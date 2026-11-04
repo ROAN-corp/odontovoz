@@ -308,7 +308,7 @@
     w.innerHTML = '<div class="login-card lg-sent">' + LOGO + '<div class="lg-env" aria-hidden="true"><svg viewBox="0 0 48 48" width="64" height="64" fill="none"><rect x="5" y="11" width="38" height="27" rx="4" stroke="var(--accent)" stroke-width="2.4"/><path d="M6 13l18 14 18-14" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/></svg></div>' +
       '<h1>' + (again ? 'Falta confirmar tu correo' : '¡Cuenta creada! Revisá tu correo') + '</h1>' +
       '<p class="lg-mail">Te enviamos un mensaje a <b>' + esc(mail) + '</b></p>' +
-      '<ol class="lg-steps"><li>Abrí tu correo y buscá el mensaje <b>«Confirm Your Signup»</b> (puede tardar un par de minutos).</li><li>Si no está en la bandeja de entrada, mirá en <b>Spam</b>, <b>Promociones</b> o <b>Notificaciones</b>.</li><li>Tocá el enlace <b>«Confirm your mail»</b>. Se abre la página de OdontoVoz: ya está activada.</li><li>Volvé acá e ingresá con tu correo y contraseña.</li></ol>' +
+      '<ol class="lg-steps"><li>Abrí tu correo y buscá el mensaje para confirmar la cuenta de OdontoVoz (puede tardar un par de minutos).</li><li>Si no está en la bandeja de entrada, mirá en <b>Spam</b>, <b>Promociones</b> o <b>Notificaciones</b>.</li><li>Tocá el botón o enlace para confirmar el correo. Se abre la página de OdontoVoz: la cuenta ya está activada.</li><li>Volvé acá e ingresá con tu correo y contraseña.</li></ol>' +
       '<div id="lgMsg" class="lg-alert" role="alert" hidden></div>' +
       '<button class="btn primary" type="button" data-act="lgSentIn" style="min-height:48px">Ya lo confirmé: ingresar</button>' +
       '<button class="btn" type="button" data-act="lgResend">No me llegó: reenviar el correo</button>' +
