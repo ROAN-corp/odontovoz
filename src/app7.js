@@ -169,6 +169,7 @@
   A.labDir = () => { if (!Array.isArray(A.CFG.labs)) A.CFG.labs = []; return A.CFG.labs; };
   const open = l => ['enviado', 'ajuste', 'porenviar'].indexOf(l.status) >= 0;
   const late = l => (l.status === 'enviado' || l.status === 'ajuste') && l.due && l.due < A.today();
+  A.labCard = (l, pid, showPat) => labCard(l, pid, showPat); A.labLate = l => late(l);
   function labCard(l, pid, showPat) {
     const p = A.PAT(pid);
     return '<article class="lab-card st-' + l.status + (late(l) ? ' late' : '') + '"><div class="lab-top"><b>' + esc(l.work) + (l.teeth ? ' · ' + esc(l.teeth) : '') + '</b><span class="chip ' + (late(l) ? 'bad' : l.status === 'instalado' ? 'ok' : l.status === 'prueba' || l.status === 'listo' ? 'acc' : '') + '">' + (late(l) ? 'Atrasado · ' : '') + esc(LSTL[l.status] || l.status) + '</span></div>' +

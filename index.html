@@ -6829,6 +6829,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   A.labDir = () => { if (!Array.isArray(A.CFG.labs)) A.CFG.labs = []; return A.CFG.labs; };
   const open = l => ['enviado', 'ajuste', 'porenviar'].indexOf(l.status) >= 0;
   const late = l => (l.status === 'enviado' || l.status === 'ajuste') && l.due && l.due < A.today();
+  A.labCard = (l, pid, showPat) => labCard(l, pid, showPat); A.labLate = l => late(l);
   function labCard(l, pid, showPat) {
     const p = A.PAT(pid);
     return '<article class="lab-card st-' + l.status + (late(l) ? ' late' : '') + '"><div class="lab-top"><b>' + esc(l.work) + (l.teeth ? ' · ' + esc(l.teeth) : '') + '</b><span class="chip ' + (late(l) ? 'bad' : l.status === 'instalado' ? 'ok' : l.status === 'prueba' || l.status === 'listo' ? 'acc' : '') + '">' + (late(l) ? 'Atrasado · ' : '') + esc(LSTL[l.status] || l.status) + '</span></div>' +
@@ -7435,6 +7436,36 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   document.head.insertAdjacentHTML('beforeend', '<style>.imp-steps{margin:0 0 6px;padding-left:20px;display:flex;flex-direction:column;gap:6px}.imp-file{align-self:flex-start;cursor:pointer}' +
     '.imp-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}.imp-col{display:flex;flex-direction:column;gap:3px;border:1px solid var(--line);border-radius:10px;padding:8px}.imp-col .hint{margin:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.imp-col select{padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}' +
     '.link{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}</style>');
+
+  /* =====================================================================
+     LABORATORIO: a la izquierda mis laboratorios; a la derecha los trabajos activos y los entregados
+     ===================================================================== */
+  const ACTIVE = ['porenviar', 'enviado', 'ajuste', 'prueba', 'listo'];
+  const pl = (n, a, b) => n + ' ' + (n === 1 ? a : b);
+  MF.labAll = m => {
+    const labs = A.labDir(), all = [], sel = m.lab || '';
+    Object.keys(A.S.pd).forEach(pid => { const pd = A.S.pd[pid]; if (pd && pd.labs && A.PAT(pid)) pd.labs.forEach(l => { if (l.status !== 'cancelado') all.push({ l, pid }); }); });
+    const mine = x => !sel || N(x.l.lab) === N(sel);
+    const act = all.filter(x => ACTIVE.indexOf(x.l.status) >= 0 && mine(x)).sort((a, b) => (A.labLate(b.l) - A.labLate(a.l)) || ((a.l.due || '9') < (b.l.due || '9') ? -1 : 1));
+    const done = all.filter(x => x.l.status === 'instalado' && mine(x)).sort((a, b) => ((b.l.recv || b.l.sent || '') > (a.l.recv || a.l.sent || '') ? 1 : -1));
+    const cnt = name => all.filter(x => N(x.l.lab) === N(name) && ACTIVE.indexOf(x.l.status) >= 0).length;
+    const nLate = act.filter(x => A.labLate(x.l)).length;
+    let left = '<div class="lb-col lb-labs"><div class="lb-h"><b>Mis laboratorios</b><button class="btn small" data-act="labDirAdd">+ Agregar</button></div>' +
+      '<button class="lb-lab' + (sel ? '' : ' on') + '" data-act="labFilter" data-name=""><b>Todos</b><span>' + all.filter(x => ACTIVE.indexOf(x.l.status) >= 0).length + ' activos</span></button>' +
+      (labs.length ? labs.map(x => '<div class="lb-lab' + (N(sel) === N(x.name) ? ' on' : '') + '" data-act="labFilter" data-name="' + esc(x.name) + '" role="button" tabindex="0"><b>' + esc(x.name) + '</b><span>' + esc([x.mech, x.phone].filter(Boolean).join(' · ') || 'Sin datos de contacto') + '</span><span class="lb-n">' + cnt(x.name) + ' activos · ' + ((x.items || []).length) + ' precios</span><button class="btn small ghost" data-act="labOne" data-id="' + x.id + '">Editar</button></div>').join('') : '<div class="empty">Todavía no cargaste laboratorios. Tocá «+ Agregar».</div>') + '<button class="lb-lab lb-add" data-act="labDirAdd"><b>+ Agregar laboratorio</b><span>Nombre, mecánico, teléfono y precios</span></button></div>';
+    let right = '<div class="lb-col lb-works"><div class="lb-h"><b>Activos y pendientes de entrega' + (sel ? ' · ' + esc(sel) : '') + '</b><span class="chip' + (nLate ? ' bad' : '') + '">' + act.length + (nLate ? ' · ' + nLate + ' atrasados' : '') + '</span></div>' +
+      (act.length ? '<div class="lab-list">' + act.map(x => A.labCard(x.l, x.pid, true)).join('') + '</div>' : '<div class="empty">No hay trabajos activos.</div>') +
+      '<div class="lb-h" style="margin-top:14px"><b>Entregados</b><span class="chip ok">' + done.length + '</span></div>' +
+      (done.length ? '<div class="lab-list">' + done.slice(0, m.more ? 200 : 8).map(x => A.labCard(x.l, x.pid, true)).join('') + '</div>' + (done.length > 8 && !m.more ? '<button class="btn small ghost" data-act="labMoreDone">Ver los ' + done.length + ' entregados</button>' : '') : '<div class="empty">Todavía no hay trabajos entregados.</div>') + '</div>';
+    return A.modalShell('Laboratorio', '<div class="lb-split">' + left + right + '</div>', '<button class="btn primary" data-act="closeModal">Listo</button>', true);
+  };
+  A.acts.labFilter = (el, ev) => { if (ev && ev.target.closest('[data-act="labOne"]')) return; S.modal.lab = el.getAttribute('data-name'); A.renderModal(); };
+  A.acts.labMoreDone = () => { S.modal.more = true; A.renderModal(); };
+  document.head.insertAdjacentHTML('beforeend', '<style>.modal:has(.lb-split){max-width:min(1100px,96vw);width:min(1100px,96vw)}.lb-split{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}' +
+    '.lb-col{display:flex;flex-direction:column;gap:8px;min-width:0}.lb-h{display:flex;align-items:center;justify-content:space-between;gap:8px}.lb-h b{font-size:15px}' +
+    '.lb-lab{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;color:var(--ink);cursor:pointer;position:relative}.lb-lab span{font-size:12.5px;color:var(--ink-2)}.lb-lab .lb-n{color:var(--accent);font-weight:600}' +
+    '.lb-lab.on{border-color:var(--accent);background:var(--accent-soft)}.lb-lab .btn{position:absolute;top:8px;right:8px}.lb-add{border-style:dashed;color:var(--accent)}' +
+    '@media (max-width:760px){.lb-split{grid-template-columns:minmax(0,1fr)}.lb-labs{flex-direction:row;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lb-labs .lb-h{display:none}.lb-labs .lb-lab{flex:0 0 auto;min-width:170px}.lb-labs .empty{min-width:240px}.lb-labs .lb-lab .btn{position:static;align-self:flex-start;margin-top:4px}}</style>');
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {
