@@ -51,6 +51,7 @@
     const d = await http('/auth/v1/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: s.refresh_token } });
     saveSession(asSession(d)); return CL.session;
   }
+  CL.api = (path, opt) => api(path, opt);
   async function api(path, opt) {
     await fresh();
     try { return await http(path, opt); }
@@ -219,13 +220,15 @@
     running = true; setState('busy');
     try {
       await baseLoad();
-      const ch = await pull(); const up = await push();
+      if (CL.checkLicense) await CL.checkLicense();
+      const ch = await pull(); const up = CL.readonly ? 0 : await push();
       CL.last = Date.now(); LS.set('odontovoz.cloud.last', String(CL.last)); setState('ok');
       if (ch || pendingRefresh) { pendingRefresh = false; A.noCloudPush = true; A.saveNow(); A.noCloudPush = false; softRefresh(); }
       if (notes.length) { const m = notes.splice(0).slice(-3).join(' '); A.toast(m); if (A.voice && A.voice.on) A.voice.speak(m); }
       if (S.modal && S.modal.type === 'setup' && A.S.setup) { S.modal = null; A.renderModal(); A.refresh(); }
       return { ch, up };
     } catch (e) {
+      if ((e.status === 403 || e.status === 401 && /row-level|42501/.test(JSON.stringify(e.data || ''))) && CL.onDenied) { CL.onDenied(); setState('ok'); return; }
       setState(e.offline ? 'offline' : 'err', e.message);
       if (e.status === 401 || e.status === 400 && /refresh/i.test(e.message)) { saveSession(null); setState('err', 'La sesión venció. Volvé a ingresar.'); }
       if (A.logError && !e.offline) A.logError('nube', e);

@@ -134,3 +134,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.1
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://rodribobadilla.github.io/odontovoz/
+
+## OdontoVoz 1.2 · suscripciones
+- Cada cuenta nueva recibe 30 días de prueba gratis (tabla `ov_accounts`, script `supabase/licencias.sql`).
+- Si la suscripción vence o se suspende, la cuenta queda en **solo lectura**: ve y descarga sus datos, pero no puede cargar nada nuevo. El servidor lo hace cumplir (no se puede saltear desde el teléfono).
+- Panel de administración: https://rodribobadilla.github.io/odontovoz/admin.html (entrar con una cuenta administradora). Desde ahí: +1 mes, +1 año, suspender, reactivar, cambiar plan y notas.
+- Para sumar otro administrador (cuando tenga cuenta creada), en Supabase › SQL Editor:
+  `insert into public.ov_admins (user_id) select id from auth.users where email = 'CORREO' on conflict do nothing;`

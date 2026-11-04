@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel OdontoVoz</title>
+<style>
+:root { --bg:#f3f6f6; --surface:#fff; --ink:#12262c; --ink2:#55676c; --line:#d8e2e3; --acc:#0b6b6f; --accs:#dff0ef; --ok:#2c8a58; --okbg:#d9f0e3; --warn:#b8860b; --warnbg:#fbf0cf; --bad:#b3261e; --badbg:#f9d6d3; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0d1a1d; --surface:#132428; --ink:#e3eef0; --ink2:#9fb3b8; --line:#26393d; --acc:#4cc3c4; --accs:#17383b; --ok:#55c58a; --okbg:#173a2a; --warn:#e5c35a; --warnbg:#3d3516; --bad:#ff8a84; --badbg:#4a1f1d; } }
+:root[data-theme="dark"] { --bg:#0d1a1d; --surface:#132428; --ink:#e3eef0; --ink2:#9fb3b8; --line:#26393d; --acc:#4cc3c4; --accs:#17383b; --ok:#55c58a; --okbg:#173a2a; --warn:#e5c35a; --warnbg:#3d3516; --bad:#ff8a84; --badbg:#4a1f1d; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+header h1 { font-size: 18px; margin: 0; flex: 1; } header small { color: var(--ink2); }
+main { max-width: 1280px; margin: 0 auto; padding: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.login { max-width: 380px; margin: 60px auto; display: flex; flex-direction: column; gap: 12px; }
+label { font-size: 12px; font-weight: 700; color: var(--ink2); text-transform: uppercase; letter-spacing: .04em; }
+input, select, textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); font: inherit; }
+button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 7px 12px; font-weight: 600; }
+button.primary { background: var(--acc); color: #fff; border-color: var(--acc); } button.danger { color: var(--bad); border-color: var(--bad); } button.small { padding: 4px 9px; font-size: 13px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; } .stat b { display: block; font-size: 24px; } .stat span { color: var(--ink2); font-size: 13px; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; } .tools input { max-width: 320px; } .tools select { width: auto; }
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; } th { font-size: 12px; color: var(--ink2); text-transform: uppercase; letter-spacing: .04em; background: var(--bg); }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.chip.ok { background: var(--okbg); color: var(--ok); } .chip.warn { background: var(--warnbg); color: var(--warn); } .chip.bad { background: var(--badbg); color: var(--bad); } .chip.acc { background: var(--accs); color: var(--acc); }
+.acts { display: flex; gap: 4px; flex-wrap: wrap; } .muted { color: var(--ink2); font-size: 13px; } .err { color: var(--bad); min-height: 1.2em; }
+.drawer { position: fixed; inset: 0; background: rgba(8,20,24,.45); display: grid; place-items: center; padding: 16px; z-index: 10; }
+.drawer .card { width: min(520px, 100%); display: flex; flex-direction: column; gap: 10px; max-height: 92vh; overflow: auto; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 760px) { thead { display: none; } table, tbody, tr, td { display: block; width: 100%; } tr { border-bottom: 1px solid var(--line); padding: 8px 0; } td { border: 0; padding: 4px 10px; } }
+</style>
+</head>
+<body>
+<header><h1>Panel OdontoVoz</h1><small id="who"></small><button class="small" id="outBtn" hidden>Salir</button></header>
+<main id="app"></main>
+<script>
+(function () {
+  'use strict';
+  const URL0 = 'https://hcppfvioiaaejayzzhpa.supabase.co', KEY = 'sb_publishable_N-Qc-l7kJc4A7rvX68ko7Q_CiTI2HtU';
+  const PLANES = { prueba: 'Prueba', basico: 'Básico', consultorio: 'Consultorio', centro: 'Centro' };
+  const $ = s => document.querySelector(s), app = $('#app');
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let ses = null, rows = [], q = '', filt = 'todas';
+  try { ses = JSON.parse(sessionStorage.getItem('ovadm') || 'null'); } catch (e) { ses = null; }
+  const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  const addDays = (k, n) => { const d = new Date(k + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+  const dmy = k => (k ? k.slice(8, 10) + '/' + k.slice(5, 7) + '/' + k.slice(0, 4) : '—');
+  const until = r => [r.trial_until, r.paid_until].filter(Boolean).sort().pop();
+  const state = r => (r.status === 'suspendida' ? 'suspendida' : until(r) < today() ? 'vencida' : r.plan === 'prueba' && !r.paid_until ? 'prueba' : 'activa');
+  async function http(path, opt) {
+    opt = opt || {};
+    const h = Object.assign({ apikey: KEY, 'Content-Type': 'application/json' }, opt.headers || {});
+    if (ses && opt.auth !== false) h.Authorization = 'Bearer ' + ses.access_token;
+    const r = await fetch(URL0 + path, { method: opt.method || 'GET', headers: h, body: opt.body ? JSON.stringify(opt.body) : undefined });
+    const t = await r.text(); let d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { d = t; }
+    if (r.status === 401 && ses && ses.refresh_token && !opt.retry) { await refresh(); return http(path, Object.assign({}, opt, { retry: true })); }
+    if (!r.ok) throw new Error((d && (d.error_description || d.msg || d.message)) || ('Error ' + r.status));
+    return d;
+  }
+  async function refresh() {
+    const d = await http('/auth/v1/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: ses.refresh_token }, retry: true });
+    ses = { access_token: d.access_token, refresh_token: d.refresh_token, email: d.user.email, id: d.user.id }; sessionStorage.setItem('ovadm', JSON.stringify(ses));
+  }
+  function login(msg) {
+    $('#who').textContent = ''; $('#outBtn').hidden = true;
+    app.innerHTML = '<form class="card login" id="lf"><h2 style="margin:0">Ingresar</h2><p class="muted" style="margin:0">Solo para administradores de OdontoVoz.</p><div><label for="em">Correo</label><input id="em" type="email" autocomplete="email" required></div><div><label for="pw">Contraseña</label><input id="pw" type="password" autocomplete="current-password" required></div><div class="err" id="le">' + esc(msg || '') + '</div><button class="primary" type="submit">Ingresar</button></form>';
+    $('#lf').onsubmit = async e => {
+      e.preventDefault(); $('#le').textContent = '';
+      try {
+        const d = await http('/auth/v1/token?grant_type=password', { method: 'POST', auth: false, body: { email: $('#em').value.trim(), password: $('#pw').value } });
+        ses = { access_token: d.access_token, refresh_token: d.refresh_token, email: d.user.email, id: d.user.id }; sessionStorage.setItem('ovadm', JSON.stringify(ses)); load();
+      } catch (er) { $('#le').textContent = /invalid/i.test(er.message) ? 'Correo o contraseña incorrectos.' : er.message; }
+    };
+  }
+  async function load() {
+    $('#who').textContent = ses.email; $('#outBtn').hidden = false;
+    app.innerHTML = '<p class="muted">Cargando…</p>';
+    try {
+      const ad = await http('/rest/v1/ov_admins?select=user_id&user_id=eq.' + ses.id);
+      if (!ad || !ad.length) { app.innerHTML = '<div class="card">Esta cuenta no es administradora. Pedile a otro administrador que te agregue.</div>'; return; }
+      rows = await http('/rest/v1/rpc/ov_admin_accounts', { method: 'POST', body: {} }) || []; render();
+    } catch (e) { app.innerHTML = '<div class="card err">' + esc(e.message) + '</div>'; }
+  }
+  function render() {
+    const c = { todas: rows.length, activa: 0, prueba: 0, vencida: 0, suspendida: 0 }; rows.forEach(r => { c[state(r)]++; });
+    const soon = rows.filter(r => state(r) !== 'vencida' && state(r) !== 'suspendida' && until(r) <= addDays(today(), 7)).length;
+    const list = rows.filter(r => (filt === 'todas' || state(r) === filt) && (!q || (r.email || '').toLowerCase().indexOf(q) >= 0 || (r.notes || '').toLowerCase().indexOf(q) >= 0));
+    const chip = s => '<span class="chip ' + ({ activa: 'ok', prueba: 'acc', vencida: 'warn', suspendida: 'bad' }[s]) + '">' + s + '</span>';
+    app.innerHTML = '<div class="stats"><div class="stat"><b>' + c.todas + '</b><span>cuentas</span></div><div class="stat"><b>' + c.activa + '</b><span>pagando</span></div><div class="stat"><b>' + c.prueba + '</b><span>en prueba</span></div><div class="stat"><b>' + soon + '</b><span>vencen en 7 días</span></div><div class="stat"><b>' + (c.vencida + c.suspendida) + '</b><span>vencidas o suspendidas</span></div></div>' +
+      '<div class="tools"><input id="qq" placeholder="Buscar por correo o nota" value="' + esc(q) + '"><select id="ff">' + ['todas', 'activa', 'prueba', 'vencida', 'suspendida'].map(f => '<option value="' + f + '"' + (f === filt ? ' selected' : '') + '>' + (f === 'todas' ? 'Todas' : f) + ' (' + c[f] + ')</option>').join('') + '</select><button class="small" id="rl">Actualizar</button></div>' +
+      '<table><thead><tr><th>Cuenta</th><th>Plan</th><th>Estado</th><th>Vence</th><th>Uso</th><th>Acciones</th></tr></thead><tbody>' +
+      (list.length ? list.map(r => '<tr><td><b>' + esc(r.email) + '</b><div class="muted">Alta ' + dmy((r.created_at || '').slice(0, 10)) + (r.notes ? ' · ' + esc(r.notes) : '') + '</div></td><td>' + esc(PLANES[r.plan] || r.plan) + '</td><td>' + chip(state(r)) + '</td><td>' + dmy(until(r)) + '</td>' +
+        '<td class="muted">' + (r.records || 0) + ' registros<br>' + (r.last_sync ? 'sincronizó ' + dmy(r.last_sync.slice(0, 10)) : 'sin datos aún') + '</td>' +
+        '<td><div class="acts"><button class="small" data-x="m30" data-id="' + r.owner + '">+1 mes</button><button class="small" data-x="y1" data-id="' + r.owner + '">+1 año</button>' +
+        (r.status === 'suspendida' ? '<button class="small primary" data-x="on" data-id="' + r.owner + '">Reactivar</button>' : '<button class="small danger" data-x="off" data-id="' + r.owner + '">Suspender</button>') +
+        '<button class="small" data-x="ed" data-id="' + r.owner + '">Editar</button></div></td></tr>').join('') : '<tr><td colspan="6" class="muted">No hay cuentas con ese filtro.</td></tr>') + '</tbody></table>' +
+      '<p class="muted">«+1 mes» y «+1 año» suman desde hoy o desde el vencimiento actual, lo que sea más tarde, y dejan la cuenta activa. Una cuenta vencida o suspendida queda en solo lectura: ve y descarga sus datos, pero el servidor no acepta cambios.</p>';
+    $('#qq').oninput = e => { q = e.target.value.toLowerCase(); const p = e.target.selectionStart; render(); const i = $('#qq'); i.focus(); i.setSelectionRange(p, p); };
+    $('#ff').onchange = e => { filt = e.target.value; render(); };
+    $('#rl').onclick = load;
+    app.querySelectorAll('[data-x]').forEach(b => { b.onclick = () => act(b.getAttribute('data-x'), b.getAttribute('data-id')); });
+  }
+  async function patch(id, body) { await http('/rest/v1/ov_accounts?owner=eq.' + id, { method: 'PATCH', body: Object.assign(body, { updated_at: new Date().toISOString() }), headers: { Prefer: 'return=minimal' } }); await load(); }
+  function act(x, id) {
+    const r = rows.filter(z => z.owner === id)[0]; if (!r) return;
+    const base = [today(), r.paid_until].filter(Boolean).sort().pop();
+    if (x === 'm30' || x === 'y1') { const n = x === 'm30' ? 30 : 365; patch(id, { paid_until: addDays(base, n), status: 'activa', plan: r.plan === 'prueba' ? 'consultorio' : r.plan }); return; }
+    if (x === 'off') { if (confirm('¿Suspender ' + r.email + '? Va a quedar en solo lectura.')) patch(id, { status: 'suspendida' }); return; }
+    if (x === 'on') { patch(id, { status: 'activa' }); return; }
+    if (x === 'ed') edit(r);
+  }
+  function edit(r) {
+    const d = document.createElement('div'); d.className = 'drawer';
+    d.innerHTML = '<div class="card"><h2 style="margin:0">' + esc(r.email) + '</h2><div class="row2"><div><label>Plan</label><select id="ePl">' + Object.keys(PLANES).map(k => '<option value="' + k + '"' + (k === r.plan ? ' selected' : '') + '>' + PLANES[k] + '</option>').join('') + '</select></div><div><label>Estado</label><select id="eSt"><option value="activa"' + (r.status === 'activa' ? ' selected' : '') + '>activa</option><option value="suspendida"' + (r.status === 'suspendida' ? ' selected' : '') + '>suspendida</option></select></div></div>' +
+      '<div class="row2"><div><label>Prueba hasta</label><input type="date" id="eTr" value="' + esc(r.trial_until || '') + '"></div><div><label>Pagado hasta</label><input type="date" id="ePa" value="' + esc(r.paid_until || '') + '"></div></div>' +
+      '<div><label>Equipos permitidos</label><input type="number" min="1" max="20" id="eDv" value="' + (r.max_devices || 3) + '"></div><div><label>Notas (pagos, teléfono, acuerdos)</label><textarea id="eNo" rows="3">' + esc(r.notes || '') + '</textarea></div><div class="err" id="eEr"></div>' +
+      '<div class="acts" style="justify-content:flex-end"><button id="eCa">Cancelar</button><button class="primary" id="eOk">Guardar</button></div></div>';
+    document.body.appendChild(d);
+    d.onclick = e => { if (e.target === d) d.remove(); };
+    $('#eCa').onclick = () => d.remove();
+    $('#eOk').onclick = async () => {
+      try { await patch(r.owner, { plan: $('#ePl').value, status: $('#eSt').value, trial_until: $('#eTr').value || r.trial_until, paid_until: $('#ePa').value || null, max_devices: parseInt($('#eDv').value, 10) || 3, notes: $('#eNo').value.trim() || null }); d.remove(); }
+      catch (e) { $('#eEr').textContent = e.message; }
+    };
+  }
+  $('#outBtn').onclick = async () => { try { await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual */ } ses = null; sessionStorage.removeItem('ovadm'); login(); };
+  if (ses) load(); else login();
+})();
+</script>
+</body>
+</html>

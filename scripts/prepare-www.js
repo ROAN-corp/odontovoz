@@ -30,7 +30,7 @@ if (sbUrl && sbKey) single = single.replace(/\{ supabaseUrl: '[^']*', supabaseAn
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(root, 'dist', 'OdontoVoz-web.html'), single);
 
-for (const f of ['manifest.webmanifest', 'sw.js', 'privacidad.html', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png']) {
+for (const f of ['manifest.webmanifest', 'sw.js', 'privacidad.html', 'admin.html', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png']) {
   fs.copyFileSync(path.join(root, f), path.join(www, f));
 }
 console.log('www/ lista:', fs.readdirSync(www).join(', '));
