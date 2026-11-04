@@ -55,41 +55,39 @@ jobs:
       - name: Copiar la app al proyecto Android
         run: npx cap sync android
 
-      - name: Clave de firma fija para pruebas (para poder actualizar sin desinstalar)
+      - name: Clave de firma fija (para actualizar sin desinstalar)
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
-          key: odontovoz-debug-keystore-v1
+          path: ~/ov-keystore
+          key: odontovoz-keystore-v2
 
       - name: Compilar
         working-directory: android
-        env:
-          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           chmod +x gradlew
-          if [ -n "$KS_B64" ]; then
-            ./gradlew --no-daemon assembleRelease
-          else
-            echo "::warning::Falta la clave de firma propia (secret ANDROID_KEYSTORE_BASE64). Se usa la clave fija guardada en el caché de GitHub."
-            ./gradlew --no-daemon assembleDebug
-          fi
+          ./gradlew --no-daemon assembleRelease
 
       - name: Firmar el APK
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          mkdir -p dist
+          mkdir -p dist ~/ov-keystore
           if [ -n "$KS_B64" ]; then
             echo "$KS_B64" | base64 -d > ks.jks
-            BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-            "$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
-            "$BT/apksigner" sign --ks ks.jks --ks-key-alias odontovoz --ks-pass env:KS_PASS --key-pass env:KS_PASS --out dist/OdontoVoz.apk aligned.apk
-            "$BT/apksigner" verify --print-certs dist/OdontoVoz.apk
-            rm -f ks.jks aligned.apk
           else
-            cp android/app/build/outputs/apk/debug/app-debug.apk dist/OdontoVoz.apk
+            echo "::warning::Sin clave propia (secrets ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD): se usa la clave guardada en el caché de GitHub."
+            if [ ! -f ~/ov-keystore/ov.jks ]; then
+              keytool -genkeypair -keystore ~/ov-keystore/ov.jks -alias odontovoz -keyalg RSA -keysize 2048 -validity 10000 \
+                -storepass odontovoz-cache -keypass odontovoz-cache -dname "CN=Odonto Voz, O=Odonto Voz, C=AR"
+            fi
+            cp ~/ov-keystore/ov.jks ks.jks; KS_PASS=odontovoz-cache
           fi
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          "$BT/apksigner" sign --ks ks.jks --ks-key-alias odontovoz --ks-pass env:KS_PASS --key-pass env:KS_PASS --out dist/OdontoVoz.apk aligned.apk
+          "$BT/apksigner" verify --print-certs dist/OdontoVoz.apk | grep -i "SHA-256"
+          rm -f ks.jks aligned.apk
           ls -la dist
 
       - name: Guardar el APK en esta ejecución
