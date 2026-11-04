@@ -112,3 +112,9 @@ Desde la versión 6, cada compilación usa siempre la misma firma (guardada en G
 - **Alta y ficha por voz**: «Navi, agregá un paciente nuevo» → «nombre…», «apellido…», «DNI…», «teléfono…», «obra social…», «guardar» → «alergia a…», «medicación…», «antecedentes…».
 - Al pasar a **centro** por primera vez se pide el nombre del centro; se guarda y se puede cambiar después.
 - Nuevo ícono y nombre: **OdontoVoz**.
+
+## Versión 6.3
+- Odontograma en el teléfono con los cuatro cuadrantes en su lugar (1 | 2 arriba, 4 | 3 abajo) y piezas más chicas; la temporaria debajo.
+- Las pestañas de la ficha ya no vuelven al principio: queda a la vista la que elegiste.
+- **Importar pacientes** (Menú › Importar pacientes): desde Bilog u otro programa, con el listado exportado a Excel o CSV. Reconoce las columnas solo, no duplica pacientes con el mismo DNI y trae una planilla modelo.
+- Versión para PC: cada compilación publica también **OdontoVoz-web.html** (se abre con doble clic en Chrome o Edge).

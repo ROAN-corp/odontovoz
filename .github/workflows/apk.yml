@@ -99,11 +99,14 @@ jobs:
       - name: Publicar para descargar desde el teléfono
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v6.2.${{ github.run_number }}
-          name: OdontoVoz 6.2 (compilación ${{ github.run_number }})
+          tag_name: v6.3.${{ github.run_number }}
+          name: OdontoVoz 6.3 (compilación ${{ github.run_number }})
           body: |
-            Descargá **OdontoVoz.apk** desde el teléfono e instalalo.
+            Teléfono: descargá **OdontoVoz.apk** e instalalo.
+            PC: descargá **OdontoVoz-web.html** y abrilo con doble clic (Chrome o Edge).
             Si Android lo pide, permití "instalar apps de orígenes desconocidos" para el navegador.
             Para actualizar, instalá el APK nuevo encima del anterior: los datos se conservan.
-          files: dist/OdontoVoz.apk
+          files: |
+            dist/OdontoVoz.apk
+            dist/OdontoVoz-web.html
           make_latest: true
