@@ -101,8 +101,8 @@ jobs:
       - name: Publicar para descargar desde el teléfono
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v6.0.${{ github.run_number }}
-          name: Odonto Voz 6.0 (compilación ${{ github.run_number }})
+          tag_name: v6.1.${{ github.run_number }}
+          name: Odonto Voz 6.1 (compilación ${{ github.run_number }})
           body: |
             Descargá **OdontoVoz.apk** desde el teléfono e instalalo.
             Si Android lo pide, permití "instalar apps de orígenes desconocidos" para el navegador.

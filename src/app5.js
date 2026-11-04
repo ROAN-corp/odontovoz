@@ -120,6 +120,8 @@
     live('«' + phrase + '»');
     let r;
     try { r = A.cmd.exec(phrase, { voice: true }); } catch (e) { A.logError('comando', e); r = { ok: false, msg: 'No pude hacer eso: ' + ((e && e.message) || 'error') }; }
+    /* conversación: tras una orden que salió bien, se siguen aceptando frases sin repetir el nombre */
+    if (V.mode === 'hands' && r && r.ok) V.armedUntil = Date.now() + (A.FOLLOW_MS || 15000);
     if (r && r.msg) { live(r.msg); if (!(S.tab === 'ficha' && S.fichaTab === 'odon' && r.odon)) A.say(r.msg); else V.speak(r.msg); }
     ui();
   }
@@ -320,7 +322,7 @@
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         A.openFicha(res.pid, pr.sub);
         if (pr.budget && A.pd(res.pid).tx.some(t => t.status === 'plan')) A.acts.budgetNew();
-        return ok(A.PAT(res.pid).name + ' · ' + ({ odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'recetas', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta' }[pr.sub]) + '.');
+        return ok(A.PAT(res.pid).name + ' · ' + ({ odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'recetas', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
       case 'openPat':
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         if (pr.ficha || S.tab === 'ficha') A.openFicha(res.pid, 'datos'); else { S.panel = { type: 'pat', pid: res.pid }; A.renderPanel(); }

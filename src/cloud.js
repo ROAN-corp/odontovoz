@@ -275,7 +275,7 @@
     if (!up && !rec && !np) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="rec">Me olvidé la contraseña</button>';
     if (rec) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="in">Volver</button>';
     if (!np) h += '<div class="legal">Los datos viajan cifrados y se guardan en servidores de la Unión Europea, que la Argentina reconoce con protección adecuada. Solo vos (y los equipos donde ingreses con tu cuenta) pueden verlos.</div>' +
-      '<div class="row-btns" style="justify-content:center"><button type="button" class="btn small ghost" data-act="loginLocal">Seguir sin cuenta</button><button type="button" class="btn small ghost" data-act="loginDemo">Ver con datos de ejemplo</button></div>';
+      '<div class="row-btns" style="justify-content:center"><button type="button" class="btn small ghost" data-act="loginDemo">Probar con pacientes de ejemplo</button></div>';
     w.innerHTML = h + '</form>';
     const f = w.querySelector('input'); if (f && !A.isNarrow()) f.focus();
   };
@@ -283,7 +283,7 @@
   A.acts.loginOpen = () => { A.hideDrawer(); CL.showLogin('in'); };
   A.acts.loginTab = el => { CL._mail = ($('#lgMail') || {}).value || CL._mail; CL.showLogin(el.getAttribute('data-t')); };
   A.acts.loginLocal = () => { LS.set('odontovoz.localOnly', '1'); CL.hideLogin(); A.afterRefresh(); };
-  A.acts.loginDemo = () => { LS.set('odontovoz.localOnly', '1'); CL.hideLogin(); if (!A.DEMO) A.setMode('demo'); };
+  A.acts.loginDemo = () => { CL.hideLogin(); if (!A.DEMO) A.setMode('demo'); else A.toast('Modo prueba: pacientes ficticios, guardados solo en este equipo. Para tus pacientes reales, ingresá con tu cuenta.'); };
   const lgErr = m => { const e = $('#lgMsg'); if (e) e.textContent = m; };
   const okPass = p => p.length >= 8 && /[a-zA-Z]/.test(p) && /\d/.test(p);
   const okMail = m => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m);
@@ -329,6 +329,7 @@
       '<div class="field" style="margin-top:10px"><label for="devName">Nombre de este equipo (lo ven los demás al cargar algo)</label><input id="devName" data-chg="devName" value="' + esc(A.deviceLabel()) + '" placeholder="Ej.: Recepción, Consultorio, PC"></div>' +
       '<div class="hint">Para que la secretaria y vos vean lo mismo, ingresen con esta misma cuenta en cada equipo (teléfono, tablet o la página web en la PC). Los cambios aparecen en los otros equipos en unos segundos.</div>' +
       '<div class="row-btns"><button class="btn" data-act="cloudSyncNow">Sincronizar ahora</button><button class="btn" data-act="acctPass">Cambiar contraseña</button><button class="btn" data-act="privacyOpen">Privacidad</button></div>' +
+      '<div class="block"><h3>Bloqueo con PIN</h3><div class="hint" style="margin:0">' + (CL.pinOn() ? 'Activo: la app pide el PIN al abrirla.' : 'Opcional: pide un PIN al abrir la app en este equipo.') + '</div><div class="row-btns">' + (CL.pinOn() ? '<button class="btn small" data-act="pinSetOpen">Cambiar PIN</button><button class="btn small" data-act="pinOff">Quitar PIN</button>' : '<button class="btn small primary" data-act="pinSetOpen">Poner PIN</button>') + '</div></div>' +
       '<div class="block"><h3>Tus datos</h3><div class="hint" style="margin:0">Podés descargar todo cuando quieras (Ajustes › Copia de seguridad). Las imágenes de pacientes quedan en el equipo donde se cargaron.</div><div class="row-btns"><button class="btn small" data-act="cfgOpen" data-t="datos">Descargar copia</button><button class="btn small danger" data-act="acctDelete">Borrar mis datos de la nube</button></div></div>';
     return A.modalShell('Cuenta y equipos', b, '<button class="btn" data-act="acctOut">Cerrar sesión</button><button class="btn primary" data-act="closeModal">Listo</button>');
   };
@@ -363,6 +364,39 @@
     LS.set('odontovoz.cloudcfg', url && key ? JSON.stringify({ url, key }) : null); S.modal = null; A.renderModal(); A.afterRefresh(); if (url && key) CL.showLogin('in');
   };
 
+  /* ---------- bloqueo con PIN al abrir la app (el teléfono puede quedar en manos de otro) ---------- */
+  async function hashPin(pin) {
+    const salt = (CL.session && CL.session.user.id) || 'ov', data = new TextEncoder().encode(salt + ':' + pin);
+    try { const h = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join(''); }
+    catch (e) { let x = 5381; for (const b of data) x = ((x << 5) + x + b) >>> 0; return 'f' + x.toString(16); }
+  }
+  CL.pinOn = () => !!LS.get('odontovoz.pin', '');
+  let pinTries = 0, hiddenAt = 0;
+  CL.lock = () => {
+    if (!CL.pinOn() || !CL.session || $('#pinWrap')) return;
+    const w = document.createElement('div'); w.id = 'pinWrap'; w.className = 'login-wrap';
+    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>Odonto Voz</h1><p class="hint" style="margin:0">' + esc(CL.session.user.email) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
+    document.body.appendChild(w); const i = $('#pinIn'); if (i) i.focus();
+  };
+  A.subs.pinGo = async () => {
+    const v = ($('#pinIn').value || '').trim(); if (!v) return;
+    if (await hashPin(v) === LS.get('odontovoz.pin', '')) { pinTries = 0; const w = $('#pinWrap'); if (w) w.remove(); return; }
+    pinTries++; $('#pinIn').value = '';
+    if (pinTries >= 5) { LS.set('odontovoz.pin', null); A.toast('Demasiados intentos: ingresá de nuevo con tu correo y contraseña.'); CL.signOut(false); return; }
+    $('#pinMsg').textContent = 'PIN incorrecto. Te quedan ' + (5 - pinTries) + ' intentos.';
+  };
+  A.acts.pinForgot = () => { LS.set('odontovoz.pin', null); CL.signOut(false); };
+  A.acts.pinSetOpen = () => { S.modal = { type: 'pinSet' }; A.renderModal(); };
+  MF.pinSet = () => A.modalShell('PIN para abrir la app', '<p class="hint">Cada vez que abras la app (o vuelvas a ella después de 3 minutos) te pide este PIN. Es solo de este equipo.</p><div class="row2"><div class="field"><label for="pn1">PIN (4 a 8 números)</label><input id="pn1" type="password" inputmode="numeric" maxlength="8"></div><div class="field"><label for="pn2">Repetilo</label><input id="pn2" type="password" inputmode="numeric" maxlength="8"></div></div><div id="pnMsg" class="hint bad"></div>',
+    '<button class="btn" data-act="acctOpen">Cancelar</button><button class="btn primary" data-act="pinSave">Guardar PIN</button>');
+  A.acts.pinSave = async () => {
+    const a = $('#pn1').value.trim(), b = $('#pn2').value.trim();
+    if (!/^\d{4,8}$/.test(a)) { $('#pnMsg').textContent = 'Usá de 4 a 8 números.'; return; } if (a !== b) { $('#pnMsg').textContent = 'No coinciden.'; return; }
+    LS.set('odontovoz.pin', await hashPin(a)); A.toast('PIN activado.'); A.acts.acctOpen();
+  };
+  A.acts.pinOff = () => { LS.set('odontovoz.pin', null); A.toast('PIN desactivado.'); A.renderModal(); };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) hiddenAt = Date.now(); else if (hiddenAt && Date.now() - hiddenAt > 180000) CL.lock(); });
+
   /* ---------- política de privacidad (también en privacidad.html) ---------- */
   A.acts.privacyOpen = (el, ev) => { if (ev) ev.preventDefault(); const w = $('#loginWrap'); if (w) w.style.display = 'none'; S.modal = { type: 'privacy', fromLogin: !!w }; A.renderModal(); };
   const origClose = A.closeModal;
@@ -384,11 +418,10 @@
     const link = await CL.fromLink();
     if (link === 'recovery') { CL.showLogin('newpass'); return; }
     if (link) { afterLogin(); return; }
-    if (CL.session) { if (A.DEMO) { /* con sesión iniciada se usan los datos reales */ LS.set('odontovoz.mode', 'real'); A.noSave = true; location.reload(); return; } startLoop(); return; }
-    if (LS.get('odontovoz.localOnly', '') !== '1') {
-      const show = () => CL.showLogin('in');
-      const intro = $('#intro'); if (intro) { const go = intro.querySelector('[data-act="introGo"]'); if (go) go.addEventListener('click', () => setTimeout(show, 450), { once: true }); } else show();
-    }
+    if (CL.session) { if (A.DEMO) { /* con sesión iniciada se usan los datos reales */ LS.set('odontovoz.mode', 'real'); A.noSave = true; location.reload(); return; } CL.lock(); startLoop(); return; }
+    /* sin sesión no se entra: cada profesional ve solo lo suyo con su usuario y contraseña */
+    const show = () => CL.showLogin('in');
+    const intro = $('#intro'); if (intro) { const go = intro.querySelector('[data-act="introGo"]'); if (go) go.addEventListener('click', () => setTimeout(show, 450), { once: true }); } else show();
   };
   setTimeout(() => { CL.boot().catch(e => A.logError && A.logError('nube', e)); }, 0);
 })();

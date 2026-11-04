@@ -93,3 +93,10 @@ El segundo proceso publica la app en `https://TU_USUARIO.github.io/odontovoz/`. 
 
 ### Actualizar el APK sin desinstalar
 Desde la versión 6, cada compilación usa siempre la misma firma (guardada en GitHub). La primera vez que se pasa de la 5 a la 6 hay que desinstalar una única vez (antes, hacé una copia de seguridad desde Ajustes). Para que la firma sea tuya y permanente, cargá los secrets `ANDROID_KEYSTORE_BASE64` y `ANDROID_KEYSTORE_PASSWORD`.
+
+## Versión 6.1
+- **Obras sociales y aranceles** (Menú › Obras sociales y aranceles): precargadas las más usadas en Argentina y las provinciales de Neuquén (ISSN) y Río Negro (IPROSS). En cada una se tilda qué prácticas cubre (códigos del Nomenclador Nacional), cuánto paga la obra social y el coseguro. Al registrar una práctica hecha, al paciente se le carga solo el coseguro, y queda la planilla del mes para presentar (descargable).
+- **Laboratorio**: pestaña nueva en la ficha (tipo de trabajo, piezas, material, color VITA, etapa, laboratorio, fechas de envío y de vuelta, costo, indicaciones) y vista de todos los trabajos en curso con los atrasados primero. El pedido se manda por WhatsApp al laboratorio.
+- **Tipo de cuenta**: se cambia con un toque desde Menú › Tu cuenta, sin volver a cargar los datos.
+- **Voz conversada**: después de una orden, el asistente sigue escuchando 15 segundos sin repetir el nombre («Navi, abrí la historia de Pérez» → «ahora el odontograma» → «agregá caries en 45 por oclusal»).
+- **Ingreso obligatorio** con usuario y contraseña cuando la nube está activa, y PIN opcional para abrir la app en cada equipo.
