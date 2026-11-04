@@ -147,3 +147,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Paciente nuevo: se abre la ficha completa (datos personales, fecha de nacimiento con edad automática, domicilio, localidad, obra social con N.º de afiliado y plan, motivo y anamnesis). El turno con paciente nuevo sigue siendo la versión corta.
 - Por voz: «fecha de nacimiento 3 de mayo de 1990», «domicilio…», «localidad…», «número de afiliado…», «plan…», «particular».
 - Agenda: más alta; los turnos de 15 minutos muestran nombre y hora en una línea, y los superpuestos se reparten el ancho para que se lean.
+
+## OdontoVoz 1.4
+- Al crear la cuenta aparece la pantalla «Revisá tu correo» con los pasos, botón para reenviar el correo y para volver a ingresar.
+- Usuario o contraseña equivocados: aviso rojo grande, campos marcados, vibración y se baja el teclado para que se lea.
+- Si alguien intenta ingresar sin haber confirmado el correo, le aparece la misma pantalla con la opción de reenviarlo.
+- Administradores: rodribobadilla5630@gmail.com y angelagatielo@gmail.com (cuentas principales, plan Centro sin vencimiento).

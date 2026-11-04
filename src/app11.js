@@ -172,6 +172,12 @@
 
   document.head.insertAdjacentHTML('beforeend', '<style>' +
     '.panel.still{animation:none}' +
+    /* ingreso: avisos bien visibles y pantalla de correo enviado */
+    '.lg-alert{border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.4;font-weight:500}.lg-alert.bad{background:#fde8e6;color:#8a1f1a;border:2px solid #d9473f}.lg-alert.ok{background:#e3f4ec;color:#145c3a;border:2px solid #2f9e6a}' +
+    '#loginWrap input[aria-invalid="true"]{border-color:#d9473f;box-shadow:0 0 0 3px rgba(217,71,63,.18)}' +
+    '@keyframes lgShake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}.login-card.shake{animation:lgShake .45s}' +
+    '.lg-sent{text-align:left}.lg-sent h1{font-size:22px}.lg-env{display:flex;justify-content:center}.lg-mail{margin:0;font-size:15px}.lg-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14.5px;line-height:1.4}' +
+    '@media (prefers-color-scheme:dark){.lg-alert.bad{background:#3a1513;color:#ffb4ad}.lg-alert.ok{background:#0f2e20;color:#9fe0bf}}' +
     '.modal.np-full{width:min(1080px,100%);max-height:calc(100vh - 24px)}.np-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}.np-sec{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}.np-sec h3,.np-h{margin:0 0 8px;font-size:14px;letter-spacing:.02em}.np-h{margin-top:12px}.np-os-tg{margin-bottom:8px}#npA[readonly],#pf_age[readonly]{background:var(--surface-2,rgba(0,0,0,.04))}' +
     '@media (max-width:760px){.np-cols{grid-template-columns:1fr;gap:0}.modal-scrim:has(.np-full){padding:0}.modal.np-full{width:100%;max-height:none;height:100%;border-radius:0;padding-top:env(safe-area-inset-top,0px)}}' +
     /* agenda: turnos cortos y superpuestos legibles */

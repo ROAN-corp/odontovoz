@@ -65,6 +65,7 @@
     return { confirm: true };
   };
   CL.signIn = async (email, pass) => { const d = await http('/auth/v1/token?grant_type=password', { method: 'POST', auth: false, body: { email, password: pass } }); saveSession(asSession(d)); };
+  CL.resend = async email => http('/auth/v1/resend', { method: 'POST', auth: false, body: { type: 'signup', email } });
   CL.recover = async email => http('/auth/v1/recover', { method: 'POST', auth: false, body: { email } });
   CL.setPassword = async pass => api('/auth/v1/user', { method: 'PUT', body: { password: pass } });
   CL.signOut = async wipe => {
@@ -273,7 +274,7 @@
     if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
     if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto la <a href="#" data-act="privacyOpen">política de privacidad y condiciones de uso</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
-    h += '<div id="lgMsg" class="hint bad" role="alert">' + esc(msg || '') + '</div>';
+    h += '<div id="lgMsg" class="lg-alert" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
     h += '<button class="btn primary" type="submit" style="min-height:48px">' + (np ? 'Guardar contraseña' : rec ? 'Enviar enlace' : up ? 'Crear cuenta' : 'Ingresar') + '</button>';
     if (!up && !rec && !np) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="rec">Me olvidé la contraseña</button>';
     if (rec) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="in">Volver</button>';
@@ -287,32 +288,74 @@
   A.acts.loginTab = el => { CL._mail = ($('#lgMail') || {}).value || CL._mail; CL.showLogin(el.getAttribute('data-t')); };
   A.acts.loginLocal = () => { LS.set('odontovoz.localOnly', '1'); CL.hideLogin(); A.afterRefresh(); };
   A.acts.loginDemo = () => { CL.hideLogin(); if (!A.DEMO) A.setMode('demo'); else A.toast('Modo prueba: pacientes ficticios, guardados solo en este equipo. Para tus pacientes reales, ingresá con tu cuenta.'); };
-  const lgErr = m => { const e = $('#lgMsg'); if (e) e.textContent = m; };
+  /* mensajes del ingreso: un recuadro bien visible, se baja el teclado para que se lea y el teléfono vibra */
+  const lgErr = (m, kind) => {
+    const e = $('#lgMsg'); if (!e) { A.toast(m); return; }
+    const ok = kind === 'ok';
+    e.hidden = false; e.className = 'lg-alert ' + (ok ? 'ok' : 'bad');
+    e.innerHTML = '<b>' + (ok ? '✓ ' : '⚠ ') + '</b>' + esc(m);
+    const ae = document.activeElement; if (!ok && ae && ae.blur && A.isNarrow && A.isNarrow()) ae.blur();
+    if (!ok) { const c = $('#loginWrap .login-card'); if (c) { c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); } try { navigator.vibrate && navigator.vibrate(120); } catch (x) { /* nada */ } }
+    setTimeout(() => { try { e.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) { /* nada */ } }, 60);
+  };
+  const markBad = ids => { A.$$('#loginWrap input').forEach(i => i.removeAttribute('aria-invalid')); ids.forEach(id => { const i = $('#' + id); if (i) i.setAttribute('aria-invalid', 'true'); }); };
+  document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#loginWrap')) e.target.removeAttribute('aria-invalid'); });
+
+  /* después de crear la cuenta (o si intenta entrar sin confirmar): pantalla «Revisá tu correo» */
+  CL.showSent = (mail, again) => {
+    let w = $('#loginWrap'); if (!w) { w = document.createElement('div'); w.id = 'loginWrap'; w.className = 'login-wrap'; document.body.appendChild(w); }
+    CL._mail = mail;
+    w.innerHTML = '<div class="login-card lg-sent">' + LOGO + '<div class="lg-env" aria-hidden="true"><svg viewBox="0 0 48 48" width="64" height="64" fill="none"><rect x="5" y="11" width="38" height="27" rx="4" stroke="var(--accent)" stroke-width="2.4"/><path d="M6 13l18 14 18-14" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/></svg></div>' +
+      '<h1>' + (again ? 'Falta confirmar tu correo' : '¡Cuenta creada! Revisá tu correo') + '</h1>' +
+      '<p class="lg-mail">Te enviamos un mensaje a <b>' + esc(mail) + '</b></p>' +
+      '<ol class="lg-steps"><li>Abrí tu correo y buscá el mensaje <b>«Confirm Your Signup»</b> (puede tardar un par de minutos).</li><li>Si no está en la bandeja de entrada, mirá en <b>Spam</b>, <b>Promociones</b> o <b>Notificaciones</b>.</li><li>Tocá el enlace <b>«Confirm your mail»</b>. Se abre la página de OdontoVoz: ya está activada.</li><li>Volvé acá e ingresá con tu correo y contraseña.</li></ol>' +
+      '<div id="lgMsg" class="lg-alert" role="alert" hidden></div>' +
+      '<button class="btn primary" type="button" data-act="lgSentIn" style="min-height:48px">Ya lo confirmé: ingresar</button>' +
+      '<button class="btn" type="button" data-act="lgResend">No me llegó: reenviar el correo</button>' +
+      '<button class="btn ghost small" type="button" data-act="loginTab" data-t="up">Me equivoqué de correo</button></div>';
+    try { navigator.vibrate && navigator.vibrate([60, 60, 60]); } catch (x) { /* nada */ }
+  };
+  A.acts.lgSentIn = () => CL.showLogin('in');
+  let resendAt = 0;
+  A.acts.lgResend = async el => {
+    if (Date.now() - resendAt < 60000) return lgErr('Ya lo reenviamos hace un momento. Esperá un minuto y revisá también Spam.', 'ok');
+    el.disabled = true; const t = el.textContent; el.textContent = 'Reenviando…';
+    try { await CL.resend(CL._mail); resendAt = Date.now(); lgErr('Listo, te lo reenviamos a ' + CL._mail + '. Revisá también Spam o Promociones.', 'ok'); }
+    catch (e) { lgErr(e.message); }
+    finally { el.disabled = false; el.textContent = t; }
+  };
   const okPass = p => p.length >= 8 && /[a-zA-Z]/.test(p) && /\d/.test(p);
   const okMail = m => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m);
-  async function busy(btnLabel, fn) { const b = $('#loginWrap button[type="submit"]'); const t = b ? b.textContent : ''; if (b) { b.disabled = true; b.textContent = btnLabel; } try { await fn(); } catch (e) { lgErr(e.message); } finally { if (b && document.body.contains(b)) { b.disabled = false; b.textContent = t; } } }
+  async function busy(btnLabel, fn) { const b = $('#loginWrap button[type="submit"]'); const t = b ? b.textContent : ''; if (b) { b.disabled = true; b.textContent = btnLabel; } try { await fn(); } catch (e) { lgErr(e.message); if (CL._onErr) CL._onErr(e); } finally { if (b && document.body.contains(b)) { b.disabled = false; b.textContent = t; } } }
   A.subs.loginIn = () => {
     const m = $('#lgMail').value.trim(), p = $('#lgPass').value; CL._mail = m;
     if (!okMail(m)) return lgErr('Revisá el correo.'); if (!p) return lgErr('Escribí la contraseña.');
+    CL._onErr = e => {
+      const code = e && e.data && (e.data.error_code || e.data.code), msg = String(e && e.data && (e.data.msg || e.data.error_description || e.data.message) || '');
+      if (code === 'email_not_confirmed' || /email not confirmed/i.test(msg)) { CL.showSent(m, true); return; }
+      if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) { markBad(['lgMail', 'lgPass']); lgErr('Correo o contraseña incorrectos. Revisá que el correo esté bien escrito y probá de nuevo la contraseña (respeta mayúsculas). Si no la recordás, tocá «Me olvidé la contraseña».'); const pi = $('#lgPass'); if (pi) pi.value = ''; }
+    };
     busy('Ingresando…', async () => { await CL.signIn(m, p); afterLogin(); });
   };
   A.subs.loginUp = () => {
     const m = $('#lgMail').value.trim(), p = $('#lgPass').value, p2 = $('#lgPass2').value; CL._mail = m;
     if (!okMail(m)) return lgErr('Revisá el correo.'); if (!okPass(p)) return lgErr('La contraseña necesita al menos 8 caracteres, con letras y números.');
     if (p !== p2) return lgErr('Las contraseñas no coinciden.'); if (!$('#lgOk1').checked || !$('#lgOk2').checked) return lgErr('Para crear la cuenta tenés que aceptar las dos casillas.');
+    CL._onErr = null;
     busy('Creando…', async () => {
       const r = await CL.signUp(m, p, { consent_privacy: PRIV_VER, consent_at: new Date().toISOString(), health_professional: true });
-      if (r.in) afterLogin(); else CL.showLogin('in', '');
-      if (r.confirm) { const e = $('#lgMsg'); if (e) { e.className = 'hint ok'; e.textContent = 'Listo. Te enviamos un correo a ' + m + ': abrilo y tocá el enlace para activar la cuenta. Después ingresá acá.'; } }
+      if (r.in) afterLogin(); else CL.showSent(m);
     });
   };
   A.subs.loginRec = () => {
     const m = $('#lgMail').value.trim(); if (!okMail(m)) return lgErr('Revisá el correo.');
-    busy('Enviando…', async () => { await CL.recover(m); const e = $('#lgMsg'); e.className = 'hint ok'; e.textContent = 'Si el correo tiene cuenta, te llega un enlace para elegir una contraseña nueva.'; });
+    CL._onErr = null;
+    busy('Enviando…', async () => { await CL.recover(m); lgErr('Si el correo tiene cuenta, te llega un enlace para elegir una contraseña nueva. Revisá también Spam.', 'ok'); });
   };
   A.subs.loginNewPass = () => {
     const p = $('#lgPass').value, p2 = $('#lgPass2').value;
     if (!okPass(p)) return lgErr('La contraseña necesita al menos 8 caracteres, con letras y números.'); if (p !== p2) return lgErr('Las contraseñas no coinciden.');
+    CL._onErr = null;
     busy('Guardando…', async () => { await CL.setPassword(p); A.toast('Contraseña cambiada.'); afterLogin(); });
   };
   function afterLogin() {
