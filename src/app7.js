@@ -242,8 +242,11 @@
   /* menú: obras sociales y laboratorio */
   const nav = $('#gearMenu .dr-nav');
   if (nav) nav.insertAdjacentHTML('beforeend',
-    '<button class="dnav" data-act="labAllOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3c-2.4 0-4 1.9-4 4.4 0 1.9.7 3.2 1.3 4.8.7 1.8.7 4 1.4 6.2.4 1.2 1.8 1.2 2.2.1.6-1.8.8-3.8 1.8-3.8h2.1c.9 0 1.1 2 1.8 3.8.4 1.1 1.8 1.1 2.2-.1.7-2.2.7-4.4 1.4-6.2.6-1.6 1.3-2.9 1.3-4.8C21 4.9 19.4 3 17 3c-1.5 0-2.4.8-3.8.8S8.5 3 7 3z"/></svg><span class="t">Laboratorio</span></button>' +
-    '<button class="dnav only-admin" data-act="osOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M12 8v8M8 12h8"/></svg><span class="t">Obras sociales y aranceles</span></button>');
+    '<button class="dnav" data-act="labAllOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3c-2.4 0-4 1.9-4 4.4 0 1.9.7 3.2 1.3 4.8.7 1.8.7 4 1.4 6.2.4 1.2 1.8 1.2 2.2.1.6-1.8.8-3.8 1.8-3.8h2.1c.9 0 1.1 2 1.8 3.8.4 1.1 1.8 1.1 2.2-.1.7-2.2.7-4.4 1.4-6.2.6-1.6 1.3-2.9 1.3-4.8C21 4.9 19.4 3 17 3c-1.5 0-2.4.8-3.8.8S8.5 3 7 3z"/></svg><span class="t">Laboratorio</span></button>');
+  /* obras sociales y aranceles van en Ajustes, al lado de «Prácticas y aranceles» */
+  const catBtn = $('#gearMenu .dnav[data-act="catalogOpen"]');
+  if (catBtn) catBtn.insertAdjacentHTML('afterend', '<button class="dnav only-admin" data-act="osOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M12 8v8M8 12h8"/></svg><span class="t">Obras sociales y aranceles</span></button>');
+
 
   /* =====================================================================
      TIPO DE CUENTA: se cambia con un toque y se conservan los datos

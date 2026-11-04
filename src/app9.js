@@ -133,8 +133,9 @@
     const q = v => '"' + String(v).replace(/"/g, '""') + '"';
     A.saveFile('Planilla de pacientes OdontoVoz.csv', new Blob(['﻿' + [h.map(q).join(';'), ex.map(q).join(';')].join('\r\n')], { type: 'text/csv' }));
   };
-  const nav = $('#gearMenu .dr-nav');
-  if (nav) nav.insertAdjacentHTML('beforeend', '<button class="dnav" data-act="importOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v5h16v-5"/></svg><span class="t">Importar pacientes<small>Desde Bilog u otro programa</small></span></button>');
+  /* en Ajustes, debajo de obras sociales */
+  const anchor = $('#gearMenu .dnav[data-act="osOpen"]') || $('#gearMenu .dnav[data-act="catalogOpen"]');
+  if (anchor) anchor.insertAdjacentHTML('afterend', '<button class="dnav" data-act="importOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 15v5h16v-5"/></svg><span class="t">Importar pacientes<small>Desde Bilog u otro programa</small></span></button>');
   /* el comando de voz «importar pacientes» */
   const parsePrev = window.OVCmd.parse;
   window.OVCmd.parse = (text, ctx) => { const c = window.OVCmd.clean(text); if (/^(?:importar|traer|pasar|cargar) (?:los |mis )?pacientes(?: (?:de|desde) .+)?$/.test(c)) return { intent: 'nav', tab: 'import' }; return parsePrev(text, ctx); };
