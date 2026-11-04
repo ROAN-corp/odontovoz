@@ -126,3 +126,7 @@ Desde la versión 6, cada compilación usa siempre la misma firma (guardada en G
 
 ## Versión 6.5
 - **Motivo de la consulta**: destacado arriba de todo en el resumen del paciente y del turno, debajo del nombre en la ficha y primero en «Datos e historia». Se carga con un toque (con ejemplos rápidos o dictado), al crear un paciente, al dar un turno o por voz («motivo de consulta: dolor en la muela de abajo»). Los motivos anteriores quedan guardados con su fecha.
+
+## OdontoVoz 1.0 (primera versión con firma definitiva)
+A partir de acá la numeración vuelve a empezar: 1.0, 1.1, 1.2… (las «6.x» fueron versiones de desarrollo).
+Por dentro, Android usa el número de compilación (siempre creciente), así que las actualizaciones se instalan encima sin problema.
