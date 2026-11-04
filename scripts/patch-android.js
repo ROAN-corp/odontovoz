@@ -27,4 +27,15 @@ g = g.replace(/versionCode\s+\d+/, `versionCode ${runNumber}`);
 g = g.replace(/versionName\s+"[^"]*"/, `versionName "${pkg.version}"`);
 fs.writeFileSync(gradlePath, g);
 
+// Android 15 dibuja la app debajo de la barra de estado: se pide que no lo haga (la parte de arriba se veía cortada)
+const stylesPath = path.join(root, 'android', 'app', 'src', 'main', 'res', 'values', 'styles.xml');
+if (fs.existsSync(stylesPath)) {
+  let st = fs.readFileSync(stylesPath, 'utf8');
+  if (!st.includes('windowOptOutEdgeToEdgeEnforcement')) {
+    st = st.replace(/(<style name="AppTheme\.NoActionBar"[^>]*>)/, '$1\n        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>');
+    if (!st.includes('xmlns:tools')) st = st.replace('<resources>', '<resources xmlns:tools="http://schemas.android.com/tools">');
+    fs.writeFileSync(stylesPath, st);
+  }
+}
+
 console.log('Android listo: micrófono habilitado, versión', pkg.version, '(' + runNumber + ')');

@@ -17,9 +17,15 @@ if (fs.existsSync(jspdfSrc)) {
 } else {
   console.warn('Aviso: no se encontró jsPDF en node_modules; los PDF van a necesitar internet.');
 }
+// servidor de cuentas: se toma de las variables del repositorio (SUPABASE_URL y SUPABASE_ANON_KEY) si existen
+const sbUrl = process.env.SUPABASE_URL || '', sbKey = process.env.SUPABASE_ANON_KEY || '';
+if (sbUrl && sbKey) {
+  html = html.replace("{ supabaseUrl: '', supabaseAnonKey: '' }", JSON.stringify({ supabaseUrl: sbUrl, supabaseAnonKey: sbKey }));
+  console.log('Nube configurada:', sbUrl);
+}
 fs.writeFileSync(path.join(www, 'index.html'), html);
 
-for (const f of ['manifest.webmanifest', 'sw.js', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png']) {
+for (const f of ['manifest.webmanifest', 'sw.js', 'privacidad.html', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png']) {
   fs.copyFileSync(path.join(root, f), path.join(www, f));
 }
 console.log('www/ lista:', fs.readdirSync(www).join(', '));

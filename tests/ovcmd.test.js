@@ -96,5 +96,22 @@ t('tema oscuro', { intent: 'mode', theme: 'dark' }); t('activá manos libres', {
 // palabra de activación
 const w = [['odontovoz abrí la agenda', true, 'abri la agenda'], ['odonto voz, turno para Pérez', true, 'turno para perez'], ['hola odonto quién sigue', true, 'quien sigue'], ['abrí el odontograma', false, 'abri el odontograma'], ['che odontovos llegó Gómez', true, 'llego gomez']];
 w.forEach(([p, woke, rest]) => { n++; const r = C.stripWake(p); if (r.woke !== woke || r.rest !== rest) { fail++; console.log('FALLA wake', p, JSON.stringify(r)); } });
+// v6: frases largas para dar turnos, duración y odontograma explícito
+t('agrega un a pedro juarez el dia miercoles 4 de noviembre a las 16hs en un turno de media hora', { intent: 'newAppt', name: 'pedro juarez', date: '2026-11-04', start: 960, dur: 30 });
+t('agregá a Pedro Juárez el miércoles a las 16 hs por una hora', { intent: 'newAppt', name: 'pedro juarez', date: '2026-11-04', start: 960, dur: 60 });
+t('dale un turno a María López el jueves a las 10 y media de 45 minutos', { intent: 'newAppt', name: 'maria lopez', start: 630, dur: 45 });
+t('agendame a Juan Pérez mañana 9hs', { intent: 'newAppt', name: 'juan perez', start: 540, date: '2026-11-05' });
+t('sumá a la señora Ana Díaz el lunes que viene a las 11 de una hora y media', { intent: 'newAppt', name: 'ana diaz', date: '2026-11-09', dur: 90 });
+t('turno para Pérez el 12 de diciembre a las 3 de la tarde', { intent: 'newAppt', name: 'perez', date: '2026-12-12', start: 900 });
+t('agrega una caries oclusal del 45 en el odontograma', { intent: 'odon', text: 'caries oclusal del 45' });
+t('marcá ausente el 18 en el odontograma de Quiroga', { intent: 'odon', text: 'ausente el 18', name: 'quiroga' });
+t('agrega caries en el 36', { intent: 'unknown' });
+t('odontograma de Lucía Benítez', { intent: 'ficha', sub: 'odon' });
+// nombres del asistente
+C.setWake('nexus');
+[['Nexus, agregá a Pedro Juárez mañana a las 10', true, 'agrega a pedro juarez manana a las 10'], ['nexos quién sigue', true, 'quien sigue'], ['odontovoz quién sigue', true, 'quien sigue'], ['el nexus de la historia', false, 'el nexus de la historia']].forEach(([p, woke, rest]) => { n++; const r = C.stripWake(p); if (r.woke !== woke || r.rest !== rest) { fail++; console.log('FALLA wake nexus', p, JSON.stringify(r)); } });
+C.setWake('agenda');
+[['agenda, agregá a Gómez el viernes a las 10', true, 'agrega a gomez el viernes a las 10']].forEach(([p, woke, rest]) => { n++; const r = C.stripWake(p); if (r.woke !== woke || r.rest !== rest) { fail++; console.log('FALLA wake agenda', p, JSON.stringify(r)); } });
+C.setWake('navi');
 console.log((n - fail) + ' de ' + n + ' frases bien' + (fail ? ' · ' + fail + ' fallas' : ''));
 process.exit(fail ? 1 : 0);

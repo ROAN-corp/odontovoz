@@ -69,3 +69,27 @@ El segundo proceso publica la app en `https://TU_USUARIO.github.io/odontovoz/`. 
 - Los pacientes, turnos e historias quedan guardados **dentro del teléfono**. Si desinstalás la app o borrás sus datos, se pierden.
 - Hacé copias seguido: **Ajustes → Copia de seguridad → Descargar**. Con el APK, la copia se abre en el menú de compartir: guardala en Drive o mandátela por mail.
 - El APK, la página web y la vista de Claude son lugares distintos y **no comparten datos** entre sí. Para pasar los datos de uno a otro usá la copia de seguridad.
+
+## Versión 6: cuentas, nube y página web
+
+### Qué hay de nuevo
+- Botón de estado en cada turno (color según confirmó, llegó, atendido, no vino, canceló). Un toque y se cambia; también se reprograma o se carga la seña desde ahí.
+- Seña bien visible: etiqueta verde «SEÑA $…» en la agenda, en el inicio y en el turno; queda como pago en la cuenta del paciente.
+- Turnos atendidos tachados; la agenda del día se va moviendo sola hasta el turno actual.
+- Asistente de voz con nombre a elección: Navi, Doc, Nexus, Mia, Axon, Lumina o Agenda (o uno propio). Responde en voz alta; se silencia en Menú › Asistente de voz.
+- Menú escondido a la izquierda: se abre tocando la solapa o deslizando desde el borde.
+- Un solo modo de uso (se quitó «atención»). Inicio del odontólogo: la agenda de hoy resumida y cuatro botones.
+- Bienvenida animada la primera vez.
+- Usuario y contraseña: la misma cuenta en el teléfono, la recepción y la PC, con los datos sincronizados.
+
+### Activar las cuentas (una sola vez)
+1. Crear una cuenta gratis en https://supabase.com y un proyecto nuevo. **Región: Central EU (Frankfurt)**, porque la Argentina reconoce a la Unión Europea con protección adecuada para datos personales.
+2. En el proyecto: **SQL Editor** › pegar todo `supabase/schema.sql` › **Run**.
+3. **Authentication › URL Configuration**: en *Site URL* y en *Redirect URLs* poner `https://rodribobadilla.github.io/odontovoz/`.
+4. **Authentication › Providers › Email**: dejar activado «Confirm email» y poner largo mínimo de contraseña 8.
+5. **Project Settings › API**: copiar *Project URL* y la clave **anon public** (la otra, *service_role*, no se comparte nunca).
+6. En GitHub: **Settings › Secrets and variables › Actions › pestaña Variables**: crear `SUPABASE_URL` y `SUPABASE_ANON_KEY` con esos dos valores.
+7. En GitHub: **Settings › Pages › Source: GitHub Actions** (para publicar la versión web).
+
+### Actualizar el APK sin desinstalar
+Desde la versión 6, cada compilación usa siempre la misma firma (guardada en GitHub). La primera vez que se pasa de la 5 a la 6 hay que desinstalar una única vez (antes, hacé una copia de seguridad desde Ajustes). Para que la firma sea tuya y permanente, cargá los secrets `ANDROID_KEYSTORE_BASE64` y `ANDROID_KEYSTORE_PASSWORD`.

@@ -31,10 +31,11 @@ jobs:
       - name: Instalar jsPDF
         run: npm install --no-audit --no-fund --ignore-scripts jspdf@2.5.1
       - name: Armar la app web (www)
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
         run: node scripts/prepare-www.js
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: www

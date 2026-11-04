@@ -33,6 +33,7 @@
   const V = A.voice = { on: false, mode: null, rec: null, opts: {}, speaking: false, restarts: [], armedUntil: 0, last: { t: '', at: 0 }, tts: true };
   try { V.tts = localStorage.getItem('odontovoz.tts') !== '0'; } catch (e) { /* nada */ }
   V.supported = () => !!SRC();
+  V._stopRec = () => stopRec(); V._boot = () => boot();
   function stopRec() { const r = V.rec; V.rec = null; if (r) { try { r.onend = null; r.onresult = null; r.onerror = null; (r.abort || r.stop).call(r); } catch (e) { /* ya detenido */ } } }
   function boot() {
     const SR = SRC(); if (!SR || !V.on) return;
@@ -66,7 +67,7 @@
   V.start = (mode, opts) => {
     if (!SRC()) { S.modal = { type: 'voiceHelp', blocked: true }; A.renderModal(); return false; }
     stopRec(); V.on = true; V.mode = mode || 'dictado'; V.opts = opts || {}; V.restarts = []; V.armedUntil = 0;
-    if (V.mode === 'hands') live('Decí «odontovoz» y lo que necesitás');
+    if (V.mode === 'hands') live('Decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '» y lo que necesitás');
     else if (V.mode === 'texto') live('Dictá la nota. Decí «terminar dictado» al final.');
     else if (V.mode === 'dictado') live(S.tab === 'ficha' && S.fichaTab === 'odon' ? 'Decí lo que ves: «caries oclusal del 35»' : 'Decí lo que necesitás: «turno para Pérez mañana a las 10»');
     boot(); ui(); return true;
@@ -113,7 +114,7 @@
         if (!w.rest) { V.armedUntil = now + 9000; live('Te escucho…'); V.speak('Te escucho'); ui(); return; }
         phrase = w.rest;
       } else if (V.armedUntil > now) { V.armedUntil = 0; }
-      else { live('(sin «odontovoz») ' + text, true); return; }
+      else { live('(sin «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '») ' + text, true); return; }
       V.armedUntil = 0;
     } else { const w = C.stripWake(text); if (w.woke && !w.rest) { live('Te escucho…'); return; } if (w.woke) phrase = w.rest; }
     live('«' + phrase + '»');
@@ -126,9 +127,9 @@
   function ui() {
     const on = V.on, hands = on && V.mode === 'hands';
     const mic = $('#vdMic'); if (mic) { mic.setAttribute('aria-pressed', String(on && V.mode !== 'hands')); mic.setAttribute('aria-label', on ? 'Terminar el dictado' : 'Hablar: tocá y decí un comando'); }
-    const hf = $('#hfBtn'); if (hf) { hf.setAttribute('aria-pressed', String(hands)); hf.title = hands ? 'Manos libres activo: tocá para apagarlo' : 'Manos libres: decí «odontovoz» y el comando'; }
+    const hf = $('#hfBtn'); if (hf) { hf.setAttribute('aria-pressed', String(hands)); hf.title = hands ? 'Manos libres activo: tocá para apagarlo' : 'Manos libres: decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '» y el comando'; }
     const bar = $('#vdBar'); if (bar) bar.hidden = !on || V.mode === 'once';
-    const st = $('#vdState'); if (st) st.textContent = hands ? (V.armedUntil > Date.now() ? 'Te escucho' : 'Manos libres · decí «odontovoz»') : V.mode === 'texto' ? 'Dictando una nota' : 'Escuchando';
+    const st = $('#vdState'); if (st) st.textContent = hands ? (V.armedUntil > Date.now() ? 'Te escucho' : 'Manos libres · decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '»') : V.mode === 'texto' ? 'Dictando una nota' : 'Escuchando';
     const dock = $('#vdock'); if (dock) { dock.classList.toggle('listening', on); dock.classList.toggle('hands', hands); }
     const tm = $('#topMic'); if (tm) tm.setAttribute('aria-pressed', String(on && V.mode === 'once'));
     if (A.odUpdateMic) A.odUpdateMic();
@@ -140,7 +141,7 @@
   A.acts.voiceStop = () => V.stop();
   A.acts.handsFree = () => {
     if (V.on && V.mode === 'hands') { V.stop(); A.toast('Manos libres apagado.'); return; }
-    if (V.start('hands')) A.toast('Manos libres activo: decí «odontovoz» y el pedido, por ejemplo «odontovoz, quién sigue». Funciona con la app abierta y la pantalla encendida.');
+    if (V.start('hands')) { const w = (A.wakeLabel ? A.wakeLabel() : 'odontovoz'); A.toast('Manos libres activo: decí «' + w + '» y el pedido, por ejemplo «' + w + ', quién sigue». Funciona con la app abierta y la pantalla encendida.'); V.speak('Hola, soy ' + w + '. Te escucho.'); }
   };
   A.acts.voiceSearch = () => V.start('once', { onText: t => { const q = t.replace(/^(?:buscar|busca|buscame|abri|abrime|paciente)\s+(?:a\s+|al\s+)?/i, '').replace(/[.,;]+$/, '').trim(); const bar = $('.top.appbar'); if (bar) bar.classList.add('searching'); const i = $('#topQ'); if (i) { i.value = q; A.ins.topSearch(i); } } });
   A.acts.dictate = el => {
@@ -229,7 +230,7 @@
       case 'cancel': case 'back': A.back({ soft: true }); return ok('Volví atrás.');
       case 'home': A.goHome(); return ok('Inicio.');
       case 'menu': A.showDrawer(); return ok('Menú abierto.');
-      case 'hands': V.start('hands'); return ok('Manos libres activo. Decí «odontovoz» antes de cada pedido.');
+      case 'hands': V.start('hands'); return ok('Manos libres activo. Decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '» antes de cada pedido.');
       case 'mode':
         if (pr.ui) { A.acts.uiMode(fake({ 'data-ui': pr.ui })); return ok(pr.ui === 'atencion' ? 'Modo atención: tu agenda del día.' : 'Modo administración.'); }
         if (pr.role) { if (A.isSolo()) return no('En un consultorio individual no hay vista de recepción.'); A.acts.role(fake({ 'data-role': pr.role })); return ok(pr.role === 'recepcion' ? 'Vista de recepción.' : 'Vista de profesional.'); }

@@ -35,9 +35,12 @@ jobs:
           ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" | tail -5
 
       - name: Instalar dependencias
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Armar la app web (www)
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
         run: node scripts/prepare-www.js
 
       - name: Crear el proyecto Android
@@ -52,6 +55,12 @@ jobs:
       - name: Copiar la app al proyecto Android
         run: npx cap sync android
 
+      - name: Clave de firma fija para pruebas (para poder actualizar sin desinstalar)
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: odontovoz-debug-keystore-v1
+
       - name: Compilar
         working-directory: android
         env:
@@ -61,7 +70,7 @@ jobs:
           if [ -n "$KS_B64" ]; then
             ./gradlew --no-daemon assembleRelease
           else
-            echo "::warning::Falta la clave de firma (secret ANDROID_KEYSTORE_BASE64). Se genera un APK de prueba que NO se va a poder actualizar sin desinstalar."
+            echo "::warning::Falta la clave de firma propia (secret ANDROID_KEYSTORE_BASE64). Se usa la clave fija guardada en el caché de GitHub."
             ./gradlew --no-daemon assembleDebug
           fi
 
@@ -92,8 +101,8 @@ jobs:
       - name: Publicar para descargar desde el teléfono
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v5.0.${{ github.run_number }}
-          name: Odonto Voz 5.0 (compilación ${{ github.run_number }})
+          tag_name: v6.0.${{ github.run_number }}
+          name: Odonto Voz 6.0 (compilación ${{ github.run_number }})
           body: |
             Descargá **OdontoVoz.apk** desde el teléfono e instalalo.
             Si Android lo pide, permití "instalar apps de orígenes desconocidos" para el navegador.

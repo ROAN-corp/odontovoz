@@ -1,0 +1,17 @@
+// Copia src/*.js dentro de index.html (la app es un solo archivo). Uso: node scripts/inline-src.js
+const fs = require('fs'), path = require('path');
+const root = path.join(__dirname, '..'), file = path.join(root, 'index.html');
+let lines = fs.readFileSync(file, 'utf8').split('\n');
+const order = ['ovcmd.js', 'app5.js', 'app6.js', 'cloud.js'];
+for (const name of order) {
+  const p = path.join(root, 'src', name); if (!fs.existsSync(p)) continue;
+  const src = fs.readFileSync(p, 'utf8').replace(/\n+$/, '').split('\n'), head = src[0];
+  let i = lines.indexOf(head);
+  if (i < 0) { // módulo nuevo: va antes del arranque
+    i = lines.findIndex(l => l.startsWith('/* ===== arranque'));
+    lines.splice(i, 0, ...src); console.log('agregado', name); continue;
+  }
+  let j = i + 1; while (j < lines.length && !lines[j].startsWith('/* =====') && lines[j] !== '</script>') j++;
+  lines.splice(i, j - i, ...src); console.log('actualizado', name);
+}
+fs.writeFileSync(file, lines.join('\n'));

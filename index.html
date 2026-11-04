@@ -772,6 +772,82 @@ details.od-tools summary::after { content: " ▾"; color: var(--ink-2); } detail
 body.has-modal .vdock { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
 body.has-modal .vdock .vd-hf { display: none; }
 
+/* ================= v6: estado rápido, seña, solapa del menú, inicio del día, asistente, bienvenida, cuenta ================= */
+.stb { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); font: 700 12px/1 var(--f-sans, system-ui); display: inline-grid; place-items: center; padding: 0; margin-right: 5px; cursor: pointer; vertical-align: -5px; color: var(--ink); }
+.stb.st-pendiente { border-color: var(--st-pend); background: var(--st-pend-bg); color: var(--st-pend); }
+.stb.st-confirmado { border-color: var(--st-conf); background: var(--st-conf); color: #fff; }
+.stb.st-llego { border-color: var(--st-llego); background: var(--st-llego); color: #fff; }
+.stb.st-en-atencion { border-color: var(--st-atn); background: var(--st-atn); color: #fff; }
+.stb.st-atendido { border-color: var(--st-done); background: var(--st-done); color: #fff; }
+.stb.st-ausente { border-color: var(--st-no); background: var(--st-no); color: #fff; }
+.stb.st-cancelado { border-color: var(--st-canc); background: var(--st-canc-bg); color: var(--st-canc); }
+.blk .n { display: flex; align-items: center; min-width: 0; }
+.blk .n .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.blk.st-atendido .nm, .hd-row.st-atendido .hd-who b { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: var(--st-done); }
+.blk.st-atendido { opacity: .8; }
+.sena-b { display: inline-block; font: 800 10px/1.4 var(--f-sans, system-ui); letter-spacing: .03em; color: #fff; background: #1f7a4d; border-radius: 5px; padding: 0 5px; vertical-align: 1px; }
+.blk.has-sena { box-shadow: inset -4px 0 0 #1f7a4d; }
+.st-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; } .st-head span { color: var(--ink-2); font-size: 14px; }
+.st-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.st-opt { display: flex; align-items: center; gap: 10px; min-height: 50px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); font-weight: 700; font-size: 15px; padding: 8px 12px; text-align: left; color: var(--ink); cursor: pointer; }
+.st-opt i { font-style: normal; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; flex: 0 0 auto; background: var(--surface-2); }
+.st-opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.st-opt.st-confirmado i { background: var(--st-conf); color: #fff; } .st-opt.st-llego i { background: var(--st-llego); color: #fff; } .st-opt.st-en-atencion i { background: var(--st-atn); color: #fff; }
+.st-opt.st-atendido i { background: var(--st-done); color: #fff; } .st-opt.st-ausente i { background: var(--st-no); color: #fff; } .st-opt.st-pendiente i { background: var(--st-pend-bg); color: var(--st-pend); } .st-opt.st-cancelado i { background: var(--st-canc-bg); color: var(--st-canc); }
+.st-more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; } .st-more .btn { flex: 1 1 140px; min-height: 44px; } .btn.sena-on { border-color: #1f7a4d; color: #1f7a4d; font-weight: 800; }
+.rs-days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin: 8px 0; }
+.rs-days .wk { flex: 0 0 auto; min-width: 48px; display: flex; flex-direction: column; align-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 6px; color: var(--ink); }
+.rs-days .wk[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.sena-block { flex-direction: row !important; align-items: center; justify-content: space-between; gap: 10px; }
+.sena-block > div { display: flex; flex-direction: column; gap: 2px; } .sena-block.on { border-color: #1f7a4d; background: color-mix(in srgb, #1f7a4d 10%, var(--surface)); }
+.sena-amt { color: #1f7a4d; font-size: 18px; } .sena-now { display: flex; flex-direction: column; border: 2px solid #1f7a4d; border-radius: 12px; padding: 10px 12px; margin: 8px 0; } .sena-now b { color: #1f7a4d; font-size: 17px; } .sena-now span { color: var(--ink-2); font-size: 13px; }
+/* solapa del menú */
+.dr-handle { position: fixed; left: 0; top: 46%; z-index: 100; width: 16px; height: 72px; border: 1px solid var(--line); border-left: 0; border-radius: 0 12px 12px 0; background: var(--surface); box-shadow: 2px 0 10px rgba(18, 38, 44, .14); padding: 0; cursor: pointer; display: grid; place-items: center; }
+.dr-handle span { width: 4px; height: 30px; border-radius: 2px; background: repeating-linear-gradient(var(--ink-2) 0 3px, transparent 3px 7px); opacity: .7; }
+.dr-handle[hidden] { display: none; } body.on-odon .dr-handle { top: 64%; }
+.drawer { transition: transform .12s ease-out; }
+.dnav small { display: block; font-weight: 500; font-size: 12px; color: var(--ink-2); } .dnav .t { display: flex; flex-direction: column; }
+.acct-type { border: 1px dashed var(--line); border-radius: 12px; }
+/* inicio del día */
+.home.v6 { gap: 14px; }
+.hd-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.hd-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; } .hd-top b { font-size: 18px; } .hd-top span { color: var(--ink-2); font-size: 13px; }
+.hd-row { display: flex; align-items: center; gap: 8px; padding: 9px 6px; border-radius: 10px; border-left: 4px solid var(--line); cursor: pointer; }
+.hd-row + .hd-row { margin-top: 2px; } .hd-row:hover { background: var(--surface-2); }
+.hd-row.st-confirmado { border-left-color: var(--st-conf); } .hd-row.st-llego { border-left-color: var(--st-llego); } .hd-row.st-en-atencion { border-left-color: var(--st-atn); } .hd-row.st-pendiente { border-left-color: var(--st-pend); } .hd-row.st-ausente { border-left-color: var(--st-no); } .hd-row.st-atendido { border-left-color: var(--st-done); }
+.hd-row.cur { background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent) inset; } .hd-row.done { opacity: .72; }
+.hd-row .stb { width: 28px; height: 28px; font-size: 14px; margin: 0; }
+.hd-time { font: 700 15px/1.1 var(--f-mono); min-width: 46px; display: flex; flex-direction: column; } .hd-time small { font-size: 11px; color: var(--ink-2); font-weight: 500; }
+.hd-who { display: flex; flex-direction: column; min-width: 0; } .hd-who b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hd-who > span { color: var(--ink-2); font-size: 13px; } .hd-who em { color: var(--accent); font-style: normal; font-weight: 700; }
+.hd-before summary { cursor: pointer; color: var(--ink-2); font-size: 13px; padding: 4px 6px; }
+.home-actions.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 760px) { .home-actions.four { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.ha-voice { border-color: var(--accent); }
+.home-new { align-self: stretch; min-height: 48px; font-size: 16px; }
+/* asistente */
+.as-hero { display: flex; gap: 14px; align-items: center; border: 1px solid var(--line); border-radius: 16px; padding: 12px; margin-bottom: 12px; } .as-hero > div { display: flex; flex-direction: column; gap: 4px; } .as-hero b { font-size: 20px; } .as-hero span { font-size: 14px; color: var(--ink-2); }
+.as-orb { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #9ee6e0, var(--accent) 55%, #0a4a4d); box-shadow: 0 0 0 6px var(--accent-soft); animation: orb 3.2s ease-in-out infinite; }
+@keyframes orb { 50% { box-shadow: 0 0 0 11px var(--accent-soft); } }
+.as-names { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+/* bienvenida */
+.intro { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 20%, #12666a, #072f33 70%); color: #eafaf8; padding: 24px; transition: opacity .4s ease, transform .4s ease; }
+.intro.out { opacity: 0; transform: scale(1.04); pointer-events: none; }
+.in-box { max-width: 420px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.in-logo { width: 96px; height: 96px; color: #9ee6e0; animation: inPop .7s cubic-bezier(.2, .9, .3, 1.3) both; }
+.in-logo svg { width: 100%; height: 100%; } .lg-path { stroke-dasharray: 120; stroke-dashoffset: 120; animation: draw 1.4s .25s ease forwards; } .lg-wave { animation: wave 1.2s 1.2s ease-in-out infinite; transform-origin: center; }
+.in-name { font-size: 34px; margin: 6px 0 0; letter-spacing: .01em; animation: rise .6s .6s both; } .in-hi { font-size: 20px; margin: 0; color: #9ee6e0; font-weight: 700; animation: rise .6s .9s both; }
+.in-desc { margin: 4px 0 10px; font-size: 16px; line-height: 1.45; color: #cdeceb; animation: rise .6s 1.15s both; } .in-go { min-width: 200px; min-height: 50px; font-size: 17px; animation: rise .6s 1.4s both; background: #eafaf8; color: #0b4d50; border-color: #eafaf8; }
+@keyframes inPop { from { transform: scale(.4); opacity: 0; } } @keyframes draw { to { stroke-dashoffset: 0; } } @keyframes rise { from { transform: translateY(14px); opacity: 0; } } @keyframes wave { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .intro *, .as-orb { animation: none !important; } .lg-path { stroke-dashoffset: 0; } }
+/* cuenta y nube */
+.acct-box { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); border-radius: 12px; padding: 10px; font-size: 14px; }
+.acct-box b { font-size: 15px; } .sync-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-2); margin-right: 6px; vertical-align: 1px; }
+.sync-dot.ok { background: #2c8a58; } .sync-dot.busy { background: #d9a21e; } .sync-dot.err { background: #c0392b; }
+.login-wrap { position: fixed; inset: 0; z-index: 190; background: var(--bg); display: grid; place-items: center; padding: 20px; overflow-y: auto; }
+.login-card { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); }
+.login-card h1 { margin: 0; font-size: 24px; } .login-card .seg { align-self: stretch; } .login-card .seg button { flex: 1; }
+.login-card .legal { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
+.peer-toast { border-left: 4px solid var(--accent); }
 </style>
 
 <header class="top appbar">
@@ -805,13 +881,11 @@ body.has-modal .vdock .vd-hf { display: none; }
       <button class="dnav" data-act="tnOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg><span class="t">Turnero online</span></button>
     </nav>
     <div class="dr-sec">
-      <div class="dr-lbl">Modo de uso</div>
-      <div class="seg" role="group" aria-label="Modo de uso">
-        <button data-act="uiMode" data-ui="atencion" aria-pressed="false" title="Solo tu agenda y tus pacientes del día">Atención</button>
-        <button data-act="uiMode" data-ui="admin" aria-pressed="true" title="Agenda completa, pacientes, caja y más">Administración</button>
-      </div>
+      <div class="dr-lbl">Tu cuenta</div>
+      <div id="drAcct"></div>
+      <button class="dnav acct-type" data-act="changeAccount"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><span class="t"><span id="acctLbl">Tipo de cuenta</span><small>Tocá para cambiar: odontólogo o centro</small></span></button>
       <label class="sr" for="meSel">Profesional que atiende</label>
-      <select id="meSel" class="inp me-sel only-atn only-centro" data-chg="meSet"></select>
+      <select id="meSel" class="inp me-sel only-atn only-centro" data-chg="meSet" hidden></select>
       <div class="seg only-admin only-centro" role="group" aria-label="Ver como">
         <button data-act="role" data-role="profesional" aria-pressed="true">Profesional</button>
         <button data-act="role" data-role="recepcion" aria-pressed="false">Recepción</button>
@@ -820,6 +894,7 @@ body.has-modal .vdock .vd-hf { display: none; }
     <div class="dr-sec">
       <div class="dr-lbl">Ajustes</div>
       <button class="dnav" id="cfgBtn" data-act="cfgOpen" data-t="centro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="t">Centro, profesionales y horarios</span></button>
+      <button class="dnav" data-act="assistOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M19 15l.8 1.9 1.9.8-1.9.8L19 20.4l-.8-1.9-1.9-.8 1.9-.8z"/></svg><span class="t">Asistente de voz<small id="drAssist"></small></span></button>
       <button class="dnav" data-act="catalogOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="t">Prácticas y aranceles</span></button>
       <button class="dnav" data-act="appearOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.6 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6h1.9A4.7 4.7 0 0 0 21 11c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg><span class="t">Apariencia</span></button>
       <button class="dnav" data-act="cfgOpen" data-t="datos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg><span class="t">Copia de seguridad</span></button>
@@ -832,7 +907,7 @@ body.has-modal .vdock .vd-hf { display: none; }
       <button class="dnav" data-act="voiceHelp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.7 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h7M8.5 14h4"/></svg><span class="t">Qué le puedo decir</span></button>
       <button class="dnav" data-act="supportOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.3-2.5 3.7M12 17h.01"/></svg><span class="t">Ayuda y soporte</span></button>
     </div>
-    <div class="dr-foot"><span id="acctLbl"></span><span id="drVer"></span></div>
+    <div class="dr-foot"><span id="drSync"></span><span id="drVer"></span></div>
   </aside>
 </div>
 
@@ -859,6 +934,11 @@ body.has-modal .vdock .vd-hf { display: none; }
 <div id="toastHost"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* Servidor de cuentas y nube (Supabase). La clave «anon» es pública por diseño: la seguridad la dan las reglas por usuario (RLS).
+   Si quedan vacíos, la app funciona sin cuenta, con los datos solo en el dispositivo. */
+window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
+</script>
 <script>
 /* ===== puente con la app de Android (Capacitor): voz nativa del teléfono =====
    Dentro de la app instalada (APK) el navegador interno no trae reconocimiento de voz.
@@ -1195,15 +1275,43 @@ body.has-modal .vdock .vd-hf { display: none; }
   'use strict';
 
   const N = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/(\d)\s*[:.h]\s*(\d{2})\b/g, '$1:$2')
+    .replace(/(\d)\s*[:.h]\s*(\d{2})\b/g, '$1:$2').replace(/(\d)\s*(?:hs|hrs|h)\b/g, '$1 hs')
     .replace(/[¿?¡!.,;"“”«»()\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
 
   /* ---------- palabra de activación ---------- */
   const WAKE = /(?:^|\s)(?:(?:hola|oye|oi|che|ey|hey|dale)\s+)?(?:o\s*)?dont[oa]\s*(?:voz|vos|boz|bos|box|bots|bot|vo)?(?=\s|$)/;
+  /* nombres del asistente y cómo los suele escribir el reconocedor de voz */
+  const NAMES = {
+    navi: 'navi|nabi|navy|navis|navih|nadie navi',
+    doc: 'doc|dock|dok|doc doc|doctor doc',
+    nexus: 'nexus|nexos|nexo|necsus|nexu|nexuz|next us|nexis',
+    mia: 'mia|mias|mya|mi a',
+    axon: 'axon|acson|akson|exon|axxon|ackson|action|axel',
+    lumina: 'lumina|luminah|lumi|lumino|luminas|lu mina',
+    agenda: 'agenda'
+  };
+  let wakeName = 'navi', WAKE_NAME = null;
+  function setWake(name, custom) {
+    wakeName = String(name || 'navi').toLowerCase();
+    let alts = NAMES[wakeName];
+    if (!alts && custom) alts = N(custom).replace(/[^a-z ]/g, '').trim();
+    WAKE_NAME = alts ? new RegExp('^(?:(?:hola|oye|oi|che|ey|hey|dale|buenas)\\s+)?(?:' + alts + ')(?=\\s|$)') : null;
+  }
+  setWake('navi');
   function stripWake(text) {
-    const n = N(text), m = WAKE.exec(n);
+    const n = N(text);
+    if (WAKE_NAME) {
+      const w = WAKE_NAME.exec(n);
+      if (w) {
+        let rest = n.slice(w[0].length).trim();
+        /* con el nombre «Agenda», «agenda de mañana» sigue siendo un pedido de la agenda */
+        if (wakeName === 'agenda' && rest) { const r = parse(rest, {}); if (!r || r.intent === 'unknown') { const r2 = parse(n, {}); if (r2 && r2.intent !== 'unknown') rest = n; } }
+        return { woke: true, name: wakeName, rest, full: n };
+      }
+    }
+    const m = WAKE.exec(n);
     if (!m) return { woke: false, rest: n };
-    return { woke: true, rest: (n.slice(0, m.index) + ' ' + n.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim() };
+    return { woke: true, rest: (n.slice(0, m.index) + ' ' + n.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim(), full: n };
   }
 
   /* ---------- muletillas al principio y al final ---------- */
@@ -1282,7 +1390,12 @@ body.has-modal .vdock .vd-hf { display: none; }
       if (/^mes/.test(m[2])) { const d = fromKey(today); d.setMonth(d.getMonth() + n); return cut(m, keyOf(d)); }
       return cut(m, addD(today, n));
     }
-    if ((m = /\b(?:el |este |el proximo |proximo |el otro )?(lunes|martes|miercoles|jueves|viernes|sabado|domingo)( que viene| proximo| siguiente)?\b/.exec(s))) {
+    if ((m = new RegExp('\\b(?:para )?(?:el )?(?:dia )?(?:(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo) )?' + DAYW + ' (?:de )?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?: (?:de |del )?(20\\d\\d))?\\b').exec(s))) {
+      const dn = /treinta y/.test(m[1]) ? 31 : dayNum(m[1]), t = fromKey(today); let d = new Date(m[3] ? +m[3] : t.getFullYear(), MONS[m[2]], dn, 12);
+      if (!m[3] && keyOf(d) < today) d = new Date(t.getFullYear() + 1, MONS[m[2]], dn, 12);
+      return cut(m, keyOf(d));
+    }
+    if ((m = /\b(?:para )?(?:el )?(?:dia )?(?:este |proximo |el proximo |el otro )?(lunes|martes|miercoles|jueves|viernes|sabado|domingo)( que viene| proximo| siguiente)?\b/.exec(s))) {
       const want = DOWS[m[1]], cur = fromKey(today).getDay(); let diff = (want - cur + 7) % 7;
       if (diff === 0 && (m[2] || /proximo|otro/.test(m[0]))) diff = 7;
       return cut(m, addD(today, diff));
@@ -1309,7 +1422,7 @@ body.has-modal .vdock .vd-hf { display: none; }
     m = new RegExp('\\b(?:a las|a la|para las|para la|tipo|como a las|a eso de las|cerca de las|las|la|a eso de la)\\s+' + HW +
       '(?:\\s+(?:y\\s+)?(media|cuarto|cuarenta y cinco|quince|treinta|veinticinco|veinte|diez|cinco|cuarenta|cincuenta|\\d{2})(?!\\s+(?:mil|lucas?|pesos)))?(?:\\s+menos\\s+(cuarto|diez|veinte|cinco))?(?:\\s+(?:en punto|hs|horas|h))?(?:\\s+(?:de la|del|por la|a la)\\s+(manana|tarde|noche|mediodia))?').exec(s);
     if (!m) {
-      const b = /\b(\d{1,2}:\d{2})(?:\s*(?:hs|horas|h))?(?:\s+(?:de la|del|por la)\s+(manana|tarde|noche))?/.exec(s);
+      const b = /\b(\d{1,2}:\d{2})(?:\s*(?:hs|horas|h))?(?:\s+(?:de la|del|por la)\s+(manana|tarde|noche))?/.exec(s) || /\b(?:a las |para las |tipo )?(\d{1,2}) (?:hs|horas)\b(?:\s+(?:de la|del|por la)\s+(manana|tarde|noche))?/.exec(s);
       if (b) m = { 0: b[0], index: b.index, 1: b[1], 2: null, 3: null, 4: b[2] };
     }
     if (!m) return { value: null, rest: s };
@@ -1323,6 +1436,24 @@ body.has-modal .vdock .vd-hf { display: none; }
     else if (!per && h >= 1 && h <= 7) h += 12; /* «a las 3» en un consultorio es a la tarde */
     if (mi > 59) return { value: null, rest: s };
     return cut(m, h * 60 + mi);
+  }
+
+  /* ---------- duración del turno («de media hora», «por una hora», «de 45 minutos») ---------- */
+  function parseDur(s) {
+    const cut = (m, v) => ({ value: v, rest: (s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim() });
+    let m;
+    const pre = '\\b(?:en |con )?(?:un |una )?(?:turno |sesion |consulta )?(?:de |por |que dure |dura |durante )';
+    if ((m = new RegExp(pre + '(?:una )?hora y media\\b').exec(s))) return cut(m, 90);
+    if ((m = new RegExp(pre + '(?:una )?hora y cuarto\\b').exec(s))) return cut(m, 75);
+    if ((m = new RegExp(pre + '(?:una )?media hora\\b').exec(s))) return cut(m, 30);
+    if ((m = new RegExp(pre + '(?:un )?cuarto de hora\\b').exec(s))) return cut(m, 15);
+    if ((m = new RegExp(pre + '(?:una|1) hora\\b').exec(s))) return cut(m, 60);
+    if ((m = new RegExp(pre + '(dos|2) horas\\b').exec(s))) return cut(m, 120);
+    if ((m = new RegExp(pre + '(\\d{1,3}|quince|veinte|treinta|cuarenta|cuarenta y cinco|cincuenta|sesenta|noventa|diez|veinticinco) (?:minutos|min|mins)\\b').exec(s))) {
+      const v = /^\d+$/.test(m[1]) ? +m[1] : ({ 'cuarenta y cinco': 45, noventa: 90, sesenta: 60, cincuenta: 50, cuarenta: 40, treinta: 30, veinticinco: 25, veinte: 20, quince: 15, diez: 10 })[m[1]];
+      if (v >= 5 && v <= 240) return cut(m, v);
+    }
+    return { value: null, rest: s };
   }
 
   /* ---------- motivo del turno ---------- */
@@ -1358,6 +1489,12 @@ body.has-modal .vdock .vd-hf { display: none; }
     return t;
   }
   const isPron = s => !s || PRON.test(s);
+  /* restos de la frase que no son parte del nombre («el día», «en un turno») */
+  function tidy(r) {
+    let t = ' ' + String(r || '') + ' ', prev;
+    do { prev = t; t = t.replace(/\s(?:el dia|el|dia|en un turno|en una consulta|un turno|una consulta|turno|en|para|y|de)\s*$/, ' '); } while (t !== prev);
+    return t.replace(/\s+(?:el dia|dia)\s+/g, ' ').trim();
+  }
 
   /* ---------- verbos ---------- */
   const GO = '(?:ir a(?:l| la)?|anda a(?:l| la)?|andate a(?:l| la)?|vamos a(?:l| la)?|vamo a(?:l| la)?|llevame a(?:l| la)?|pasa a(?:l| la)?|pasame a(?:l| la)?|entra(?:r)? a(?:l| la)?|abri(?:r|me)?|abre|mostra(?:r|me)?|muestra(?:me)?|ver|veamos|quiero ver|dame|traeme|trae|mira|volve a(?:l| la)?|volver a(?:l| la)?|abrime la|abrime el|abri la|abri el)';
@@ -1408,6 +1545,12 @@ body.has-modal .vdock .vd-hf { display: none; }
     if (/^(?:como viene el dia|que tengo hoy|cuantos? (?:turnos|pacientes) (?:tengo|hay)(?: hoy)?|resumen del dia|como estamos hoy|cuantos faltan)$/.test(c)) return { intent: 'today' };
     if ((m = /^(?:cuanto (?:me )?debe|que saldo tiene|cual es el saldo de|cuanto le falta pagar a|debe algo)(?:\s+(.*))?$/.exec(c))) return { intent: 'owe', name: cleanName(m[1] || '') };
 
+    // odontograma pedido de forma explícita («agregá una caries oclusal del 45 en el odontograma»)
+    if ((m = /^(?:agrega(?:r|me|le)?|anota(?:r|me|le)?|pone(?:r|me|le)?|marca(?:r|me|le)?|carga(?:r|me|le)?|suma(?:r|le)?|registra(?:r|me|le)?)?\s*(.+?)\s+(?:en|al|para)\s+(?:el\s+)?odontograma(?:\s+(?:de|del|a)\s+(.+))?$/.exec(c)) && !/^(?:abri|abrime|mostra|mostrame|ir|anda|ver)\b/.test(c)) {
+      return { intent: 'odon', text: m[1].replace(/^(?:un|una|el|la)\s+/, ''), name: m[2] ? cleanName(m[2]) : null };
+    }
+    if ((m = /^(?:en el odontograma|odontograma)\s*(?:agrega(?:r|me|le)?|anota(?:r|le)?|pone(?:r|le)?|marca(?:r|le)?)?\s+(?!(?:de|del|a|al|para)\s)(.+)$/.exec(c))) return { intent: 'odon', text: m[1], name: null };
+
     // atender
     if ((m = /^(?:atender|atende|atiendo|atendamos|empezar|empeza|empecemos|arrancar|arranca|arrancamos|iniciar|inicia|comenzar|comenza|hace(?:r)? pasar|que pase|pasa|llama(?:r)?)(?: la| una)?(?: atencion| consulta)?(?: (?:a la|al|con|de|a))?\s*(.*)$/.exec(c))) {
       const who = cleanName(m[1] || '');
@@ -1423,18 +1566,23 @@ body.has-modal .vdock .vd-hf { display: none; }
     // turnos nuevos
     if ((m = /^(?:(?:dar|da|dale|dame|darle|agenda(?:r|me|le)?|anota(?:r|me|le)?|pone(?:r|me|le)?|nuevo|nueva|reserva(?:r|me|le)?|saca(?:r|me|le)?|hace(?:r|me|le)?|programa(?:r|me|le)?|quiero|necesito|crea(?:r)?|agregar|agrega(?:me|le)?|carga(?:r|me|le)?|asigna(?:r|le)?)\s+)?(?:un |una |el |otro |otra |nuevo |nueva )?(sobreturno|sobre turno|turno|cita|hora)(?:\s+nuevo|\s+nueva)?\b(.*)$/.exec(c)) && (m[1] !== 'hora' || /\b(?:para|a)\b/.test(m[2]))) {
       let r = ' ' + m[2] + ' ';
-      const t = parseTime(r.trim()); r = t.rest;
+      const du = parseDur(r.trim()); r = du.rest;
+      const t = parseTime(r); r = t.rest;
       const d = parseDate(r, today); r = d.rest;
       const mo = parseMotive(r); r = mo.rest;
       const p = parsePro(r, ctx.pros); r = p.rest;
-      const name = cleanName(r.trim());
-      return { intent: 'newAppt', sobre: /sobre/.test(m[1]), start: t.value, date: d.value, what: mo.value, pro: p.value, name: isPron(name) ? null : name, current: !!name && isPron(name) };
+      const name = cleanName(tidy(r));
+      return { intent: 'newAppt', sobre: /sobre/.test(m[1]), start: t.value, date: d.value, dur: du.value, what: mo.value, pro: p.value, name: isPron(name) ? null : name, current: !!name && isPron(name) };
     }
-    if ((m = /^(?:agenda(?:r|me|le)?|anota(?:r|me|le)?|reserva(?:r|me|le)?)\s+(?!(?:de la|del|de|semana|mes|dia|hoy|manana)\b)(?:a\s+|al\s+|a la\s+)?(.+)$/.exec(c)) && !/\b(?:en la historia|en historia|historia clinica)\b/.test(m[1])) {
-      let r = m[1];
+    if ((m = /^(agenda(?:r|me|le)?|anota(?:r|me|le)?|reserva(?:r|me|le)?|agrega(?:r|me|le)?|suma(?:r|me|le)?|pone(?:r|me|le)?|mete(?:r|me|le)?|carga(?:r|me|le)?|cita(?:r|me|le)?)\s+(?!(?:de la|del|de|semana|mes|dia|hoy|manana)\b)(?:un\s+(?=a\s)|una\s+(?=a\s))?(?:a\s+|al\s+|a la\s+)?(.+)$/.exec(c)) && !/\b(?:en la historia|en historia|historia clinica|nota|evolucion|odontograma)\b/.test(m[2])) {
+      const weak = !/^(?:agenda|anota|reserva|cita)/.test(m[1]);
+      let r = m[2];
+      const du = parseDur(r); r = du.rest;
       const t = parseTime(r); r = t.rest; const d = parseDate(r, today); r = d.rest; const mo = parseMotive(r); r = mo.rest; const p = parsePro(r, ctx.pros); r = p.rest;
-      const name = cleanName(r.trim());
-      if (t.value != null || d.value || name) return { intent: 'newAppt', sobre: false, start: t.value, date: d.value, what: mo.value, pro: p.value, name: isPron(name) ? null : name, current: !!name && isPron(name) };
+      const name = cleanName(tidy(r));
+      const toothy = /\b(?:[1-4][1-8]|[5-8][1-5])\b/.test(r) || /\b(?:caries|oclusal|mesial|distal|vestibular|palatin[ao]|lingual|amalgama|sellador|fractura|pieza|resto radicular|ausente|corona|implante)\b/.test(m[2]);
+      if ((!weak || ((t.value != null || d.value || du.value) && !toothy)) && (t.value != null || d.value || name))
+        return { intent: 'newAppt', sobre: false, start: t.value, date: d.value, dur: du.value, what: mo.value, pro: p.value, name: isPron(name) ? null : name, current: !!name && isPron(name) };
     }
     // pacientes nuevos
     if ((m = /^(?:nuevo paciente|nueva paciente|paciente nuevo|paciente nueva|agrega(?:r|me)? (?:un |una )?(?:nuevo |nueva )?paciente|crea(?:r)? (?:un |una )?paciente|alta de paciente|da(?:r)? de alta (?:a )?|registra(?:r)? (?:un |una )?(?:nuevo |nueva )?paciente|carga(?:r|me)? (?:un |una )?paciente)\s*(.*)$/.exec(c))) {
@@ -1500,11 +1648,10 @@ body.has-modal .vdock .vd-hf { display: none; }
     return { intent: 'unknown', text: c, raw };
   }
 
-  const api = { parse, clean, N, stripWake, parseDate, parseTime, parseAmount, parseMethod, parseMotive, parsePro, cleanName, wordsNum };
+  const api = { parse, clean, N, stripWake, setWake, NAMES, parseDur, parseDate, parseTime, parseAmount, parseMethod, parseMotive, parsePro, cleanName, wordsNum };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.OVCmd = api;
 })(typeof window !== 'undefined' ? window : this);
-
 /* ===== núcleo: utilidades, datos de ejemplo, estado, persistencia ===== */
 (function () {
   'use strict';
@@ -1545,7 +1692,9 @@ body.has-modal .vdock .vd-hf { display: none; }
   A.toMin = s => { const p = String(s).split(':'); return (+p[0]) * 60 + (+p[1] || 0); };
   A.hash = s => { let h = 2166136261; s = String(s); for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
   A.rng = seed => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
-  A.uid = () => { A.S.seq++; return 'n' + A.S.seq.toString(36) + Math.floor(Math.random() * 1296).toString(36); };
+  /* etiqueta corta y fija de este dispositivo: evita que dos equipos de la misma cuenta generen el mismo código */
+  A.devTag = () => { if (A._dev) return A._dev; let t = null; try { t = localStorage.getItem('odontovoz.dev'); } catch (e) { /* nada */ } if (!t) { t = Math.random().toString(36).slice(2, 6); try { localStorage.setItem('odontovoz.dev', t); } catch (e) { /* nada */ } } return (A._dev = t); };
+  A.uid = () => { A.S.seq++; return 'n' + A.S.seq.toString(36) + Math.floor(Math.random() * 1296).toString(36) + (A.DEMO ? '' : A.devTag().slice(0, 2)); };
   A.clone = o => JSON.parse(JSON.stringify(o));
 
   /* ---------- profesionales y motivos ---------- */
@@ -1704,12 +1853,12 @@ body.has-modal .vdock .vd-hf { display: none; }
   A.PATS = PATS;
   A.PAT = id => PATS.filter(p => p.id === id)[0];
   const PIDX = {}; PATS.forEach(p => { PIDX[p.id] = p; });
-  A.PAT = id => PIDX[id];
+  A.PAT = id => PIDX[id]; A.PIDX = PIDX;
 
   A.derive = p => { p.name = p.first + ' ' + p.last; return p; };
   A.addPatient = d => {
     const n = (A.S.newPats = A.S.newPats || []).length + 1;
-    const p = A.derive({ id: 'x' + n, first: d.first, last: d.last, age: d.age || 30, cov: d.cov || 'Particular', dni: d.dni || '', phone: d.phone || '', email: d.email || '', seed: [], debt: 0, conds: [], pro: d.pro || 'pr1', custom: true });
+    const p = A.derive({ id: 'x' + n + (A.DEMO ? '' : '-' + A.devTag()), first: d.first, last: d.last, age: d.age || 30, cov: d.cov || 'Particular', dni: d.dni || '', phone: d.phone || '', email: d.email || '', seed: [], debt: 0, conds: [], pro: d.pro || 'pr1', custom: true });
     A.S.newPats.push(p); PATS.push(p); PIDX[p.id] = p; A.save(); return p;
   };
   A.setProfileQuiet = (pid, f) => { const pat = A.PAT(pid); Object.assign(pat, f); A.derive(pat); };
@@ -2379,8 +2528,9 @@ body.has-modal .vdock .vd-hf { display: none; }
     const t = A.mm(a.start) + '–' + A.mm(a.start + a.dur);
     const grip = '<button class="grip" data-act="noop" data-grip="' + a.id + '" aria-label="Arrastrar para mover" title="Arrastrar para mover">⠿</button>';
     if (a.type === 'block') return '<div class="' + cls + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" role="button" tabindex="0"><div class="t"><span>' + t + '</span>' + grip + '</div><div class="n">' + esc(a.label) + '</div></div>';
-    return '<div class="' + cls + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" data-appt="' + a.id + '" role="button" tabindex="0" title="' + esc(pat.name + ' · ' + a.what) + '"><div class="t"><span>' + t + (a.sobre ? ' <span class="sb">SOBRETURNO</span>' : '') + '</span>' + grip + '</div>' +
-      '<div class="n">' + esc(pat.name) + (pd ? ' ⚠' : '') + '</div><div class="k">' + esc(a.what) + (a.online ? ' <span class="onl">online</span>' : '') + '</div></div>';
+    const stb = A.stBtnHTML ? A.stBtnHTML(a) : '', sena = A.senaBadge ? A.senaBadge(a) : '';
+    return '<div class="' + cls + (sena ? ' has-sena' : '') + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" data-appt="' + a.id + '" role="button" tabindex="0" title="' + esc(pat.name + ' · ' + a.what + ' · ' + (A.STATUS_LABEL[a.status] || '')) + '"><div class="t"><span>' + t + (a.sobre ? ' <span class="sb">SOBRETURNO</span>' : '') + '</span>' + grip + '</div>' +
+      '<div class="n">' + stb + '<span class="nm">' + esc(pat.name) + '</span>' + (pd ? ' ⚠' : '') + '</div><div class="k">' + sena + esc(a.what) + (a.online ? ' <span class="onl">online</span>' : '') + '</div></div>';
   }
   function gridHTML(cols, key0) {
     const [g0, g1] = bounds(cols), H = (g1 - g0) / 15 * SH, today = A.today(), nowM = A.nowMin();
@@ -2459,7 +2609,7 @@ body.has-modal .vdock .vd-hf { display: none; }
   (function () {
     let t0 = null;
     document.addEventListener('touchstart', e => {
-      if (S.tab !== 'agenda' || S.view !== 'dia' || S.uimode === 'atencion' || S.modal || S.panel || e.touches.length !== 1) { t0 = null; return; }
+      if (S.tab !== 'agenda' || S.view !== 'dia' || S.modal || S.panel || e.touches.length !== 1 || e.touches[0].clientX < 26) { t0 = null; return; }
       const el = e.target; if (!el.closest || !el.closest('#view-agenda') || el.closest('#dayStrip') || el.closest('[data-grip]') || el.closest('input,select,textarea,.more-menu')) { t0 = null; return; }
       const gw = el.closest('#gridWrap');
       t0 = { x: e.touches[0].clientX, y: e.touches[0].clientY, gw: gw ? { l: gw.scrollLeft, max: gw.scrollWidth - gw.clientWidth } : null };
@@ -2684,7 +2834,7 @@ body.has-modal .vdock .vd-hf { display: none; }
     if (f.creating) body += '<div class="block"><h3>Paciente nuevo</h3><div class="row2"><div class="field"><label for="nc_first">Nombre</label><input id="nc_first" value="' + esc(f.n_first || '') + '"></div><div class="field"><label for="nc_last">Apellido</label><input id="nc_last" value="' + esc(f.n_last || '') + '"></div></div><div class="row2"><div class="field"><label for="nc_dni">DNI</label><input id="nc_dni" inputmode="numeric" value="' + esc(f.n_dni || '') + '"></div><div class="field"><label for="nc_phone">Teléfono (WhatsApp)</label><input id="nc_phone" inputmode="tel" value="' + esc(f.n_phone || '') + '"></div></div><button class="btn small primary" data-act="naCreate">Crear y elegir</button></div>';
     body += '<div class="row2"><div class="field"><label for="naPro">Profesional</label><select id="naPro">' + pros.map(p => '<option value="' + p.id + '"' + (p.id === f.pro ? ' selected' : '') + '>' + esc(p.name) + ' · ' + esc(p.spec) + '</option>').join('') + '</select></div>' +
       '<div class="field"><label for="naWhat">Motivo</label><select id="naWhat">' + Object.keys(A.TYPES).map(k => '<option' + (A.TYPES[k][0] === f.what ? ' selected' : '') + '>' + esc(A.TYPES[k][0]) + '</option>').join('') + '</select></div></div>' +
-      '<div class="row3"><div class="field"><label for="naDate">Día</label><input type="date" id="naDate" value="' + f.date + '"></div><div class="field"><label for="naTime">Hora</label><input type="time" id="naTime" step="300" value="' + A.mm(f.start) + '"></div><div class="field"><label for="naDur">Duración</label><select id="naDur">' + [15, 30, 45, 60, 90, 120].map(x => '<option value="' + x + '"' + (x === f.dur ? ' selected' : '') + '>' + x + ' min</option>').join('') + '</select></div></div>' +
+      '<div class="row3"><div class="field"><label for="naDate">Día</label><input type="date" id="naDate" value="' + f.date + '"></div><div class="field"><label for="naTime">Hora</label><input type="time" id="naTime" step="300" value="' + A.mm(f.start) + '"></div><div class="field"><label for="naDur">Duración</label><select id="naDur">' + [15, 30, 45, 60, 90, 120].concat([15, 30, 45, 60, 90, 120].indexOf(f.dur) < 0 ? [f.dur] : []).sort((x, y) => x - y).map(x => '<option value="' + x + '"' + (x === f.dur ? ' selected' : '') + '>' + x + ' min</option>').join('') + '</select></div></div>' +
       '<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="naSobre"' + (f.sobre ? ' checked' : '') + '> Sobreturno (se superpone con otro turno del mismo profesional)</label><div id="naMsg" class="hint"></div>';
     return shell(f.sobre ? 'Nuevo sobreturno' : 'Nuevo turno', body, '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="naSave">Agendar</button>');
   }
@@ -2705,7 +2855,8 @@ body.has-modal .vdock .vd-hf { display: none; }
   };
   A.acts.naSave = () => {
     readNew(); const f = S.modal.f, msg = $('#naMsg');
-    if (!f.pid) { msg.className = 'hint bad'; msg.textContent = 'Elegí un paciente.'; return; }
+    if (!f.pid && f.creating && (f.n_first || '').trim() && (f.n_last || '').trim()) { const np = A.addPatient({ first: f.n_first.trim(), last: f.n_last.trim(), dni: (f.n_dni || '').replace(/\D/g, ''), phone: f.n_phone || '' }); f.pid = np.id; f.creating = false; }
+    if (!f.pid) { msg.className = 'hint bad'; msg.textContent = f.creating ? 'Completá nombre y apellido del paciente nuevo.' : 'Elegí un paciente.'; return; }
     const a = { id: A.uid(), pid: f.pid, pro: f.pro, date: f.date, start: f.start, dur: f.dur, what: f.what, status: 'pendiente', rem: 'porenviar', sobre: f.sobre || undefined };
     const cf = A.conflicts(a);
     if (cf.length) {
@@ -5095,6 +5246,7 @@ body.has-modal .vdock .vd-hf { display: none; }
   const V = A.voice = { on: false, mode: null, rec: null, opts: {}, speaking: false, restarts: [], armedUntil: 0, last: { t: '', at: 0 }, tts: true };
   try { V.tts = localStorage.getItem('odontovoz.tts') !== '0'; } catch (e) { /* nada */ }
   V.supported = () => !!SRC();
+  V._stopRec = () => stopRec(); V._boot = () => boot();
   function stopRec() { const r = V.rec; V.rec = null; if (r) { try { r.onend = null; r.onresult = null; r.onerror = null; (r.abort || r.stop).call(r); } catch (e) { /* ya detenido */ } } }
   function boot() {
     const SR = SRC(); if (!SR || !V.on) return;
@@ -5128,7 +5280,7 @@ body.has-modal .vdock .vd-hf { display: none; }
   V.start = (mode, opts) => {
     if (!SRC()) { S.modal = { type: 'voiceHelp', blocked: true }; A.renderModal(); return false; }
     stopRec(); V.on = true; V.mode = mode || 'dictado'; V.opts = opts || {}; V.restarts = []; V.armedUntil = 0;
-    if (V.mode === 'hands') live('Decí «odontovoz» y lo que necesitás');
+    if (V.mode === 'hands') live('Decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '» y lo que necesitás');
     else if (V.mode === 'texto') live('Dictá la nota. Decí «terminar dictado» al final.');
     else if (V.mode === 'dictado') live(S.tab === 'ficha' && S.fichaTab === 'odon' ? 'Decí lo que ves: «caries oclusal del 35»' : 'Decí lo que necesitás: «turno para Pérez mañana a las 10»');
     boot(); ui(); return true;
@@ -5175,7 +5327,7 @@ body.has-modal .vdock .vd-hf { display: none; }
         if (!w.rest) { V.armedUntil = now + 9000; live('Te escucho…'); V.speak('Te escucho'); ui(); return; }
         phrase = w.rest;
       } else if (V.armedUntil > now) { V.armedUntil = 0; }
-      else { live('(sin «odontovoz») ' + text, true); return; }
+      else { live('(sin «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '») ' + text, true); return; }
       V.armedUntil = 0;
     } else { const w = C.stripWake(text); if (w.woke && !w.rest) { live('Te escucho…'); return; } if (w.woke) phrase = w.rest; }
     live('«' + phrase + '»');
@@ -5188,9 +5340,9 @@ body.has-modal .vdock .vd-hf { display: none; }
   function ui() {
     const on = V.on, hands = on && V.mode === 'hands';
     const mic = $('#vdMic'); if (mic) { mic.setAttribute('aria-pressed', String(on && V.mode !== 'hands')); mic.setAttribute('aria-label', on ? 'Terminar el dictado' : 'Hablar: tocá y decí un comando'); }
-    const hf = $('#hfBtn'); if (hf) { hf.setAttribute('aria-pressed', String(hands)); hf.title = hands ? 'Manos libres activo: tocá para apagarlo' : 'Manos libres: decí «odontovoz» y el comando'; }
+    const hf = $('#hfBtn'); if (hf) { hf.setAttribute('aria-pressed', String(hands)); hf.title = hands ? 'Manos libres activo: tocá para apagarlo' : 'Manos libres: decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '» y el comando'; }
     const bar = $('#vdBar'); if (bar) bar.hidden = !on || V.mode === 'once';
-    const st = $('#vdState'); if (st) st.textContent = hands ? (V.armedUntil > Date.now() ? 'Te escucho' : 'Manos libres · decí «odontovoz»') : V.mode === 'texto' ? 'Dictando una nota' : 'Escuchando';
+    const st = $('#vdState'); if (st) st.textContent = hands ? (V.armedUntil > Date.now() ? 'Te escucho' : 'Manos libres · decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '»') : V.mode === 'texto' ? 'Dictando una nota' : 'Escuchando';
     const dock = $('#vdock'); if (dock) { dock.classList.toggle('listening', on); dock.classList.toggle('hands', hands); }
     const tm = $('#topMic'); if (tm) tm.setAttribute('aria-pressed', String(on && V.mode === 'once'));
     if (A.odUpdateMic) A.odUpdateMic();
@@ -5202,7 +5354,7 @@ body.has-modal .vdock .vd-hf { display: none; }
   A.acts.voiceStop = () => V.stop();
   A.acts.handsFree = () => {
     if (V.on && V.mode === 'hands') { V.stop(); A.toast('Manos libres apagado.'); return; }
-    if (V.start('hands')) A.toast('Manos libres activo: decí «odontovoz» y el pedido, por ejemplo «odontovoz, quién sigue». Funciona con la app abierta y la pantalla encendida.');
+    if (V.start('hands')) { const w = (A.wakeLabel ? A.wakeLabel() : 'odontovoz'); A.toast('Manos libres activo: decí «' + w + '» y el pedido, por ejemplo «' + w + ', quién sigue». Funciona con la app abierta y la pantalla encendida.'); V.speak('Hola, soy ' + w + '. Te escucho.'); }
   };
   A.acts.voiceSearch = () => V.start('once', { onText: t => { const q = t.replace(/^(?:buscar|busca|buscame|abri|abrime|paciente)\s+(?:a\s+|al\s+)?/i, '').replace(/[.,;]+$/, '').trim(); const bar = $('.top.appbar'); if (bar) bar.classList.add('searching'); const i = $('#topQ'); if (i) { i.value = q; A.ins.topSearch(i); } } });
   A.acts.dictate = el => {
@@ -5291,7 +5443,7 @@ body.has-modal .vdock .vd-hf { display: none; }
       case 'cancel': case 'back': A.back({ soft: true }); return ok('Volví atrás.');
       case 'home': A.goHome(); return ok('Inicio.');
       case 'menu': A.showDrawer(); return ok('Menú abierto.');
-      case 'hands': V.start('hands'); return ok('Manos libres activo. Decí «odontovoz» antes de cada pedido.');
+      case 'hands': V.start('hands'); return ok('Manos libres activo. Decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '» antes de cada pedido.');
       case 'mode':
         if (pr.ui) { A.acts.uiMode(fake({ 'data-ui': pr.ui })); return ok(pr.ui === 'atencion' ? 'Modo atención: tu agenda del día.' : 'Modo administración.'); }
         if (pr.role) { if (A.isSolo()) return no('En un consultorio individual no hay vista de recepción.'); A.acts.role(fake({ 'data-role': pr.role })); return ok(pr.role === 'recepcion' ? 'Vista de recepción.' : 'Vista de profesional.'); }
@@ -5708,7 +5860,746 @@ body.has-modal .vdock .vd-hf { display: none; }
     if (first && !S.tutorialSeen) setTimeout(() => A.openTutorial(), 250);
   };
 })();
+/* ===== v6: estado rápido de turnos, seña visible, asistente con nombre y voz, menú con solapa, inicio del día, bienvenida ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd, V = A.voice, IC = A.IC || {};
+  A.VERSION = '6.0';
+  const fake = attrs => ({ getAttribute: k => (attrs[k] == null ? null : String(attrs[k])), hasAttribute: k => attrs[k] != null });
+  const LS = {
+    get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* sin almacenamiento */ } }
+  };
+  const capName = s => String(s || '').replace(/\b([a-zñ])/g, ch => ch.toUpperCase());
 
+  /* =====================================================================
+     UN SOLO MODO DE USO (se quitó «modo atención»)
+     ===================================================================== */
+  S.uimode = 'admin';
+  A.acts.uiMode = () => { S.uimode = 'admin'; A.refresh(); };
+
+  /* =====================================================================
+     ESTADO DEL TURNO CON UN TOQUE
+     ===================================================================== */
+  const ST_ICON = { pendiente: '?', confirmado: '✓', llego: '●', 'en-atencion': '▶', atendido: '✔', ausente: '✕', cancelado: '⊘' };
+  const ST_OPTS = [['confirmado', 'Confirmó'], ['llego', 'Llegó · en sala'], ['en-atencion', 'En atención'], ['atendido', 'Atendido'], ['ausente', 'No vino'], ['pendiente', 'Sin confirmar'], ['cancelado', 'Canceló']];
+  A.stBtnHTML = a => '<button class="stb st-' + a.status + '" data-act="stMenu" data-id="' + a.id + '" aria-label="Estado: ' + esc(A.STATUS_LABEL[a.status] || a.status) + '. Tocá para cambiarlo" title="' + esc(A.STATUS_LABEL[a.status] || '') + ' · tocá para cambiar">' + (ST_ICON[a.status] || '?') + '</button>';
+  A.acts.stMenu = (el, ev) => { if (ev) ev.stopPropagation(); S.modal = { type: 'stMenu', id: el.getAttribute('data-id') }; A.renderModal(); };
+  MF.stMenu = m => {
+    const a = A.apptById(m.id); if (!a || !a.pid) return '';
+    const p = A.PAT(a.pid), sena = A.senaOf(a);
+    let b = '<div class="st-head"><b>' + esc(p.name) + '</b><span>' + esc(A.cap(A.fmtLong(a.date))) + ' · ' + A.mm(a.start) + '–' + A.mm(a.start + a.dur) + ' · ' + esc(a.what) + (A.isSolo() ? '' : ' · ' + esc(A.PRO(a.pro).short)) + '</span></div>';
+    b += '<div class="st-grid">' + ST_OPTS.map(o => '<button class="st-opt st-' + o[0] + '" data-act="stSet" data-st="' + o[0] + '" aria-pressed="' + (a.status === o[0]) + '"><i>' + ST_ICON[o[0]] + '</i>' + o[1] + '</button>').join('') + '</div>';
+    b += '<div class="st-more">' +
+      '<button class="btn" data-act="stResched">↻ Reprogramar</button>' +
+      '<button class="btn' + (sena ? ' sena-on' : '') + '" data-act="apSena" data-id="' + a.id + '">$ ' + (sena ? 'Seña ' + A.money(sena) : 'Registrar seña') + '</button>' +
+      (S.role === 'profesional' && a.status !== 'atendido' ? '<button class="btn primary" data-act="stAtender">Atender</button>' : '') +
+      '<button class="btn ghost" data-act="stOpen">Ver el turno</button></div>';
+    return A.modalShell('Estado del turno', b, '');
+  };
+  A.acts.stSet = el => {
+    const id = S.modal && S.modal.id, st = el.getAttribute('data-st'); if (!id) return;
+    S.modal = null; A.renderModal(); A.setStatus(id, st);
+  };
+  A.acts.stOpen = () => { const id = S.modal.id; S.modal = null; A.renderModal(); S.panel = { type: 'appt', id }; A.renderPanel(); };
+  A.acts.stAtender = () => { const a = A.apptById(S.modal.id); S.modal = null; A.renderModal(); A.acts.startAtn(fake({ 'data-pid': a.pid, 'data-id': a.id })); };
+
+  /* reprogramar: elegir otro día y uno de sus horarios libres */
+  A.acts.stResched = () => { const a = A.apptById(S.modal.id); S.modal = { type: 'resched', id: a.id, date: a.date === A.today() ? A.add(a.date, 7) : a.date, pro: a.pro }; A.renderModal(); };
+  MF.resched = m => {
+    const a = A.apptById(m.id); if (!a) return '';
+    const p = A.PRO(m.pro), slots = A.freeSlots ? A.freeSlots(p, m.date).filter(t => !(m.date === a.date && t === a.start)) : [];
+    const days = []; for (let i = 0, k = A.today(); i < 21 && days.length < 12; i++, k = A.add(k, 1)) if (A.hoursFor(p, k).length) days.push(k);
+    let b = '<div class="hint">Turno actual: ' + esc(A.fmtShort(a.date)) + ' ' + A.mm(a.start) + ' · ' + esc(A.PAT(a.pid).name) + '</div>';
+    b += '<div class="rs-days">' + days.map(k => '<button class="wk' + (k === m.date ? ' on' : '') + '" data-act="rsDay" data-date="' + k + '" aria-pressed="' + (k === m.date) + '"><small>' + A.DOW[A.dow(k)].slice(0, 3) + '</small><b>' + A.parse(k).getDate() + '</b></button>').join('') + '</div>';
+    b += '<div class="field"><label for="rsDate">Otro día</label><input type="date" id="rsDate" data-chg="rsDate" value="' + m.date + '"></div>';
+    b += slots.length ? '<div class="slots">' + slots.map(t => '<button class="slot" data-act="rsPick" data-t="' + t + '">' + A.mm(t) + '</button>').join('') + '</div>' : '<div class="empty" style="padding:8px 0">No quedan horarios libres ese día.</div>';
+    return A.modalShell('Reprogramar turno', b, '<button class="btn" data-act="closeModal">Cancelar</button>');
+  };
+  A.acts.rsDay = el => { S.modal.date = el.getAttribute('data-date'); A.renderModal(); };
+  A.chg.rsDate = el => { if (el.value) { S.modal.date = el.value; A.renderModal(); } };
+  A.acts.rsPick = el => {
+    const m = S.modal, a = A.apptById(m.id), t = parseInt(el.getAttribute('data-t'), 10); S.modal = null; A.renderModal();
+    A.tryMove(a.id, { date: m.date, start: t });
+    const b = A.apptById(a.id); if (b && b.date === m.date && b.start === t) { b.rep = (b.rep || 0) + 1; if (b.status === 'ausente' || b.status === 'cancelado') b.status = 'pendiente'; b.rem = 'porenviar'; A.S.dirtyDays[b.date] = 1; A.save(); }
+    if (S.tab === 'agenda') { S.date = m.date; } A.refresh();
+  };
+
+  /* =====================================================================
+     SEÑA: se ve en el turno, en la agenda y en la cuenta del paciente
+     ===================================================================== */
+  A.senaOf = a => (a && a.sena ? a.sena.amt : a && a.online && a.senaState !== 'retenida' ? (a.senaAmt || 0) : 0);
+  A.senaBadge = a => { const v = A.senaOf(a); return v ? '<span class="sena-b" title="Seña abonada">SEÑA ' + A.money(v) + '</span> ' : ''; };
+  A.acts.apSena = el => { const id = el.getAttribute('data-id'); S.modal = { type: 'apSena', id }; A.renderModal(); };
+  MF.apSena = m => {
+    const a = A.apptById(m.id); if (!a) return '';
+    const s = a.sena, def = (A.CFG.online && A.CFG.online.sena) || 10000;
+    let b = '<div class="hint">' + esc(A.PAT(a.pid).name) + ' · turno del ' + esc(A.fmtShort(a.date)) + ' a las ' + A.mm(a.start) + '</div>';
+    if (s) b += '<div class="sena-now"><b>Seña abonada: ' + A.money(s.amt) + '</b><span>' + esc(s.method || '') + ' · ' + A.fmtDMY(s.date) + (s.by ? ' · cargó ' + esc(s.by) : '') + '</span></div>';
+    b += '<div class="row-btns">' + [def, 5000, 10000, 20000].filter((v, i, l) => l.indexOf(v) === i).map(v => '<button class="chip-ex" data-act="snQuick" data-v="' + v + '">' + A.money(v) + '</button>').join('') + '</div>' +
+      '<div class="row2"><div class="field"><label for="asAmt">Importe</label><input id="asAmt" inputmode="numeric" value="' + (s ? s.amt : def) + '"></div><div class="field"><label for="asMeth">Medio de pago</label><select id="asMeth">' + ['Efectivo', 'Transferencia', 'Mercado Pago', 'Débito', 'Crédito'].map(x => '<option' + (s && s.method === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div></div>' +
+      '<div id="asMsg" class="hint bad"></div><div class="hint">La seña queda anotada en el turno (se ve en la agenda) y como pago en la cuenta del paciente.</div>';
+    return A.modalShell(s ? 'Seña del turno' : 'Registrar seña', b, (s ? '<button class="btn danger" data-act="asDel">Quitar seña</button>' : '<button class="btn" data-act="closeModal">Cancelar</button>') + '<button class="btn primary" data-act="asSave">' + (s ? 'Guardar cambio' : 'Registrar seña') + '</button>');
+  };
+  A.acts.snQuick = el => { const i = $('#asAmt'); if (i) i.value = el.getAttribute('data-v'); };
+  function dropSenaLedger(a) { if (!a.sena || !a.sena.ledgerId) return; const pd = A.pd(a.pid); pd.ledger = pd.ledger.filter(e => e.id !== a.sena.ledgerId); A.touchPd(a.pid); }
+  A.acts.asSave = () => {
+    const a = A.apptById(S.modal.id), amt = parseInt(($('#asAmt').value || '').replace(/\D/g, ''), 10) || 0, method = $('#asMeth').value;
+    if (!(amt > 0)) { $('#asMsg').textContent = 'Ingresá el importe de la seña.'; return; }
+    dropSenaLedger(a);
+    const pd = A.pd(a.pid), e = { id: A.uid(), date: A.today(), type: 'pago', amount: amt, desc: 'Seña del turno del ' + A.fmtDMY(a.date) + ' ' + A.mm(a.start), method, pro: a.pro, sena: true, apptId: a.id };
+    pd.ledger.push(e); pd.ledger.sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0)); A.touchPd(a.pid);
+    A.mutate([a.date], () => { a.sena = { amt, method, date: A.today(), ledgerId: e.id, by: A.deviceLabel ? A.deviceLabel() : '' }; if (a.status === 'pendiente') { a.status = 'confirmado'; a.rem = 'confirmo'; } }, 'Seña registrada: ' + A.money(amt) + ' · ' + A.PAT(a.pid).name);
+    S.modal = null; A.renderModal(); A.refresh(); if (A.notifyPeers) A.notifyPeers('sena', a);
+  };
+  A.acts.asDel = () => {
+    const a = A.apptById(S.modal.id); dropSenaLedger(a);
+    A.mutate([a.date], () => { delete a.sena; }, 'Seña quitada'); S.modal = null; A.renderModal(); A.refresh();
+  };
+  /* en el panel del turno, la seña va arriba de todo */
+  const origPanel = A.renderPanel;
+  A.renderPanel = () => {
+    origPanel();
+    const p = S.panel; if (!p || p.type !== 'appt') return;
+    const a = A.apptById(p.id); if (!a || a.type === 'block') return;
+    const head = $('#panelHost .panel-head'); if (!head) return;
+    const v = A.senaOf(a);
+    head.insertAdjacentHTML('afterend', '<div class="block sena-block' + (v ? ' on' : '') + '"><div><h3>Seña</h3>' + (v ? '<b class="sena-amt">' + A.money(v) + ' abonada</b><span class="hint" style="margin:0">' + esc((a.sena && a.sena.method) || 'turnero online') + (a.sena ? ' · ' + A.fmtDMY(a.sena.date) : '') + '</span>' : '<span class="hint" style="margin:0">Sin seña</span>') + '</div><button class="btn small' + (v ? '' : ' primary') + '" data-act="apSena" data-id="' + a.id + '">' + (v ? 'Ver o cambiar' : 'Registrar seña') + '</button></div>');
+  };
+
+  /* =====================================================================
+     AGENDA: la vista del día sigue al turno actual
+     ===================================================================== */
+  let lastTouch = 0, lastKey = '';
+  ['touchstart', 'wheel', 'pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, e => { if (e.target && e.target.closest && e.target.closest('#gridWrap, #view-inicio')) lastTouch = Date.now(); }, { passive: true, capture: true }));
+  A.currentAppt = (pros) => {
+    const t = A.today(), now = A.nowMin(), ids = (pros || A.visPros()).map(p => p.id);
+    const l = A.day(t).filter(a => a.type !== 'block' && a.status !== 'cancelado' && ids.indexOf(a.pro) >= 0).sort((x, y) => x.start - y.start);
+    return l.filter(a => a.status === 'en-atencion')[0] || l.filter(a => a.start <= now && a.start + a.dur > now && a.status !== 'atendido' && a.status !== 'ausente')[0] ||
+      l.filter(a => a.status === 'llego')[0] || l.filter(a => a.start + a.dur > now && a.status !== 'atendido' && a.status !== 'ausente')[0] || null;
+  };
+  A.scrollToNow = smooth => {
+    const w = $('#gridWrap'); if (!w || S.date !== A.today() || S.view !== 'dia') return;
+    const cur = A.currentAppt(), el = cur && w.querySelector('[data-appt="' + cur.id + '"]'), nowL = w.querySelector('.now');
+    const target = el ? el.offsetTop + (el.offsetParent && el.offsetParent !== w ? el.offsetParent.offsetTop : 0) - 48 : nowL ? nowL.offsetTop - 120 : null;
+    if (target == null) return;
+    try { w.scrollTo({ top: Math.max(0, target), behavior: smooth ? 'smooth' : 'auto' }); } catch (e) { w.scrollTop = Math.max(0, target); }
+    /* en el teléfono la cuadrícula no tiene alto fijo: se mueve la página */
+    if (w.scrollHeight <= w.clientHeight + 4 && el) { const r = el.getBoundingClientRect(); if (r.top < 90 || r.top > innerHeight - 160) window.scrollTo({ top: Math.max(0, scrollY + r.top - 130), behavior: smooth ? 'smooth' : 'auto' }); }
+  };
+  const origAgenda = A.render.agenda;
+  A.render.agenda = () => {
+    origAgenda();
+    const key = S.view + S.date;
+    if (key !== lastKey) { lastKey = key; if (S.view === 'dia' && S.date === A.today()) setTimeout(() => A.scrollToNow(false), 30); }
+  };
+  setInterval(() => {
+    if (document.hidden || S.modal || S.panel) return;
+    if (S.tab === 'agenda' && S.view === 'dia' && S.date === A.today()) {
+      A.render.agenda();
+      if (Date.now() - lastTouch > 90000) A.scrollToNow(true);
+    } else if (S.tab === 'inicio' && Date.now() - lastTouch > 60000) A.render.inicio();
+  }, 60000);
+
+  /* =====================================================================
+     ASISTENTE: nombre para llamarlo, respuesta hablada y silencio
+     ===================================================================== */
+  const NAMES = [['navi', 'Navi'], ['doc', 'Doc'], ['nexus', 'Nexus'], ['mia', 'Mia'], ['axon', 'Axon'], ['lumina', 'Lumina'], ['agenda', 'Agenda']];
+  const AS = A.assist = { name: LS.get('odontovoz.wake', 'navi'), custom: LS.get('odontovoz.wakeCustom', '') };
+  AS.label = () => { const f = NAMES.filter(n => n[0] === AS.name)[0]; return f ? f[1] : (AS.custom || 'Navi'); };
+  A.wakeLabel = AS.label;
+  C.setWake(AS.name, AS.custom);
+  V.tts = LS.get('odontovoz.tts', '1') !== '0';
+  const nativeTTS = () => (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.TextToSpeech) || null;
+  function webSpeak(text, done) {
+    const ss = window.speechSynthesis; if (!ss) { done(); return; }
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'es-AR'; u.rate = 1.05;
+    const es = (ss.getVoices() || []).filter(v => /^es/i.test(v.lang)); const pick = es.filter(v => /AR|419|US|MX/i.test(v.lang))[0] || es[0]; if (pick) u.voice = pick;
+    u.onend = done; u.onerror = done; ss.cancel(); ss.speak(u);
+    setTimeout(() => { try { if (!ss.speaking && !ss.pending) done(); } catch (e) { done(); } }, 500);
+  }
+  /* habla en cualquier modo de voz (no mientras se dicta una nota); deja de escuchar para no oírse */
+  V.speak = (msg, force) => {
+    if (!msg || (!V.tts && !force)) return;
+    if (!force && (!V.on || V.mode === 'texto' || V.mode === 'once')) return;
+    const text = String(msg).replace(/[«»]/g, '').replace(/\s·\s/g, '. ').replace(/\$\s?/g, '').slice(0, 260);
+    let done = false;
+    const resume = () => { if (done) return; done = true; V.speaking = false; if (V.on && !V.rec && V._boot) V._boot(); if (V.ui) V.ui(); };
+    V.speaking = true; if (V._stopRec) V._stopRec();
+    setTimeout(resume, Math.min(10000, 1600 + text.length * 80));
+    const t = nativeTTS();
+    try {
+      if (t) t.speak({ text, lang: 'es-AR', rate: 1.0, pitch: 1.0, volume: 1.0, category: 'playback' }).then(resume, () => { try { webSpeak(text, resume); } catch (e) { resume(); } });
+      else webSpeak(text, resume);
+    } catch (e) { resume(); }
+  };
+  A.acts.assistOpen = () => { A.hideDrawer(); S.modal = { type: 'assist' }; A.renderModal(); };
+  MF.assist = () => {
+    const nm = AS.label();
+    let b = '<div class="as-hero"><span class="as-orb" aria-hidden="true"></span><div><b>' + esc(nm) + '</b><span>Tu asistente. Decí «' + esc(nm) + '» y el pedido; por ejemplo: «' + esc(nm) + ', agregá a Pedro Juárez el miércoles 4 de noviembre a las 16 en un turno de media hora».</span></div></div>';
+    b += '<div class="lbl">Cómo se llama</div><div class="as-names">' + NAMES.map(n => '<button class="pill" data-act="asName" data-n="' + n[0] + '" aria-pressed="' + (AS.name === n[0]) + '">' + n[1] + '</button>').join('') + '<button class="pill" data-act="asName" data-n="custom" aria-pressed="' + (NAMES.every(n => n[0] !== AS.name)) + '">Otro…</button></div>';
+    if (NAMES.every(n => n[0] !== AS.name)) b += '<div class="field"><label for="asCustom">Nombre elegido (una o dos palabras fáciles de decir)</label><input id="asCustom" data-chg="asCustom" value="' + esc(AS.custom) + '" placeholder="Ej.: Carlota"></div>';
+    if (AS.name === 'agenda') b += '<div class="hint">Con «Agenda» también podés seguir diciendo «agenda de mañana»: si la frase es un pedido de la agenda, se abre la agenda.</div>';
+    b += '<label class="chk" style="margin-top:10px"><input type="checkbox" data-chg="ttsSet"' + (V.tts ? ' checked' : '') + '> Responder en voz alta</label><div class="hint" style="margin-top:2px">Si lo apagás, ' + esc(nm) + ' responde solo con un mensaje escrito.</div>';
+    b += '<div class="row-btns" style="margin-top:8px"><button class="btn" data-act="asTest">Probar la voz</button><button class="btn primary" data-act="handsFree">Activar manos libres</button></div>';
+    b += '<div class="hint">También responde a «odontovoz». Funciona con la app abierta y la pantalla encendida.</div>';
+    return A.modalShell('Asistente de voz', b, '<button class="btn primary" data-act="closeModal">Listo</button>');
+  };
+  A.acts.asName = el => {
+    const n = el.getAttribute('data-n');
+    AS.name = n === 'custom' ? 'custom' : n; LS.set('odontovoz.wake', AS.name); C.setWake(AS.name, AS.custom); A.renderModal(); A.afterRefresh();
+    if (n !== 'custom') A.toast('Ahora el asistente se llama ' + AS.label() + '.');
+  };
+  A.chg.asCustom = el => { AS.custom = el.value.trim().split(/\s+/).slice(0, 2).join(' '); LS.set('odontovoz.wakeCustom', AS.custom); C.setWake(AS.name, AS.custom); A.afterRefresh(); A.toast('Ahora el asistente se llama ' + AS.label() + '.'); };
+  A.chg.ttsSet = el => { V.tts = el.checked; LS.set('odontovoz.tts', el.checked ? '1' : '0'); A.toast(el.checked ? 'Respuesta en voz alta activada.' : 'Respuesta en voz alta silenciada.'); };
+  A.acts.asTest = () => V.speak('Hola, soy ' + AS.label() + '. ¿En qué te ayudo?', true);
+
+  /* =====================================================================
+     NUEVAS FRASES: turnos con duración y paciente nuevo, odontograma explícito
+     ===================================================================== */
+  function findPat(name) {
+    if (!name) { const c = A.curPid(); return c ? { pid: c } : { none: true }; }
+    const r = A.searchPats(name, 8); if (!r.length) return { none: true, name };
+    if (r.length === 1) return { pid: r[0].id };
+    const nn = A.norm(name), ex = r.filter(p => A.norm(p.first + ' ' + p.last) === nn || A.norm(p.last + ' ' + p.first) === nn);
+    if (ex.length === 1) return { pid: ex[0].id };
+    return { many: r, name };
+  }
+  function odonCmd(pr) {
+    const res = findPat(pr.name);
+    if (!res.pid) return { ok: false, msg: res.many ? 'Hay varios pacientes que se llaman «' + pr.name + '». Abrí la ficha del que corresponde.' : res.name ? 'No encontré a «' + res.name + '».' : 'Primero abrí un paciente, o decí: «… en el odontograma de Pérez».' };
+    if (!(S.tab === 'ficha' && S.fichaPid === res.pid && S.fichaTab === 'odon')) A.openFicha(res.pid, 'odon');
+    const r = A.odText(pr.text, 'voz') || {};
+    if (r.changed || (r.lines && r.lines.length && !/^(?:No hay nada|El barrido no)/.test(r.lines[0]))) return { ok: true, odon: true, msg: (r.lines || []).join(' · ') };
+    if (r.issue) return { ok: true, odon: true, msg: 'Falta un dato: mirá el aviso debajo del odontograma.' };
+    return { ok: false, odon: true, msg: 'No entendí «' + pr.text + '». Probá: «caries oclusal del 45 en el odontograma».' };
+  }
+  function newApptCmd(pr) {
+    const res = pr.name ? findPat(pr.name) : (pr.current ? findPat(null) : { none: true }), pid = res.pid || null;
+    const pro = pr.pro || (pid && A.PAT(pid).pro && A.visPros().some(x => x.id === A.PAT(pid).pro) ? A.PAT(pid).pro : null) || (S.proSel && S.proSel[0]) || A.visPros()[0].id;
+    const date = pr.date || (S.tab === 'agenda' ? S.date : A.today());
+    const T = pr.what && A.TYPES[pr.what], dur = pr.dur || (T ? T[1] : null);
+    A.openNewAppt({ pid, pro, date, start: pr.start != null ? pr.start : null, dur, what: T ? T[0] : null, sobre: pr.sobre });
+    let newName = '';
+    if (!pid && pr.name && S.modal && S.modal.f) {
+      const f = S.modal.f; f.q = capName(pr.name);
+      if (!res.many) { const w = f.q.split(/\s+/); f.creating = true; f.n_first = w.length > 1 ? w.slice(0, -1).join(' ') : w[0]; f.n_last = w.length > 1 ? w[w.length - 1] : ''; newName = f.q; }
+      A.renderModal(); if (res.many) { const q = $('#naQ'); if (q) { q.value = f.q; A.ins.naSearch(q); } }
+    }
+    const f = S.modal && S.modal.f, when = A.fmtShort(date) + ' a las ' + A.mm(f ? f.start : pr.start || 0) + (f ? ', ' + f.dur + ' minutos' : '');
+    if (pid) return { ok: true, msg: 'Turno para ' + A.PAT(pid).name + ' el ' + when + (A.isSolo() ? '' : ' con ' + A.PRO(pro).short) + '. Decí «agendar» para confirmar o «cancelar».' };
+    if (res.many) return { ok: true, msg: 'Hay varios pacientes que coinciden con «' + pr.name + '». Elegí uno en la lista y decí «agendar».' };
+    if (newName) return { ok: true, msg: newName + ' no está en tus pacientes: lo creo como paciente nuevo. Turno el ' + when + '. ' + (f && f.n_last ? 'Decí «agendar» para guardar todo.' : 'Falta el apellido: escribilo y decí «agendar».') };
+    return { ok: true, msg: 'Elegí el paciente. Turno el ' + when + '.' };
+  }
+  const origExec = A.cmd.exec;
+  A.cmd.exec = (text, opts) => {
+    let pr = null; try { pr = C.parse(text, { today: A.today(), pros: A.PROS.concat(A.PROS_OLD || []) }); } catch (e) { pr = null; }
+    if (pr && pr.intent === 'mode' && pr.ui) return { ok: true, msg: 'Ahora hay un solo modo: todo está en el inicio y en el menú de la izquierda.' };
+    if (pr && pr.intent === 'odon') return odonCmd(pr);
+    if (pr && pr.intent === 'newAppt') return newApptCmd(pr);
+    return origExec(text, opts);
+  };
+
+  /* =====================================================================
+     MENÚ ESCONDIDO A LA IZQUIERDA CON SOLAPA (tocar o arrastrar)
+     ===================================================================== */
+  document.body.insertAdjacentHTML('beforeend', '<button id="drHandle" class="dr-handle" data-act="gear" aria-label="Abrir el menú" title="Menú (tocá o deslizá hacia la derecha)"><span></span></button>');
+  (function () {
+    let sw = null;
+    document.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) { sw = null; return; }
+      const x = e.touches[0].clientX, y = e.touches[0].clientY, d = $('#gearMenu'), open = d && !d.hidden;
+      const onHandle = e.target.closest && e.target.closest('#drHandle');
+      if (!open && !S.modal && (x < 22 || onHandle)) sw = { x, y, open: false };
+      else if (open && e.target.closest && e.target.closest('.drawer')) sw = { x, y, open: true };
+      else sw = null;
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+      if (!sw) return; const dx = e.touches[0].clientX - sw.x, dy = e.touches[0].clientY - sw.y;
+      if (Math.abs(dy) > Math.abs(dx) * 1.3 && Math.abs(dy) > 20) { sw = null; return; }
+      const dr = $('#gearMenu .drawer');
+      if (!sw.open && dx > 45) { A.showDrawer(); sw = null; }
+      else if (sw.open && dr && dx < 0) dr.style.transform = 'translateX(' + Math.max(-320, dx) + 'px)';
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (!sw) return; const dx = e.changedTouches[0].clientX - sw.x, dr = $('#gearMenu .drawer');
+      if (sw.open) { if (dr) dr.style.transform = ''; if (dx < -70) { A.hideDrawer(); A.afterRefresh(); } }
+      sw = null;
+    }, { passive: true });
+  })();
+
+  /* =====================================================================
+     INICIO: la agenda del día resumida y cuatro botones
+     ===================================================================== */
+  const ICS = Object.assign({ menu: '', search: '', cal: '', mic: '', plus: '' }, IC);
+  function dayRows(list, curId, showPro) {
+    return list.map(a => {
+      const p = A.PAT(a.pid), done = a.status === 'atendido' || a.status === 'ausente';
+      return '<div class="hd-row st-' + a.status + (a.id === curId ? ' cur' : '') + (done ? ' done' : '') + '" data-act="openAppt" data-id="' + a.id + '" role="button" tabindex="0">' +
+        '<span class="hd-time">' + A.mm(a.start) + '<small>' + a.dur + "'" + '</small></span>' + A.stBtnHTML(a) +
+        '<span class="hd-who"><b>' + esc(p.name) + '</b><span>' + A.senaBadge(a) + esc(a.what) + (showPro ? ' · ' + esc(A.PRO(a.pro).short) : '') + (a.id === curId ? ' · <em>' + (a.status === 'en-atencion' ? 'en atención' : a.status === 'llego' ? 'en sala' : 'ahora') + '</em>' : '') + '</span></span></div>';
+    }).join('');
+  }
+  A.render.inicio = () => {
+    const host = $('#view-inicio'); if (!host) return;
+    const t = A.today(), hr = A.nowDate().getHours(), hi = hr < 13 ? 'Buen día' : hr < 20 ? 'Buenas tardes' : 'Buenas noches', solo = A.isSolo();
+    const me = solo ? A.PROS[0] : null, nm = AS.label();
+    const l = A.day(t).filter(a => a.type !== 'block' && a.status !== 'cancelado' && A.visPros().some(p => p.id === a.pro)).sort((x, y) => x.start - y.start || (x.pro < y.pro ? -1 : 1));
+    const cur = A.currentAppt(), curId = cur && cur.id;
+    const done = l.filter(a => a.status === 'atendido').length, wait = l.filter(a => a.status === 'llego').length, senas = l.reduce((s, a) => s + A.senaOf(a), 0);
+    const idx = cur ? l.indexOf(cur) : l.filter(a => a.status === 'atendido' || a.status === 'ausente' || a.start + a.dur <= A.nowMin()).length;
+    const before = l.slice(0, Math.max(0, idx)), after = l.slice(Math.max(0, idx));
+    let o = '<div class="home v6">';
+    if (A.DEMO) o += '<div class="demo-banner"><span>Modo prueba: los pacientes y turnos son de ejemplo.</span><button class="btn small" data-act="modeOpen">Usarla de verdad</button></div>';
+    o += '<div class="home-hi"><h1>' + hi + (me && !me.blank ? ', ' + esc(me.name) : '') + '</h1><p>' + esc(A.cap(A.fmtLong(t))) + ' · ' + esc(A.CLINIC) + '</p></div>';
+    o += '<section class="hd-card" aria-label="Turnos de hoy"><div class="hd-top"><b>Hoy</b><span>' + l.length + ' turnos · ' + done + ' atendidos' + (wait ? ' · ' + wait + ' en sala' : '') + (senas ? ' · señas ' + A.money(senas) : '') + '</span></div>';
+    if (!l.length) o += '<div class="empty" style="padding:14px 4px">No hay turnos para hoy. <button class="btn small primary" data-act="newAppt">+ Dar un turno</button></div>';
+    else {
+      if (before.length) o += '<details class="hd-before"' + (S.hdBefore ? ' open' : '') + '><summary>Anteriores (' + before.length + ')</summary>' + dayRows(before, curId, !solo) + '</details>';
+      o += '<div class="hd-list">' + (after.length ? dayRows(after.slice(0, 8), curId, !solo) : '<div class="empty" style="padding:10px 4px">Terminaste los turnos de hoy.</div>') + '</div>';
+      if (after.length > 8) o += '<button class="btn small ghost" data-act="tab" data-tab="agenda">Ver ' + (after.length - 8) + ' más en la agenda</button>';
+    }
+    o += '</section>';
+    o += '<div class="home-actions four">' +
+      '<button class="ha" data-act="searchToggle">' + ICS.search + '<span>Buscar paciente<small>Nombre, apellido o DNI</small></span></button>' +
+      '<button class="ha" data-act="tab" data-tab="agenda">' + ICS.cal + '<span>Agenda completa<small>Día, semana y mes</small></span></button>' +
+      '<button class="ha ha-voice" data-act="handsFree">' + ICS.mic + '<span>Hablar con ' + esc(nm) + '<small>Decí «' + esc(nm) + '» y el pedido</small></span></button>' +
+      '<button class="ha" data-act="gear">' + ICS.menu + '<span>Menú<small>Pacientes, caja, ajustes</small></span></button></div>';
+    o += '<button class="btn primary home-new" data-act="newAppt">+ Dar un turno</button>';
+    host.innerHTML = o + '</div>';
+  };
+  document.addEventListener('toggle', e => { if (e.target && e.target.matches && e.target.matches('details.hd-before')) S.hdBefore = e.target.open; }, true);
+
+  /* =====================================================================
+     MENÚ: tipo de cuenta a la vista y nombre del asistente
+     ===================================================================== */
+  const origAfter = A.afterRefresh;
+  A.afterRefresh = () => {
+    origAfter();
+    const al = $('#acctLbl'); if (al) al.textContent = A.isSolo() ? 'Odontólogo · consultorio individual' : 'Centro odontológico';
+    const da = $('#drAssist'); if (da) da.textContent = AS.label() + (V.tts ? ' · responde en voz alta' : ' · en silencio');
+    const h = $('#drHandle'), g = $('#gearMenu'); if (h) h.hidden = !!(g && !g.hidden) || !!S.modal || (S.tab === 'turnero');
+    if (A.cloudChrome) A.cloudChrome();
+  };
+  const origModal = A.renderModal;
+  A.renderModal = () => { origModal(); const h = $('#drHandle'); if (h) h.hidden = !!S.modal; };
+
+  /* la pantalla de inicio después de elegir el tipo de cuenta */
+  const origSetupGo = A.acts.setupGo;
+  A.acts.setupGo = el => { origSetupGo(el); if (!S.modal || S.modal.type !== 'setup') { if (S.tab === 'agenda' && S.setup) { S.tab = 'inicio'; A.refresh(); } } };
+  const origSetup = MF.setup;
+  MF.setup = m => { let h = origSetup(m); if (!A.DEMO) h = h.replace('Todos los pacientes y turnos de esta versión son ficticios y quedan solo en este navegador.', 'Podés cambiar el tipo de cuenta cuando quieras desde el menú › Tu cuenta.'); return h; };
+
+  /* =====================================================================
+     BIENVENIDA ANIMADA (solo la primera vez)
+     ===================================================================== */
+  const LOGO = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path class="lg-path" d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path class="lg-wave" d="M11 11.5v2M13.5 10v5M16 9v7M18.5 10v5M21 11.5v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  A.showIntro = force => {
+    if (!force && (LS.get('odontovoz.intro', '') === '1' || S.setup)) return false;
+    const d = document.createElement('div'); d.id = 'intro'; d.className = 'intro'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Bienvenida');
+    d.innerHTML = '<div class="in-box"><div class="in-logo">' + LOGO + '</div><h1 class="in-name">Odonto Voz</h1><p class="in-hi">Bienvenido</p>' +
+      '<p class="in-desc">La agenda, las historias clínicas y el odontograma de tu consultorio, manejados con la voz. Pensada para atender con guantes: decís lo que ves y queda anotado.</p>' +
+      '<button class="btn primary in-go" data-act="introGo">Comenzar</button></div>';
+    document.body.appendChild(d); return true;
+  };
+  A.acts.introGo = () => { LS.set('odontovoz.intro', '1'); const d = $('#intro'); if (!d) return; d.classList.add('out'); setTimeout(() => { d.remove(); if (!S.setup && !S.modal) A.openSetup(); }, 420); };
+  A.showIntro(false);
+})();
+/* ===== cuenta con usuario y contraseña, y nube: los mismos datos en el teléfono, la recepción y la PC ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
+  const LS = {
+    get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
+    set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } }
+  };
+  const PRIV_VER = '2026-11';
+
+  /* ---------- servidor (Supabase): dirección y clave pública del proyecto ---------- */
+  const conf = () => {
+    const c = window.OV_CONFIG || {};
+    let url = c.supabaseUrl, key = c.supabaseAnonKey;
+    if (!url || !key) { try { const o = JSON.parse(LS.get('odontovoz.cloudcfg', 'null')); if (o) { url = o.url; key = o.key; } } catch (e) { /* nada */ } }
+    return url && key ? { url: String(url).replace(/\/+$/, ''), key: String(key) } : null;
+  };
+  const CL = A.cloud = { state: 'off', msg: '', last: 0, busy: false, session: null };
+  CL.configured = () => !!conf();
+  try { CL.session = JSON.parse(LS.get('odontovoz.session', 'null')); } catch (e) { CL.session = null; }
+  const saveSession = s => { CL.session = s; LS.set('odontovoz.session', s ? JSON.stringify(s) : null); };
+  A.deviceLabel = () => LS.get('odontovoz.devname', '') || (window.OV_NATIVE ? 'Teléfono' : 'Computadora');
+
+  /* ---------- pedidos al servidor ---------- */
+  async function http(path, opt) {
+    const c = conf(); if (!c) throw new Error('La nube no está configurada.');
+    opt = opt || {};
+    const h = Object.assign({ apikey: c.key, 'Content-Type': 'application/json' }, opt.headers || {});
+    if (opt.auth !== false && CL.session) h.Authorization = 'Bearer ' + CL.session.access_token;
+    let r;
+    try { r = await fetch(c.url + path, { method: opt.method || 'GET', headers: h, body: opt.body ? JSON.stringify(opt.body) : undefined }); }
+    catch (e) { const er = new Error('Sin conexión con el servidor.'); er.offline = true; throw er; }
+    const txt = await r.text(); let data = null; try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
+    if (!r.ok) { const er = new Error(authMsg(data, r.status)); er.status = r.status; er.data = data; throw er; }
+    return data;
+  }
+  function authMsg(d, st) {
+    const m = String((d && (d.error_description || d.msg || d.message || d.error)) || '');
+    if (/invalid login credentials/i.test(m)) return 'El correo o la contraseña no coinciden.';
+    if (/email not confirmed/i.test(m)) return 'Falta confirmar el correo: abrí el mensaje que te enviamos y tocá el enlace.';
+    if (/already registered|already exists/i.test(m)) return 'Ese correo ya tiene una cuenta. Ingresá o recuperá la contraseña.';
+    if (/password should be|weak/i.test(m)) return 'La contraseña es muy débil: usá al menos 8 caracteres con letras y números.';
+    if (/rate limit|too many/i.test(m)) return 'Demasiados intentos seguidos. Esperá unos minutos.';
+    if (st === 401 || /jwt/i.test(m)) return 'La sesión venció. Volvé a ingresar.';
+    return m || ('Error del servidor (' + st + ').');
+  }
+  const asSession = d => ({ access_token: d.access_token, refresh_token: d.refresh_token, expires_at: Date.now() + ((d.expires_in || 3600) - 60) * 1000, user: { id: d.user && d.user.id, email: d.user && d.user.email } });
+  async function fresh() {
+    const s = CL.session; if (!s) throw new Error('No hay sesión.');
+    if (Date.now() < s.expires_at) return s;
+    const d = await http('/auth/v1/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: s.refresh_token } });
+    saveSession(asSession(d)); return CL.session;
+  }
+  async function api(path, opt) {
+    await fresh();
+    try { return await http(path, opt); }
+    catch (e) { if (e.status === 401) { CL.session.expires_at = 0; await fresh(); return http(path, opt); } throw e; }
+  }
+
+  /* ---------- registro, ingreso, contraseña ---------- */
+  CL.signUp = async (email, pass, meta) => {
+    const d = await http('/auth/v1/signup', { method: 'POST', auth: false, body: { email, password: pass, data: meta } });
+    if (d && d.access_token) { saveSession(asSession(d)); return { in: true }; }
+    return { confirm: true };
+  };
+  CL.signIn = async (email, pass) => { const d = await http('/auth/v1/token?grant_type=password', { method: 'POST', auth: false, body: { email, password: pass } }); saveSession(asSession(d)); };
+  CL.recover = async email => http('/auth/v1/recover', { method: 'POST', auth: false, body: { email } });
+  CL.setPassword = async pass => api('/auth/v1/user', { method: 'PUT', body: { password: pass } });
+  CL.signOut = async wipe => {
+    try { if (CL.session) await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
+    saveSession(null); stopLoop(); await baseClear();
+    if (wipe) { A.noSave = true; LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.uid', null); try { indexedDB.deleteDatabase('odontovoz.media'); } catch (e) { /* nada */ } }
+    setTimeout(() => location.reload(), 80);
+  };
+  /* enlaces del correo (confirmar cuenta, nueva contraseña): vuelven a la app con la sesión en la dirección */
+  CL.fromLink = async () => {
+    const h = location.hash || ''; if (!/access_token=/.test(h)) return null;
+    const q = new URLSearchParams(h.replace(/^#/, '')), at = q.get('access_token'), rt = q.get('refresh_token'), type = q.get('type');
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* nada */ }
+    try { const u = await http('/auth/v1/user', { headers: { Authorization: 'Bearer ' + at }, auth: false }); saveSession({ access_token: at, refresh_token: rt, expires_at: Date.now() + (parseInt(q.get('expires_in') || '3600', 10) - 60) * 1000, user: { id: u.id, email: u.email } }); return type || 'login'; }
+    catch (e) { A.toast('El enlace venció o ya se usó. Pedí uno nuevo.'); return null; }
+  };
+
+  /* ---------- copia de lo último sincronizado (para unir cambios de varios equipos) ---------- */
+  let dbp = null;
+  const db = () => dbp || (dbp = new Promise((res, rej) => { try { const r = indexedDB.open('odontovoz.cloud', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }));
+  const BASE = {}; let baseReady = false;
+  async function baseLoad() {
+    if (baseReady) return; const d = await db();
+    await new Promise(res => { const tx = d.transaction('kv'), st = tx.objectStore('kv'), rq = st.openCursor(); rq.onsuccess = () => { const c = rq.result; if (c) { BASE[c.key] = c.value; c.continue(); } else res(); }; rq.onerror = () => res(); });
+    baseReady = true;
+  }
+  async function basePut(k, val) { val = { v: JSON.parse(JSON.stringify(val.v === undefined ? null : val.v)), rev: val.rev }; BASE[k] = val; const d = await db(); await new Promise(res => { const tx = d.transaction('kv', 'readwrite'); tx.objectStore('kv').put(val, k); tx.oncomplete = res; tx.onerror = res; }); }
+  async function baseClear() { Object.keys(BASE).forEach(k => delete BASE[k]); baseReady = false; try { const d = await db(); await new Promise(res => { const tx = d.transaction('kv', 'readwrite'); tx.objectStore('kv').clear(); tx.oncomplete = res; tx.onerror = res; }); } catch (e) { /* nada */ } }
+
+  /* ---------- qué se sincroniza ---------- */
+  const SIMPLE = {
+    pats: () => A.S.newPats || [], pros: () => A.PROS, prosOld: () => A.PROS_OLD, cfg: () => A.CFG, cat: () => A.CAT, aran: () => A.ARANCEL,
+    cash: () => A.S.cash || null, liq: () => A.S.liq || null, setup: () => A.S.setup || null
+  };
+  function getLocal(k) {
+    if (k.indexOf('day:') === 0) return A.S.days[k.slice(4)];
+    if (k.indexOf('pd:') === 0) return A.S.pd[k.slice(3)];
+    return SIMPLE[k] ? (SIMPLE[k]() == null ? undefined : SIMPLE[k]()) : undefined;
+  }
+  function collect() {
+    const out = {};
+    Object.keys(A.S.days).forEach(d => { const l = A.S.days[d]; if ((l && l.length) || BASE['day:' + d]) out['day:' + d] = l || []; });
+    Object.keys(A.S.pd).forEach(p => { if (A.S.pd[p]) out['pd:' + p] = A.S.pd[p]; });
+    Object.keys(SIMPLE).forEach(k => { const v = SIMPLE[k](); if (v != null) out[k] = v; });
+    return out;
+  }
+  const J = x => JSON.stringify(x === undefined ? null : x);
+  const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
+  const isIdArr = x => Array.isArray(x) && x.every(o => isObj(o) && o.id != null);
+  /* unión de tres vías: lo que cambió de un lado se respeta; si cambiaron los dos, se unen las listas por código */
+  function merge3(L, R, B) {
+    if (J(L) === J(R)) return L;
+    if (B === undefined) {
+      if (isIdArr(L) && isIdArr(R)) { const rm = {}; R.forEach(o => { rm[o.id] = 1; }); return R.concat(L.filter(o => !rm[o.id])); }
+      if (isObj(L) && isObj(R)) { const o = {}; new Set(Object.keys(L).concat(Object.keys(R))).forEach(k => { const v = R[k] === undefined ? L[k] : L[k] === undefined ? R[k] : merge3(L[k], R[k], undefined); if (v !== undefined) o[k] = v; }); return o; }
+      return R === undefined || R === null ? L : R;
+    }
+    if (J(L) === J(B)) return R;
+    if (J(R) === J(B)) return L;
+    if (isIdArr(L) && isIdArr(R) && (B === null || Array.isArray(B))) {
+      const map = a => { const m = {}; (a || []).forEach(o => { if (isObj(o) && o.id != null) m[o.id] = o; }); return m; };
+      const bm = map(B), lm = map(L), out = [], seen = {};
+      R.forEach(r => { seen[r.id] = 1; const l = lm[r.id], b = bm[r.id]; if (l) out.push(merge3(l, r, b)); else if (!(b && J(r) === J(b))) out.push(r); });
+      L.forEach(l => { if (seen[l.id]) return; const b = bm[l.id]; if (!(b && J(l) === J(b))) out.push(l); });
+      return out;
+    }
+    if (isObj(L) && isObj(R)) {
+      const b = isObj(B) ? B : {}, o = {};
+      new Set(Object.keys(L).concat(Object.keys(R))).forEach(k => { const v = merge3(L[k], R[k], b[k]); if (v !== undefined) o[k] = v; });
+      return o;
+    }
+    return L; /* el mismo dato cambiado en los dos lados: queda el de este equipo, que se sube enseguida */
+  }
+  CL.merge3 = merge3;
+  function setArr(arr, v) { arr.length = 0; (v || []).forEach(x => arr.push(x)); }
+  function setObj(o, v) { Object.keys(o).forEach(k => { if (!(k in (v || {}))) delete o[k]; }); Object.assign(o, v || {}); }
+  const notes = [];
+  function apply(k, v) {
+    v = v == null ? v : JSON.parse(JSON.stringify(v)); /* copia propia: nunca compartir objetos con la copia sincronizada */
+    if (k.indexOf('day:') === 0) {
+      const d = k.slice(4), old = A.S.days[d] || [];
+      if (d === A.today()) watchDay(old, v || []);
+      A.S.days[d] = v || []; A.S.dirtyDays[d] = 1;
+    } else if (k.indexOf('pd:') === 0) {
+      const p = k.slice(3); A.S.pd[p] = v; A.S.dirtyPd[p] = 1; if (v && v.prof && A.PAT(p)) A.setProfileQuiet(p, v.prof);
+    } else if (k === 'pats') {
+      const list = v || [], ids = {}; list.forEach(p => { ids[p.id] = 1; });
+      const prev = A.S.newPats || [];
+      prev.forEach(p => { if (!ids[p.id]) { const i = A.PATS.indexOf(A.PIDX[p.id]); if (i >= 0) A.PATS.splice(i, 1); delete A.PIDX[p.id]; } });
+      list.forEach(p => { const cur = A.PIDX[p.id]; if (cur) { Object.assign(cur, p); A.derive(cur); } else { const np = A.derive(Object.assign({}, p)); A.PATS.push(np); A.PIDX[np.id] = np; } });
+      A.S.newPats = list.map(p => A.PIDX[p.id]);
+    } else if (k === 'pros') setArr(A.PROS, v);
+    else if (k === 'prosOld') setArr(A.PROS_OLD, v);
+    else if (k === 'cfg') { const on = (v && v.online) || A.CFG.online; setObj(A.CFG, v); A.CFG.online = on; A.CFG.demo = false; }
+    else if (k === 'cat') setArr(A.CAT, v);
+    else if (k === 'aran') setObj(A.ARANCEL, v);
+    else if (k === 'cash') A.S.cash = v;
+    else if (k === 'liq') A.S.liq = v;
+    else if (k === 'setup') { A.S.setup = v; A.applySetup(); }
+  }
+  /* avisos de lo que hizo otro equipo (por ejemplo, la recepción) */
+  function watchDay(old, nw) {
+    const om = {}; old.forEach(a => { om[a.id] = a; });
+    nw.forEach(a => {
+      if (!a.pid || !A.PAT(a.pid)) return; const o = om[a.id], n = A.PAT(a.pid).name;
+      if (a.status === 'llego' && (!o || o.status !== 'llego')) notes.push('Llegó ' + n + ' (turno de las ' + A.mm(a.start) + ').');
+      if (a.sena && (!o || !o.sena)) notes.push('Seña de ' + n + ': ' + A.money(a.sena.amt) + '.');
+      if (!o) notes.push('Turno nuevo: ' + n + ' a las ' + A.mm(a.start) + '.');
+      if (o && a.status === 'cancelado' && o.status !== 'cancelado') notes.push('Canceló ' + n + ' (' + A.mm(a.start) + ').');
+    });
+  }
+
+  /* ---------- ciclo: bajar cambios, unir, subir ---------- */
+  let loopT = null, pushT = null, running = false, again = false, pendingRefresh = false;
+  const T = 'ov_records';
+  async function pull() {
+    let since = Object.keys(BASE).length ? LS.get('odontovoz.cloud.since', '1970-01-01T00:00:00Z') : '1970-01-01T00:00:00Z', changed = 0, guard = 0;
+    for (;;) {
+      const rows = await api('/rest/v1/' + T + '?select=k,v,rev,updated_at,device&updated_at=gte.' + encodeURIComponent(since) + '&order=updated_at.asc&limit=500');
+      for (const r of rows) {
+        const b = BASE[r.k]; if (b && b.rev >= r.rev) continue;
+        const local = getLocal(r.k), merged = local === undefined ? r.v : merge3(local, r.v, b ? b.v : undefined);
+        if (J(merged) !== J(local)) { apply(r.k, merged); changed++; }
+        await basePut(r.k, { v: r.v, rev: r.rev });
+      }
+      if (rows.length) since = rows[rows.length - 1].updated_at;
+      if (rows.length < 500 || ++guard > 40) break;
+    }
+    /* se repite un margen de 5 segundos por cambios que el servidor guardó en el mismo instante */
+    const back = new Date(new Date(since).getTime() - 5000).toISOString(); LS.set('odontovoz.cloud.since', since === '1970-01-01T00:00:00Z' ? since : back);
+    return changed;
+  }
+  async function pushKey(k, v, tries) {
+    const b = BASE[k], body = { v, device: A.deviceLabel() };
+    let rows;
+    if (b) rows = await api('/rest/v1/' + T + '?k=eq.' + encodeURIComponent(k) + '&rev=eq.' + b.rev, { method: 'PATCH', body, headers: { Prefer: 'return=representation' } });
+    else { try { rows = await api('/rest/v1/' + T, { method: 'POST', body: Object.assign({ k }, body), headers: { Prefer: 'return=representation' } }); } catch (e) { if (e.status === 409) rows = []; else throw e; } }
+    if (rows && rows.length) { await basePut(k, { v, rev: rows[0].rev }); return; }
+    /* otro equipo lo cambió antes: se baja, se une y se vuelve a intentar */
+    if ((tries || 0) > 3) throw new Error('No se pudo guardar «' + k + '» en la nube (cambios simultáneos).');
+    const cur = await api('/rest/v1/' + T + '?select=k,v,rev&k=eq.' + encodeURIComponent(k));
+    if (cur && cur[0]) { const m = merge3(v, cur[0].v, b ? b.v : undefined); await basePut(k, { v: cur[0].v, rev: cur[0].rev }); if (J(m) !== J(v)) { apply(k, m); pendingRefresh = true; } return pushKey(k, m, (tries || 0) + 1); }
+    if (b) { delete BASE[k]; return pushKey(k, v, (tries || 0) + 1); }
+  }
+  async function push() {
+    const all = collect(); let n = 0;
+    for (const k of Object.keys(all)) { const b = BASE[k]; if (!b || J(b.v) !== J(all[k])) { await pushKey(k, all[k]); n++; } }
+    return n;
+  }
+  CL.sync = async () => {
+    if (!CL.session || !conf() || A.DEMO) return;
+    if (running) { again = true; return; }
+    running = true; setState('busy');
+    try {
+      await baseLoad();
+      const ch = await pull(); const up = await push();
+      CL.last = Date.now(); LS.set('odontovoz.cloud.last', String(CL.last)); setState('ok');
+      if (ch || pendingRefresh) { pendingRefresh = false; A.noCloudPush = true; A.saveNow(); A.noCloudPush = false; softRefresh(); }
+      if (notes.length) { const m = notes.splice(0).slice(-3).join(' '); A.toast(m); if (A.voice && A.voice.on) A.voice.speak(m); }
+      if (S.modal && S.modal.type === 'setup' && A.S.setup) { S.modal = null; A.renderModal(); A.refresh(); }
+      return { ch, up };
+    } catch (e) {
+      setState(e.offline ? 'offline' : 'err', e.message);
+      if (e.status === 401 || e.status === 400 && /refresh/i.test(e.message)) { saveSession(null); setState('err', 'La sesión venció. Volvé a ingresar.'); }
+      if (A.logError && !e.offline) A.logError('nube', e);
+    } finally { running = false; if (again) { again = false; setTimeout(CL.sync, 300); } }
+  };
+  function softRefresh() {
+    const ae = document.activeElement, typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
+    if (typing) { pendingRefresh = true; ae.addEventListener('blur', () => { if (pendingRefresh) { pendingRefresh = false; A.refresh(); } }, { once: true }); return; }
+    A.refresh();
+  }
+  function setState(st, msg) { CL.state = st; CL.msg = msg || ''; if (A.cloudChrome) A.cloudChrome(); }
+  function startLoop() { stopLoop(); loopT = setInterval(() => { if (!document.hidden && navigator.onLine !== false) CL.sync(); }, 8000); CL.sync(); }
+  function stopLoop() { if (loopT) clearInterval(loopT); loopT = null; }
+  /* cada vez que la app guarda, sube los cambios a los pocos segundos */
+  const origSaveNow = A.saveNow;
+  A.saveNow = () => { origSaveNow(); if (!A.noCloudPush && CL.session && !A.DEMO) { clearTimeout(pushT); pushT = setTimeout(CL.sync, 1500); } };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && CL.session) CL.sync(); });
+  window.addEventListener('online', () => { if (CL.session) CL.sync(); });
+
+  /* ---------- indicador en el menú ---------- */
+  const ago = t => { if (!t) return 'nunca'; const s = Math.round((Date.now() - t) / 1000); return s < 60 ? 'recién' : s < 3600 ? 'hace ' + Math.round(s / 60) + ' min' : 'hace ' + Math.round(s / 3600) + ' h'; };
+  A.cloudChrome = () => {
+    const host = $('#drAcct'), foot = $('#drSync');
+    const dot = { ok: 'ok', busy: 'busy', err: 'err', offline: 'err' }[CL.state] || '';
+    let h;
+    if (!conf()) h = '<div class="acct-box"><b>Sin cuenta en la nube</b><span>Los datos quedan solo en este dispositivo. Hacé copias de seguridad desde Ajustes.</span><button class="btn small" data-act="cloudAdmin">Conectar servidor…</button></div>';
+    else if (!CL.session) h = '<div class="acct-box"><b>No ingresaste</b><span>Ingresá con tu correo y contraseña para tener los mismos datos en la PC, la recepción y el teléfono.</span><button class="btn small primary" data-act="loginOpen">Ingresar o crear cuenta</button></div>';
+    else h = '<div class="acct-box"><b>' + esc(CL.session.user.email || '') + '</b><span><i class="sync-dot ' + dot + '"></i>' + (CL.state === 'busy' ? 'Sincronizando…' : CL.state === 'err' ? esc(CL.msg || 'Error al sincronizar') : CL.state === 'offline' ? 'Sin conexión: se sube al volver' : 'Sincronizado ' + ago(CL.last)) + '</span><button class="btn small" data-act="acctOpen">Cuenta y equipos</button></div>';
+    if (host) host.innerHTML = h;
+    if (foot) foot.textContent = CL.session ? (CL.state === 'ok' ? '☁ al día' : CL.state === 'busy' ? '☁ …' : '☁ pendiente') : '';
+  };
+
+  /* ---------- pantalla de ingreso ---------- */
+  const LOGO = '<svg viewBox="0 0 32 32" width="44" height="44" fill="none" aria-hidden="true"><path d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/></svg>';
+  CL.showLogin = (tab, msg) => {
+    let w = $('#loginWrap'); if (!w) { w = document.createElement('div'); w.id = 'loginWrap'; w.className = 'login-wrap'; document.body.appendChild(w); }
+    const up = tab === 'up', rec = tab === 'rec', np = tab === 'newpass';
+    let h = '<form class="login-card" data-sub="' + (np ? 'loginNewPass' : rec ? 'loginRec' : up ? 'loginUp' : 'loginIn') + '" novalidate>' + LOGO + '<h1>' + (np ? 'Nueva contraseña' : rec ? 'Recuperar contraseña' : up ? 'Crear cuenta' : 'Ingresar') + '</h1>';
+    if (!rec && !np) h += '<div class="seg" role="group"><button type="button" data-act="loginTab" data-t="in" aria-pressed="' + !up + '">Ingresar</button><button type="button" data-act="loginTab" data-t="up" aria-pressed="' + up + '">Crear cuenta</button></div>';
+    if (!np) h += '<div class="field"><label for="lgMail">Correo electrónico</label><input id="lgMail" type="email" autocomplete="email" inputmode="email" required value="' + esc(CL._mail || '') + '"></div>';
+    if (!rec) h += '<div class="field"><label for="lgPass">' + (np ? 'Nueva contraseña' : 'Contraseña') + '</label><input id="lgPass" type="password" autocomplete="' + (up || np ? 'new-password' : 'current-password') + '" minlength="8" required></div>';
+    if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
+    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto la <a href="#" data-act="privacyOpen">política de privacidad y condiciones de uso</a>.</label>' +
+      '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
+    h += '<div id="lgMsg" class="hint bad" role="alert">' + esc(msg || '') + '</div>';
+    h += '<button class="btn primary" type="submit" style="min-height:48px">' + (np ? 'Guardar contraseña' : rec ? 'Enviar enlace' : up ? 'Crear cuenta' : 'Ingresar') + '</button>';
+    if (!up && !rec && !np) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="rec">Me olvidé la contraseña</button>';
+    if (rec) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="in">Volver</button>';
+    if (!np) h += '<div class="legal">Los datos viajan cifrados y se guardan en servidores de la Unión Europea, que la Argentina reconoce con protección adecuada. Solo vos (y los equipos donde ingreses con tu cuenta) pueden verlos.</div>' +
+      '<div class="row-btns" style="justify-content:center"><button type="button" class="btn small ghost" data-act="loginLocal">Seguir sin cuenta</button><button type="button" class="btn small ghost" data-act="loginDemo">Ver con datos de ejemplo</button></div>';
+    w.innerHTML = h + '</form>';
+    const f = w.querySelector('input'); if (f && !A.isNarrow()) f.focus();
+  };
+  CL.hideLogin = () => { const w = $('#loginWrap'); if (w) w.remove(); };
+  A.acts.loginOpen = () => { A.hideDrawer(); CL.showLogin('in'); };
+  A.acts.loginTab = el => { CL._mail = ($('#lgMail') || {}).value || CL._mail; CL.showLogin(el.getAttribute('data-t')); };
+  A.acts.loginLocal = () => { LS.set('odontovoz.localOnly', '1'); CL.hideLogin(); A.afterRefresh(); };
+  A.acts.loginDemo = () => { LS.set('odontovoz.localOnly', '1'); CL.hideLogin(); if (!A.DEMO) A.setMode('demo'); };
+  const lgErr = m => { const e = $('#lgMsg'); if (e) e.textContent = m; };
+  const okPass = p => p.length >= 8 && /[a-zA-Z]/.test(p) && /\d/.test(p);
+  const okMail = m => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m);
+  async function busy(btnLabel, fn) { const b = $('#loginWrap button[type="submit"]'); const t = b ? b.textContent : ''; if (b) { b.disabled = true; b.textContent = btnLabel; } try { await fn(); } catch (e) { lgErr(e.message); } finally { if (b && document.body.contains(b)) { b.disabled = false; b.textContent = t; } } }
+  A.subs.loginIn = () => {
+    const m = $('#lgMail').value.trim(), p = $('#lgPass').value; CL._mail = m;
+    if (!okMail(m)) return lgErr('Revisá el correo.'); if (!p) return lgErr('Escribí la contraseña.');
+    busy('Ingresando…', async () => { await CL.signIn(m, p); afterLogin(); });
+  };
+  A.subs.loginUp = () => {
+    const m = $('#lgMail').value.trim(), p = $('#lgPass').value, p2 = $('#lgPass2').value; CL._mail = m;
+    if (!okMail(m)) return lgErr('Revisá el correo.'); if (!okPass(p)) return lgErr('La contraseña necesita al menos 8 caracteres, con letras y números.');
+    if (p !== p2) return lgErr('Las contraseñas no coinciden.'); if (!$('#lgOk1').checked || !$('#lgOk2').checked) return lgErr('Para crear la cuenta tenés que aceptar las dos casillas.');
+    busy('Creando…', async () => {
+      const r = await CL.signUp(m, p, { consent_privacy: PRIV_VER, consent_at: new Date().toISOString(), health_professional: true });
+      if (r.in) afterLogin(); else CL.showLogin('in', '');
+      if (r.confirm) { const e = $('#lgMsg'); if (e) { e.className = 'hint ok'; e.textContent = 'Listo. Te enviamos un correo a ' + m + ': abrilo y tocá el enlace para activar la cuenta. Después ingresá acá.'; } }
+    });
+  };
+  A.subs.loginRec = () => {
+    const m = $('#lgMail').value.trim(); if (!okMail(m)) return lgErr('Revisá el correo.');
+    busy('Enviando…', async () => { await CL.recover(m); const e = $('#lgMsg'); e.className = 'hint ok'; e.textContent = 'Si el correo tiene cuenta, te llega un enlace para elegir una contraseña nueva.'; });
+  };
+  A.subs.loginNewPass = () => {
+    const p = $('#lgPass').value, p2 = $('#lgPass2').value;
+    if (!okPass(p)) return lgErr('La contraseña necesita al menos 8 caracteres, con letras y números.'); if (p !== p2) return lgErr('Las contraseñas no coinciden.');
+    busy('Guardando…', async () => { await CL.setPassword(p); A.toast('Contraseña cambiada.'); afterLogin(); });
+  };
+  function afterLogin() {
+    const uid = CL.session.user.id, prev = LS.get('odontovoz.cloud.uid', '');
+    if (prev && prev !== uid) { /* otra cuenta en este equipo: se empieza de cero para no mezclar consultorios */ LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.since', null); baseClear(); }
+    LS.set('odontovoz.cloud.uid', uid); LS.set('odontovoz.localOnly', null);
+    CL.hideLogin();
+    if (A.DEMO || (prev && prev !== uid)) { LS.set('odontovoz.mode', 'real'); A.noSave = true; setTimeout(() => location.reload(), 60); return; }
+    A.toast('Ingresaste como ' + CL.session.user.email + '. Sincronizando…'); startLoop(); A.afterRefresh();
+  }
+
+  /* ---------- cuenta y equipos ---------- */
+  A.acts.acctOpen = () => { A.hideDrawer(); S.modal = { type: 'acct' }; A.renderModal(); };
+  MF.acct = () => {
+    const s = CL.session; if (!s) return A.modalShell('Cuenta', '<p>No ingresaste.</p>', '<button class="btn primary" data-act="loginOpen">Ingresar</button>');
+    const b = '<div class="acct-box"><b>' + esc(s.user.email) + '</b><span><i class="sync-dot ' + ({ ok: 'ok', busy: 'busy' }[CL.state] || 'err') + '"></i>Última sincronización: ' + ago(CL.last) + '</span></div>' +
+      '<div class="field" style="margin-top:10px"><label for="devName">Nombre de este equipo (lo ven los demás al cargar algo)</label><input id="devName" data-chg="devName" value="' + esc(A.deviceLabel()) + '" placeholder="Ej.: Recepción, Consultorio, PC"></div>' +
+      '<div class="hint">Para que la secretaria y vos vean lo mismo, ingresen con esta misma cuenta en cada equipo (teléfono, tablet o la página web en la PC). Los cambios aparecen en los otros equipos en unos segundos.</div>' +
+      '<div class="row-btns"><button class="btn" data-act="cloudSyncNow">Sincronizar ahora</button><button class="btn" data-act="acctPass">Cambiar contraseña</button><button class="btn" data-act="privacyOpen">Privacidad</button></div>' +
+      '<div class="block"><h3>Tus datos</h3><div class="hint" style="margin:0">Podés descargar todo cuando quieras (Ajustes › Copia de seguridad). Las imágenes de pacientes quedan en el equipo donde se cargaron.</div><div class="row-btns"><button class="btn small" data-act="cfgOpen" data-t="datos">Descargar copia</button><button class="btn small danger" data-act="acctDelete">Borrar mis datos de la nube</button></div></div>';
+    return A.modalShell('Cuenta y equipos', b, '<button class="btn" data-act="acctOut">Cerrar sesión</button><button class="btn primary" data-act="closeModal">Listo</button>');
+  };
+  A.chg.devName = el => { LS.set('odontovoz.devname', el.value.trim().slice(0, 30)); };
+  A.acts.cloudSyncNow = async () => { await CL.sync(); A.toast(CL.state === 'ok' ? 'Todo sincronizado.' : CL.msg || 'No se pudo sincronizar.'); if (S.modal && S.modal.type === 'acct') A.renderModal(); };
+  A.acts.acctPass = async () => { try { await CL.recover(CL.session.user.email); A.toast('Te enviamos un correo con el enlace para elegir la contraseña nueva.'); } catch (e) { A.toast(e.message); } };
+  A.acts.acctOut = () => { S.modal = { type: 'acctOut' }; A.renderModal(); };
+  MF.acctOut = () => A.modalShell('Cerrar sesión', '<p>Lo que ya está en la nube queda guardado. ¿Querés también borrar los datos de este equipo? Conviene si el equipo es compartido.</p>',
+    '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn" data-act="acctOutKeep">Cerrar y conservar</button><button class="btn danger" data-act="acctOutWipe">Cerrar y borrar de este equipo</button>');
+  A.acts.acctOutKeep = () => { S.modal = null; A.renderModal(); CL.signOut(false); };
+  A.acts.acctOutWipe = async () => { S.modal = null; A.renderModal(); if (CL.session) await CL.sync(); CL.signOut(true); };
+  A.acts.acctDelete = () => { S.modal = { type: 'acctDel' }; A.renderModal(); };
+  MF.acctDel = () => A.modalShell('Borrar mis datos de la nube',
+    '<p>Se borran de los servidores todos los pacientes, turnos e historias de esta cuenta. <b>No se puede deshacer.</b></p><p class="hint">Antes, descargá una copia: la ley obliga a conservar las historias clínicas (Ley 26.529, art. 18: al menos 10 años).</p><div class="field"><label for="delOk">Escribí BORRAR para confirmar</label><input id="delOk" autocomplete="off"></div><div id="delMsg" class="hint bad"></div>',
+    '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="acctDelGo">Borrar</button>');
+  A.acts.acctDelGo = async () => {
+    if (($('#delOk').value || '').trim().toUpperCase() !== 'BORRAR') { $('#delMsg').textContent = 'Escribí BORRAR.'; return; }
+    try { await api('/rest/v1/rpc/ov_delete_my_data', { method: 'POST', body: {} }); await baseClear(); LS.set('odontovoz.cloud.since', null); S.modal = null; A.renderModal(); A.toast('Datos de la nube borrados. Este equipo conserva su copia hasta que cierres sesión.'); stopLoop(); }
+    catch (e) { $('#delMsg').textContent = e.message; }
+  };
+  /* conexión manual a un servidor propio (avanzado) */
+  A.acts.cloudAdmin = () => { A.hideDrawer(); S.modal = { type: 'cloudAdmin' }; A.renderModal(); };
+  MF.cloudAdmin = () => {
+    let o = {}; try { o = JSON.parse(LS.get('odontovoz.cloudcfg', 'null')) || {}; } catch (e) { /* nada */ }
+    return A.modalShell('Conectar servidor', '<p class="hint">Para quien administra la instalación: dirección del proyecto Supabase y su clave pública («anon»). La clave pública está pensada para ir dentro de la app; la seguridad la dan las reglas por usuario del servidor.</p>' +
+      '<div class="field"><label for="ccUrl">Dirección del proyecto</label><input id="ccUrl" value="' + esc(o.url || '') + '" placeholder="https://xxxx.supabase.co"></div><div class="field"><label for="ccKey">Clave pública (anon)</label><input id="ccKey" value="' + esc(o.key || '') + '"></div><div id="ccMsg" class="hint bad"></div>',
+      '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="cloudAdminSave">Guardar</button>');
+  };
+  A.acts.cloudAdminSave = () => {
+    const url = $('#ccUrl').value.trim(), key = $('#ccKey').value.trim();
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.(co|in)\/?$/i.test(url) && !/^https:\/\//.test(url)) { $('#ccMsg').textContent = 'La dirección tiene que empezar con https://'; return; }
+    LS.set('odontovoz.cloudcfg', url && key ? JSON.stringify({ url, key }) : null); S.modal = null; A.renderModal(); A.afterRefresh(); if (url && key) CL.showLogin('in');
+  };
+
+  /* ---------- política de privacidad (también en privacidad.html) ---------- */
+  A.acts.privacyOpen = (el, ev) => { if (ev) ev.preventDefault(); const w = $('#loginWrap'); if (w) w.style.display = 'none'; S.modal = { type: 'privacy', fromLogin: !!w }; A.renderModal(); };
+  const origClose = A.closeModal;
+  A.closeModal = () => { const fl = S.modal && S.modal.type === 'privacy' && S.modal.fromLogin; origClose(); if (fl) { const w = $('#loginWrap'); if (w) w.style.display = ''; } };
+  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen claro de cómo se tratan los datos en Odonto Voz.</p>' +
+    '<h3>Quién es responsable de qué</h3><p>El profesional o el centro que usa la app es el <b>responsable de la base de datos de sus pacientes</b> (Ley 25.326). Odonto Voz presta el servicio de software y de almacenamiento por cuenta del profesional y solo trata los datos para hacer funcionar la app.</p>' +
+    '<h3>Qué datos se guardan</h3><p>De la cuenta: correo, contraseña (guardada cifrada, nadie la puede leer) y la aceptación de estas condiciones. De los pacientes: lo que el profesional carga (datos de contacto, turnos, historia clínica, odontograma, presupuestos y pagos). Son <b>datos sensibles de salud</b>: solo los puede tratar el profesional, con secreto profesional y con el consentimiento del paciente (Ley 25.326, arts. 7, 8 y 10; Ley 26.529).</p>' +
+    '<h3>Dónde y cómo</h3><p>En servidores de Supabase en la <b>Unión Europea (Frankfurt, Alemania)</b>. La Argentina considera que los países de la Unión Europea tienen protección adecuada para transferir datos personales (AAIP). Los datos viajan cifrados (HTTPS) y se guardan cifrados. Cada cuenta solo puede leer sus propios registros (reglas de seguridad por usuario en la base de datos). Se guarda un historial de cambios de cada ficha para que la historia clínica no se pierda ni se altere sin rastro.</p>' +
+    '<h3>Sin cuenta</h3><p>Si usás la app sin cuenta, todo queda solo en tu equipo y nada se envía a internet.</p>' +
+    '<h3>Tus derechos y los de tus pacientes</h3><p>Acceso, rectificación, actualización y supresión (Ley 25.326, arts. 14 a 16). El acceso es gratuito cada seis meses salvo interés legítimo. Podés descargar todos tus datos desde Ajustes y borrar los de la nube desde «Cuenta y equipos». Recordá que la historia clínica debe conservarse al menos 10 años (Ley 26.529, art. 18).</p>' +
+    '<p class="hint">LA AGENCIA DE ACCESO A LA INFORMACIÓN PÚBLICA, en su carácter de Órgano de Control de la Ley N° 25.326, tiene la atribución de atender las denuncias y reclamos que interpongan quienes resulten afectados en sus derechos por incumplimiento de las normas vigentes en materia de protección de datos personales.</p>' +
+    '<h3>Obligaciones del profesional</h3><p>Informar a sus pacientes y obtener su consentimiento; inscribir su base de datos en el Registro Nacional de Bases de Datos de la AAIP cuando corresponda; cuidar el acceso a sus equipos y su contraseña.</p>' +
+    '<h3>Contacto</h3><p>' + (A.SUPPORT && A.SUPPORT.email ? 'Escribinos a ' + esc(A.SUPPORT.email) + '.' : 'Desde Ayuda › Soporte dentro de la app.') + '</p>';
+  MF.privacy = () => A.modalShell('Privacidad y condiciones', A.PRIVACY_HTML, '<button class="btn primary" data-act="closeModal">Entendido</button>', true);
+
+  /* ---------- arranque ---------- */
+  CL.boot = async () => {
+    if (!conf()) { A.afterRefresh(); return; }
+    const link = await CL.fromLink();
+    if (link === 'recovery') { CL.showLogin('newpass'); return; }
+    if (link) { afterLogin(); return; }
+    if (CL.session) { if (A.DEMO) { /* con sesión iniciada se usan los datos reales */ LS.set('odontovoz.mode', 'real'); A.noSave = true; location.reload(); return; } startLoop(); return; }
+    if (LS.get('odontovoz.localOnly', '') !== '1') {
+      const show = () => CL.showLogin('in');
+      const intro = $('#intro'); if (intro) { const go = intro.querySelector('[data-act="introGo"]'); if (go) go.addEventListener('click', () => setTimeout(show, 450), { once: true }); } else show();
+    }
+  };
+  setTimeout(() => { CL.boot().catch(e => A.logError && A.logError('nube', e)); }, 0);
+})();
 /* ===== arranque, navegación y eventos ===== */
 (function () {
   'use strict';

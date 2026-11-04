@@ -5,9 +5,13 @@
   "android": {
     "backgroundColor": "#0b6b6f",
     "allowMixedContent": false,
-    "captureInput": true
+    "captureInput": true,
+    "adjustMarginsForEdgeToEdge": "force"
   },
   "plugins": {
-    "SplashScreen": { "launchShowDuration": 800, "backgroundColor": "#0b6b6f" }
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#0b6b6f"
+    }
   }
 }

@@ -5,15 +5,43 @@
   'use strict';
 
   const N = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/(\d)\s*[:.h]\s*(\d{2})\b/g, '$1:$2')
+    .replace(/(\d)\s*[:.h]\s*(\d{2})\b/g, '$1:$2').replace(/(\d)\s*(?:hs|hrs|h)\b/g, '$1 hs')
     .replace(/[¿?¡!.,;"“”«»()\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
 
   /* ---------- palabra de activación ---------- */
   const WAKE = /(?:^|\s)(?:(?:hola|oye|oi|che|ey|hey|dale)\s+)?(?:o\s*)?dont[oa]\s*(?:voz|vos|boz|bos|box|bots|bot|vo)?(?=\s|$)/;
+  /* nombres del asistente y cómo los suele escribir el reconocedor de voz */
+  const NAMES = {
+    navi: 'navi|nabi|navy|navis|navih|nadie navi',
+    doc: 'doc|dock|dok|doc doc|doctor doc',
+    nexus: 'nexus|nexos|nexo|necsus|nexu|nexuz|next us|nexis',
+    mia: 'mia|mias|mya|mi a',
+    axon: 'axon|acson|akson|exon|axxon|ackson|action|axel',
+    lumina: 'lumina|luminah|lumi|lumino|luminas|lu mina',
+    agenda: 'agenda'
+  };
+  let wakeName = 'navi', WAKE_NAME = null;
+  function setWake(name, custom) {
+    wakeName = String(name || 'navi').toLowerCase();
+    let alts = NAMES[wakeName];
+    if (!alts && custom) alts = N(custom).replace(/[^a-z ]/g, '').trim();
+    WAKE_NAME = alts ? new RegExp('^(?:(?:hola|oye|oi|che|ey|hey|dale|buenas)\\s+)?(?:' + alts + ')(?=\\s|$)') : null;
+  }
+  setWake('navi');
   function stripWake(text) {
-    const n = N(text), m = WAKE.exec(n);
+    const n = N(text);
+    if (WAKE_NAME) {
+      const w = WAKE_NAME.exec(n);
+      if (w) {
+        let rest = n.slice(w[0].length).trim();
+        /* con el nombre «Agenda», «agenda de mañana» sigue siendo un pedido de la agenda */
+        if (wakeName === 'agenda' && rest) { const r = parse(rest, {}); if (!r || r.intent === 'unknown') { const r2 = parse(n, {}); if (r2 && r2.intent !== 'unknown') rest = n; } }
+        return { woke: true, name: wakeName, rest, full: n };
+      }
+    }
+    const m = WAKE.exec(n);
     if (!m) return { woke: false, rest: n };
-    return { woke: true, rest: (n.slice(0, m.index) + ' ' + n.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim() };
+    return { woke: true, rest: (n.slice(0, m.index) + ' ' + n.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim(), full: n };
   }
 
   /* ---------- muletillas al principio y al final ---------- */
@@ -92,7 +120,12 @@
       if (/^mes/.test(m[2])) { const d = fromKey(today); d.setMonth(d.getMonth() + n); return cut(m, keyOf(d)); }
       return cut(m, addD(today, n));
     }
-    if ((m = /\b(?:el |este |el proximo |proximo |el otro )?(lunes|martes|miercoles|jueves|viernes|sabado|domingo)( que viene| proximo| siguiente)?\b/.exec(s))) {
+    if ((m = new RegExp('\\b(?:para )?(?:el )?(?:dia )?(?:(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo) )?' + DAYW + ' (?:de )?(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)(?: (?:de |del )?(20\\d\\d))?\\b').exec(s))) {
+      const dn = /treinta y/.test(m[1]) ? 31 : dayNum(m[1]), t = fromKey(today); let d = new Date(m[3] ? +m[3] : t.getFullYear(), MONS[m[2]], dn, 12);
+      if (!m[3] && keyOf(d) < today) d = new Date(t.getFullYear() + 1, MONS[m[2]], dn, 12);
+      return cut(m, keyOf(d));
+    }
+    if ((m = /\b(?:para )?(?:el )?(?:dia )?(?:este |proximo |el proximo |el otro )?(lunes|martes|miercoles|jueves|viernes|sabado|domingo)( que viene| proximo| siguiente)?\b/.exec(s))) {
       const want = DOWS[m[1]], cur = fromKey(today).getDay(); let diff = (want - cur + 7) % 7;
       if (diff === 0 && (m[2] || /proximo|otro/.test(m[0]))) diff = 7;
       return cut(m, addD(today, diff));
@@ -119,7 +152,7 @@
     m = new RegExp('\\b(?:a las|a la|para las|para la|tipo|como a las|a eso de las|cerca de las|las|la|a eso de la)\\s+' + HW +
       '(?:\\s+(?:y\\s+)?(media|cuarto|cuarenta y cinco|quince|treinta|veinticinco|veinte|diez|cinco|cuarenta|cincuenta|\\d{2})(?!\\s+(?:mil|lucas?|pesos)))?(?:\\s+menos\\s+(cuarto|diez|veinte|cinco))?(?:\\s+(?:en punto|hs|horas|h))?(?:\\s+(?:de la|del|por la|a la)\\s+(manana|tarde|noche|mediodia))?').exec(s);
     if (!m) {
-      const b = /\b(\d{1,2}:\d{2})(?:\s*(?:hs|horas|h))?(?:\s+(?:de la|del|por la)\s+(manana|tarde|noche))?/.exec(s);
+      const b = /\b(\d{1,2}:\d{2})(?:\s*(?:hs|horas|h))?(?:\s+(?:de la|del|por la)\s+(manana|tarde|noche))?/.exec(s) || /\b(?:a las |para las |tipo )?(\d{1,2}) (?:hs|horas)\b(?:\s+(?:de la|del|por la)\s+(manana|tarde|noche))?/.exec(s);
       if (b) m = { 0: b[0], index: b.index, 1: b[1], 2: null, 3: null, 4: b[2] };
     }
     if (!m) return { value: null, rest: s };
@@ -133,6 +166,24 @@
     else if (!per && h >= 1 && h <= 7) h += 12; /* «a las 3» en un consultorio es a la tarde */
     if (mi > 59) return { value: null, rest: s };
     return cut(m, h * 60 + mi);
+  }
+
+  /* ---------- duración del turno («de media hora», «por una hora», «de 45 minutos») ---------- */
+  function parseDur(s) {
+    const cut = (m, v) => ({ value: v, rest: (s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim() });
+    let m;
+    const pre = '\\b(?:en |con )?(?:un |una )?(?:turno |sesion |consulta )?(?:de |por |que dure |dura |durante )';
+    if ((m = new RegExp(pre + '(?:una )?hora y media\\b').exec(s))) return cut(m, 90);
+    if ((m = new RegExp(pre + '(?:una )?hora y cuarto\\b').exec(s))) return cut(m, 75);
+    if ((m = new RegExp(pre + '(?:una )?media hora\\b').exec(s))) return cut(m, 30);
+    if ((m = new RegExp(pre + '(?:un )?cuarto de hora\\b').exec(s))) return cut(m, 15);
+    if ((m = new RegExp(pre + '(?:una|1) hora\\b').exec(s))) return cut(m, 60);
+    if ((m = new RegExp(pre + '(dos|2) horas\\b').exec(s))) return cut(m, 120);
+    if ((m = new RegExp(pre + '(\\d{1,3}|quince|veinte|treinta|cuarenta|cuarenta y cinco|cincuenta|sesenta|noventa|diez|veinticinco) (?:minutos|min|mins)\\b').exec(s))) {
+      const v = /^\d+$/.test(m[1]) ? +m[1] : ({ 'cuarenta y cinco': 45, noventa: 90, sesenta: 60, cincuenta: 50, cuarenta: 40, treinta: 30, veinticinco: 25, veinte: 20, quince: 15, diez: 10 })[m[1]];
+      if (v >= 5 && v <= 240) return cut(m, v);
+    }
+    return { value: null, rest: s };
   }
 
   /* ---------- motivo del turno ---------- */
@@ -168,6 +219,12 @@
     return t;
   }
   const isPron = s => !s || PRON.test(s);
+  /* restos de la frase que no son parte del nombre («el día», «en un turno») */
+  function tidy(r) {
+    let t = ' ' + String(r || '') + ' ', prev;
+    do { prev = t; t = t.replace(/\s(?:el dia|el|dia|en un turno|en una consulta|un turno|una consulta|turno|en|para|y|de)\s*$/, ' '); } while (t !== prev);
+    return t.replace(/\s+(?:el dia|dia)\s+/g, ' ').trim();
+  }
 
   /* ---------- verbos ---------- */
   const GO = '(?:ir a(?:l| la)?|anda a(?:l| la)?|andate a(?:l| la)?|vamos a(?:l| la)?|vamo a(?:l| la)?|llevame a(?:l| la)?|pasa a(?:l| la)?|pasame a(?:l| la)?|entra(?:r)? a(?:l| la)?|abri(?:r|me)?|abre|mostra(?:r|me)?|muestra(?:me)?|ver|veamos|quiero ver|dame|traeme|trae|mira|volve a(?:l| la)?|volver a(?:l| la)?|abrime la|abrime el|abri la|abri el)';
@@ -218,6 +275,12 @@
     if (/^(?:como viene el dia|que tengo hoy|cuantos? (?:turnos|pacientes) (?:tengo|hay)(?: hoy)?|resumen del dia|como estamos hoy|cuantos faltan)$/.test(c)) return { intent: 'today' };
     if ((m = /^(?:cuanto (?:me )?debe|que saldo tiene|cual es el saldo de|cuanto le falta pagar a|debe algo)(?:\s+(.*))?$/.exec(c))) return { intent: 'owe', name: cleanName(m[1] || '') };
 
+    // odontograma pedido de forma explícita («agregá una caries oclusal del 45 en el odontograma»)
+    if ((m = /^(?:agrega(?:r|me|le)?|anota(?:r|me|le)?|pone(?:r|me|le)?|marca(?:r|me|le)?|carga(?:r|me|le)?|suma(?:r|le)?|registra(?:r|me|le)?)?\s*(.+?)\s+(?:en|al|para)\s+(?:el\s+)?odontograma(?:\s+(?:de|del|a)\s+(.+))?$/.exec(c)) && !/^(?:abri|abrime|mostra|mostrame|ir|anda|ver)\b/.test(c)) {
+      return { intent: 'odon', text: m[1].replace(/^(?:un|una|el|la)\s+/, ''), name: m[2] ? cleanName(m[2]) : null };
+    }
+    if ((m = /^(?:en el odontograma|odontograma)\s*(?:agrega(?:r|me|le)?|anota(?:r|le)?|pone(?:r|le)?|marca(?:r|le)?)?\s+(?!(?:de|del|a|al|para)\s)(.+)$/.exec(c))) return { intent: 'odon', text: m[1], name: null };
+
     // atender
     if ((m = /^(?:atender|atende|atiendo|atendamos|empezar|empeza|empecemos|arrancar|arranca|arrancamos|iniciar|inicia|comenzar|comenza|hace(?:r)? pasar|que pase|pasa|llama(?:r)?)(?: la| una)?(?: atencion| consulta)?(?: (?:a la|al|con|de|a))?\s*(.*)$/.exec(c))) {
       const who = cleanName(m[1] || '');
@@ -233,18 +296,23 @@
     // turnos nuevos
     if ((m = /^(?:(?:dar|da|dale|dame|darle|agenda(?:r|me|le)?|anota(?:r|me|le)?|pone(?:r|me|le)?|nuevo|nueva|reserva(?:r|me|le)?|saca(?:r|me|le)?|hace(?:r|me|le)?|programa(?:r|me|le)?|quiero|necesito|crea(?:r)?|agregar|agrega(?:me|le)?|carga(?:r|me|le)?|asigna(?:r|le)?)\s+)?(?:un |una |el |otro |otra |nuevo |nueva )?(sobreturno|sobre turno|turno|cita|hora)(?:\s+nuevo|\s+nueva)?\b(.*)$/.exec(c)) && (m[1] !== 'hora' || /\b(?:para|a)\b/.test(m[2]))) {
       let r = ' ' + m[2] + ' ';
-      const t = parseTime(r.trim()); r = t.rest;
+      const du = parseDur(r.trim()); r = du.rest;
+      const t = parseTime(r); r = t.rest;
       const d = parseDate(r, today); r = d.rest;
       const mo = parseMotive(r); r = mo.rest;
       const p = parsePro(r, ctx.pros); r = p.rest;
-      const name = cleanName(r.trim());
-      return { intent: 'newAppt', sobre: /sobre/.test(m[1]), start: t.value, date: d.value, what: mo.value, pro: p.value, name: isPron(name) ? null : name, current: !!name && isPron(name) };
+      const name = cleanName(tidy(r));
+      return { intent: 'newAppt', sobre: /sobre/.test(m[1]), start: t.value, date: d.value, dur: du.value, what: mo.value, pro: p.value, name: isPron(name) ? null : name, current: !!name && isPron(name) };
     }
-    if ((m = /^(?:agenda(?:r|me|le)?|anota(?:r|me|le)?|reserva(?:r|me|le)?)\s+(?!(?:de la|del|de|semana|mes|dia|hoy|manana)\b)(?:a\s+|al\s+|a la\s+)?(.+)$/.exec(c)) && !/\b(?:en la historia|en historia|historia clinica)\b/.test(m[1])) {
-      let r = m[1];
+    if ((m = /^(agenda(?:r|me|le)?|anota(?:r|me|le)?|reserva(?:r|me|le)?|agrega(?:r|me|le)?|suma(?:r|me|le)?|pone(?:r|me|le)?|mete(?:r|me|le)?|carga(?:r|me|le)?|cita(?:r|me|le)?)\s+(?!(?:de la|del|de|semana|mes|dia|hoy|manana)\b)(?:un\s+(?=a\s)|una\s+(?=a\s))?(?:a\s+|al\s+|a la\s+)?(.+)$/.exec(c)) && !/\b(?:en la historia|en historia|historia clinica|nota|evolucion|odontograma)\b/.test(m[2])) {
+      const weak = !/^(?:agenda|anota|reserva|cita)/.test(m[1]);
+      let r = m[2];
+      const du = parseDur(r); r = du.rest;
       const t = parseTime(r); r = t.rest; const d = parseDate(r, today); r = d.rest; const mo = parseMotive(r); r = mo.rest; const p = parsePro(r, ctx.pros); r = p.rest;
-      const name = cleanName(r.trim());
-      if (t.value != null || d.value || name) return { intent: 'newAppt', sobre: false, start: t.value, date: d.value, what: mo.value, pro: p.value, name: isPron(name) ? null : name, current: !!name && isPron(name) };
+      const name = cleanName(tidy(r));
+      const toothy = /\b(?:[1-4][1-8]|[5-8][1-5])\b/.test(r) || /\b(?:caries|oclusal|mesial|distal|vestibular|palatin[ao]|lingual|amalgama|sellador|fractura|pieza|resto radicular|ausente|corona|implante)\b/.test(m[2]);
+      if ((!weak || ((t.value != null || d.value || du.value) && !toothy)) && (t.value != null || d.value || name))
+        return { intent: 'newAppt', sobre: false, start: t.value, date: d.value, dur: du.value, what: mo.value, pro: p.value, name: isPron(name) ? null : name, current: !!name && isPron(name) };
     }
     // pacientes nuevos
     if ((m = /^(?:nuevo paciente|nueva paciente|paciente nuevo|paciente nueva|agrega(?:r|me)? (?:un |una )?(?:nuevo |nueva )?paciente|crea(?:r)? (?:un |una )?paciente|alta de paciente|da(?:r)? de alta (?:a )?|registra(?:r)? (?:un |una )?(?:nuevo |nueva )?paciente|carga(?:r|me)? (?:un |una )?paciente)\s*(.*)$/.exec(c))) {
@@ -310,7 +378,7 @@
     return { intent: 'unknown', text: c, raw };
   }
 
-  const api = { parse, clean, N, stripWake, parseDate, parseTime, parseAmount, parseMethod, parseMotive, parsePro, cleanName, wordsNum };
+  const api = { parse, clean, N, stripWake, setWake, NAMES, parseDur, parseDate, parseTime, parseAmount, parseMethod, parseMotive, parsePro, cleanName, wordsNum };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.OVCmd = api;
 })(typeof window !== 'undefined' ? window : this);
