@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OdontoVoz · Agenda e historia clínica odontológica por voz</title>
+<meta name="description" content="OdontoVoz organiza la agenda, las historias clínicas y el odontograma de tu consultorio. Le dictás con las manos ocupadas y lo anota. Android, web y PC.">
+<meta name="theme-color" content="#08484b">
+<link rel="icon" href="img/icono.png">
+<link rel="apple-touch-icon" href="img/icono.png">
+<meta property="og:title" content="OdontoVoz · tu consultorio, dictado">
+<meta property="og:description" content="Agenda, historia clínica y odontograma con asistente por voz. Para odontólogos y recepción.">
+<meta property="og:image" content="img/pc-agenda.webp">
+<script>
+  /* enlaces de los correos (confirmar cuenta, nueva contraseña) y app instalada: van directo a la app */
+  (function () {
+    var h = location.hash, q = location.search;
+    var standalone = window.matchMedia && matchMedia('(display-mode: standalone)').matches;
+    if (/access_token=|error_description=|type=(signup|recovery|invite|magiclink)/.test(h) || /[?&](code|token_hash)=/.test(q) || standalone) location.replace('app/' + q + h);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Schibsted+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f2f6f5; --white: #ffffff; --ink: #0f2a2b; --ink-2: #4a6264; --line: #d3e0de;
+  --teal: #0b6b6f; --deep: #08484b; --mint: #bfe8df; --blue: #2457c5; --red: #c8372d;
+  --sun: #f6c453;
+  --display: 'Schibsted Grotesk', system-ui, sans-serif; --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --wrap: 1120px; --gut: clamp(16px, 4vw, 40px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #0d1b1c; --white: #132627; --ink: #e5efee; --ink-2: #9db4b3; --line: #24403f; --mint: #1d4a45; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #0d1b1c; --white: #132627; --ink: #e5efee; --ink-2: #9db4b3; --line: #24403f; --mint: #1d4a45; color-scheme: dark; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 18px/1.6 var(--body); }
+img { max-width: 100%; height: auto; display: block; }
+a { color: var(--teal); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.12; margin: 0; letter-spacing: -.01em; }
+h2 { font-size: clamp(30px, 4.4vw, 46px); font-weight: 800; }
+h3 { font-size: 21px; font-weight: 700; }
+p { margin: 0; }
+.wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gut); }
+.lede { font-size: 20px; color: var(--ink-2); max-width: 62ch; }
+section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
+.sec-head { display: grid; gap: 14px; margin-bottom: 40px; max-width: 760px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 22px; border-radius: 999px; font: 700 17px/1 var(--display); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.solid { background: var(--sun); color: #2b2100; }
+.btn.solid:hover { background: #ffd56f; }
+.btn.line { border-color: currentColor; color: inherit; }
+.btn.teal { background: var(--teal); color: #fff; }
+.btn.teal:hover { background: var(--deep); }
+.btn svg { width: 20px; height: 20px; flex: none; }
+
+/* ---------- cabecera ---------- */
+.top { position: sticky; top: 0; z-index: 20; background: var(--deep); color: #fff; }
+.top .wrap { display: flex; align-items: center; gap: 18px; min-height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font: 800 21px/1 var(--display); }
+.brand svg { width: 30px; height: 30px; }
+.top nav { display: flex; gap: 22px; margin-left: auto; }
+.top nav a { color: #d7efeb; text-decoration: none; font-weight: 700; font-size: 16px; }
+.top nav a:hover { color: #fff; text-decoration: underline; }
+.top .btn { min-height: 42px; padding: 0 18px; font-size: 15px; }
+@media (max-width: 860px) { .top nav { display: none; } .top .btn { margin-left: auto; } }
+
+/* ---------- portada ---------- */
+.hero { background: var(--deep); color: #fff; padding: clamp(40px, 7vw, 88px) 0 clamp(56px, 8vw, 96px); overflow: hidden; }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(32px, 5vw, 64px); align-items: center; }
+.hero h1 { font-size: clamp(42px, 6.6vw, 76px); font-weight: 800; letter-spacing: -.025em; }
+.hero .lede { color: #cfe7e3; margin-top: 20px; }
+.hero .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.hero .fine { margin-top: 16px; font-size: 15px; color: #9fcbc4; }
+@media (max-width: 900px) { .hero .wrap { grid-template-columns: 1fr; } }
+
+.demo { background: #f7fbfa; color: var(--ink); border-radius: 22px; padding: 18px 18px 16px; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .55); }
+.demo-bar { display: flex; align-items: center; gap: 12px; }
+.mic { width: 46px; height: 46px; border-radius: 50%; background: var(--teal); display: grid; place-items: center; flex: none; position: relative; }
+.mic svg { width: 22px; height: 22px; }
+.mic.on::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 3px solid var(--teal); opacity: .45; animation: ring 1.2s ease-out infinite; }
+@keyframes ring { from { transform: scale(.85); opacity: .6; } to { transform: scale(1.25); opacity: 0; } }
+.said { min-height: 56px; display: flex; align-items: center; font: 500 19px/1.35 var(--display); color: var(--ink); }
+.said .cur { display: inline-block; width: 2px; height: 1.1em; background: var(--teal); margin-left: 2px; vertical-align: -3px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.odo { margin: 12px 0 8px; background: #fff; border: 1px solid #d3e0de; border-radius: 14px; padding: 10px 8px 6px; }
+.odo svg { width: 100%; height: auto; display: block; }
+.odo text { font: 700 9px var(--body); fill: #6b8384; }
+.odo .t rect, .odo .t polygon { fill: #fff; stroke: #9db1b1; stroke-width: 1; }
+.odo .t .f-blue { fill: var(--blue); stroke: var(--blue); }
+.odo .t .f-red { fill: var(--red); stroke: var(--red); }
+.odo .mark { fill: none; stroke-width: 2.4; }
+.odo .hl { fill: none; stroke: var(--sun); stroke-width: 3; rx: 4; }
+.done-line { min-height: 26px; font-size: 15px; color: #2a6b49; font-weight: 700; display: flex; gap: 8px; align-items: center; }
+.done-line i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: #4a6264; margin-top: 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+/* ---------- un día ---------- */
+.day { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-left: 3px solid var(--mint); margin-left: 8px; }
+.day li { position: relative; padding: 0 0 34px 34px; display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 18px; }
+.day li:last-child { padding-bottom: 0; }
+.day li::before { content: ""; position: absolute; left: -11px; top: 4px; width: 19px; height: 19px; border-radius: 50%; background: var(--paper); border: 4px solid var(--teal); }
+.day time { font: 800 22px/1.2 var(--display); color: var(--teal); }
+.day b { display: block; font: 700 20px/1.3 var(--display); margin-bottom: 4px; }
+.day p { color: var(--ink-2); max-width: 60ch; }
+.day q { font-style: italic; color: var(--ink); }
+@media (max-width: 600px) { .day li { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---------- pantallas ---------- */
+.shots { background: var(--white); border-block: 1px solid var(--line); }
+.pc { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 24px 50px -32px rgba(8, 72, 75, .5); }
+.phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 3vw, 36px); margin-top: clamp(32px, 5vw, 56px); }
+.phone figure { margin: 0; }
+.phone .frame { border-radius: 28px; overflow: hidden; border: 8px solid #10282a; background: #10282a; aspect-ratio: 9 / 15.4; }
+.phone .frame img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.phone figcaption { margin-top: 14px; }
+.phone figcaption b { font: 700 19px/1.3 var(--display); display: block; }
+.phone figcaption span { color: var(--ink-2); font-size: 16px; }
+@media (max-width: 760px) { .phones { grid-template-columns: 1fr; max-width: 360px; margin-inline: auto; } }
+
+.feats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 56px; margin-top: 56px; }
+.feats div { padding: 22px 0; border-top: 1px solid var(--line); }
+.feats h3 { margin-bottom: 6px; }
+.feats p { color: var(--ink-2); font-size: 17px; }
+@media (max-width: 760px) { .feats { grid-template-columns: 1fr; } }
+
+/* ---------- comandos ---------- */
+.say { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 40px; list-style: none; margin: 0; padding: 0; }
+.say li { display: grid; gap: 2px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+.say q { font: 500 20px/1.35 var(--display); quotes: "«" "»"; }
+.say span { color: var(--ink-2); font-size: 16px; }
+@media (max-width: 760px) { .say { grid-template-columns: 1fr; } }
+.wake { margin-top: 28px; color: var(--ink-2); max-width: 66ch; }
+
+/* ---------- planes ---------- */
+.plans-sec { background: var(--white); border-block: 1px solid var(--line); }
+.plans { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.plan { border: 1px solid var(--line); border-radius: 18px; padding: 24px 22px; display: flex; flex-direction: column; gap: 14px; background: var(--paper); }
+.plan.star { background: var(--deep); color: #fff; border-color: var(--deep); }
+.plan.star .who, .plan.star li { color: #cfe7e3; }
+.plan h3 { font-size: 22px; }
+.plan .who { color: var(--ink-2); font-size: 16px; min-height: 2.6em; }
+.plan .price { font: 800 32px/1 var(--display); display: flex; flex-direction: column; gap: 6px; }
+.plan .price small { font: 400 15px var(--body); opacity: .75; }
+.plan .btn { white-space: nowrap; }
+.plan ul { margin: 0; padding: 0 0 0 20px; display: grid; gap: 6px; font-size: 16px; color: var(--ink-2); flex: 1; align-content: start; }
+.plan .btn { width: 100%; min-height: 48px; font-size: 16px; }
+.plan.star .btn { background: var(--sun); color: #2b2100; }
+.plans-note { margin-top: 22px; color: var(--ink-2); font-size: 16px; max-width: 80ch; }
+@media (max-width: 1000px) { .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .plans { grid-template-columns: 1fr; } }
+
+/* ---------- descargas ---------- */
+.dls { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
+.dl { border: 1px solid var(--line); border-radius: 18px; padding: 24px; background: var(--white); display: flex; flex-direction: column; gap: 12px; }
+.dl.main { border: 2px solid var(--teal); }
+.dl .meta { font-size: 15px; color: var(--ink-2); }
+.dl .meta b { color: var(--ink); }
+.dl .btn { align-self: flex-start; }
+.dl p { color: var(--ink-2); font-size: 16px; }
+.sig { font-size: 13px; color: var(--ink-2); word-break: break-all; }
+.sig summary { cursor: pointer; font-size: 15px; }
+@media (max-width: 900px) { .dls { grid-template-columns: 1fr; } }
+
+.road { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 48px; list-style: none; padding: 0; counter-reset: r; }
+.road li { padding: 20px 22px 0 0; border-top: 4px solid var(--line); position: relative; }
+.road li.now { border-top-color: var(--teal); }
+.road li b { font: 700 19px/1.3 var(--display); display: block; margin-bottom: 4px; }
+.road li span { font-size: 14px; font-weight: 700; color: var(--teal); }
+.road li p { color: var(--ink-2); font-size: 16px; margin-top: 4px; }
+@media (max-width: 760px) { .road { grid-template-columns: 1fr; } .road li { padding: 16px 0 18px; } }
+
+/* ---------- instalación ---------- */
+.inst { background: var(--white); border-block: 1px solid var(--line); }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.tabs button { min-height: 46px; padding: 0 18px; border-radius: 999px; border: 2px solid var(--line); background: var(--paper); color: var(--ink); font: 700 16px var(--display); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--teal); border-color: var(--teal); color: #fff; }
+.panel[hidden] { display: none; }
+.panel { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 48px; }
+@media (max-width: 860px) { .panel { grid-template-columns: 1fr; gap: 28px; } }
+.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 18px; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; }
+.steps li::before { content: counter(s); width: 40px; height: 40px; border-radius: 50%; background: var(--mint); color: var(--deep); font: 800 18px/40px var(--display); text-align: center; }
+.steps b { display: block; font: 700 18px/1.35 var(--display); }
+.steps p { color: var(--ink-2); font-size: 16px; }
+.screen-msg { display: inline; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 15px; color: var(--ink); }
+.aside { background: var(--paper); border-radius: 18px; padding: 24px; display: grid; gap: 12px; align-content: start; align-self: start; border: 1px solid var(--line); }
+.aside h3 { font-size: 19px; }
+.aside p, .aside li { font-size: 16px; color: var(--ink-2); }
+.aside ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.brands { display: grid; gap: 18px; }
+.brands div { border-top: 1px solid var(--line); padding-top: 16px; }
+.brands h3 { margin-bottom: 6px; }
+.brands p { color: var(--ink-2); font-size: 16px; }
+
+/* ---------- datos ---------- */
+.trust { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.trust p { color: var(--ink-2); font-size: 17px; margin-top: 6px; }
+@media (max-width: 760px) { .trust { grid-template-columns: 1fr; } }
+
+footer { background: var(--deep); color: #cfe7e3; padding: 40px 0 calc(40px + env(safe-area-inset-bottom, 0px)); font-size: 15px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
+footer a { color: #fff; }
+footer .brand { margin-right: auto; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="OdontoVoz, inicio">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="#bfe8df" stroke-width="2" stroke-linejoin="round"/><path d="M11 11.5v2M13.5 10v5M16 9v7M18.5 10v5M21 11.5v2" stroke="#bfe8df" stroke-width="1.8" stroke-linecap="round"/></svg>
+      OdontoVoz
+    </a>
+    <nav aria-label="Secciones">
+      <a href="#como">Cómo funciona</a>
+      <a href="#planes">Planes</a>
+      <a href="#descargas">Descargas</a>
+      <a href="#instalar">Instalación</a>
+    </nav>
+    <a class="btn solid" href="app/">Abrir la app</a>
+  </div>
+</header>
+
+<main>
+<section class="hero" aria-labelledby="t-hero">
+  <div class="wrap">
+    <div>
+      <h1 id="t-hero">Dictale la consulta. OdontoVoz la anota.</h1>
+      <p class="lede">Agenda, historia clínica y odontograma para tu consultorio. Con los guantes puestos le decís lo que ves y queda cargado en la ficha del paciente, en el celular y en la PC de recepción al mismo tiempo.</p>
+      <div class="cta">
+        <a class="btn solid" href="#descargas">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Descargar para Android
+        </a>
+        <a class="btn line" href="app/">Usarla en la web</a>
+      </div>
+      <p class="fine">30 días de prueba gratis, sin tarjeta. Tus datos siempre son tuyos.</p>
+    </div>
+
+    <div class="demo" role="img" aria-label="Ejemplo: se dice «caries en el 36 por oclusal» y el odontograma marca la cara oclusal del 36 en azul.">
+      <div class="demo-bar">
+        <div class="mic on" id="dMic"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="#fff"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div class="said" id="dSaid" aria-hidden="true"></div>
+      </div>
+      <div class="odo" aria-hidden="true"><svg id="dOdo" viewBox="0 0 412 92"></svg></div>
+      <div class="done-line" id="dDone" aria-hidden="true"></div>
+      <div class="legend" aria-hidden="true"><span><i style="background:var(--blue)"></i>A realizar</span><span><i style="background:var(--red)"></i>Existente o realizado</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="como" aria-labelledby="t-dia">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-dia">Un día en el consultorio con OdontoVoz</h2>
+      <p class="lede">Pensada para el ritmo real: recepción en la PC, el profesional en el sillón con el celular a mano, y todo sincronizado en segundos.</p>
+    </div>
+    <ol class="day">
+      <li><time>8:40</time><div><b>Recepción confirma los turnos</b><p>Desde la PC, cada turno tiene su botón de WhatsApp que abre el chat del paciente con el recordatorio escrito. Al confirmar, el turno cambia de color.</p></div></li>
+      <li><time>9:02</time><div><b>Llega la paciente</b><p>La secretaria la marca como «llegó» y en el celular del odontólogo aparece el aviso a los pocos segundos. Sin gritos de pasillo.</p></div></li>
+      <li><time>9:05</time><div><b>En el sillón, con las manos ocupadas</b><p><q>Navi, abrí la ficha de Laura Sánchez… caries en el 36 por oclusal… tiene una resina hecha en el 16 por vestibular.</q> El odontograma se pinta solo y la historia clínica queda al día.</p></div></li>
+      <li><time>9:40</time><div><b>Se cobra lo que corresponde</b><p>Lo realizado se carga con el código del nomenclador. Si tiene obra social, el sistema calcula qué paga la obra social y cuánto es el coseguro.</p></div></li>
+      <li><time>9:45</time><div><b>Pedido al laboratorio</b><p>La corona queda registrada con el laboratorio, la etapa, la fecha de entrega y el precio. Si se atrasa, te avisa.</p></div></li>
+      <li><time>19:00</time><div><b>Cierre del día</b><p>Ves quién se atendió, quién faltó, qué se cobró y quién quedó debiendo. Mañana, la agenda arranca con los turnos sin confirmar arriba.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="shots" aria-labelledby="t-pant">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-pant">Todo el consultorio, en una sola app</h2>
+      <p class="lede">En la computadora, la agenda completa con el calendario del mes. En el celular, lo que necesitás en el sillón.</p>
+    </div>
+    <div class="pc"><img src="img/pc-agenda.webp" width="1800" height="1062" alt="Agenda del día en la computadora: turnos por horario con su estado, botón de WhatsApp y calendario del mes al costado." loading="lazy"></div>
+    <div class="phones">
+      <figure class="phone"><div class="frame"><img src="img/celu-agenda.webp" width="780" height="1330" alt="Agenda en el celular con turnos confirmados y sin confirmar." loading="lazy"></div><figcaption><b>Agenda</b><span>Estados con un toque: confirmó, llegó, en atención, atendido, faltó.</span></figcaption></figure>
+      <figure class="phone"><div class="frame"><img src="img/celu-odontograma.webp" width="780" height="1400" alt="Odontograma con piezas marcadas por voz." loading="lazy"></div><figcaption><b>Odontograma por voz</b><span>Dentición permanente y temporaria, por caras, con numeración FDI.</span></figcaption></figure>
+      <figure class="phone"><div class="frame"><img src="img/celu-resumen.webp" width="780" height="1688" alt="Resumen del paciente con motivo de consulta, alertas y notas del día." loading="lazy"></div><figcaption><b>Resumen del paciente</b><span>Motivo de consulta, alertas clínicas y qué se hizo hoy, de un vistazo.</span></figcaption></figure>
+    </div>
+
+    <div class="feats">
+      <div><h3>Agenda para varios profesionales</h3><p>Día, semana y mes. Turnos de 15 minutos a varias horas, sobreturnos, bloqueos de horario, seña y arrastrar para mover.</p></div>
+      <div><h3>Historia clínica completa</h3><p>Datos personales, obra social con afiliado y plan, anamnesis con alertas que se ven en la agenda, evolución y firma del paciente.</p></div>
+      <div><h3>Obras sociales y aranceles</h3><p>Nomenclador cargado, con las obras sociales de Neuquén y Río Negro (ISSN, IPROSS) y las nacionales. Vos ajustás los valores.</p></div>
+      <div><h3>Laboratorios</h3><p>Tus laboratorios con sus trabajos y precios. Cada pedido con etapa, fecha de entrega y lo que pagó el paciente.</p></div>
+      <div><h3>Celular, tablet y PC sincronizados</h3><p>Lo que carga recepción aparece en el celular del profesional en segundos. Sin conexión, sigue funcionando y sincroniza después.</p></div>
+      <div><h3>Pasá tus pacientes de otro sistema</h3><p>Importás el listado desde Excel o CSV (por ejemplo, la exportación de Bilog) y no empezás de cero.</p></div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="t-voz">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-voz">Le hablás como a tu asistente</h2>
+      <p class="lede">Entiende cómo se habla en el consultorio, no hace falta aprender comandos. Estos son ejemplos reales.</p>
+    </div>
+    <ul class="say">
+      <li><q>Agendá a Pedro Juárez mañana a las 10, media hora</q><span>Crea el turno y avisa si se superpone.</span></li>
+      <li><q>Abrí la ficha de Laura Sánchez</q><span>Busca por nombre, apellido o DNI, aunque se pronuncie distinto.</span></li>
+      <li><q>Caries en el 36 por oclusal</q><span>Marca la cara en el odontograma, para realizar.</span></li>
+      <li><q>Tiene un arreglo de resina en el 16 por vestibular</q><span>Lo registra como existente, con el material.</span></li>
+      <li><q>Motivo de consulta: dolor en una muela de abajo</q><span>Queda arriba de todo en el resumen del paciente.</span></li>
+      <li><q>Alergia a la penicilina</q><span>Se suma a la anamnesis y aparece como alerta en la agenda.</span></li>
+      <li><q>Fecha de nacimiento 3 de mayo de 1990</q><span>Carga la fecha y calcula la edad.</span></li>
+      <li><q>¿Quién sigue?</q><span>Te dice el próximo paciente y abre su resumen.</span></li>
+    </ul>
+    <p class="wake">El asistente tiene nombre para que no se active con cualquier conversación: Navi, Doc, Mia, Nexus, Axon o Lumina, el que prefieras. Responde en voz alta y deja la pantalla encendida mientras lo usás.</p>
+  </div>
+</section>
+
+<section class="plans-sec" id="planes" aria-labelledby="t-planes">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-planes">Planes</h2>
+      <p class="lede">Todos los planes incluyen el asistente por voz y todas las funciones. Cambia la cantidad de profesionales y de equipos.</p>
+    </div>
+    <div class="plans" id="plans"></div>
+    <p class="plans-note" id="plansNote"></p>
+  </div>
+</section>
+
+<section id="descargas" aria-labelledby="t-desc">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-desc">Descargas</h2>
+      <p class="lede">Hoy OdontoVoz se instala en Android con el archivo de instalación (APK) y se usa en cualquier equipo desde el navegador. Es la misma cuenta y los mismos datos en todos lados.</p>
+    </div>
+    <div class="dls">
+      <div class="dl main">
+        <h3>Android (archivo APK)</h3>
+        <p>La app completa para celulares y tablets con Android 6 o más nuevo. Se instala desde este archivo, sin pasar por Play Store. Las actualizaciones se instalan encima y no se pierde nada.</p>
+        <p class="meta" id="apkMeta">Última versión disponible.</p>
+        <a class="btn teal" id="apkBtn" href="https://github.com/rodribobadilla/odontovoz/releases/latest/download/OdontoVoz.apk">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Descargar OdontoVoz.apk
+        </a>
+        <p>Antes de instalar, mirá la <a href="#instalar">guía de instalación</a>: Android va a mostrar un aviso porque la app no viene de Play Store.</p>
+        <details class="sig"><summary>Firma digital de la app</summary><p>Todas las versiones están firmadas con la misma clave de OdontoVoz. Huella SHA-256 del certificado:<br><code>8E:24:52:9C:F9:0F:C2:67:C2:FF:95:F6:7D:09:5E:4D:E4:B9:2C:AF:66:1C:27:5B:2E:59:5C:BA:2D:C5:1A:BE</code></p></details>
+      </div>
+      <div class="dl">
+        <h3>Versión web</h3>
+        <p>Funciona en Chrome, Edge o Safari, en la PC de recepción, en una notebook, en un iPhone o en un Android que no deje instalar el APK. Se puede agregar a la pantalla de inicio como una app más.</p>
+        <a class="btn line" href="app/">Abrir OdontoVoz web</a>
+      </div>
+      <div class="dl">
+        <h3>Archivo para la PC</h3>
+        <p>Una copia de la app en un solo archivo, para abrir con doble clic en Chrome o Edge. Útil si en el consultorio la conexión es inestable.</p>
+        <a class="btn line" href="https://github.com/rodribobadilla/odontovoz/releases/latest/download/OdontoVoz-web.html" download>Descargar archivo</a>
+      </div>
+    </div>
+
+    <ol class="road" aria-label="Próximas plataformas">
+      <li class="now"><span>Hoy</span><b>APK para Android y versión web</b><p>Instalación directa y uso desde el navegador en PC, Mac, iPhone y Android.</p></li>
+      <li><span>Próximamente</span><b>Google Play</b><p>Vas a poder instalarla y actualizarla desde Play Store, sin avisos ni permisos especiales.</p></li>
+      <li><span>Más adelante</span><b>App Store para iPhone y iPad</b><p>Mientras tanto, en iPhone se usa la versión web agregada a la pantalla de inicio.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="inst" id="instalar" aria-labelledby="t-inst">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-inst">Cómo instalarla</h2>
+      <p class="lede">Elegí tu equipo. Si el celular bloquea la instalación, en «Si tu celular la bloquea» está la solución para cada marca.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Equipo">
+      <button role="tab" id="tb-and" aria-controls="p-and" aria-selected="true">Android</button>
+      <button role="tab" id="tb-blk" aria-controls="p-blk" aria-selected="false" tabindex="-1">Si tu celular la bloquea</button>
+      <button role="tab" id="tb-ios" aria-controls="p-ios" aria-selected="false" tabindex="-1">iPhone y iPad</button>
+      <button role="tab" id="tb-pc" aria-controls="p-pc" aria-selected="false" tabindex="-1">Computadora</button>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-and" aria-labelledby="tb-and">
+      <ol class="steps">
+        <li><div><b>Descargá el APK desde el celular</b><p>Abrí esta página en Chrome, en el celular, y tocá <a href="#descargas">Descargar OdontoVoz.apk</a>.</p></div></li>
+        <li><div><b>Confirmá la descarga</b><p>Si Chrome avisa <span class="screen-msg">Este tipo de archivo puede dañar el dispositivo</span>, tocá <b style="display:inline">Descargar de todas formas</b>. Lo dice con cualquier APK.</p></div></li>
+        <li><div><b>Abrí el archivo</b><p>Tocá la notificación de descarga terminada, o buscá OdontoVoz.apk en la app Archivos, en la carpeta Descargas.</p></div></li>
+        <li><div><b>Permití instalar desde esa app</b><p>La primera vez aparece <span class="screen-msg">Por tu seguridad, el teléfono no puede instalar apps desconocidas de esta fuente</span>. Tocá Configuración, activá <b style="display:inline">Permitir de esta fuente</b> y volvé atrás.</p></div></li>
+        <li><div><b>Instalá</b><p>Tocá Instalar. Si aparece Google Play Protect diciendo que no reconoce la app, tocá <b style="display:inline">Más detalles</b> y después <b style="display:inline">Instalar de todas formas</b>.</p></div></li>
+        <li><div><b>Abrí OdontoVoz y permití el micrófono</b><p>Creá tu cuenta con tu correo, confirmalo desde el mail que te llega y listo. Para actualizar, repetís lo mismo con la versión nueva: se instala encima y conservás todo.</p></div></li>
+      </ol>
+      <div class="aside">
+        <h3>¿Por qué Android muestra avisos?</h3>
+        <p>Android advierte con cualquier app que no se instala desde Play Store. No quiere decir que tenga un problema: OdontoVoz está firmada siempre con la misma clave (podés ver la huella en Descargas).</p>
+        <p>Google anunció que desde 2027 Android va a pedir que las apps instaladas por fuera de la tienda sean de desarrolladores verificados. Nos vamos a registrar antes, y también estamos preparando la publicación en Google Play.</p>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-blk" aria-labelledby="tb-blk" hidden>
+      <div class="brands">
+        <div><h3>Samsung Galaxy</h3><p>Los modelos con One UI 6 o más nuevo traen el <b>Bloqueador automático</b>, que frena todo lo que no venga de Play Store o Galaxy Store. Entrá a Ajustes › Seguridad y privacidad › Bloqueador automático, desactivalo, instalá OdontoVoz y después lo podés volver a activar. La app ya instalada sigue funcionando.</p></div>
+        <div><h3>Xiaomi, Redmi y POCO</h3><p>Antes de instalar, el teléfono hace un análisis de seguridad y puede pedirte esperar unos segundos o iniciar sesión en tu cuenta Xiaomi. Cuando termine, tocá Continuar o Instalar de todos modos.</p></div>
+        <div><h3>Motorola, Nokia, TCL y otros</h3><p>Alcanza con los pasos de la pestaña Android: permitir instalar desde Chrome o Archivos, y aceptar el aviso de Play Protect.</p></div>
+        <div><h3>Celular de la empresa o con control parental</h3><p>Si lo administra una empresa o un control parental, la instalación puede estar bloqueada y no se puede cambiar desde el teléfono. En ese caso usá la versión web (a la derecha).</p></div>
+      </div>
+      <div class="aside">
+        <h3>La solución que siempre funciona: la versión web</h3>
+        <p>No pide permisos de fuentes desconocidas porque no instala ningún archivo. Tiene las mismas funciones, la misma cuenta y los mismos datos, incluido el dictado por voz en Chrome.</p>
+        <ol class="steps">
+          <li><div><b>Abrí la app en Chrome</b><p><a href="app/">rodribobadilla.github.io/odontovoz/app</a></p></div></li>
+          <li><div><b>Agregala a la pantalla de inicio</b><p>Menú ⋮ › Agregar a la pantalla principal (o Instalar app).</p></div></li>
+          <li><div><b>Usala desde el ícono</b><p>Se abre a pantalla completa, como cualquier app.</p></div></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-ios" aria-labelledby="tb-ios" hidden>
+      <ol class="steps">
+        <li><div><b>Abrí la app en Safari</b><p>Entrá a <a href="app/">rodribobadilla.github.io/odontovoz/app</a> desde Safari.</p></div></li>
+        <li><div><b>Tocá Compartir</b><p>Es el cuadrado con la flecha hacia arriba, abajo en el iPhone o arriba en el iPad.</p></div></li>
+        <li><div><b>Elegí «Agregar a inicio»</b><p>Bajá en la lista hasta encontrarlo, tocalo y después Agregar.</p></div></li>
+        <li><div><b>Abrila desde el ícono y permití el micrófono</b><p>Ingresá con tu cuenta y vas a ver los mismos datos que en el resto de tus equipos.</p></div></li>
+      </ol>
+      <div class="aside">
+        <h3>¿Y la App Store?</h3>
+        <p>La versión para App Store está en los planes. Mientras tanto, la versión web en iPhone tiene la agenda, las historias clínicas y el odontograma completos.</p>
+        <p>Si el dictado del asistente no responde en tu modelo, podés usar el micrófono del teclado del iPhone en cualquier campo.</p>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-pc" aria-labelledby="tb-pc" hidden>
+      <ol class="steps">
+        <li><div><b>Abrí la app en Chrome o Edge</b><p>Entrá a <a href="app/">rodribobadilla.github.io/odontovoz/app</a>.</p></div></li>
+        <li><div><b>Instalala</b><p>En la barra de direcciones aparece un ícono de instalar (una pantalla con una flecha). Tocalo y confirmá Instalar.</p></div></li>
+        <li><div><b>Abrila desde el escritorio o el menú Inicio</b><p>Queda como un programa más, en su propia ventana. Para dictar, conectá un micrófono o usá el de la notebook.</p></div></li>
+      </ol>
+      <div class="aside">
+        <h3>Recepción y profesional, cada uno en su equipo</h3>
+        <p>Ingresando con la misma cuenta en la PC de recepción y en el celular del profesional, los turnos, llegadas y cobros se sincronizan solos en segundos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="t-datos">
+  <div class="wrap">
+    <div class="sec-head"><h2 id="t-datos">Tus datos, protegidos y siempre tuyos</h2></div>
+    <div class="trust">
+      <div><h3>Cada cuenta, privada</h3><p>Nadie ve tus pacientes sin tu correo y contraseña. Podés sumar un PIN para bloquear la app en el celular.</p></div>
+      <div><h3>Guardados con resguardo legal</h3><p>Los datos viajan cifrados y se guardan en servidores de la Unión Europea, que Argentina reconoce con protección adecuada (Ley 25.326).</p></div>
+      <div><h3>Si dejás de pagar, no perdés nada</h3><p>La cuenta queda en solo lectura: seguís viendo tus historias clínicas y podés descargarlas completas cuando quieras.</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand">OdontoVoz</span>
+    <a href="app/">Abrir la app</a>
+    <a href="privacidad.html">Política de privacidad</a>
+    <span id="contactFoot"></span>
+    <span>Hecho en la Patagonia, Argentina · 2026</span>
+  </div>
+</footer>
+
+<script>
+/* ====== DATOS EDITABLES: planes y contacto ======
+   Para cambiar precios o textos de los planes, se edita solo esta parte. */
+const CONTACTO = { whatsapp: '', email: '' }; // ej.: whatsapp: '5492995551234', email: 'hola@odontovoz.com.ar'
+const PLANES = [
+  { nombre: 'Prueba', quien: 'Para conocerla con tus pacientes reales.', precio: 'Gratis', por: '30 días', items: ['Todas las funciones', '1 profesional', 'Hasta 2 equipos', 'Sin tarjeta de crédito'], boton: 'Empezar gratis', link: 'app/' },
+  { nombre: 'Profesional', quien: 'Un odontólogo que atiende solo.', precio: '$19.900', por: 'por mes', items: ['1 profesional', 'Hasta 2 equipos (celular y PC)', 'Asistente por voz', 'Respaldo en la nube'], boton: 'Contratar', destacado: false },
+  { nombre: 'Consultorio', quien: 'Varios profesionales con recepción.', precio: '$34.900', por: 'por mes', items: ['Hasta 3 profesionales', 'Recepción incluida', 'Hasta 5 equipos', 'Agenda compartida en vivo'], boton: 'Contratar', destacado: true },
+  { nombre: 'Centro', quien: 'Clínicas y centros odontológicos.', precio: '$59.900', por: 'por mes', items: ['Hasta 8 profesionales', 'Hasta 12 equipos', 'Liquidación por obra social', 'Ayuda para migrar los datos'], boton: 'Consultar' }
+];
+const NOTA_PLANES = 'Precios de lanzamiento en pesos argentinos, IVA incluido, de referencia: pueden cambiar antes del lanzamiento oficial. Pagando el año completo, dos meses sin cargo.';
+
+(function () {
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const contactLink = (plan) => {
+    if (CONTACTO.whatsapp) return 'https://wa.me/' + CONTACTO.whatsapp.replace(/\D/g, '') + '?text=' + encodeURIComponent('Hola, quiero el plan ' + plan + ' de OdontoVoz.');
+    if (CONTACTO.email) return 'mailto:' + CONTACTO.email + '?subject=' + encodeURIComponent('Plan ' + plan + ' de OdontoVoz');
+    return 'app/';
+  };
+  document.getElementById('plans').innerHTML = PLANES.map(p => '<article class="plan' + (p.destacado ? ' star' : '') + '"><h3>' + esc(p.nombre) + '</h3><p class="who">' + esc(p.quien) + '</p><p class="price">' + esc(p.precio) + ' <small>' + esc(p.por) + '</small></p><ul>' + p.items.map(i => '<li>' + esc(i) + '</li>').join('') + '</ul><a class="btn ' + (p.destacado ? '' : 'teal') + '" href="' + esc(p.link || contactLink(p.nombre)) + '">' + esc(p.link || CONTACTO.whatsapp || CONTACTO.email ? p.boton : 'Probar gratis') + '</a></article>').join('');
+  document.getElementById('plansNote').textContent = NOTA_PLANES + (CONTACTO.whatsapp || CONTACTO.email ? '' : ' Todos empiezan con la prueba gratis; al terminar, elegís el plan desde la app.');
+  if (CONTACTO.whatsapp || CONTACTO.email) document.getElementById('contactFoot').innerHTML = '<a href="' + esc(contactLink('')) + '">Contacto</a>';
+
+  /* versión del APK desde GitHub */
+  fetch('https://api.github.com/repos/rodribobadilla/odontovoz/releases/latest').then(r => r.ok ? r.json() : null).then(d => {
+    if (!d) return;
+    const a = (d.assets || []).filter(x => x.name === 'OdontoVoz.apk')[0];
+    const v = String(d.tag_name || '').replace(/^v/, '').split('.').slice(0, 2).join('.');
+    const f = new Date(d.published_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('apkMeta').innerHTML = '<b>Versión ' + esc(v) + '</b>, publicada el ' + esc(f) + (a ? ' · ' + (a.size / 1048576).toFixed(1).replace('.', ',') + ' MB' : '');
+  }).catch(() => {});
+
+  /* pestañas de instalación */
+  const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  const sel = t => { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; }); };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => sel(t));
+    t.addEventListener('keydown', e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return; const n = tabs[(i + d + tabs.length) % tabs.length]; sel(n); n.focus(); });
+  });
+  if (/android/i.test(navigator.userAgent) && /samsung|sm-/i.test(navigator.userAgent)) { /* Samsung: se avisa del Bloqueador automático */ document.querySelector('#p-and .aside').insertAdjacentHTML('beforeend', '<p><b>Tenés un Samsung:</b> si no te deja instalar, mirá la pestaña «Si tu celular la bloquea».</p>'); }
+  if (/iphone|ipad/i.test(navigator.userAgent)) sel(document.getElementById('tb-ios'));
+
+  /* ====== demostración: lo que se dice se pinta en el odontograma ====== */
+  const svg = document.getElementById('dOdo'), NS = 'http://www.w3.org/2000/svg';
+  const UP = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28], LO = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+  const S = 22, G = 3, MID = 10, X0 = 2, pos = {};
+  const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  function tooth(n, x, y, up) {
+    const g = el('g', { class: 't' }), i = S * .3, P = pts => pts.map(p => p.join(',')).join(' ');
+    const faces = {
+      top: P([[x, y], [x + S, y], [x + S - i, y + i], [x + i, y + i]]), bottom: P([[x, y + S], [x + S, y + S], [x + S - i, y + S - i], [x + i, y + S - i]]),
+      left: P([[x, y], [x + i, y + i], [x + i, y + S - i], [x, y + S]]), right: P([[x + S, y], [x + S - i, y + i], [x + S - i, y + S - i], [x + S, y + S]])
+    };
+    const f = {};
+    for (const k in faces) { f[k] = el('polygon', { points: faces[k] }); g.appendChild(f[k]); }
+    f.center = el('rect', { x: x + i, y: y + i, width: S - 2 * i, height: S - 2 * i }); g.appendChild(f.center);
+    /* vestibular: arriba en los superiores, abajo en los inferiores */
+    f.V = up ? f.top : f.bottom; f.O = f.center;
+    svg.appendChild(g); pos[n] = { x, y, f, g };
+    const lbl = el('text', { x: x + S / 2, y: up ? y - 4 : y + S + 11, 'text-anchor': 'middle' }); lbl.textContent = n; svg.appendChild(lbl);
+  }
+  const col = k => X0 + k * (S + G) + (k >= 8 ? MID : 0);
+  UP.forEach((n, k) => tooth(n, col(k), 12, true)); LO.forEach((n, k) => tooth(n, col(k), 56, false));
+  svg.appendChild(el('line', { x1: col(8) - MID / 2 - G / 2 + .5, x2: col(8) - MID / 2 - G / 2 + .5, y1: 2, y2: 92, stroke: '#c5d5d3', 'stroke-dasharray': '3 3' }));
+  const marks = el('g', {}); svg.appendChild(marks);
+
+  const SCRIPT = [
+    { say: 'Caries en el 36 por oclusal', n: 36, face: 'O', c: 'blue', done: '36 · caries oclusal · a realizar' },
+    { say: 'Tiene una resina hecha en el 16 por vestibular', n: 16, face: 'V', c: 'red', done: '16 · resina vestibular · existente' },
+    { say: 'Hay que hacer una corona en el 21', n: 21, ring: true, c: 'blue', done: '21 · corona · a realizar' },
+    { say: 'Extracción del 48', n: 48, cross: true, c: 'blue', done: '48 · extracción · a realizar' }
+  ];
+  const said = document.getElementById('dSaid'), done = document.getElementById('dDone'), mic = document.getElementById('dMic');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function paint(s) {
+    const p = pos[s.n], color = s.c === 'blue' ? 'var(--blue)' : 'var(--red)';
+    if (s.face) p.f[s.face].setAttribute('class', 'f-' + s.c);
+    if (s.ring) marks.appendChild(el('circle', { cx: p.x + S / 2, cy: p.y + S / 2, r: S / 2 + 2.5, class: 'mark', stroke: color }));
+    if (s.cross) { marks.appendChild(el('line', { x1: p.x - 1, y1: p.y - 1, x2: p.x + S + 1, y2: p.y + S + 1, class: 'mark', stroke: color })); marks.appendChild(el('line', { x1: p.x + S + 1, y1: p.y - 1, x2: p.x - 1, y2: p.y + S + 1, class: 'mark', stroke: color })); }
+  }
+  function hl(s) { const old = svg.querySelector('.hl'); if (old) old.remove(); if (!s) return; const p = pos[s.n]; svg.appendChild(el('rect', { x: p.x - 3, y: p.y - 3, width: S + 6, height: S + 6, class: 'hl', rx: 4 })); }
+  function reset() { Object.values(pos).forEach(p => ['top', 'bottom', 'left', 'right', 'center'].forEach(k => p.f[k].removeAttribute('class'))); marks.innerHTML = ''; hl(null); }
+  if (reduce) { SCRIPT.forEach(paint); said.textContent = '«' + SCRIPT[0].say + '»'; done.innerHTML = '<i style="background:var(--blue)"></i>' + SCRIPT[0].done; mic.classList.remove('on'); return; }
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  (async function loop() {
+    for (;;) {
+      reset();
+      for (const s of SCRIPT) {
+        mic.classList.add('on'); done.textContent = '';
+        for (let k = 1; k <= s.say.length; k++) { said.innerHTML = '«' + s.say.slice(0, k) + '<span class="cur"></span>'; await wait(38 + Math.random() * 30); }
+        said.textContent = '«' + s.say + '»'; mic.classList.remove('on');
+        await wait(350); hl(s); paint(s);
+        done.innerHTML = '<i style="background:var(--' + s.c + ')"></i>✓ ' + s.done;
+        await wait(1700);
+      }
+      hl(null); await wait(2600);
+    }
+  })();
+})();
+</script>
+</body>
+</html>

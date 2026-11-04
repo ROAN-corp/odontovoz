@@ -153,3 +153,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Usuario o contraseña equivocados: aviso rojo grande, campos marcados, vibración y se baja el teclado para que se lea.
 - Si alguien intenta ingresar sin haber confirmado el correo, le aparece la misma pantalla con la opción de reenviarlo.
 - Administradores: rodribobadilla5630@gmail.com y angelagatielo@gmail.com (cuentas principales, plan Centro sin vencimiento).
+
+## Página web pública
+- `sitio/` es la página de OdontoVoz (presentación, planes, descargas, guía de instalación). Se publica en https://rodribobadilla.github.io/odontovoz/
+- La app web pasó a https://rodribobadilla.github.io/odontovoz/app/ (el panel sigue en /admin.html).
+- Precios, textos de planes y contacto (WhatsApp/correo): al final de `sitio/index.html`, en `PLANES`, `NOTA_PLANES` y `CONTACTO`.

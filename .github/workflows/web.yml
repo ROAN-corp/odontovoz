@@ -1,6 +1,6 @@
 name: Publicar OdontoVoz como página web
 
-# Publica la app en GitHub Pages (https://USUARIO.github.io/REPOSITORIO/).
+# Publica en GitHub Pages: la página de OdontoVoz en https://USUARIO.github.io/REPOSITORIO/ y la app en .../app/.
 # Desde esa dirección se instala en el teléfono con Chrome ("Agregar a la pantalla de inicio")
 # y el dictado por voz funciona con el reconocimiento de Chrome.
 on:
@@ -35,9 +35,11 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
         run: node scripts/prepare-www.js
+      - name: Armar el sitio (página pública + app en /app)
+        run: node scripts/build-site.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: www
+          path: site
       - id: deploy
         uses: actions/deploy-pages@v4
