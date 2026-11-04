@@ -850,6 +850,12 @@ body.has-modal .vdock .vd-hf { display: none; }
 .login-card .legal { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
 .peer-toast { border-left: 4px solid var(--accent); }
 .odon.tight .num { font-size: 15px; font-weight: 600; } .odon.tight .prim-lbl { font-size: 15px; } .odon .midline.q { stroke-width: 1.6; }
+.od-toolbar { display: flex; gap: 6px; align-items: center; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: thin; }
+.od-toolbar .tool { flex: 0 0 auto; white-space: nowrap; } .od-toolbar .sep { flex: 0 0 1px; align-self: stretch; background: var(--line); margin: 2px 2px; } .od-toolbar select { flex: 0 0 auto; }
+.od-tb-lbl { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; }
+.od-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .od-head .od-zoom { margin-left: auto; }
+.odon-scroll.zoom { overflow-x: auto; -webkit-overflow-scrolling: touch; } .odon-scroll.zoom .odon { min-width: 640px; }
+@media (max-width: 760px) { .od-sticky { margin-left: -10px; margin-right: -10px; padding-left: 4px; padding-right: 4px; } }
 .prim-lbl { font: 600 11px var(--f-sans, system-ui); fill: var(--ink-2); text-anchor: middle; letter-spacing: .04em; }
 .odon.static { pointer-events: none; }
 </style>
@@ -1045,12 +1051,21 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     corona: 'corona', coronas: 'corona', endodoncia: 'endodoncia', conducto: 'endodoncia',
     perno: 'perno', poste: 'perno', implante: 'implante', restoradicular: 'restoradicular',
     incluido: 'incluido', incluida: 'incluido', incluidos: 'incluido', retenido: 'incluido', retenida: 'incluido',
-    sano: 'sano', sanos: 'sano', sana: 'sano', sanas: 'sano'
+    sano: 'sano', sanos: 'sano', sana: 'sano', sanas: 'sano',
+    /* forma coloquial: «arreglo», «empaste», «tapadura» = restauración; con material («de resina») se precisa */
+    arreglo: 'obturacion', arreglos: 'obturacion', arreglado: 'obturacion', arreglada: 'obturacion', empaste: 'obturacion', empastes: 'obturacion',
+    empastado: 'obturacion', empastada: 'obturacion', tapadura: 'obturacion', tapaduras: 'obturacion', relleno: 'obturacion', restauraciones: 'obturacion', obturaciones: 'obturacion',
+    composites: 'composite', composit: 'composite', resinas: 'composite', amalgamas: 'amalgama', ionomeros: 'ionomero', vidrio: 'ionomero',
+    carie: 'caries', cariada: 'caries', cariado: 'caries', picada: 'caries', picado: 'caries', fracturas: 'fractura', rota: 'fractura', roto: 'fractura', partida: 'fractura', partido: 'fractura',
+    perdida: 'ausente', perdido: 'ausente', ausencia: 'ausente', sacada: 'extraido', sacado: 'extraido', sacar: 'extraccion', extraer: 'extraccion', extracciones: 'extraccion',
+    endodonciada: 'endodoncia', endodonciado: 'endodoncia', conductos: 'endodoncia', funda: 'corona', fundas: 'corona', implantes: 'implante', pernos: 'perno'
   };
+  var MATERIAL = { composite: 1, amalgama: 1, ionomero: 1 };
 
   var FACE_WORDS = {
     mesial: 'M', distal: 'D', oclusal: 'O', incisal: 'O', masticatoria: 'O',
-    vestibular: 'V', bucal: 'V', labial: 'V', lingual: 'L', palatino: 'L', palatina: 'L', palatal: 'L'
+    vestibular: 'V', bucal: 'V', labial: 'V', lingual: 'L', palatino: 'L', palatina: 'L', palatal: 'L',
+    mesiales: 'M', distales: 'D', oclusales: 'O', vestibulares: 'V', linguales: 'L', palatinas: 'L', palatinos: 'L', incisales: 'O', oclusar: 'O'
   };
   var FACE_ABBR = { mod: ['M', 'O', 'D'], mo: ['M', 'O'], od: ['O', 'D'] };
 
@@ -1060,13 +1075,20 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     existente: 'realizado', preexistente: 'realizado', colocada: 'realizado', colocado: 'realizado',
     planificado: 'planificado', planificada: 'planificado', planificados: 'planificado', planificadas: 'planificado',
     programada: 'planificado', programado: 'planificado', indicada: 'planificado', indicado: 'planificado',
-    presupuestar: 'planificado', planificar: 'planificado'
+    presupuestar: 'planificado', planificar: 'planificado',
+    viejo: 'realizado', vieja: 'realizado', antiguo: 'realizado', antigua: 'realizado', previo: 'realizado', previa: 'realizado', anterior: 'realizado',
+    pendiente: 'planificado', pendientes: 'planificado', cambiar: 'planificado', recambio: 'planificado', rehacer: 'planificado', necesita: 'planificado', hacerle: 'planificado', hacer: 'planificado'
   };
 
   var STOP = {};
   ('del de el la los las en al a pieza piezas diente dientes muela muelas con y hay tiene una un cara caras ' +
    'numero esta hoy paciente tambien ademas luego despues otra otro se le lo que para por ya es son ' +
-   'presenta presentan nueva nuevo vestibular_').split(' ').forEach(function (w) { if (w) STOP[w] = 1; });
+   'presenta presentan nueva nuevo vestibular_ ' +
+   /* muletillas y verbos de una charla normal: «tenemos», «ah, también hay», «tengo un arreglo hecho…» */
+   'tenemos tengo tenes tienen hay ah eh bueno mira miren ahi aca este esta ese esa veo vemos encontre encuentro observo noto nota ve ' +
+   'unos unas me nos te tipo como medio chiquita chiquito pequena pequeno grande profunda profundo superficial inicial activa activo ' +
+   'osea digamos fijate anota anotame anotale agrega agregame agregale marca marcame marcale pone poneme ponele pinta pintame registra registrame carga cargame ' +
+   'quiero seria mismo misma molar molares premolar premolares canino caninos incisivo incisivos material vez cosa algo nomas sobre').split(' ').forEach(function (w) { if (w) STOP[w] = 1; });
 
   var PHRASES = [
     [/resto\s+radicular|raiz\s+remanente|remanente(\s+radicular)?/g, 'restoradicular'],
@@ -1075,6 +1097,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     [/tratamiento\s+de\s+conducto/g, 'endodoncia'],
     [/ionomero(\s+de\s+vidrio)?/g, 'ionomero'],
     [/sin\s+patologia/g, 'sano'],
+    [/que\s+ya\s+(?:tenia|tiene|traia|trae)|ya\s+(?:tenia|tiene|traia|trae)|de\s+antes|de\s+otro\s+(?:profesional|dentista|odontologo)/g, 'preexistente'],
+    [/(?:hay\s+que|tengo\s+que|vamos\s+a|voy\s+a)\s+(?:hacer(?:le)?|cambiar|poner(?:le)?|arreglar)|para\s+hacer|por\s+hacer|a\s+hacer/g, 'planificado'],
+    [/lo\s+(?:hice|hicimos)|(?:esta|quedo)\s+(?:hecho|hecha|terminado|terminada)|ya\s+(?:hecho|hecha|esta)/g, 'realizado'],
     [/borr(?:ar|a)\s+(?:el\s+)?ultimo|deshac(?:er|e)|anular(?:\s+el\s+ultimo)?|volver\s+atras/g, 'deshacer'],
     [/terceros?\s+molares?|muelas?\s+del\s+juicio|cordales/g, 'terceros'],
     [/arcada\s+superior|maxilar\s+superior|todo\s+el\s+superior/g, 'arcsup'],
@@ -1249,6 +1274,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
 
       if (COND_WORDS[tok]) {
         var c = COND_WORDS[tok];
+        /* «arreglo de resina» o «resina, un arreglo»: el material precisa la restauración en vez de empezar otra */
+        if (seg.cond === 'obturacion' && MATERIAL[c] && !seg.closedMat) { seg.cond = c; seg.raw.push(tok); continue; }
+        if (MATERIAL[seg.cond] && c === 'obturacion') { seg.raw.push(tok); continue; }
         if (hasAction(seg)) push();
         if (c === 'sano') seg.sano = true; else seg.cond = c;
         seg.raw.push(tok); continue;
@@ -2198,7 +2226,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     const showPrim = !opt.mini && !opt.noPrim;
     /* en el teléfono: los cuatro cuadrantes en su lugar (1 | 2 arriba, 4 | 3 abajo), con piezas más chicas para que entren */
     const tight = !!opt.compact;
-    const uid = opt.uid || 'x', PITCH = tight ? 40 : 46, GAP = tight ? 10 : 18, X0 = tight ? 4 : 8, Y = { tU: 22, tL: 112 };
+    const uid = opt.uid || 'x', PITCH = tight ? 39 : 46, GAP = tight ? 6 : 18, X0 = tight ? 1 : 8, Y = { tU: 22, tL: 112 };
     const W = tight ? X0 * 2 + 16 * PITCH + GAP - (PITCH - 38) : 770;
     const o = [], armed = !opt.mini && S.od && S.od.tool;
     o.push('<svg class="' + (opt.mini ? 'mini-odon' : 'odon' + (tight ? ' tight' : '') + (armed ? ' armed' : '') + (opt.static ? ' static' : '')) + '" viewBox="' + (opt.mini ? '0 14 770 144' : showPrim ? '0 0 ' + W + ' 316' : '0 0 ' + W + ' 176') + '" role="img" aria-label="Odontograma: cuadrantes 1 y 2 arriba, 4 y 3 abajo">');
@@ -2255,17 +2283,20 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     const od = S.od;
     const tf = ['caries', 'composite', 'amalgama', 'ionomero', 'sellador', 'fractura'], tw = ['ausente', 'corona', 'endodoncia', 'implante', 'extraccion'];
     const tb = (id, l) => '<button class="tool" data-act="odTool" data-tool="' + id + '" aria-pressed="false">' + l + '</button>';
-    const tools = tf.map(c => tb(c, P.COND_META[c].label)).join('') + '<span class="sep"></span>' + tw.map(c => tb(c, P.COND_META[c].label)).join('') + '<span class="sep"></span>' + tb('sano', 'Sano') + tb('borrar', 'Borrar') +
+    const TL = { composite: 'Arreglo · resina', amalgama: 'Arreglo · amalgama' };
+    const tools = tf.map(c => tb(c, TL[c] || P.COND_META[c].label)).join('') + '<span class="sep"></span>' + tw.map(c => tb(c, P.COND_META[c].label)).join('') + '<span class="sep"></span>' + tb('sano', 'Sano') + tb('borrar', 'Borrar') +
       '<span class="sep"></span><label class="sr" for="statusOv">Estado</label><select id="statusOv" data-chg="odStatus"><option value="">Estado: automático</option><option value="patologia">A realizar (hallazgo)</option><option value="planificado">Planificado</option><option value="realizado">Realizado</option></select>';
     const mic = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
     const narrow = A.isNarrow();
     return (od.control ? '<div class="ctl-banner"><b>Control en curso:</b> actualizá el odontograma (tocá las piezas o dictá) y después confirmá. <button class="btn small primary" data-act="ctlDone" data-pid="' + pid + '">Terminar control</button></div>' : '') + '<div class="atn-grid"><div>' +
-      '<div class="od-sticky"><div class="od-head"><h2>Odontograma</h2><span class="count" id="odonCount"></span></div><div class="odon-scroll" id="odonHost"></div>' +
+      '<div class="od-sticky"><div class="od-head"><h2>Odontograma</h2><span class="count" id="odonCount"></span><button class="btn small od-zoom" data-act="odZoom" aria-pressed="' + !!S.odZoom + '" title="Ver las piezas más grandes (se desliza hacia los costados)">' + (S.odZoom ? '− Achicar' : '+ Agrandar') + '</button></div>' +
+      '<div class="od-toolbar" role="toolbar" aria-label="Pintar a mano: elegí qué marcar y tocá la cara"><span class="od-tb-lbl">Pintar a mano:</span>' + tools + '</div>' +
+      '<div class="odon-scroll' + (S.odZoom ? ' zoom' : '') + '" id="odonHost"></div>' +
       '<div class="od-voice"><button class="mic" id="micBtn" data-act="odMic" aria-pressed="false" aria-label="Iniciar dictado por voz">' + mic + '</button>' +
       '<div class="od-live" aria-live="polite"><span class="st" id="micState">Dictado por voz</span><span class="tx" id="liveHost">Tocá el micrófono y decí: «caries oclusal del 35»</span><span class="rs" id="odRes"></span></div>' +
       '<button class="btn small" id="odUndoBtn" data-act="odUndo">Deshacer</button></div><div id="cardsHost" class="od-cards"></div></div>' +
       '<section class="card" style="margin-top:14px">' + A.legendHTML() + '<div class="small-note">Numeración FDI, vista del profesional: la derecha del paciente queda a la izquierda.' + (narrow ? ' En el celular: arriba el maxilar superior (18→11 y 21→28), abajo el inferior (48→41 y 31→38).' : '') + '</div>' +
-      '<details class="od-tools"' + (narrow ? '' : ' open') + '><summary>Marcar tocando las piezas</summary><div class="tools">' + tools + '</div><div class="small-note" style="margin-top:0">Elegí qué marcar y tocá la cara de la pieza. Tocá de nuevo para quitarlo.</div></details>' +
+      '<div class="small-note">Para pintar a mano: arriba del odontograma elegí qué marcar (caries, arreglo…) y tocá la cara de la pieza. Tocá de nuevo para quitarlo. Usá «+ Agrandar» si las piezas te quedan chicas.</div>' +
       '<form class="say" data-sub="sayForm"><label class="sr" for="sayInput">Frase de dictado</label><input id="sayInput" autocomplete="off" placeholder="O escribí lo que dictarías"><button class="btn primary" type="submit">Aplicar</button></form>' +
       '<div class="chips-ex">' + EXAMPLES.map(e => '<button class="chip-ex" data-act="odSay" data-say="' + esc(e) + '">' + esc(e) + '</button>').join('') + '</div>' +
       '<div class="row-btns" style="margin-top:12px"><button class="btn small" id="sweepBtn" data-act="odSweep">Barrido guiado</button><button class="btn small" id="demoBtn" data-act="odDemo">Examen de ejemplo</button></div>' +
@@ -7293,7 +7324,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
-  A.VERSION = '6.3';
+  A.VERSION = '6.4';
   const N = s => A.norm(s);
 
   /* =====================================================================
@@ -7466,6 +7497,48 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     '.lb-lab{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;color:var(--ink);cursor:pointer;position:relative}.lb-lab span{font-size:12.5px;color:var(--ink-2)}.lb-lab .lb-n{color:var(--accent);font-weight:600}' +
     '.lb-lab.on{border-color:var(--accent);background:var(--accent-soft)}.lb-lab .btn{position:absolute;top:8px;right:8px}.lb-add{border-style:dashed;color:var(--accent)}' +
     '@media (max-width:760px){.lb-split{grid-template-columns:minmax(0,1fr)}.lb-labs{flex-direction:row;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lb-labs .lb-h{display:none}.lb-labs .lb-lab{flex:0 0 auto;min-width:170px}.lb-labs .empty{min-width:240px}.lb-labs .lb-lab .btn{position:static;align-self:flex-start;margin-top:4px}}</style>');
+
+  /* odontograma: «+ Agrandar» muestra las piezas más grandes (se desliza hacia los costados); se recuerda en este equipo */
+  try { S.odZoom = localStorage.getItem('odontovoz.odZoom') === '1'; } catch (e) { /* nada */ }
+  A.acts.odZoom = () => {
+    S.odZoom = !S.odZoom; try { localStorage.setItem('odontovoz.odZoom', S.odZoom ? '1' : '0'); } catch (e) { /* nada */ }
+    const h = $('#odonHost'), b = $('.od-zoom');
+    if (h) h.classList.toggle('zoom', S.odZoom);
+    if (b) { b.setAttribute('aria-pressed', String(S.odZoom)); b.textContent = S.odZoom ? '− Achicar' : '+ Agrandar'; }
+    if (h && S.odZoom) h.scrollLeft = 0;
+  };
+
+  /* en el teléfono, con una herramienta de cara elegida (caries, arreglo…), al tocar una pieza se abre la pieza grande
+     para elegir la cara con el dedo sin errar */
+  const FACE_TOOLS = { caries: 1, composite: 1, amalgama: 1, ionomero: 1, sellador: 1, fractura: 1, obturacion: 1 };
+  const origTouch = A.acts.odTouch;
+  A.acts.odTouch = el => {
+    const tool = S.od && S.od.tool;
+    if (el.getAttribute && el.getAttribute('data-big')) { origTouch(el); openPick(parseInt(el.getAttribute('data-t'), 10)); return; } /* queda abierta para marcar varias caras (ej. MOD) */
+    if (!tool || !FACE_TOOLS[tool] || !A.isNarrow() || S.odZoom) { origTouch(el); return; }
+    openPick(parseInt(el.getAttribute('data-t'), 10));
+  };
+  function faceName(f, n) { return A.faceName(f, n); }
+  function openPick(n) {
+    closePick();
+    const q = Math.floor(n / 10), upper = q === 1 || q === 2 || q === 5 || q === 6, left = q === 1 || q === 4 || q === 5 || q === 8;
+    const top = upper ? 'V' : 'L', bot = upper ? 'L' : 'V', lf = left ? 'D' : 'M', rt = left ? 'M' : 'D';
+    const d = (A.pd(S.fichaPid).odon || {})[n] || {}, fc = f => { const mk = d.faces && d.faces[f]; return mk ? (mk.status === 'realizado' ? 'f-done' : 'f-todo') : ''; };
+    const P = [['0,0 120,0 82,38 38,38', top, 60, 22], ['0,120 120,120 82,82 38,82', bot, 60, 104], ['0,0 38,38 38,82 0,120', lf, 18, 64], ['120,0 82,38 82,82 120,120', rt, 102, 64], ['38,38 82,38 82,82 38,82', 'O', 60, 64]];
+    const lbl = A.P.COND_META[S.od.tool] ? (S.od.tool === 'composite' ? 'Arreglo de resina' : A.P.COND_META[S.od.tool].label) : S.od.tool;
+    const w = document.createElement('div'); w.id = 'toothPick'; w.className = 'tp-wrap';
+    w.innerHTML = '<div class="tp-card" role="dialog" aria-label="Elegí la cara de la pieza ' + n + '"><div class="tp-h"><b>Pieza ' + n + '</b><span>' + esc(lbl) + ': tocá la cara</span><button class="x" data-act="tpClose" aria-label="Cerrar">×</button></div>' +
+      '<svg viewBox="-4 -4 128 128" class="tp-svg">' + P.map(p => '<polygon class="face ' + fc(p[1]) + '" points="' + p[0] + '" data-act="odTouch" data-big="1" data-t="' + n + '" data-f="' + p[1] + '"></polygon><text x="' + p[2] + '" y="' + (p[3] + 4) + '" class="tp-l">' + faceName(p[1], n).slice(0, 3).toUpperCase() + '</text>').join('') + '</svg>' +
+      '<div class="tp-f">' + ['M', 'D', 'V', 'L', 'O'].map(f => '<button class="btn small" data-act="odTouch" data-big="1" data-t="' + n + '" data-f="' + f + '">' + esc(A.cap(faceName(f, n))) + '</button>').join('') + '</div><button class="btn primary" data-act="tpClose">Listo</button></div>';
+    w.addEventListener('click', e => { if (e.target === w) closePick(); });
+    document.body.appendChild(w);
+  }
+  function closePick() { const w = $('#toothPick'); if (w) w.remove(); }
+  A.acts.tpClose = closePick;
+  document.head.insertAdjacentHTML('beforeend', '<style>.tp-wrap{position:fixed;inset:0;z-index:150;background:rgba(8,20,24,.45);display:grid;place-items:center;padding:16px}.tp-card{background:var(--surface);border-radius:18px;padding:14px;width:min(340px,100%);display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}' +
+    '.tp-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.tp-h b{font-size:18px}.tp-h span{color:var(--ink-2);font-size:14px;flex:1}.tp-svg{width:min(240px,70vw);height:auto;align-self:center}.tp-svg .face{stroke:var(--ink-2);stroke-width:1.5;cursor:pointer;fill:var(--surface)}.tp-svg .face.f-todo{fill:var(--m-todo)}.tp-svg .face.f-done{fill:var(--m-done)}' +
+    '.tp-l{font:700 11px var(--f-sans,system-ui);fill:var(--ink);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--surface);stroke-width:3px}.tp-f{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}' +
+    '@media (max-width:760px){.od-head .count{order:3;flex-basis:100%;font-size:12px}}</style>');
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
-  A.VERSION = '6.3';
+  A.VERSION = '6.4';
   const N = s => A.norm(s);
 
   /* =====================================================================
@@ -175,4 +175,46 @@
     '.lb-lab{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;color:var(--ink);cursor:pointer;position:relative}.lb-lab span{font-size:12.5px;color:var(--ink-2)}.lb-lab .lb-n{color:var(--accent);font-weight:600}' +
     '.lb-lab.on{border-color:var(--accent);background:var(--accent-soft)}.lb-lab .btn{position:absolute;top:8px;right:8px}.lb-add{border-style:dashed;color:var(--accent)}' +
     '@media (max-width:760px){.lb-split{grid-template-columns:minmax(0,1fr)}.lb-labs{flex-direction:row;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.lb-labs .lb-h{display:none}.lb-labs .lb-lab{flex:0 0 auto;min-width:170px}.lb-labs .empty{min-width:240px}.lb-labs .lb-lab .btn{position:static;align-self:flex-start;margin-top:4px}}</style>');
+
+  /* odontograma: «+ Agrandar» muestra las piezas más grandes (se desliza hacia los costados); se recuerda en este equipo */
+  try { S.odZoom = localStorage.getItem('odontovoz.odZoom') === '1'; } catch (e) { /* nada */ }
+  A.acts.odZoom = () => {
+    S.odZoom = !S.odZoom; try { localStorage.setItem('odontovoz.odZoom', S.odZoom ? '1' : '0'); } catch (e) { /* nada */ }
+    const h = $('#odonHost'), b = $('.od-zoom');
+    if (h) h.classList.toggle('zoom', S.odZoom);
+    if (b) { b.setAttribute('aria-pressed', String(S.odZoom)); b.textContent = S.odZoom ? '− Achicar' : '+ Agrandar'; }
+    if (h && S.odZoom) h.scrollLeft = 0;
+  };
+
+  /* en el teléfono, con una herramienta de cara elegida (caries, arreglo…), al tocar una pieza se abre la pieza grande
+     para elegir la cara con el dedo sin errar */
+  const FACE_TOOLS = { caries: 1, composite: 1, amalgama: 1, ionomero: 1, sellador: 1, fractura: 1, obturacion: 1 };
+  const origTouch = A.acts.odTouch;
+  A.acts.odTouch = el => {
+    const tool = S.od && S.od.tool;
+    if (el.getAttribute && el.getAttribute('data-big')) { origTouch(el); openPick(parseInt(el.getAttribute('data-t'), 10)); return; } /* queda abierta para marcar varias caras (ej. MOD) */
+    if (!tool || !FACE_TOOLS[tool] || !A.isNarrow() || S.odZoom) { origTouch(el); return; }
+    openPick(parseInt(el.getAttribute('data-t'), 10));
+  };
+  function faceName(f, n) { return A.faceName(f, n); }
+  function openPick(n) {
+    closePick();
+    const q = Math.floor(n / 10), upper = q === 1 || q === 2 || q === 5 || q === 6, left = q === 1 || q === 4 || q === 5 || q === 8;
+    const top = upper ? 'V' : 'L', bot = upper ? 'L' : 'V', lf = left ? 'D' : 'M', rt = left ? 'M' : 'D';
+    const d = (A.pd(S.fichaPid).odon || {})[n] || {}, fc = f => { const mk = d.faces && d.faces[f]; return mk ? (mk.status === 'realizado' ? 'f-done' : 'f-todo') : ''; };
+    const P = [['0,0 120,0 82,38 38,38', top, 60, 22], ['0,120 120,120 82,82 38,82', bot, 60, 104], ['0,0 38,38 38,82 0,120', lf, 18, 64], ['120,0 82,38 82,82 120,120', rt, 102, 64], ['38,38 82,38 82,82 38,82', 'O', 60, 64]];
+    const lbl = A.P.COND_META[S.od.tool] ? (S.od.tool === 'composite' ? 'Arreglo de resina' : A.P.COND_META[S.od.tool].label) : S.od.tool;
+    const w = document.createElement('div'); w.id = 'toothPick'; w.className = 'tp-wrap';
+    w.innerHTML = '<div class="tp-card" role="dialog" aria-label="Elegí la cara de la pieza ' + n + '"><div class="tp-h"><b>Pieza ' + n + '</b><span>' + esc(lbl) + ': tocá la cara</span><button class="x" data-act="tpClose" aria-label="Cerrar">×</button></div>' +
+      '<svg viewBox="-4 -4 128 128" class="tp-svg">' + P.map(p => '<polygon class="face ' + fc(p[1]) + '" points="' + p[0] + '" data-act="odTouch" data-big="1" data-t="' + n + '" data-f="' + p[1] + '"></polygon><text x="' + p[2] + '" y="' + (p[3] + 4) + '" class="tp-l">' + faceName(p[1], n).slice(0, 3).toUpperCase() + '</text>').join('') + '</svg>' +
+      '<div class="tp-f">' + ['M', 'D', 'V', 'L', 'O'].map(f => '<button class="btn small" data-act="odTouch" data-big="1" data-t="' + n + '" data-f="' + f + '">' + esc(A.cap(faceName(f, n))) + '</button>').join('') + '</div><button class="btn primary" data-act="tpClose">Listo</button></div>';
+    w.addEventListener('click', e => { if (e.target === w) closePick(); });
+    document.body.appendChild(w);
+  }
+  function closePick() { const w = $('#toothPick'); if (w) w.remove(); }
+  A.acts.tpClose = closePick;
+  document.head.insertAdjacentHTML('beforeend', '<style>.tp-wrap{position:fixed;inset:0;z-index:150;background:rgba(8,20,24,.45);display:grid;place-items:center;padding:16px}.tp-card{background:var(--surface);border-radius:18px;padding:14px;width:min(340px,100%);display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}' +
+    '.tp-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.tp-h b{font-size:18px}.tp-h span{color:var(--ink-2);font-size:14px;flex:1}.tp-svg{width:min(240px,70vw);height:auto;align-self:center}.tp-svg .face{stroke:var(--ink-2);stroke-width:1.5;cursor:pointer;fill:var(--surface)}.tp-svg .face.f-todo{fill:var(--m-todo)}.tp-svg .face.f-done{fill:var(--m-done)}' +
+    '.tp-l{font:700 11px var(--f-sans,system-ui);fill:var(--ink);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--surface);stroke-width:3px}.tp-f{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}' +
+    '@media (max-width:760px){.od-head .count{order:3;flex-basis:100%;font-size:12px}}</style>');
 })();

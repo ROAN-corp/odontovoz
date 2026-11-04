@@ -118,3 +118,8 @@ Desde la versión 6, cada compilación usa siempre la misma firma (guardada en G
 - Las pestañas de la ficha ya no vuelven al principio: queda a la vista la que elegiste.
 - **Importar pacientes** (Menú › Importar pacientes): desde Bilog u otro programa, con el listado exportado a Excel o CSV. Reconoce las columnas solo, no duplica pacientes con el mismo DNI y trae una planilla modelo.
 - Versión para PC: cada compilación publica también **OdontoVoz-web.html** (se abre con doble clic en Chrome o Edge).
+
+## Versión 6.4
+- Odontograma más grande en el teléfono (de borde a borde) y botón **+ Agrandar** para ver las piezas el doble (se desliza a los costados).
+- **Pintar a mano** arriba del odontograma: elegís Caries, Arreglo de resina, Amalgama… y tocás la pieza. En el teléfono se abre la pieza grande para elegir la cara sin errar (se pueden marcar varias caras seguidas).
+- Dictado más coloquial: «tenemos arreglo por cara vestibular del 26», «ah, también hay una caries por oclusal del 27», «tengo un arreglo de resina hecho en el 16 por vestibular», «la 47 tiene un empaste viejo», «hay que cambiar la amalgama del 46», «el 11 está roto por incisal», «hay que sacar el 48».
