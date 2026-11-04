@@ -1,0 +1,99 @@
+name: Generar APK de Odonto Voz
+
+# Se ejecuta solo cada vez que se sube un cambio a la rama main,
+# y también a mano desde la pestaña "Actions" → "Run workflow".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bajar el proyecto
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Preparar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Preparar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      - name: Armar la app web (www)
+        run: node scripts/prepare-www.js
+
+      - name: Crear el proyecto Android
+        run: npx cap add android
+
+      - name: Ícono y pantalla de inicio
+        run: npx capacitor-assets generate --android
+
+      - name: Permisos (micrófono) y versión
+        run: node scripts/patch-android.js
+
+      - name: Copiar la app al proyecto Android
+        run: npx cap sync android
+
+      - name: Compilar
+        working-directory: android
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          chmod +x gradlew
+          if [ -n "$KS_B64" ]; then
+            ./gradlew --no-daemon assembleRelease
+          else
+            echo "::warning::Falta la clave de firma (secret ANDROID_KEYSTORE_BASE64). Se genera un APK de prueba que NO se va a poder actualizar sin desinstalar."
+            ./gradlew --no-daemon assembleDebug
+          fi
+
+      - name: Firmar el APK
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          mkdir -p dist
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > ks.jks
+            BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+            "$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+            "$BT/apksigner" sign --ks ks.jks --ks-key-alias odontovoz --ks-pass env:KS_PASS --key-pass env:KS_PASS --out dist/OdontoVoz.apk aligned.apk
+            "$BT/apksigner" verify --print-certs dist/OdontoVoz.apk
+            rm -f ks.jks aligned.apk
+          else
+            cp android/app/build/outputs/apk/debug/app-debug.apk dist/OdontoVoz.apk
+          fi
+          ls -la dist
+
+      - name: Guardar el APK en esta ejecución
+        uses: actions/upload-artifact@v4
+        with:
+          name: OdontoVoz-apk
+          path: dist/OdontoVoz.apk
+
+      - name: Publicar para descargar desde el teléfono
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v4.1.${{ github.run_number }}
+          name: Odonto Voz 4.1 (compilación ${{ github.run_number }})
+          body: |
+            Descargá **OdontoVoz.apk** desde el teléfono e instalalo.
+            Si Android lo pide, permití "instalar apps de orígenes desconocidos" para el navegador.
+            Para actualizar, instalá el APK nuevo encima del anterior: los datos se conservan.
+          files: dist/OdontoVoz.apk
+          make_latest: true

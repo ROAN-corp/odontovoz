@@ -1,0 +1,42 @@
+name: Publicar Odonto Voz como página web
+
+# Publica la app en GitHub Pages (https://USUARIO.github.io/REPOSITORIO/).
+# Desde esa dirección se instala en el teléfono con Chrome ("Agregar a la pantalla de inicio")
+# y el dictado por voz funciona con el reconocimiento de Chrome.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar jsPDF
+        run: npm install --no-audit --no-fund --ignore-scripts jspdf@2.5.1
+      - name: Armar la app web (www)
+        run: node scripts/prepare-www.js
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: www
+      - id: deploy
+        uses: actions/deploy-pages@v4
