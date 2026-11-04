@@ -20,13 +20,13 @@ if (fs.existsSync(jspdfSrc)) {
 // servidor de cuentas: se toma de las variables del repositorio (SUPABASE_URL y SUPABASE_ANON_KEY) si existen
 const sbUrl = process.env.SUPABASE_URL || '', sbKey = process.env.SUPABASE_ANON_KEY || '';
 if (sbUrl && sbKey) {
-  html = html.replace("{ supabaseUrl: '', supabaseAnonKey: '' }", JSON.stringify({ supabaseUrl: sbUrl, supabaseAnonKey: sbKey }));
+  html = html.replace(/\{ supabaseUrl: '[^']*', supabaseAnonKey: '[^']*' \}/, JSON.stringify({ supabaseUrl: sbUrl, supabaseAnonKey: sbKey }));
   console.log('Nube configurada:', sbUrl);
 }
 fs.writeFileSync(path.join(www, 'index.html'), html);
 // versión web en un solo archivo (para abrir en la PC con doble clic): usa jsPDF desde internet
 let single = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-if (sbUrl && sbKey) single = single.replace("{ supabaseUrl: '', supabaseAnonKey: '' }", JSON.stringify({ supabaseUrl: sbUrl, supabaseAnonKey: sbKey }));
+if (sbUrl && sbKey) single = single.replace(/\{ supabaseUrl: '[^']*', supabaseAnonKey: '[^']*' \}/, JSON.stringify({ supabaseUrl: sbUrl, supabaseAnonKey: sbKey }));
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(root, 'dist', 'OdontoVoz-web.html'), single);
 

@@ -130,3 +130,7 @@ Desde la versión 6, cada compilación usa siempre la misma firma (guardada en G
 ## OdontoVoz 1.0 (primera versión con firma definitiva)
 A partir de acá la numeración vuelve a empezar: 1.0, 1.1, 1.2… (las «6.x» fueron versiones de desarrollo).
 Por dentro, Android usa el número de compilación (siempre creciente), así que las actualizaciones se instalan encima sin problema.
+
+## OdontoVoz 1.1
+- Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
+- Versión web publicada en https://rodribobadilla.github.io/odontovoz/
