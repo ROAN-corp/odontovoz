@@ -1,6 +1,6 @@
 // Odonto Voz: funcionamiento sin conexión y avisos de versión nueva.
 // Cambiar VERSION en cada actualización publicada para que los teléfonos la reciban.
-const VERSION = 'odontovoz-1.4.0';
+const VERSION = 'odontovoz-1.5.0';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'jspdf.umd.min.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'icon-180.png'];
 
 self.addEventListener('install', e => {
@@ -25,4 +25,10 @@ self.addEventListener('fetch', e => {
   if (url.origin === location.origin || /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
     e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(r => { if (r.ok || r.type === 'opaque') { const copy = r.clone(); caches.open(VERSION).then(c => c.put(req, copy)); } return r; })));
   }
+});
+
+// al tocar una notificación (por ejemplo «Llegó …»), se abre o se trae al frente la app
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => { for (const c of cs) { if ('focus' in c) return c.focus(); } return self.clients.openWindow ? self.clients.openWindow('./') : null; }));
 });

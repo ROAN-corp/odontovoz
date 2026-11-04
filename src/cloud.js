@@ -52,6 +52,8 @@
     saveSession(asSession(d)); return CL.session;
   }
   CL.api = (path, opt) => api(path, opt);
+  CL.token = async () => (await fresh()).access_token;
+  CL.conf = () => conf();
   async function api(path, opt) {
     await fresh();
     try { return await http(path, opt); }
@@ -142,7 +144,7 @@
   CL.merge3 = merge3;
   function setArr(arr, v) { arr.length = 0; (v || []).forEach(x => arr.push(x)); }
   function setObj(o, v) { Object.keys(o).forEach(k => { if (!(k in (v || {}))) delete o[k]; }); Object.assign(o, v || {}); }
-  const notes = [];
+  const notes = [], arrivals = [];
   function apply(k, v) {
     v = v == null ? v : JSON.parse(JSON.stringify(v)); /* copia propia: nunca compartir objetos con la copia sincronizada */
     if (k.indexOf('day:') === 0) {
@@ -157,6 +159,7 @@
       prev.forEach(p => { if (!ids[p.id]) { const i = A.PATS.indexOf(A.PIDX[p.id]); if (i >= 0) A.PATS.splice(i, 1); delete A.PIDX[p.id]; } });
       list.forEach(p => { const cur = A.PIDX[p.id]; if (cur) { Object.assign(cur, p); A.derive(cur); } else { const np = A.derive(Object.assign({}, p)); A.PATS.push(np); A.PIDX[np.id] = np; } });
       A.S.newPats = list.map(p => A.PIDX[p.id]);
+      if (A.purgeDeleted) A.purgeDeleted();
     } else if (k === 'pros') setArr(A.PROS, v);
     else if (k === 'prosOld') setArr(A.PROS_OLD, v);
     else if (k === 'cfg') { const on = (v && v.online) || A.CFG.online; setObj(A.CFG, v); A.CFG.online = on; A.CFG.demo = false; }
@@ -171,7 +174,7 @@
     const om = {}; old.forEach(a => { om[a.id] = a; });
     nw.forEach(a => {
       if (!a.pid || !A.PAT(a.pid)) return; const o = om[a.id], n = A.PAT(a.pid).name;
-      if (a.status === 'llego' && (!o || o.status !== 'llego')) notes.push('Llegó ' + n + ' (turno de las ' + A.mm(a.start) + ').');
+      if (a.status === 'llego' && (!o || o.status !== 'llego')) { if (A.onArrivals) arrivals.push({ id: a.id, pid: a.pid, start: a.start, pro: a.pro }); else notes.push('Llegó ' + n + ' (turno de las ' + A.mm(a.start) + ').'); }
       if (a.sena && (!o || !o.sena)) notes.push('Seña de ' + n + ': ' + A.money(a.sena.amt) + '.');
       if (!o) notes.push('Turno nuevo: ' + n + ' a las ' + A.mm(a.start) + '.');
       if (o && a.status === 'cancelado' && o.status !== 'cancelado') notes.push('Canceló ' + n + ' (' + A.mm(a.start) + ').');
@@ -225,6 +228,7 @@
       const ch = await pull(); const up = CL.readonly ? 0 : await push();
       CL.last = Date.now(); LS.set('odontovoz.cloud.last', String(CL.last)); setState('ok');
       if (ch || pendingRefresh) { pendingRefresh = false; A.noCloudPush = true; A.saveNow(); A.noCloudPush = false; softRefresh(); }
+      if (arrivals.length && A.onArrivals) { try { A.onArrivals(arrivals.splice(0)); } catch (x) { arrivals.length = 0; } }
       if (notes.length) { const m = notes.splice(0).slice(-3).join(' '); A.toast(m); if (A.voice && A.voice.on) A.voice.speak(m); }
       if (S.modal && S.modal.type === 'setup' && A.S.setup) { S.modal = null; A.renderModal(); A.refresh(); }
       return { ch, up };
@@ -241,7 +245,7 @@
     A._fromSync = true; try { A.refresh(); } finally { A._fromSync = false; }
   }
   function setState(st, msg) { CL.state = st; CL.msg = msg || ''; if (A.cloudChrome) A.cloudChrome(); }
-  function startLoop() { stopLoop(); loopT = setInterval(() => { if (!document.hidden && navigator.onLine !== false) CL.sync(); }, 8000); CL.sync(); }
+  function startLoop() { stopLoop(); let tick = 0; loopT = setInterval(() => { tick++; if (navigator.onLine === false) return; if (!document.hidden) CL.sync(); else if (A.notifBg && A.notifBg() && tick % 2 === 0) CL.sync(); }, 8000); CL.sync(); }
   function stopLoop() { if (loopT) clearInterval(loopT); loopT = null; }
   /* cada vez que la app guarda, sube los cambios a los pocos segundos */
   const origSaveNow = A.saveNow;

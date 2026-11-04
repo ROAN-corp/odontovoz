@@ -417,7 +417,7 @@
 
   /* barra superior, menú lateral y estado general después de cada cambio */
   const TITLES = { inicio: 'Inicio', agenda: 'Agenda', pacientes: 'Pacientes', caja: 'Caja', liq: 'Liquidaciones' };
-  const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Recetas', img: 'Imágenes', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
+  const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Recetas', img: 'Fotos y radiografías', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
   A.afterRefresh = () => {
     const mh = $('#modalHost'); if (!S.modal && mh && mh.innerHTML) A.renderModal(); /* algunas acciones cerraban la ventana sin quitarla de la pantalla */
     const t = $('#abTitle'), sb = $('#abSub');

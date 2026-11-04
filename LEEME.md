@@ -158,3 +158,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - `sitio/` es la página de OdontoVoz (presentación, planes, descargas, guía de instalación). Se publica en https://rodribobadilla.github.io/odontovoz/
 - La app web pasó a https://rodribobadilla.github.io/odontovoz/app/ (el panel sigue en /admin.html).
 - Precios, textos de planes y contacto (WhatsApp/correo): al final de `sitio/index.html`, en `PLANES`, `NOTA_PLANES` y `CONTACTO`.
+
+## OdontoVoz 1.5
+- Pacientes: botón ⋮ (en la lista, en la ficha y en el resumen) con «Eliminar paciente». Si tiene historia clínica, avisa de la obligación legal de conservarla (Ley 26.529, art. 18), ofrece descargar el PDF y pide confirmar. Se borra en todos los equipos.
+- Historia clínica: botón «Guardar» al final de Datos personales y de Anamnesis, con la hora de guardado.
+- Fotos y radiografías: pestaña propia en la ficha (radiografías, intraorales, extraorales), vista rápida en «Datos e historia» y guardado en la nube (Supabase Storage, carpeta privada por cuenta: `supabase/fotos.sql`).
+- Laboratorio: lista compacta con pestañas (activos, atrasados, en el laboratorio, para probar o instalar, entregados), filtro por laboratorio, acción principal en cada fila y menú ⋮.
+- Avisos: cuando otro equipo marca que llegó un paciente, este equipo suena, vibra y muestra un aviso (y una notificación del sistema si se activa). Ajustes › Avisos y sonidos.
+- Al abrir la app: logo animado con un acorde suave (se puede apagar).

@@ -8,7 +8,7 @@ const root = path.join(__dirname, '..');
 const manifestPath = path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
 let m = fs.readFileSync(manifestPath, 'utf8');
 
-const perms = ['android.permission.RECORD_AUDIO', 'android.permission.INTERNET'];
+const perms = ['android.permission.RECORD_AUDIO', 'android.permission.INTERNET', 'android.permission.POST_NOTIFICATIONS', 'android.permission.VIBRATE'];
 for (const p of perms) {
   if (!m.includes(`android:name="${p}"`)) {
     m = m.replace('</manifest>', `    <uses-permission android:name="${p}" />\n</manifest>`);
