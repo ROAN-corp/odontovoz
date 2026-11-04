@@ -28,8 +28,11 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Preparar Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Revisar Android SDK (ya viene instalado en el servidor de GitHub)
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platforms" | tail -5
+          ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" | tail -5
 
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
