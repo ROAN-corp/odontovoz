@@ -1,6 +1,6 @@
 {
   "appId": "ar.odontovoz.app",
-  "appName": "Odonto Voz",
+  "appName": "OdontoVoz",
   "webDir": "www",
   "android": {
     "backgroundColor": "#0b6b6f",

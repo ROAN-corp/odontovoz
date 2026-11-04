@@ -276,7 +276,7 @@
       const p = A.PAT(a.pid), done = a.status === 'atendido' || a.status === 'ausente';
       return '<div class="hd-row st-' + a.status + (a.id === curId ? ' cur' : '') + (done ? ' done' : '') + '" data-act="openAppt" data-id="' + a.id + '" role="button" tabindex="0">' +
         '<span class="hd-time">' + A.mm(a.start) + '<small>' + a.dur + "'" + '</small></span>' + A.stBtnHTML(a) +
-        '<span class="hd-who"><b>' + esc(p.name) + '</b><span>' + A.senaBadge(a) + esc(a.what) + (showPro ? ' · ' + esc(A.PRO(a.pro).short) : '') + (a.id === curId ? ' · <em>' + (a.status === 'en-atencion' ? 'en atención' : a.status === 'llego' ? 'en sala' : 'ahora') + '</em>' : '') + '</span></span></div>';
+        '<span class="hd-who"><b>' + esc(p.name) + '</b><span>' + A.senaBadge(a) + esc(a.what) + (showPro ? ' · ' + esc(A.PRO(a.pro).short) : '') + (a.id === curId ? ' · <em>' + (a.status === 'en-atencion' ? 'en atención' : a.status === 'llego' ? 'en sala' : 'ahora') + '</em>' : '') + '</span></span>' + (A.waBtnHTML ? A.waBtnHTML(a) : '') + '</div>';
     }).join('');
   }
   A.render.inicio = () => {
@@ -336,7 +336,7 @@
   A.showIntro = force => {
     if (!force && (LS.get('odontovoz.intro', '') === '1' || S.setup)) return false;
     const d = document.createElement('div'); d.id = 'intro'; d.className = 'intro'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Bienvenida');
-    d.innerHTML = '<div class="in-box"><div class="in-logo">' + LOGO + '</div><h1 class="in-name">Odonto Voz</h1><p class="in-hi">Bienvenido</p>' +
+    d.innerHTML = '<div class="in-box"><div class="in-logo">' + LOGO + '</div><h1 class="in-name">OdontoVoz</h1><p class="in-hi">Bienvenido</p>' +
       '<p class="in-desc">La agenda, las historias clínicas y el odontograma de tu consultorio, manejados con la voz. Pensada para atender con guantes: decís lo que ves y queda anotado.</p>' +
       '<button class="btn primary in-go" data-act="introGo">Comenzar</button></div>';
     document.body.appendChild(d); return true;

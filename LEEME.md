@@ -100,3 +100,15 @@ Desde la versión 6, cada compilación usa siempre la misma firma (guardada en G
 - **Tipo de cuenta**: se cambia con un toque desde Menú › Tu cuenta, sin volver a cargar los datos.
 - **Voz conversada**: después de una orden, el asistente sigue escuchando 15 segundos sin repetir el nombre («Navi, abrí la historia de Pérez» → «ahora el odontograma» → «agregá caries en 45 por oclusal»).
 - **Ingreso obligatorio** con usuario y contraseña cuando la nube está activa, y PIN opcional para abrir la app en cada equipo.
+
+## Versión 6.2
+- Odontograma con **dentición temporaria** (51–55, 61–65, 71–75, 81–85) más chica debajo de la permanente; se dicta igual («caries oclusal del 55»).
+- Resumen del paciente: botón **Ficha completa ›** debajo del nombre; el odontograma del resumen muestra las caras.
+- **WhatsApp**: botón verde en cada turno de la agenda y del inicio; abre el chat del paciente (número en formato 549 + área + número).
+- **Web en la PC**: ocupa todo el ancho y la agenda muestra el calendario del mes con los días con turnos.
+- **Laboratorios**: ficha de cada laboratorio (mecánico dental, teléfono, lista de trabajos con precios). En el paciente: laboratorio + trabajo (el costo se completa solo) + precio al paciente + lo que abonó y el saldo.
+- **Pantalla encendida** mientras la voz está activa.
+- **Voz**: elige entre varias versiones de lo escuchado la que tiene sentido, corrige errores típicos («carie», «o clusal», «mecial») y encuentra nombres parecidos («Gonsales» → González).
+- **Alta y ficha por voz**: «Navi, agregá un paciente nuevo» → «nombre…», «apellido…», «DNI…», «teléfono…», «obra social…», «guardar» → «alergia a…», «medicación…», «antecedentes…».
+- Al pasar a **centro** por primera vez se pide el nombre del centro; se guarda y se puede cambiar después.
+- Nuevo ícono y nombre: **OdontoVoz**.

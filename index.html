@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Odonto Voz</title>
+<title>OdontoVoz</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b6b6f">
 <meta name="color-scheme" content="light dark">
 <meta name="description" content="Gestión odontológica: agenda, historias clínicas, odontograma por voz, caja y turnero online.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Odonto Voz">
+<meta name="apple-mobile-web-app-title" content="OdontoVoz">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -656,6 +656,7 @@ body { padding-block: 0 104px; }
 @media (max-width: 520px) { .vd-hf .t { display: none; } .vd-hf { width: 44px; padding: 0; justify-content: center; } }
 body.on-odon .vdock .vd-mic, body.on-odon .vdock .vd-hf { display: none; }
 body.on-odon .vdock .vd-bar { display: none; }
+body.on-odon .vdock.hands .vd-hf, body.on-odon .vdock.hands .vd-bar { display: flex; } /* con manos libres activo se sigue viendo y se puede apagar */
 @media (prefers-reduced-motion: reduce) { .vd-mic[aria-pressed="true"], .vd-dot { animation: none; } .drawer { animation: none; } }
 /* inicio */
 .home { display: flex; flex-direction: column; gap: 14px; padding: 14px 0 8px; max-width: 760px; margin: 0 auto; }
@@ -848,6 +849,8 @@ body.has-modal .vdock .vd-hf { display: none; }
 .login-card h1 { margin: 0; font-size: 24px; } .login-card .seg { align-self: stretch; } .login-card .seg button { flex: 1; }
 .login-card .legal { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
 .peer-toast { border-left: 4px solid var(--accent); }
+.prim-lbl { font: 600 11px var(--f-sans, system-ui); fill: var(--ink-2); text-anchor: middle; letter-spacing: .04em; }
+.odon.static { pointer-events: none; }
 </style>
 
 <header class="top appbar">
@@ -869,8 +872,8 @@ body.has-modal .vdock .vd-hf { display: none; }
 
 <div id="gearMenu" class="gear-wrap drawer-wrap" hidden>
   <div class="drawer-scrim" data-act="drawerClose"></div>
-  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Menú de Odonto Voz">
-    <div class="dr-head"><span class="brand"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/><path d="M11 11h10" stroke="var(--red)" stroke-width="2" stroke-linecap="round"/></svg></span><div class="dr-id"><b>Odonto Voz</b><span id="drClinic"></span></div><button class="x" data-act="drawerClose" aria-label="Cerrar el menú">×</button></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Menú de OdontoVoz">
+    <div class="dr-head"><span class="brand"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/><path d="M11 11.5v2M13.5 10v5M16 9v7M18.5 10v5M21 11.5v2" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/></svg></span><div class="dr-id"><b>OdontoVoz</b><span id="drClinic"></span></div><button class="x" data-act="drawerClose" aria-label="Cerrar el menú">×</button></div>
     <div id="drMode"></div>
     <nav class="dr-nav" aria-label="Secciones">
       <button class="dnav" data-act="tab" data-tab="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span class="t">Inicio</span></button>
@@ -961,9 +964,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
         var st = perm && (perm.speechRecognition || perm.microphone);
         if (st && st !== 'granted') { errCode = 'not-allowed'; }
         else {
-          var r = await P.start({ language: self.lang || 'es-AR', maxResults: 1, partialResults: false, popup: false });
-          var t = (r && r.matches && r.matches[0]) || '';
-          if (t && self._on && self.onresult) self.onresult({ resultIndex: 0, results: [{ 0: { transcript: t, confidence: 1 }, length: 1, isFinal: true }] });
+          var r = await P.start({ language: self.lang || 'es-AR', maxResults: 5, partialResults: false, popup: false });
+          var ms = (r && r.matches) || [], t = ms[0] || '';
+          if (t && self._on && self.onresult) { var res = { length: ms.length, isFinal: true }; ms.forEach(function (m, i) { res[i] = { transcript: m, confidence: 1 - i * 0.1 }; }); self.onresult({ resultIndex: 0, results: [res] }); }
           else if (!t && !self.continuous) errCode = 'no-speech';
         }
       } catch (e) {
@@ -990,7 +993,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
 
   var ARCH_UP = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
   var ARCH_LO = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
-  var ALL = ARCH_UP.concat(ARCH_LO);
+  /* dentición temporaria (primaria): 55→51, 61→65 arriba; 85→81, 71→75 abajo */
+  var PRIM_UP = [55, 54, 53, 52, 51, 61, 62, 63, 64, 65];
+  var PRIM_LO = [85, 84, 83, 82, 81, 71, 72, 73, 74, 75];
+  var ALL = ARCH_UP.concat(ARCH_LO, PRIM_UP, PRIM_LO);
 
   var UNITS = { cero: 0, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9 };
   var SPECIAL = {
@@ -1114,7 +1120,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
       var part = arch.slice(Math.min(ia, ib), Math.max(ia, ib) + 1);
       return ia > ib ? part.reverse() : part;  // respeta el sentido en que se dictó
     }
-    return span(ARCH_UP) || span(ARCH_LO);
+    return span(ARCH_UP) || span(ARCH_LO) || span(PRIM_UP) || span(PRIM_LO);
   }
 
   function suggestFor(n) {
@@ -1261,7 +1267,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   }
 
   var api = {
-    ARCH_UP: ARCH_UP, ARCH_LO: ARCH_LO, ALL: ALL, COND_META: COND_META,
+    ARCH_UP: ARCH_UP, ARCH_LO: ARCH_LO, PRIM_UP: PRIM_UP, PRIM_LO: PRIM_LO, ALL: ALL, COND_META: COND_META,
     parse: parse, build: build, prepare: prepare, validTooth: validTooth, resolveStatus: resolveStatus
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -1949,7 +1955,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   function randSeed(r) {
     const out = [], n = 3 + Math.floor(r() * 5), pick = a => a[Math.floor(r() * a.length)];
     for (let i = 0; i < n; i++) {
-      const t = pick(P.ALL), ant = t % 10 <= 3, face = pick(ant ? ['mesial', 'distal', 'vestibular'] : ['oclusal', 'mesial', 'distal', 'vestibular']), k = r();
+      const t = pick(P.ARCH_UP.concat(P.ARCH_LO)), ant = t % 10 <= 3, face = pick(ant ? ['mesial', 'distal', 'vestibular'] : ['oclusal', 'mesial', 'distal', 'vestibular']), k = r();
       if (k < 0.3) out.push('composite ' + face + ' ' + t + ' realizado');
       else if (k < 0.45) out.push('caries ' + face + ' ' + t);
       else if (k < 0.55) out.push('ausente el ' + t);
@@ -2175,24 +2181,36 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   function compactSVG(odon, opt) {
     const uid = opt.uid || 'x', P8 = 46, X0 = 8, W = X0 * 2 + 8 * P8 - 8, armed = S.od && S.od.tool;
     const rows = [[P.ARCH_UP.slice(0, 8), true, 22], [P.ARCH_UP.slice(8), true, 106], [P.ARCH_LO.slice(0, 8), false, 192], [P.ARCH_LO.slice(8), false, 272]];
-    const o = ['<svg class="odon compact' + (armed ? ' armed' : '') + '" viewBox="0 0 ' + W + ' 336" role="img" aria-label="Odontograma">', defsOf(uid)];
+    const SC = 0.74, PP = 36.5, PX = (W - 10 * PP) / 2 + 4;
+    const o = ['<svg class="odon compact' + (armed ? ' armed' : '') + (opt.static ? ' static' : '') + '" viewBox="0 0 ' + W + ' 470" role="img" aria-label="Odontograma (permanente y temporario)">', defsOf(uid)];
     o.push('<line class="midline" x1="4" y1="171" x2="' + (W - 4) + '" y2="171"/>');
     rows.forEach(r => r[0].forEach((n, i) => o.push(tooth(n, odon[n], X0 + i * P8, r[2], r[1], opt, uid))));
+    o.push('<text class="prim-lbl" x="' + (W / 2) + '" y="342">Dentición temporaria</text><line class="midline" x1="4" y1="412" x2="' + (W - 4) + '" y2="412"/>');
+    P.PRIM_UP.forEach((n, i) => o.push('<g transform="translate(' + (PX + i * PP) + ',362) scale(' + SC + ')">' + tooth(n, odon[n], 0, 0, true, opt, uid) + '</g>'));
+    P.PRIM_LO.forEach((n, i) => o.push('<g transform="translate(' + (PX + i * PP) + ',420) scale(' + SC + ')">' + tooth(n, odon[n], 0, 0, false, opt, uid) + '</g>'));
     o.push('</svg>');
     return o.join('');
   }
   A.odonSVG = (odon, opt) => {
     opt = opt || {};
     if (opt.compact === undefined) opt.compact = !opt.mini && A.isNarrow();
+    const showPrim = !opt.mini && !opt.noPrim;
     if (opt.compact) return compactSVG(odon, opt);
     const uid = opt.uid || 'x', PITCH = 46, GAP = 18, X0 = 8, Y = { tU: 22, tL: 112 };
     const o = [], armed = !opt.mini && S.od && S.od.tool;
-    o.push('<svg class="' + (opt.mini ? 'mini-odon' : 'odon' + (armed ? ' armed' : '')) + '" viewBox="' + (opt.mini ? '0 14 770 144' : '0 0 770 176') + '" role="img" aria-label="Odontograma">');
+    o.push('<svg class="' + (opt.mini ? 'mini-odon' : 'odon' + (armed ? ' armed' : '') + (opt.static ? ' static' : '')) + '" viewBox="' + (opt.mini ? '0 14 770 144' : showPrim ? '0 0 770 316' : '0 0 770 176') + '" role="img" aria-label="Odontograma">');
     o.push('<defs><pattern id="h' + uid + '" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:var(--m-todo-soft)"/><line x1="0" y1="0" x2="0" y2="6" style="stroke:var(--m-todo);stroke-width:2"/></pattern></defs>');
     const midX = X0 + 8 * PITCH + GAP / 2 - (PITCH - 38) / 2;
     o.push('<line class="midline" x1="' + midX + '" y1="14" x2="' + midX + '" y2="162"/><line class="midline" x1="4" y1="84" x2="766" y2="84"/>');
     P.ARCH_UP.forEach((n, i) => o.push(tooth(n, odon[n], X0 + i * PITCH + (i >= 8 ? GAP : 0), Y.tU, true, opt, uid)));
     P.ARCH_LO.forEach((n, i) => o.push(tooth(n, odon[n], X0 + i * PITCH + (i >= 8 ? GAP : 0), Y.tL, false, opt, uid)));
+    if (showPrim) {
+      /* dentición temporaria, más chica, debajo de la permanente */
+      const SC = 0.78, PP = 38, cx = midX, y1 = 214, y2 = 266;
+      o.push('<text class="prim-lbl" x="' + cx + '" y="190">Dentición temporaria</text><line class="midline" x1="' + (cx - 220) + '" y1="255" x2="' + (cx + 220) + '" y2="255"/><line class="midline" x1="' + cx + '" y1="200" x2="' + cx + '" y2="306"/>');
+      P.PRIM_UP.forEach((n, i) => o.push('<g transform="translate(' + (cx - 5 * PP + i * PP + (i >= 5 ? 8 : -8) + 4) + ',' + y1 + ') scale(' + SC + ')">' + tooth(n, odon[n], 0, 0, true, opt, uid) + '</g>'));
+      P.PRIM_LO.forEach((n, i) => o.push('<g transform="translate(' + (cx - 5 * PP + i * PP + (i >= 5 ? 8 : -8) + 4) + ',' + y2 + ') scale(' + SC + ')">' + tooth(n, odon[n], 0, 0, false, opt, uid) + '</g>'));
+    }
     o.push('</svg>');
     return o.join('');
   };
@@ -2207,7 +2225,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
       const f = p[1], mk = d && d.faces && d.faces[f];
       const st = mk && mk.status === 'planificado' ? ' style="fill:url(#h' + uid + ')"' : '';
       const tip = 'Pieza ' + n + ' · ' + A.faceName(f, n) + (mk ? ' · ' + P.COND_META[mk.cond].label + ' (' + A.STATUS_TXT[mk.status] + ')' : '');
-      s.push('<polygon class="face' + (mk ? ' ' + FC[mk.status] : '') + '"' + st + (opt.mini ? '' : ' data-act="odTouch" data-t="' + n + '" data-f="' + f + '"') + ' points="' + p[0] + '"><title>' + esc(tip) + '</title></polygon>');
+      s.push('<polygon class="face' + (mk ? ' ' + FC[mk.status] : '') + '"' + st + (opt.mini || opt.static ? '' : ' data-act="odTouch" data-t="' + n + '" data-f="' + f + '"') + ' points="' + p[0] + '"><title>' + esc(tip) + '</title></polygon>');
     });
     s.push('</g>');
     if (gone) s.push('<path class="xmark ' + (gone.cond === 'ausente' ? 'neutral' : KC[gone.status]) + '" d="M2 2 L36 36 M36 2 L2 36"/>');
@@ -2530,7 +2548,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     const grip = '<button class="grip" data-act="noop" data-grip="' + a.id + '" aria-label="Arrastrar para mover" title="Arrastrar para mover">⠿</button>';
     if (a.type === 'block') return '<div class="' + cls + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" role="button" tabindex="0"><div class="t"><span>' + t + '</span>' + grip + '</div><div class="n">' + esc(a.label) + '</div></div>';
     const stb = A.stBtnHTML ? A.stBtnHTML(a) : '', sena = A.senaBadge ? A.senaBadge(a) : '';
-    return '<div class="' + cls + (sena ? ' has-sena' : '') + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" data-appt="' + a.id + '" role="button" tabindex="0" title="' + esc(pat.name + ' · ' + a.what + ' · ' + (A.STATUS_LABEL[a.status] || '')) + '"><div class="t"><span>' + t + (a.sobre ? ' <span class="sb">SOBRETURNO</span>' : '') + '</span>' + grip + '</div>' +
+    return '<div class="' + cls + (sena ? ' has-sena' : '') + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" data-appt="' + a.id + '" role="button" tabindex="0" title="' + esc(pat.name + ' · ' + a.what + ' · ' + (A.STATUS_LABEL[a.status] || '')) + '"><div class="t"><span>' + t + (a.sobre ? ' <span class="sb">SOBRETURNO</span>' : '') + '</span>' + (A.waBtnHTML ? A.waBtnHTML(a) : '') + grip + '</div>' +
       '<div class="n">' + stb + '<span class="nm">' + esc(pat.name) + '</span>' + (pd ? ' ⚠' : '') + '</div><div class="k">' + sena + esc(a.what) + (a.online ? ' <span class="onl">online</span>' : '') + '</div></div>';
   }
   function gridHTML(cols, key0) {
@@ -3008,7 +3026,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
       const has = Object.keys(pd.odon).length > 0, sm = A.summarize(pd), plan = pd.tx.filter(t => t.status === 'plan'), due = A.controlDue(pd);
       h += '<div class="block"><h3>Odontograma</h3>';
       if (has) {
-        h += '<div class="row-btns"><span class="chip acc">Último odontograma: ' + esc(A.odonDateTxt(pd) || 'sin fecha') + '</span></div>' + A.odonSVG(pd.odon, { mini: true, uid: 'mini' + pid }) + A.legendHTML() +
+        h += '<div class="row-btns"><span class="chip acc">Último odontograma: ' + esc(A.odonDateTxt(pd) || 'sin fecha') + '</span></div>' + A.odonSVG(pd.odon, { compact: true, static: true, uid: 'mini' + pid }) + A.legendHTML() +
           '<div class="row-btns"><span class="chip">' + sm.ausentes + ' ausentes</span><span class="chip blue">' + sm.hallazgos + ' con hallazgos</span><span class="chip bad">' + sm.hechos + ' tratadas</span><span class="chip warn">' + sm.plan + ' en plan</span></div>' +
           (plan.length ? plan.slice(0, 3).map(t => '<div class="finding"><span>' + esc(t.label) + '</span><span class="mono">' + A.money(t.price) + '</span></div>').join('') + (plan.length > 3 ? '<div class="small-note">y ' + (plan.length - 3) + ' más en el plan</div>' : '') : '<div class="small-note">Sin tratamientos pendientes.</div>');
       } else h += '<div class="empty-odon"><b>Todavía no hay odontograma realizado.</b><br>No hay fecha de confeccion porque nunca se completó. Tocá «Hacer odontograma» para cargarlo por voz o con toques.</div>';
@@ -3110,7 +3128,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   };
   A.acts.fichaBack = () => { A.stopOd && A.stopOd(); S.tab = S.from && S.from !== 'ficha' ? S.from : 'pacientes'; A.refresh(); };
 
-  const TABS = [['datos', 'Datos e historia'], ['odon', 'Odontograma'], ['plan', 'Plan y presupuesto'], ['hecho', 'Realizado'], ['lab', 'Laboratorio'], ['rx', 'Recetas'], ['img', 'Imágenes'], ['docs', 'Documentos y firmas'], ['cuenta', 'Cuenta']];
+  const TABS = [['datos', 'Datos e historia'], ['odon', 'Odontograma'], ['plan', 'Plan y presupuesto'], ['hecho', 'Realizado'], ['lab', 'Laboratorios'], ['rx', 'Recetas'], ['img', 'Imágenes'], ['docs', 'Documentos y firmas'], ['cuenta', 'Cuenta']];
   A.render.ficha = () => {
     const pid = S.fichaPid, p = A.PAT(pid), pd = A.pd(pid), pro = role(), sal = A.saldo(pid), host = $('#view-ficha');
     const tabs = TABS.filter(t => (pro || ['datos', 'docs', 'cuenta'].indexOf(t[0]) >= 0) && !(S.uimode === 'atencion' && t[0] === 'cuenta'));
@@ -4008,7 +4026,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
       o.y = y0 + 44;
     };
     o.finish = name => {
-      const n = d.getNumberOfPages(); for (let i = 1; i <= n; i++) { d.setPage(i); d.setFont('helvetica', 'normal'); d.setFontSize(8); o.setC(MUT); o.text(A.CLINIC + ' · ' + title, M, Hh - 10); o.text('Página ' + i + ' de ' + n, W - M, Hh - 10, { align: 'right' }); o.text('Generado con Odonto Voz (prototipo, datos ficticios)', M, Hh - 6); }
+      const n = d.getNumberOfPages(); for (let i = 1; i <= n; i++) { d.setPage(i); d.setFont('helvetica', 'normal'); d.setFontSize(8); o.setC(MUT); o.text(A.CLINIC + ' · ' + title, M, Hh - 10); o.text('Página ' + i + ' de ' + n, W - M, Hh - 10, { align: 'right' }); o.text('Generado con OdontoVoz (prototipo, datos ficticios)', M, Hh - 6); }
       const blob = d.output('blob'); A.lastPdf = d; return A.saveFile(name, blob);
     };
     return o;
@@ -4401,13 +4419,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   MF.setup = m => {
     const f = m.f || {}, solo = f.type === 'solo', cen = f.type === 'centro';
     const card = (t, ttl, sub, pts) => '<button class="setup-card' + (f.type === t ? ' on' : '') + '" data-act="setupType" data-t="' + t + '" aria-pressed="' + (f.type === t) + '"><b>' + ttl + '</b><span>' + sub + '</span><ul>' + pts.map(p => '<li>' + p + '</li>').join('') + '</ul></button>';
-    let h = '<p class="setup-lead">Elegí cómo vas a usar Odonto Voz. Podés cambiarlo después desde <b>Ajustes</b>.</p><div class="setup-grid">' +
+    let h = '<p class="setup-lead">Elegí cómo vas a usar OdontoVoz. Podés cambiarlo después desde <b>Ajustes</b>.</p><div class="setup-grid">' +
       card('solo', 'Soy un odontólogo', 'Consultorio individual', ['Agenda, odontograma e historias clínicas', 'Caja y presupuestos propios', 'Sin pestañas de centro ni de otros profesionales']) +
       card('centro', 'Somos un centro odontológico', 'Dos o más odontólogos', ['Agenda por profesional y vista de todo el centro', 'Recepción con acceso limitado', 'Caja del centro y liquidaciones por porcentaje']) + '</div>';
     if (solo) h += '<div class="row2"><div class="field"><label for="suName">Tu nombre (como figura en recetas y firmas)</label><input id="suName" value="' + esc(f.proName != null ? f.proName : (A.DEMO ? 'Dra. Carolina Vega' : '')) + '" placeholder="Ej.: Dra. Ana López"></div><div class="field"><label for="suClin">Nombre del consultorio</label><input id="suClin" value="' + esc(f.clinic != null ? f.clinic : (A.DEMO ? 'Consultorio Odontológico' : '')) + '" placeholder="Ej.: Consultorio Dental López"></div></div>';
     if (cen) h += '<div class="row2"><div class="field"><label for="suClin">Nombre del centro</label><input id="suClin" value="' + esc(f.clinic != null ? f.clinic : (A.DEMO ? 'Centro Odontológico Ejemplo' : '')) + '" placeholder="Ej.: Centro Dental Norte"></div>' + (A.DEMO ? '<div class="field"><label>Profesionales</label><div class="hint" style="margin:0">Se cargan 3 profesionales de ejemplo. En Ajustes podés sumar o quitar profesionales y editar sus días y horarios.</div></div>' : '<div class="field"><label for="suName">Tu nombre (primer profesional)</label><input id="suName" value="' + esc(f.proName || '') + '" placeholder="Ej.: Dr. Pablo Sosa"><div class="hint" style="margin:0">Los demás profesionales se suman después en Ajustes.</div></div>') + '</div>';
     h += '<div id="suMsg" class="hint bad"></div><div class="hint">Todos los pacientes y turnos de esta versión son ficticios y quedan solo en este navegador.</div>';
-    return '<div class="modal-scrim"><div class="modal wide" role="dialog" aria-modal="true" aria-label="Bienvenida"><div class="m-head"><h2>Bienvenido a Odonto Voz</h2></div><div class="m-body">' + h + '</div><div class="m-foot"><button class="btn primary" data-act="setupGo">Empezar</button></div></div></div>';
+    return '<div class="modal-scrim"><div class="modal wide" role="dialog" aria-modal="true" aria-label="Bienvenida"><div class="m-head"><h2>Bienvenido a OdontoVoz</h2></div><div class="m-body">' + h + '</div><div class="m-foot"><button class="btn primary" data-act="setupGo">Empezar</button></div></div></div>';
   };
   A.openSetup = () => { S.modal = { type: 'setup', f: Object.assign({}, S.setup || {}) }; A.renderModal(); };
   A.acts.setupType = el => { const m = S.modal; readSetup(); m.f.type = el.getAttribute('data-t'); A.renderModal(); };
@@ -4449,7 +4467,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     if (S.tab === 'liq' && (solo || atn)) S.tab = 'agenda';
     if (S.tab === 'caja' && atn) S.tab = 'agenda';
     if (S.tab === 'pacientes' && atn) S.tab = 'agenda';
-    const br = $('.brand span'); if (br) br.textContent = 'Odonto Voz';
+    const br = $('.brand span'); if (br) br.textContent = 'OdontoVoz';
   };
 
   /* ---------- vista «modo atención» ---------- */
@@ -4777,7 +4795,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
       '<div class="block"><h3>Restaurar desde una copia</h3><label class="btn filebtn" style="width:fit-content">Elegir archivo de copia<input type="file" id="cfgFile" accept=".json,application/json" hidden data-chg="cfgImport"></label>';
     if (m.imp) h += '<div class="tip"><b>' + esc(m.imp.name) + '</b>: copia del ' + esc(m.imp.when) + ' (versión ' + esc(m.imp.ver) + '), ' + m.imp.imgs + ' imagen(es).<br>Al restaurar, <b>se reemplazan los datos actuales</b> por los de la copia. Antes se guarda una copia automática de lo que hay ahora por si te arrepentís.</div><div class="row-btns"><button class="btn danger" data-act="cfgImportGo">Sí, reemplazar mis datos por esta copia</button><button class="btn" data-act="cfgImportNo">Cancelar</button></div>';
     h += '<div class="hint">Si usás una versión nueva de la app en el mismo lugar (mismo enlace o la misma app instalada), tus datos siguen ahí sin hacer nada. La copia sirve para pasar a otro navegador, otro equipo o ante un borrado.</div></div>';
-    h += '<div class="block"><h3>Versión y actualizaciones</h3><div class="hint">Odonto Voz <b>' + A.VERSION + '</b>. Cuando salga una versión nueva, la app instalada te avisa («Hay una versión nueva») y se actualiza al tocar <i>Actualizar</i>. Los datos no se tocan: la actualización cambia el programa, no lo que guardaste. Si una versión nueva necesita ordenar datos viejos, lo hace sola al abrir.</div></div>';
+    h += '<div class="block"><h3>Versión y actualizaciones</h3><div class="hint">OdontoVoz <b>' + A.VERSION + '</b>. Cuando salga una versión nueva, la app instalada te avisa («Hay una versión nueva») y se actualiza al tocar <i>Actualizar</i>. Los datos no se tocan: la actualización cambia el programa, no lo que guardaste. Si una versión nueva necesita ordenar datos viejos, lo hace sola al abrir.</div></div>';
     return h;
   }
   A.acts.cfgBackup = async () => {
@@ -4790,10 +4808,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     try {
       const d = JSON.parse(await f.text());
       if (!d || d.app !== 'odontovoz' || typeof d.data !== 'string') throw new Error('x');
-      if ((d.schema || 0) > 4) { say('Esa copia es de una versión más nueva de Odonto Voz. Actualizá la app y probá de nuevo.'); el.value = ''; return; }
+      if ((d.schema || 0) > 4) { say('Esa copia es de una versión más nueva de OdontoVoz. Actualizá la app y probá de nuevo.'); el.value = ''; return; }
       JSON.parse(d.data);
       S.modal.imp = { name: f.name, when: String(d.exported || '').slice(0, 10).split('-').reverse().join('/') || '—', ver: d.version || '?', imgs: Object.keys(d.media || {}).length, d }; rerender(); say('');
-    } catch (e) { say('Ese archivo no es una copia de seguridad de Odonto Voz.'); el.value = ''; }
+    } catch (e) { say('Ese archivo no es una copia de seguridad de OdontoVoz.'); el.value = ''; }
   };
   A.acts.cfgImportNo = () => { S.modal.imp = null; rerender(); };
   A.acts.cfgImportGo = async () => {
@@ -5006,7 +5024,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   if (standalone()) document.body.classList.add('app-mode');
   const hasManifest = !!document.querySelector('link[rel="manifest"]');
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; const b = $('#pwaBtn'); if (b) b.hidden = false; });
-  window.addEventListener('appinstalled', () => { deferred = null; A.toast('Odonto Voz quedó instalada en este dispositivo.'); });
+  window.addEventListener('appinstalled', () => { deferred = null; A.toast('OdontoVoz quedó instalada en este dispositivo.'); });
   A.acts.pwaInstall = async () => {
     const g = $('#gearMenu'); if (g) g.hidden = true;
     if (deferred) { try { deferred.prompt(); await deferred.userChoice; } catch (e) { /* cancelado */ } deferred = null; return; }
@@ -5019,7 +5037,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   const bar = reg => {
     const h = $('#toastHost'); if (!h || $('.upd-bar')) return;
     const d = document.createElement('div'); d.className = 'upd-bar'; d.setAttribute('role', 'status');
-    d.innerHTML = '<span>Hay una versión nueva de Odonto Voz. Tus datos no se tocan.</span><button type="button">Actualizar</button>';
+    d.innerHTML = '<span>Hay una versión nueva de OdontoVoz. Tus datos no se tocan.</span><button type="button">Actualizar</button>';
     d.querySelector('button').onclick = () => { try { A.saveNow(); } catch (e) { /* nada */ } if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING'); else location.reload(); };
     document.body.appendChild(d);
   };
@@ -5253,10 +5271,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   function boot() {
     const SR = SRC(); if (!SR || !V.on) return;
     let rec; try { rec = new SR(); } catch (e) { fatal(MIC_BLOCKED); return; }
-    rec.lang = 'es-AR'; rec.continuous = V.mode !== 'once'; rec.interimResults = true; rec.maxAlternatives = 1;
+    rec.lang = 'es-AR'; rec.continuous = V.mode !== 'once'; rec.interimResults = true; rec.maxAlternatives = 5;
     rec.onresult = ev => {
       let interim = '';
-      for (let i = ev.resultIndex; i < ev.results.length; i++) { const r = ev.results[i]; if (r.isFinal) heard(r[0].transcript); else interim += r[0].transcript; }
+      for (let i = ev.resultIndex; i < ev.results.length; i++) { const r = ev.results[i]; if (r.isFinal) { const alts = []; for (let j = 0; j < (r.length || 1); j++) if (r[j] && r[j].transcript) alts.push(r[j].transcript); heard(A.pickAlt && alts.length > 1 ? A.pickAlt(alts) : r[0].transcript); } else interim += r[0].transcript; }
       if (interim) live(interim, true);
     };
     rec.onerror = ev => {
@@ -5322,7 +5340,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
       ta.value = (ta.value ? ta.value.replace(/\s*$/, '') + ' ' : '') + cap.replace(/[.\s]*$/, '') + '. ';
       ta.dispatchEvent(new Event('input', { bubbles: true })); live('Anotado: ' + text); return;
     }
-    let phrase = text;
+    let phrase = text; A._lastRaw = text;
     if (V.mode === 'hands') {
       const w = C.stripWake(text);
       if (w.woke) {
@@ -5614,7 +5632,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     A.toast('Tus datos quedaron guardados. Ya podés cerrar esta pestaña.');
   }
   A.acts.exitNow = exitNow;
-  MF.exit = () => A.modalShell('¿Salir de Odonto Voz?', '<p style="margin:0">Tus datos quedan guardados en este dispositivo.</p><p class="hint" style="margin:0">Tocá atrás otra vez para salir enseguida.</p>', '<button class="btn" data-act="closeModal">Quedarme</button><button class="btn primary" data-act="exitNow">Salir</button>');
+  MF.exit = () => A.modalShell('¿Salir de OdontoVoz?', '<p style="margin:0">Tus datos quedan guardados en este dispositivo.</p><p class="hint" style="margin:0">Tocá atrás otra vez para salir enseguida.</p>', '<button class="btn" data-act="closeModal">Quedarme</button><button class="btn primary" data-act="exitNow">Salir</button>');
   /* botón atrás del teléfono */
   A.navInit = () => {
     const CP = window.OV_NATIVE && window.Capacitor.Plugins;
@@ -5639,14 +5657,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     if (t) {
       if (S.tab === 'ficha' && S.fichaPid && A.PAT(S.fichaPid)) { t.textContent = A.PAT(S.fichaPid).name; sb.textContent = (S.visit && S.visit.pid === S.fichaPid ? 'Atención · ' : '') + (SUBT[S.fichaTab] || ''); }
       else if (S.tab === 'agenda' && S.uimode === 'atencion') { t.textContent = 'Mi día'; sb.textContent = A.PRO(A.isSolo() ? A.PROS[0].id : S.me).name; }
-      else { t.textContent = TITLES[S.tab] || 'Odonto Voz'; sb.textContent = S.tab === 'inicio' ? A.CLINIC : ''; }
+      else { t.textContent = TITLES[S.tab] || 'OdontoVoz'; sb.textContent = S.tab === 'inicio' ? A.CLINIC : ''; }
     }
     const bb = $('#abBack'); if (bb) bb.disabled = S.tab === 'inicio' && !S.panel && !S.modal && NAV.stack.length <= 1 && !drawerOpen();
     document.body.classList.toggle('on-odon', S.tab === 'ficha' && S.fichaTab === 'odon');
     A.$$('.dnav[data-tab]').forEach(b => { const tb = b.getAttribute('data-tab'); if (tb === S.tab || (S.tab === 'ficha' && tb === 'pacientes')) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     const dc = $('#drClinic'); if (dc) dc.textContent = A.CLINIC;
     const dm = $('#drMode'); if (dm) dm.innerHTML = '<button class="mode-chip' + (A.DEMO ? '' : ' real') + '" data-act="modeOpen">' + (A.DEMO ? '● Modo prueba · datos de ejemplo' : '● Uso real · tus datos') + '</button>';
-    const dv = $('#drVer'); if (dv) dv.textContent = 'Odonto Voz ' + A.VERSION;
+    const dv = $('#drVer'); if (dv) dv.textContent = 'OdontoVoz ' + A.VERSION;
     V.ui();
   };
   /* reemplaza al ajuste de pantalla anterior (tipo de cuenta, modo atención/administración) */
@@ -5752,7 +5770,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
      TUTORIAL, COMANDOS DE VOZ, SOPORTE, MODO PRUEBA / REAL, APARIENCIA
      ===================================================================== */
   const TUT = () => [
-    [IC.tooth, 'Bienvenido a Odonto Voz', 'En un minuto te muestro cómo se usa. Podés saltearlo y verlo cuando quieras desde el menú, en «Tutorial de uso».'],
+    [IC.tooth, 'Bienvenido a OdontoVoz', 'En un minuto te muestro cómo se usa. Podés saltearlo y verlo cuando quieras desde el menú, en «Tutorial de uso».'],
     [IC.menu, 'Menú, inicio y volver', 'Arriba a la izquierda: la flecha vuelve a la pantalla anterior (también el botón atrás del teléfono), el ☰ abre el menú con todas las secciones y la casita te lleva al inicio.'],
     [IC.mic, 'La voz, siempre a mano', 'El botón redondo de abajo a la derecha escucha y hace lo que pedís: «turno para Pérez mañana a las 10», «abrí la ficha de Gómez», «caries oclusal del 36». Sigue escuchando hasta que lo tocás de nuevo o decís «terminar dictado».'],
     [IC.hf, 'Manos libres', 'Con «Manos libres» activo, la app espera que digas «odontovoz» antes de cada pedido. Ideal para atender con guantes sin tocar la pantalla.'],
@@ -5792,7 +5810,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
 
   A.SUPPORT = A.SUPPORT || { whatsapp: '', email: '' };
   const FAQ = [
-    ['El micrófono no anda', 'En la app instalada, aceptá el permiso de micrófono (Ajustes del teléfono → Apps → Odonto Voz → Permisos). En la computadora usá Chrome. En la vista previa dentro de Claude el micrófono está bloqueado.'],
+    ['El micrófono no anda', 'En la app instalada, aceptá el permiso de micrófono (Ajustes del teléfono → Apps → OdontoVoz → Permisos). En la computadora usá Chrome. En la vista previa dentro de Claude el micrófono está bloqueado.'],
     ['El dictado se corta', 'El micrófono sigue escuchando hasta que lo apagás. Si el teléfono bloquea la pantalla, se detiene: dejá la pantalla encendida mientras atendés.'],
     ['¿Dónde quedan mis datos?', 'Por ahora, en este dispositivo. Hacé copias seguido desde el menú → «Copia de seguridad». La copia automática en la nube viene en la próxima versión.'],
     ['Cambié de teléfono', 'En el teléfono viejo: menú → Copia de seguridad → Descargar. En el nuevo: instalá la app y usá «Restaurar desde una copia».'],
@@ -5801,15 +5819,15 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   A.acts.supportOpen = () => { A.hideDrawer(); S.modal = { type: 'support' }; A.renderModal(); };
   A.supportReport = () => {
     let errs = []; try { errs = JSON.parse(localStorage.getItem(ERRK) || '[]'); } catch (e) { /* nada */ }
-    return 'Odonto Voz ' + A.VERSION + ' · ' + (A.DEMO ? 'modo prueba' : 'uso real') + ' · ' + (A.isSolo() ? 'consultorio' : 'centro') + '\n' + (window.OV_NATIVE ? 'App Android' : (standalone() ? 'App instalada (web)' : 'Navegador')) + ' · ' + navigator.userAgent.slice(0, 140) + '\nVoz: ' + (V.supported() ? 'disponible' : 'no disponible') + ' · Guardado: ' + (A.saveOk === false ? 'con problemas' : 'bien') + '\nPacientes: ' + A.PATS.length + ' · Profesionales: ' + A.PROS.length +
+    return 'OdontoVoz ' + A.VERSION + ' · ' + (A.DEMO ? 'modo prueba' : 'uso real') + ' · ' + (A.isSolo() ? 'consultorio' : 'centro') + '\n' + (window.OV_NATIVE ? 'App Android' : (standalone() ? 'App instalada (web)' : 'Navegador')) + ' · ' + navigator.userAgent.slice(0, 140) + '\nVoz: ' + (V.supported() ? 'disponible' : 'no disponible') + ' · Guardado: ' + (A.saveOk === false ? 'con problemas' : 'bien') + '\nPacientes: ' + A.PATS.length + ' · Profesionales: ' + A.PROS.length +
       '\nÚltimos errores:\n' + (errs.length ? errs.slice(-8).map(e => e.t.slice(0, 16).replace('T', ' ') + ' ' + e.k + ': ' + e.m.split('\n')[0]).join('\n') : 'ninguno');
   };
   MF.support = () => {
     const s = A.SUPPORT, rep = A.supportReport();
     return A.modalShell('Ayuda y soporte', '<div class="cmd-list">' + FAQ.map(f => '<details class="block"><summary style="cursor:pointer;font-weight:700">' + esc(f[0]) + '</summary><p class="hint" style="margin:6px 0 0">' + esc(f[1]) + '</p></details>').join('') + '</div>' +
-      '<div class="block"><h3>Contactar al soporte</h3>' + (s.whatsapp || s.email ? '<div class="row-btns">' + (s.whatsapp ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + esc(s.whatsapp.replace(/\D/g, '')) + '?text=' + encodeURIComponent('Hola, necesito ayuda con Odonto Voz.\n\n' + rep) + '">WhatsApp de soporte</a><span class="mono hint">' + esc(s.whatsapp) + '</span>' : '') + (s.email ? '<span class="mono hint">' + esc(s.email) + '</span>' : '') + '</div>' : '<div class="hint" style="margin:0">El contacto de soporte se configura al publicar la app.</div>') +
+      '<div class="block"><h3>Contactar al soporte</h3>' + (s.whatsapp || s.email ? '<div class="row-btns">' + (s.whatsapp ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + esc(s.whatsapp.replace(/\D/g, '')) + '?text=' + encodeURIComponent('Hola, necesito ayuda con OdontoVoz.\n\n' + rep) + '">WhatsApp de soporte</a><span class="mono hint">' + esc(s.whatsapp) + '</span>' : '') + (s.email ? '<span class="mono hint">' + esc(s.email) + '</span>' : '') + '</div>' : '<div class="hint" style="margin:0">El contacto de soporte se configura al publicar la app.</div>') +
       '<div class="hint">Si algo falla, copiá este informe y mandalo al soporte: ayuda a encontrar el problema. No incluye datos de pacientes.</div><textarea id="supRep" class="inp" rows="6" readonly>' + esc(rep) + '</textarea><div class="row-btns"><button class="btn" data-act="copyText" data-text="' + esc(rep) + '">Copiar informe</button></div></div>' +
-      '<div class="small-note">Odonto Voz ' + esc(A.VERSION) + '</div>', '<button class="btn primary" data-act="closeModal">Listo</button>', true);
+      '<div class="small-note">OdontoVoz ' + esc(A.VERSION) + '</div>', '<button class="btn primary" data-act="closeModal">Listo</button>', true);
   };
 
   A.acts.modeOpen = () => { A.hideDrawer(); S.modal = { type: 'modeSel', step: 0 }; A.renderModal(); };
@@ -6142,7 +6160,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
       const p = A.PAT(a.pid), done = a.status === 'atendido' || a.status === 'ausente';
       return '<div class="hd-row st-' + a.status + (a.id === curId ? ' cur' : '') + (done ? ' done' : '') + '" data-act="openAppt" data-id="' + a.id + '" role="button" tabindex="0">' +
         '<span class="hd-time">' + A.mm(a.start) + '<small>' + a.dur + "'" + '</small></span>' + A.stBtnHTML(a) +
-        '<span class="hd-who"><b>' + esc(p.name) + '</b><span>' + A.senaBadge(a) + esc(a.what) + (showPro ? ' · ' + esc(A.PRO(a.pro).short) : '') + (a.id === curId ? ' · <em>' + (a.status === 'en-atencion' ? 'en atención' : a.status === 'llego' ? 'en sala' : 'ahora') + '</em>' : '') + '</span></span></div>';
+        '<span class="hd-who"><b>' + esc(p.name) + '</b><span>' + A.senaBadge(a) + esc(a.what) + (showPro ? ' · ' + esc(A.PRO(a.pro).short) : '') + (a.id === curId ? ' · <em>' + (a.status === 'en-atencion' ? 'en atención' : a.status === 'llego' ? 'en sala' : 'ahora') + '</em>' : '') + '</span></span>' + (A.waBtnHTML ? A.waBtnHTML(a) : '') + '</div>';
     }).join('');
   }
   A.render.inicio = () => {
@@ -6202,7 +6220,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   A.showIntro = force => {
     if (!force && (LS.get('odontovoz.intro', '') === '1' || S.setup)) return false;
     const d = document.createElement('div'); d.id = 'intro'; d.className = 'intro'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Bienvenida');
-    d.innerHTML = '<div class="in-box"><div class="in-logo">' + LOGO + '</div><h1 class="in-name">Odonto Voz</h1><p class="in-hi">Bienvenido</p>' +
+    d.innerHTML = '<div class="in-box"><div class="in-logo">' + LOGO + '</div><h1 class="in-name">OdontoVoz</h1><p class="in-hi">Bienvenido</p>' +
       '<p class="in-desc">La agenda, las historias clínicas y el odontograma de tu consultorio, manejados con la voz. Pensada para atender con guantes: decís lo que ves y queda anotado.</p>' +
       '<button class="btn primary in-go" data-act="introGo">Comenzar</button></div>';
     document.body.appendChild(d); return true;
@@ -6587,7 +6605,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   CL.lock = () => {
     if (!CL.pinOn() || !CL.session || $('#pinWrap')) return;
     const w = document.createElement('div'); w.id = 'pinWrap'; w.className = 'login-wrap';
-    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>Odonto Voz</h1><p class="hint" style="margin:0">' + esc(CL.session.user.email) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
+    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>OdontoVoz</h1><p class="hint" style="margin:0">' + esc(CL.session.user.email) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
     document.body.appendChild(w); const i = $('#pinIn'); if (i) i.focus();
   };
   A.subs.pinGo = async () => {
@@ -6613,8 +6631,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
   A.acts.privacyOpen = (el, ev) => { if (ev) ev.preventDefault(); const w = $('#loginWrap'); if (w) w.style.display = 'none'; S.modal = { type: 'privacy', fromLogin: !!w }; A.renderModal(); };
   const origClose = A.closeModal;
   A.closeModal = () => { const fl = S.modal && S.modal.type === 'privacy' && S.modal.fromLogin; origClose(); if (fl) { const w = $('#loginWrap'); if (w) w.style.display = ''; } };
-  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen claro de cómo se tratan los datos en Odonto Voz.</p>' +
-    '<h3>Quién es responsable de qué</h3><p>El profesional o el centro que usa la app es el <b>responsable de la base de datos de sus pacientes</b> (Ley 25.326). Odonto Voz presta el servicio de software y de almacenamiento por cuenta del profesional y solo trata los datos para hacer funcionar la app.</p>' +
+  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen claro de cómo se tratan los datos en OdontoVoz.</p>' +
+    '<h3>Quién es responsable de qué</h3><p>El profesional o el centro que usa la app es el <b>responsable de la base de datos de sus pacientes</b> (Ley 25.326). OdontoVoz presta el servicio de software y de almacenamiento por cuenta del profesional y solo trata los datos para hacer funcionar la app.</p>' +
     '<h3>Qué datos se guardan</h3><p>De la cuenta: correo, contraseña (guardada cifrada, nadie la puede leer) y la aceptación de estas condiciones. De los pacientes: lo que el profesional carga (datos de contacto, turnos, historia clínica, odontograma, presupuestos y pagos). Son <b>datos sensibles de salud</b>: solo los puede tratar el profesional, con secreto profesional y con el consentimiento del paciente (Ley 25.326, arts. 7, 8 y 10; Ley 26.529).</p>' +
     '<h3>Dónde y cómo</h3><p>En servidores de Supabase en la <b>Unión Europea (Frankfurt, Alemania)</b>. La Argentina considera que los países de la Unión Europea tienen protección adecuada para transferir datos personales (AAIP). Los datos viajan cifrados (HTTPS) y se guardan cifrados. Cada cuenta solo puede leer sus propios registros (reglas de seguridad por usuario en la base de datos). Se guarda un historial de cambios de cada ficha para que la historia clínica no se pierda ni se altere sin rastro.</p>' +
     '<h3>Sin cuenta</h3><p>Si usás la app sin cuenta, todo queda solo en tu equipo y nada se envía a internet.</p>' +
@@ -6951,6 +6969,317 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     '.lab-list{display:flex;flex-direction:column;gap:10px}.lab-card{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:10px 12px;background:var(--surface);display:flex;flex-direction:column;gap:6px}' +
     '.lab-card.late{border-left-color:var(--st-no);background:color-mix(in srgb,var(--st-no) 6%,var(--surface))}.lab-card.st-instalado{border-left-color:var(--st-done);opacity:.8}.lab-card.st-cancelado{opacity:.55}' +
     '.lab-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap}.lab-meta{font-size:13px;color:var(--ink-2)}.lab-notes{font-size:13.5px;border-left:3px solid var(--line);padding-left:8px}.lab-pat{font-weight:700;font-size:14px}' +
+    '</style>');
+})();
+/* ===== v6.2: ficha a un toque, WhatsApp al paciente, calendario en la web, laboratorios con precios, pantalla encendida, voz más comprensiva, alta por voz ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd, V = A.voice;
+  A.VERSION = '6.2';
+  const N = s => A.norm(s);
+  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const WA_IC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 12 12 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.2z"/></svg>';
+
+  /* =====================================================================
+     WHATSAPP AL NÚMERO DEL PACIENTE (formato internacional de Argentina: 54 9 + área + número, sin 0 ni 15)
+     ===================================================================== */
+  A.waNumber = phone => {
+    let d = String(phone || '').replace(/\D/g, ''); if (!d) return '';
+    if (d.indexOf('00') === 0) d = d.slice(2);
+    if (d.indexOf('54') === 0 && d.length >= 12) { d = d.slice(2); if (d.charAt(0) === '9') d = d.slice(1); }
+    if (d.charAt(0) === '0') d = d.slice(1);
+    if (d.length === 12) { for (const al of [2, 3, 4]) if (d.substr(al, 2) === '15') { d = d.slice(0, al) + d.slice(al + 2); break; } }
+    if (d.length !== 10) return d.length > 10 ? d : '';
+    return '549' + d;
+  };
+  A.waLink = (phone, text) => { const n = A.waNumber(phone); return n ? 'https://wa.me/' + n + '?text=' + encodeURIComponent(text || '') : ''; };
+  A.waBtnHTML = a => (a.pid && a.status !== 'cancelado' && a.status !== 'atendido' && a.status !== 'ausente' ? '<button class="wab' + (a.rem === 'enviado' || a.rem === 'confirmo' ? ' sent' : '') + '" data-act="waAppt" data-id="' + a.id + '" aria-label="Recordatorio por WhatsApp" title="Recordatorio por WhatsApp' + (a.rem === 'enviado' ? ' (ya enviado)' : '') + '">' + WA_IC + '</button>' : '');
+  A.acts.waAppt = (el, ev) => {
+    if (ev) ev.stopPropagation();
+    const a = A.apptById(el.getAttribute('data-id')), p = A.PAT(a.pid), url = A.waLink(p.phone, A.reminderText(a));
+    if (!url) { A.toast(p.name + ' no tiene un teléfono válido. Cargalo en su ficha (con código de área, ej. 299 4123456).'); return; }
+    window.open(url, '_blank', 'noopener');
+    if (a.rem !== 'confirmo') A.mutate([a.date], () => { a.rem = 'enviado'; }, 'Recordatorio enviado a ' + p.name + '.');
+    A.refresh();
+  };
+
+  /* =====================================================================
+     PANEL DEL PACIENTE Y DEL TURNO: «Ficha completa» arriba, al lado del nombre; WhatsApp con el número correcto
+     ===================================================================== */
+  const origPanel = A.renderPanel;
+  A.renderPanel = () => {
+    origPanel();
+    const p = S.panel; if (!p) return;
+    const pid = p.type === 'pat' ? p.pid : (A.apptById(p.id) || {}).pid; if (!pid) return;
+    const sub = $('#panelHost .panel-head .sub');
+    if (sub && !$('#panelHost .fc-btn')) sub.insertAdjacentHTML('afterend', '<button class="fc-btn" data-act="openFicha" data-pid="' + pid + '">Ficha completa ›</button>');
+    A.$$('#panelHost a[href^="https://wa.me/?text="]').forEach(x => {
+      const a = p.type === 'appt' ? A.apptById(p.id) : null, url = a ? A.waLink(A.PAT(pid).phone, A.reminderText(a)) : '';
+      if (url) x.href = url; else { x.removeAttribute('href'); x.setAttribute('data-act', 'waNoPhone'); }
+    });
+  };
+  A.acts.waNoPhone = () => A.toast('Falta un teléfono válido en la ficha del paciente (con código de área).');
+
+  /* =====================================================================
+     WEB EN LA PC: todo el ancho y calendario del mes en la agenda (solo web, pantallas anchas)
+     ===================================================================== */
+  const isWeb = () => !window.OV_NATIVE;
+  const wide = () => isWeb() && (window.innerWidth || 0) >= 1100;
+  document.body.classList.toggle('web', isWeb());
+  function miniCal() {
+    const m0 = S.calM || S.date.slice(0, 7), first = m0 + '-01', d0 = A.parse(first), today = A.today();
+    const start = A.add(first, -((d0.getDay() + 6) % 7)), pros = A.visPros();
+    let h = '<div class="mc-head"><button class="btn small" data-act="agCalMon" data-n="-1" aria-label="Mes anterior">‹</button><b>' + esc(A.cap(d0.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }))) + '</b><button class="btn small" data-act="agCalMon" data-n="1" aria-label="Mes siguiente">›</button></div>';
+    h += '<div class="mc-grid">' + ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'].map(x => '<span class="mc-dw">' + x + '</span>').join('');
+    for (let i = 0; i < 42; i++) {
+      const k = A.add(start, i), out = k.slice(0, 7) !== m0; if (i >= 35 && out) break;
+      const n = A.day(k).filter(a => a.type !== 'block' && a.status !== 'cancelado' && pros.some(p => p.id === a.pro)).length;
+      h += '<button class="mc-d' + (out ? ' out' : '') + (k === today ? ' today' : '') + (k === S.date ? ' sel' : '') + '" data-act="agGoDay" data-date="' + k + '" aria-label="' + esc(A.fmtLong(k) + (n ? ': ' + n + ' turnos' : '')) + '">' + A.parse(k).getDate() + (n ? '<i title="' + n + ' turnos"></i>' : '') + '</button>';
+    }
+    h += '</div>';
+    const l = A.day(S.date).filter(a => a.type !== 'block' && a.status !== 'cancelado' && pros.some(p => p.id === a.pro));
+    const free = pros.reduce((s, p) => s + (A.freeSlots ? A.freeSlots(p, S.date).length : 0), 0);
+    h += '<div class="mc-sum"><b>' + l.length + '</b> turnos · <b class="ok">' + free + '</b> disponibles</div>';
+    h += '<div class="mc-pros">' + pros.map(p => '<span><b class="pdot" style="background:' + p.color + '"></b>' + esc(p.name) + '</span>').join('') + '</div>';
+    return h;
+  }
+  A.acts.agCalMon = el => { const m = S.calM || S.date.slice(0, 7), d = new Date(+m.slice(0, 4), +m.slice(5) - 1 + parseInt(el.getAttribute('data-n'), 10), 1); S.calM = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); A.render.agenda(); };
+  const origAgenda = A.render.agenda;
+  A.render.agenda = () => {
+    origAgenda();
+    const host = $('#view-agenda'); if (!host || !wide()) return;
+    if (S.calM && S.calM !== S.date.slice(0, 7) && S._calDate !== S.date) S.calM = null; S._calDate = S.date;
+    const kids = Array.from(host.childNodes), main = document.createElement('div'), side = document.createElement('aside');
+    main.className = 'ag-main'; side.className = 'ag-side card'; side.setAttribute('aria-label', 'Calendario del mes');
+    kids.forEach(k => main.appendChild(k)); side.innerHTML = miniCal();
+    const wrap = document.createElement('div'); wrap.className = 'ag-split'; wrap.appendChild(main); wrap.appendChild(side); host.appendChild(wrap);
+  };
+  window.addEventListener('resize', (() => { let w = wide(), t = null; return () => { clearTimeout(t); t = setTimeout(() => { if (wide() !== w) { w = wide(); if (S.tab === 'agenda') A.render.agenda(); } }, 200); }; })());
+
+  /* =====================================================================
+     LABORATORIOS COMO FICHAS: mecánico dental, teléfono y lista de prácticas con precios;
+     en cada paciente: laboratorio + práctica + costo + precio al paciente + lo que abonó
+     ===================================================================== */
+  const labs = () => A.labDir();
+  const labBy = name => labs().filter(x => N(x.name) === N(name))[0] || null;
+  MF.labDir = () => {
+    const l = labs();
+    return A.modalShell('Mis laboratorios', '<p class="hint">Cargá cada laboratorio con su mecánico dental, teléfono y la lista de trabajos con sus precios. Después, en la ficha del paciente, elegís laboratorio y trabajo y el costo se completa solo.</p>' +
+      (l.length ? '<div class="os-list">' + l.map(x => '<button class="os-row" data-act="labOne" data-id="' + x.id + '"><span class="os-n"><b>' + esc(x.name) + '</b><small>' + esc([x.mech ? 'Mecánico: ' + x.mech : '', x.phone || ''].filter(Boolean).join(' · ') || 'Sin datos de contacto') + '</small></span><span class="os-c"><small>' + ((x.items || []).length ? (x.items || []).length + ' trabajos con precio' : 'sin precios') + '</small></span></button>').join('') + '</div>' : '<div class="empty">Todavía no cargaste laboratorios.</div>'),
+      '<button class="btn" data-act="labDirAdd">+ Agregar laboratorio</button><button class="btn primary" data-act="osBack">Listo</button>');
+  };
+  A.acts.labDirAdd = () => { const x = { id: A.uid(), name: 'Laboratorio nuevo', mech: '', phone: '', addr: '', notes: '', items: [] }; labs().push(x); A.save(); S.modal = { type: 'labOne', id: x.id, back: S.modal }; A.renderModal(); };
+  A.acts.labOne = el => { S.modal = { type: 'labOne', id: el.getAttribute('data-id'), back: S.modal }; A.renderModal(); };
+  MF.labOne = m => {
+    const x = labs().filter(l => l.id === m.id)[0]; if (!x) return '';
+    x.items = x.items || [];
+    const F = (k, l, ph, t) => '<div class="field"><label>' + l + '</label><input data-chg="labOneF" data-lab="' + x.id + '" data-f="' + k + '" value="' + esc(x[k] || '') + '" placeholder="' + esc(ph || '') + '"' + (t ? ' inputmode="' + t + '"' : '') + '></div>';
+    let b = '<div class="row2">' + F('name', 'Nombre del laboratorio', 'Ej.: Laboratorio Dental Sur') + F('mech', 'Mecánico dental', 'Ej.: Jorge Martínez') + '</div><div class="row2">' + F('phone', 'Teléfono / WhatsApp', 'Ej.: 299 4123456', 'tel') + F('addr', 'Dirección o datos de pago', '') + '</div>';
+    b += '<div class="block"><h3>Trabajos y precios</h3><div class="lab-items">' + x.items.map(it => '<div class="lab-it"><input data-chg="labItF" data-lab="' + x.id + '" data-it="' + it.id + '" data-f="name" value="' + esc(it.name) + '" aria-label="Trabajo"><input inputmode="numeric" data-chg="labItF" data-lab="' + x.id + '" data-it="' + it.id + '" data-f="price" value="' + (it.price || '') + '" placeholder="$" aria-label="Precio"><button class="x" data-act="labItDel" data-lab="' + x.id + '" data-it="' + it.id + '" aria-label="Quitar">×</button></div>').join('') + '</div>' +
+      '<div class="row-btns"><button class="btn small" data-act="labItAdd" data-lab="' + x.id + '">+ Agregar trabajo</button>' + (x.items.length ? '' : '<button class="btn small ghost" data-act="labItSeed" data-lab="' + x.id + '">Cargar lista típica</button>') + '</div></div>';
+    b += '<div class="field"><label>Notas</label><textarea data-chg="labOneF" data-lab="' + x.id + '" data-f="notes">' + esc(x.notes || '') + '</textarea></div>';
+    return A.modalShell(x.name, b, '<button class="btn danger" data-act="labOneDel" data-lab="' + x.id + '">Quitar</button><button class="btn primary" data-act="osBack">Listo</button>', true);
+  };
+  const LAB_OF = el => labs().filter(l => l.id === el.getAttribute('data-lab'))[0];
+  A.chg.labOneF = el => { const x = LAB_OF(el); if (!x) return; x[el.getAttribute('data-f')] = el.value.trim(); A.save(); };
+  A.chg.labItF = el => { const x = LAB_OF(el); if (!x) return; const it = x.items.filter(i => i.id === el.getAttribute('data-it'))[0]; if (!it) return; const f = el.getAttribute('data-f'); it[f] = f === 'price' ? num(el.value) : el.value.trim(); if (f === 'price') el.value = it.price || ''; A.save(); };
+  A.acts.labItAdd = el => { const x = LAB_OF(el); x.items.push({ id: A.uid(), name: '', price: 0 }); A.save(); A.renderModal(); const ins = A.$$('.lab-it input[data-f="name"]'); if (ins.length) ins[ins.length - 1].focus(); };
+  A.acts.labItDel = el => { const x = LAB_OF(el); x.items = x.items.filter(i => i.id !== el.getAttribute('data-it')); A.save(); A.renderModal(); };
+  A.acts.labItSeed = el => { const x = LAB_OF(el); ['Corona metal-cerámica', 'Corona de zirconio', 'Corona de disilicato de litio', 'Perno muñón colado', 'Corona provisoria', 'Prótesis completa', 'Prótesis parcial acrílica', 'Prótesis parcial cromo-cobalto', 'Compostura / agregado', 'Placa miorrelajante'].forEach(n => x.items.push({ id: A.uid(), name: n, price: 0 })); A.save(); A.renderModal(); };
+  A.acts.labOneDel = el => { const x = LAB_OF(el); A.CFG.labs = labs().filter(l => l !== x); A.save(); A.acts.osBack(); };
+
+  /* formulario del trabajo del paciente: laboratorio y trabajo desde la lista, con precios y lo abonado */
+  const origLabEditMF = MF.labEdit;
+  MF.labEdit = m => {
+    let h = origLabEditMF(m);
+    const f = m.f, l = labBy(f.lab), items = (l && l.items) || [];
+    const labSel = '<div class="field"><label for="lbLabSel">Laboratorio</label><select id="lbLabSel" data-chg="lbLabSel">' + (labs().length ? '' : '<option value="">(cargá tus laboratorios)</option>') + labs().map(x => '<option' + (l === x ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '<option value="__new">+ Laboratorio nuevo…</option></select><input id="lbLab" type="hidden" value="' + esc(f.lab || '') + '"></div>';
+    h = h.replace(/<div class="field"><label for="lbLab">Laboratorio<\/label><input id="lbLab"[\s\S]*?<\/datalist><\/div>/, labSel);
+    if (items.length) h = h.replace('<div class="row2"><div class="field"><label for="lbKind">', '<div class="field"><label for="lbItem">Trabajo del laboratorio</label><select id="lbItem" data-chg="lbItem"><option value="">Elegí de la lista de ' + esc(l.name) + '</option>' + items.map(it => '<option value="' + it.id + '"' + (N(it.name) === N(f.work) ? ' selected' : '') + '>' + esc(it.name) + (it.price ? ' · ' + A.money(it.price) : '') + '</option>').join('') + '</select></div><div class="row2"><div class="field"><label for="lbKind">');
+    h = h.replace('<label class="chk"><input type="checkbox" id="lbPaid"', '<div class="block lab-money"><h3>Precios</h3><div class="row3"><div class="field"><label for="lbCost2">Costo del laboratorio</label><input id="lbCost2" inputmode="numeric" data-in="lbCalc" value="' + (f.cost || '') + '"></div><div class="field"><label for="lbPrice">Precio al paciente</label><input id="lbPrice" inputmode="numeric" data-in="lbCalc" value="' + (f.pricePat || '') + '"></div><div class="field"><label for="lbPaidPat">El paciente abonó</label><input id="lbPaidPat" inputmode="numeric" data-in="lbCalc" value="' + (f.paidPat || '') + '"></div></div><div id="lbSaldo" class="hint" style="margin:0"></div></div><label class="chk"><input type="checkbox" id="lbPaid"');
+    h = h.replace(/<div class="field"><label for="lbCost">Costo del laboratorio<\/label><input id="lbCost"[^>]*><\/div>/, '<input id="lbCost" type="hidden" value="' + (f.cost || '') + '">');
+    return h;
+  };
+  A.modalAfter = A.modalAfter || {};
+  A.modalAfter.labEdit = () => A.ins.lbCalc();
+  A.ins.lbCalc = () => {
+    const c = num(($('#lbCost2') || {}).value), p = num(($('#lbPrice') || {}).value), pa = num(($('#lbPaidPat') || {}).value), o = $('#lbSaldo'); if (!o) return;
+    const hc = $('#lbCost'); if (hc) hc.value = c || '';
+    o.innerHTML = (p ? 'Saldo del paciente: <b>' + A.money(Math.max(0, p - pa)) + '</b>' + (pa > p ? ' (pagó de más ' + A.money(pa - p) + ')' : '') : 'Cargá el precio al paciente para ver el saldo.') + (p && c ? ' · Ganancia: <b>' + A.money(p - c) + '</b>' : '');
+  };
+  A.chg.lbLabSel = el => {
+    const f = S.modal.f; f.work = ($('#lbWork') || {}).value || f.work;
+    keepLabMoney();
+    if (el.value === '__new') { const x = { id: A.uid(), name: 'Laboratorio nuevo', mech: '', phone: '', addr: '', notes: '', items: [] }; labs().push(x); A.save(); f.lab = x.name; S.modal = { type: 'labOne', id: x.id, back: S.modal }; A.renderModal(); return; }
+    f.lab = el.value; A.renderModal();
+  };
+  A.chg.lbItem = el => {
+    const f = S.modal.f, l = labBy(f.lab), it = l && l.items.filter(i => i.id === el.value)[0]; if (!it) return;
+    keepLabMoney(); f.work = it.name; if (it.price) f.cost = it.price;
+    const all = { 'Prótesis fija': /corona|incrust|carilla|perno|puente|implante/i, 'Prótesis removible': /protesis|completa|parcial|flexible|sobredent|compostura|rebasad/i };
+    Object.keys(all).forEach(k => { if (all[k].test(it.name)) f.kind = k; });
+    A.renderModal();
+  };
+  function keepLabMoney() { const f = S.modal.f; ['lbTeeth:teeth', 'lbMat:material', 'lbShade:shade', 'lbNotes:notes', 'lbSent:sent', 'lbDue:due', 'lbRecv:recv'].forEach(x => { const [id, k] = x.split(':'); const e = $('#' + id); if (e) f[k] = e.value; }); f.cost = num(($('#lbCost2') || {}).value) || f.cost; f.pricePat = num(($('#lbPrice') || {}).value); f.paidPat = num(($('#lbPaidPat') || {}).value); }
+  const origLabSave = A.acts.labSave;
+  A.acts.labSave = () => {
+    const f = S.modal.f; f.pricePat = num(($('#lbPrice') || {}).value); f.paidPat = num(($('#lbPaidPat') || {}).value);
+    const sel = $('#lbLabSel'); if (sel && sel.value && sel.value !== '__new') { const h = $('#lbLab'); if (h) h.value = sel.value; }
+    origLabSave();
+  };
+  /* resumen de plata en la pestaña del paciente */
+  const origLabTab = A.render.labTab;
+  A.render.labTab = pid => {
+    let h = origLabTab(pid);
+    const l = A.pd(pid).labs.filter(x => x.status !== 'cancelado'), price = l.reduce((s, x) => s + (x.pricePat || 0), 0), paid = l.reduce((s, x) => s + (x.paidPat || 0), 0), cost = l.reduce((s, x) => s + (x.cost || 0), 0);
+    if (l.length && (price || cost)) h = h.replace('<div class="lab-list">', '<div class="stats"><div class="stat"><b>' + A.money(price) + '</b>precio al paciente</div><div class="stat"><b>' + A.money(paid) + '</b>abonó</div><div class="stat"><b' + (price - paid > 0 ? ' class="saldo-pos"' : '') + '>' + A.money(Math.max(0, price - paid)) + '</b>saldo</div><div class="stat"><b>' + A.money(cost) + '</b>costo laboratorio</div></div><div class="lab-list">');
+    return h.replace('Trabajos de laboratorio <span', 'Laboratorios del paciente <span');
+  };
+
+  /* =====================================================================
+     PANTALLA ENCENDIDA MIENTRAS LA VOZ ESTÁ ACTIVA
+     ===================================================================== */
+  let wl = null, awake = false;
+  const KA = () => (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.KeepAwake) || null;
+  async function setAwake(on) {
+    if (on === awake) return; awake = on;
+    try {
+      const k = KA();
+      if (k) { if (on) await k.keepAwake(); else await k.allowSleep(); return; }
+      if (on && navigator.wakeLock) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener && wl.addEventListener('release', () => { wl = null; }); }
+      if (!on && wl) { await wl.release(); wl = null; }
+    } catch (e) { awake = false; }
+  }
+  setInterval(() => setAwake(!!(V && V.on)), 1500);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && V && V.on) { awake = false; setAwake(true); } });
+
+  /* =====================================================================
+     VOZ MÁS COMPRENSIVA: varias versiones de lo escuchado, errores típicos del reconocedor y nombres parecidos
+     ===================================================================== */
+  const FIX = [[/\bcarie\b/g, 'caries'], [/\bcarias\b/g, 'caries'], [/\bo ?clusal(?:es)?\b|\boclusar\b|\bo cluso\b/g, 'oclusal'], [/\bme ?cial\b|\bmecial\b/g, 'mesial'], [/\bdis ?tal\b/g, 'distal'],
+    [/\bvesti ?bular\b|\bbestibular\b/g, 'vestibular'], [/\bpala ?tino\b/g, 'palatino'], [/\bcomposi?t\b|\bcomposite\b|\bcomposites\b|\bcompo sit\b/g, 'composite'], [/\bodonto ?grama\b|\bodontogramas\b|\bodontográfica\b/g, 'odontograma'],
+    [/\bpieza (?:numero |nro )?/g, 'pieza '], [/\bel diente\b/g, 'el'], [/\bendo ?doncia\b/g, 'endodoncia'], [/\bimplantes?\b/g, 'implante'], [/\bamal ?gama\b/g, 'amalgama'], [/\bextrac?ion\b|\bextracion\b/g, 'extraccion'],
+    [/\bhistoria clinica\b|\bhistoria clínica\b/g, 'historia clinica'], [/\bagendar?le\b/g, 'agendale'], [/\bde ?ene ?i\b|\bdeni\b/g, 'dni']];
+  A.fixAsr = t => { let s = String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); FIX.forEach(f => { s = s.replace(f[0], f[1]); }); return s.replace(/\s+/g, ' ').trim(); };
+  /* entre las versiones que da el reconocedor, se queda con la que tiene sentido para la app */
+  A.pickAlt = alts => {
+    if (!alts || alts.length < 2) return alts && alts[0];
+    const onOdon = S.tab === 'ficha' && S.fichaTab === 'odon', hands = V.on && V.mode === 'hands';
+    let best = alts[0], bs = -1;
+    alts.forEach((a, i) => {
+      const w = C.stripWake(A.fixAsr(a)), rest = w.rest || '';
+      let s = -i * 0.3; if (hands && w.woke) s += 3;
+      let pr = null; try { pr = C.parse(rest, { today: A.today(), pros: A.PROS }); } catch (e) { /* nada */ }
+      if (pr && pr.intent !== 'unknown') s += 2;
+      if (onOdon && A.P.parse(rest).actions.length) s += 2.5;
+      if (pr && pr.name && A.searchPats(pr.name, 1).length) s += 1;
+      if (s > bs) { bs = s; best = a; }
+    });
+    return best;
+  };
+  /* búsqueda de pacientes tolerante: «Gonsales» encuentra a «González», «Baldes» a «Valdez» */
+  const phon = w => N(w).replace(/h/g, '').replace(/v/g, 'b').replace(/z|c(?=[ei])|x/g, 's').replace(/ll|y(?=[aeiou])/g, 'y').replace(/qu|c(?=[aou])|k/g, 'k').replace(/g(?=[ei])|j/g, 'j').replace(/(.)\1+/g, '$1').replace(/s\b/g, '');
+  function lev(a, b) { if (Math.abs(a.length - b.length) > 2) return 9; const d = []; for (let i = 0; i <= a.length; i++) { d[i] = [i]; for (let j = 1; j <= b.length; j++) d[i][j] = i ? Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)) : j; } return d[a.length][b.length]; }
+  const origSearch = A.searchPats;
+  A.searchPats = (q, limit) => {
+    const r = origSearch(q, limit); if (r.length || !q || /\d/.test(q)) return r;
+    const qt = N(q).split(/\s+/).filter(w => w.length > 2).map(phon); if (!qt.length) return r;
+    const sc = A.PATS.map(p => { const pt = N(p.first + ' ' + p.last).split(/\s+/).map(phon); let s = 0; qt.forEach(t => { const b = Math.min.apply(null, pt.map(x => (x === t ? 0 : lev(x, t)))); if (b === 0) s += 2; else if (b === 1 && t.length >= 4) s += 1.2; else if (b === 2 && t.length >= 7) s += 0.6; }); return { p, s }; })
+      .filter(x => x.s >= Math.max(1.2, qt.length * 0.9)).sort((a, b) => b.s - a.s);
+    return sc.slice(0, limit || 8).map(x => x.p);
+  };
+
+  /* =====================================================================
+     ALTA Y FICHA POR VOZ: «nombre Juan», «apellido Pérez», «DNI 30.123.456», «alergia a la penicilina»…
+     ===================================================================== */
+  const FIELDS = [['first', /^(?:el |su )?nombre(?: del paciente)?$/], ['last', /^(?:el |su )?apellidos?$/], ['dni', /^(?:el |su )?(?:dni|documento|d n i|numero de documento)$/], ['phone', /^(?:el |su )?(?:telefono|celular|cel|whatsapp|numero de telefono)$/],
+    ['age', /^(?:la |su )?edad$/], ['email', /^(?:el |su )?(?:email|e mail|mail|correo(?: electronico)?)$/], ['addr', /^(?:el |su )?(?:domicilio|direccion)$/], ['cov', /^(?:la |su )?(?:obra social|cobertura|prepaga)$/], ['afil', /^(?:el |su )?(?:numero de afiliado|afiliado|n de afiliado|credencial)$/]];
+  const HCK = /^(antecedentes?(?: medicos| odontologicos| personales)?|medicacion(?: actual)?|medicamentos|toma|alergias?|alerta|diagnostico|indicaciones|motivo de consulta|evolucion|observaciones?)\b/;
+  const parseField = c => {
+    let m = /^(.+?)\s*(?:es|son|:|=)\s+(.+)$/.exec(c) || /^((?:el |la |su )?(?:nombre|apellidos?|dni|documento|telefono|celular|whatsapp|edad|email|e mail|mail|correo(?: electronico)?|domicilio|direccion|obra social|cobertura|prepaga|numero de afiliado|afiliado|credencial|numero de documento|numero de telefono))\s+(.+)$/.exec(c);
+    if (!m) return null; const key = m[1].trim(); for (const f of FIELDS) if (f[1].test(key)) return { f: f[0], v: m[2].trim() };
+    return null;
+  };
+  const parsePrev = C.parse;
+  C.parse = (text, ctx) => {
+    const c = C.clean(A.fixAsr(text)); let fd;
+    if ((S.modal && S.modal.type === 'patient') || (S.tab === 'ficha' && S.fichaTab === 'datos')) { if ((fd = parseField(c))) return { intent: 'field', f: fd.f, v: fd.v }; }
+    if (S.tab === 'ficha' && S.fichaPid && HCK.test(c)) return { intent: 'hcLine', text: c };
+    if (/^(?:agrega(?:r|me|mos)?|agreguemos|crea(?:r|mos)?|creemos|carga(?:r|mos)?|carguemos|da(?:r|mos)? de alta|nuevo|nueva|registra(?:r)?|abri(?:r)?)\s+(?:un |una |a un |a una )?(?:paciente|ficha|historia clinica)\s*(?:nuevo|nueva)?$/.test(c)) return { intent: 'newPat', first: '', last: '' };
+    return parsePrev(text, ctx);
+  };
+  const cap = s => String(s).split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const UC = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const IDS = { first: 'npF', last: 'npL', dni: 'npD', phone: 'npT', email: 'npE', cov: 'npC', age: 'npA' };
+  const LBL = { first: 'nombre', last: 'apellido', dni: 'DNI', phone: 'teléfono', age: 'edad', email: 'email', addr: 'domicilio', cov: 'obra social', afil: 'número de afiliado' };
+  function cleanVal(f, v) {
+    v = v.replace(/[.,;]+$/, '');
+    if (f === 'dni' || f === 'phone' || f === 'afil') { const w = C.wordsNum(v.split(' ')); const d = v.replace(/\D/g, ''); return d || (w && w.value ? String(w.value) : v); }
+    if (f === 'age') { const d = v.replace(/\D/g, ''); if (d) return d; const w = C.wordsNum(v.split(' ')); return w && w.value ? String(w.value) : v; }
+    if (f === 'email') return v.replace(/\s*arroba\s*/g, '@').replace(/\s*punto\s*/g, '.').replace(/\s+/g, '').toLowerCase();
+    if (f === 'cov') { const os = A.osList().filter(o => N(o.sigla) === N(v) || N(o.name).indexOf(N(v)) === 0)[0]; return os ? os.sigla : cap(v); }
+    return cap(v);
+  }
+  const execPrev = A.cmd.exec;
+  A.cmd.exec = (text, opts) => {
+    let pr = null; try { pr = C.parse(text, { today: A.today(), pros: A.PROS }); } catch (e) { pr = null; }
+    if (pr && pr.intent === 'field') {
+      /* se recupera el valor con sus tildes tal como se dijo («Pérez», no «Perez») */
+      const ow = String(A._lastRaw && N(A._lastRaw).indexOf(N(pr.v)) >= 0 ? A._lastRaw : text).replace(/[.,;:]+$/, '').trim().split(/\s+/), k = pr.v.split(' ').length, cand = ow.slice(-k).join(' ');
+      const v = cleanVal(pr.f, N(cand) === N(pr.v) ? cand : pr.v);
+      if (S.modal && S.modal.type === 'patient') {
+        const el = $('#' + IDS[pr.f]); if (!el) return { ok: false, msg: 'Ese dato se completa después, en la ficha.' };
+        el.value = v; el.dispatchEvent(new Event('input', { bubbles: true }));
+        const miss = ['npF', 'npL'].filter(id => !($('#' + id) || {}).value).map(id => id === 'npF' ? 'nombre' : 'apellido');
+        return { ok: true, msg: UC(LBL[pr.f]) + ': ' + v + '.' + (miss.length ? ' Falta ' + miss.join(' y ') + '.' : ' Decí «guardar» cuando termines.') };
+      }
+      if (S.tab === 'ficha' && S.fichaPid) { A.setProfile(S.fichaPid, { [pr.f]: pr.f === 'age' ? num(v) : v }); A.refresh(); return { ok: true, msg: 'Guardado. ' + UC(LBL[pr.f]) + ': ' + v + '.' }; }
+    }
+    if (pr && pr.intent === 'hcLine') {
+      const pid = S.fichaPid, r = A.parseHC(pr.text); if (!r.secs.length && !r.conds.length) return { ok: false, msg: 'No entendí qué agregar a la historia.' };
+      const done = A.applyHC(pid, r); if (S.fichaTab !== 'datos') S.fichaTab = 'datos'; A.refresh(); A.toast('Historia clínica: ' + done.out.join(', ') + '.', done.undo);
+      return { ok: true, msg: 'Anotado en la historia: ' + done.out.join(', ') + '.' };
+    }
+    if (pr && pr.intent === 'newPat' && !pr.first) { S.modal = { type: 'patient' }; A.renderModal(); return { ok: true, msg: 'Paciente nuevo. Decime los datos: «nombre…», «apellido…», «DNI…», «teléfono…», «obra social…». Al final, «guardar».' }; }
+    return execPrev(A.fixAsr(text), opts);
+  };
+  /* después de guardar un paciente nuevo por voz, sigue la historia clínica */
+  const origNpSave = A.acts.npSave;
+  A.acts.npSave = () => { origNpSave(); if (V.on && S.tab === 'ficha') A.say('Listo. Seguimos con la historia: decí «antecedentes…», «medicación…» o «alergia a…».'); };
+
+  /* =====================================================================
+     TIPO DE CUENTA: al pasar a centro por primera vez se pide el nombre del centro
+     ===================================================================== */
+  const origTypeGo = A.acts.acctTypeGo;
+  A.acts.acctTypeGo = () => {
+    const t = S.modal.t, st = S.setup || {};
+    if (t === 'centro' && st.type !== 'centro' && !st.centroNamed) { S.modal = { type: 'centroName' }; A.renderModal(); return; }
+    if (t === 'solo' && st.type !== 'solo') { S.setup = Object.assign({}, st, { clinicCentro: st.clinic, clinic: st.clinicSolo || st.clinic }); }
+    if (t === 'centro' && st.type !== 'centro') { S.setup = Object.assign({}, st, { clinicSolo: st.clinic, clinic: st.clinicCentro || st.clinic }); }
+    origTypeGo();
+  };
+  MF.centroName = () => A.modalShell('Tu centro odontológico', '<p class="hint">Es la primera vez que pasás a centro: poné el nombre del centro. Tu nombre sigue como primer profesional y después podés sumar a los demás en Ajustes.</p>' +
+    '<div class="field"><label for="cnName">Nombre del centro</label><input id="cnName" value="' + esc((S.setup && (S.setup.clinicCentro || S.setup.clinic)) || '') + '" placeholder="Ej.: Centro Dental Norte"></div><div class="field"><label for="cnPhone">Teléfono del centro (opcional)</label><input id="cnPhone" inputmode="tel" value="' + esc(A.CFG.phone || '') + '"></div><div id="cnMsg" class="hint bad"></div>',
+    '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="centroNameGo">Guardar y pasar a centro</button>');
+  A.acts.centroNameGo = () => {
+    const n = $('#cnName').value.trim(); if (!n) { $('#cnMsg').textContent = 'Escribí el nombre del centro.'; return; }
+    const st = S.setup || {}; A.CFG.phone = $('#cnPhone').value.trim() || A.CFG.phone;
+    S.setup = Object.assign({}, st, { clinicSolo: st.type === 'solo' ? st.clinic : st.clinicSolo, clinic: n, clinicCentro: n, centroNamed: true });
+    S.modal = { type: 'acctType', t: 'centro' }; origTypeGo();
+  };
+
+  /* estilos */
+  document.head.insertAdjacentHTML('beforeend', '<style>' +
+    '.fc-btn{display:inline-flex;align-items:center;gap:4px;margin-top:6px;border:1px solid var(--accent);color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:4px 12px;font:700 13px/1.3 var(--f-sans,system-ui);cursor:pointer}.fc-btn:hover{filter:brightness(1.05)}' +
+    '.wab{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:0;background:#25d366;color:#fff;display:inline-grid;place-items:center;padding:3px;cursor:pointer;margin-left:4px}.wab svg{width:15px;height:15px}.wab.sent{background:#9adbb3}' +
+    '.blk .t .wab{width:19px;height:19px;padding:2px;margin:0 2px 0 auto}.blk .t{align-items:center}.hd-row .wab{width:28px;height:28px;margin-left:auto}.hd-row .wab svg{width:18px;height:18px}' +
+    '@media (min-width:1000px){body.web .wrap,body.web .top-in{max-width:none}body.web .wrap{padding-left:24px;padding-right:24px}}' +
+    '.ag-split{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}.ag-side{position:sticky;top:70px;padding:12px;display:flex;flex-direction:column;gap:10px;order:2}.ag-main{min-width:0}' +
+    '.mc-head{display:flex;align-items:center;justify-content:space-between;gap:6px}.mc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}.mc-dw{font-size:11px;color:var(--ink-2);padding:2px 0}' +
+    '.mc-d{position:relative;border:0;background:transparent;border-radius:8px;padding:6px 0 9px;font:600 13px var(--f-sans,system-ui);color:var(--ink);cursor:pointer}.mc-d:hover{background:var(--surface-2)}.mc-d.out{color:var(--ink-2);opacity:.55}' +
+    '.mc-d.today{box-shadow:inset 0 0 0 1.5px var(--accent)}.mc-d.sel{background:var(--accent);color:var(--accent-ink,#fff)}.mc-d i{position:absolute;left:50%;bottom:3px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#2c8a58}.mc-d.sel i{background:#fff}' +
+    '.mc-sum{font-size:13px;color:var(--ink-2)}.mc-sum b{color:var(--ink)}.mc-sum b.ok{color:#2c8a58}.mc-pros{display:flex;flex-direction:column;gap:4px;font-size:13px}.mc-pros .pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}' +
+    '.lab-items{display:flex;flex-direction:column;gap:6px}.lab-it{display:grid;grid-template-columns:minmax(0,1fr) 110px 32px;gap:6px;align-items:center}.lab-it input{min-width:0;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}' +
     '</style>');
 })();
 /* ===== arranque, navegación y eventos ===== */

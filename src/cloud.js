@@ -375,7 +375,7 @@
   CL.lock = () => {
     if (!CL.pinOn() || !CL.session || $('#pinWrap')) return;
     const w = document.createElement('div'); w.id = 'pinWrap'; w.className = 'login-wrap';
-    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>Odonto Voz</h1><p class="hint" style="margin:0">' + esc(CL.session.user.email) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
+    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>OdontoVoz</h1><p class="hint" style="margin:0">' + esc(CL.session.user.email) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
     document.body.appendChild(w); const i = $('#pinIn'); if (i) i.focus();
   };
   A.subs.pinGo = async () => {
@@ -401,8 +401,8 @@
   A.acts.privacyOpen = (el, ev) => { if (ev) ev.preventDefault(); const w = $('#loginWrap'); if (w) w.style.display = 'none'; S.modal = { type: 'privacy', fromLogin: !!w }; A.renderModal(); };
   const origClose = A.closeModal;
   A.closeModal = () => { const fl = S.modal && S.modal.type === 'privacy' && S.modal.fromLogin; origClose(); if (fl) { const w = $('#loginWrap'); if (w) w.style.display = ''; } };
-  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen claro de cómo se tratan los datos en Odonto Voz.</p>' +
-    '<h3>Quién es responsable de qué</h3><p>El profesional o el centro que usa la app es el <b>responsable de la base de datos de sus pacientes</b> (Ley 25.326). Odonto Voz presta el servicio de software y de almacenamiento por cuenta del profesional y solo trata los datos para hacer funcionar la app.</p>' +
+  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen claro de cómo se tratan los datos en OdontoVoz.</p>' +
+    '<h3>Quién es responsable de qué</h3><p>El profesional o el centro que usa la app es el <b>responsable de la base de datos de sus pacientes</b> (Ley 25.326). OdontoVoz presta el servicio de software y de almacenamiento por cuenta del profesional y solo trata los datos para hacer funcionar la app.</p>' +
     '<h3>Qué datos se guardan</h3><p>De la cuenta: correo, contraseña (guardada cifrada, nadie la puede leer) y la aceptación de estas condiciones. De los pacientes: lo que el profesional carga (datos de contacto, turnos, historia clínica, odontograma, presupuestos y pagos). Son <b>datos sensibles de salud</b>: solo los puede tratar el profesional, con secreto profesional y con el consentimiento del paciente (Ley 25.326, arts. 7, 8 y 10; Ley 26.529).</p>' +
     '<h3>Dónde y cómo</h3><p>En servidores de Supabase en la <b>Unión Europea (Frankfurt, Alemania)</b>. La Argentina considera que los países de la Unión Europea tienen protección adecuada para transferir datos personales (AAIP). Los datos viajan cifrados (HTTPS) y se guardan cifrados. Cada cuenta solo puede leer sus propios registros (reglas de seguridad por usuario en la base de datos). Se guarda un historial de cambios de cada ficha para que la historia clínica no se pierda ni se altere sin rastro.</p>' +
     '<h3>Sin cuenta</h3><p>Si usás la app sin cuenta, todo queda solo en tu equipo y nada se envía a internet.</p>' +

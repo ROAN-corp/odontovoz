@@ -1,4 +1,4 @@
-name: Generar APK de Odonto Voz
+name: Generar APK de OdontoVoz
 
 # Se ejecuta solo cada vez que se sube un cambio a la rama main,
 # y también a mano desde la pestaña "Actions" → "Run workflow".
@@ -79,7 +79,7 @@ jobs:
             echo "::warning::Sin clave propia (secrets ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD): se usa la clave guardada en el caché de GitHub."
             if [ ! -f ~/ov-keystore/ov.jks ]; then
               keytool -genkeypair -keystore ~/ov-keystore/ov.jks -alias odontovoz -keyalg RSA -keysize 2048 -validity 10000 \
-                -storepass odontovoz-cache -keypass odontovoz-cache -dname "CN=Odonto Voz, O=Odonto Voz, C=AR"
+                -storepass odontovoz-cache -keypass odontovoz-cache -dname "CN=OdontoVoz, O=OdontoVoz, C=AR"
             fi
             cp ~/ov-keystore/ov.jks ks.jks; KS_PASS=odontovoz-cache
           fi
@@ -99,8 +99,8 @@ jobs:
       - name: Publicar para descargar desde el teléfono
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v6.1.${{ github.run_number }}
-          name: Odonto Voz 6.1 (compilación ${{ github.run_number }})
+          tag_name: v6.2.${{ github.run_number }}
+          name: OdontoVoz 6.2 (compilación ${{ github.run_number }})
           body: |
             Descargá **OdontoVoz.apk** desde el teléfono e instalalo.
             Si Android lo pide, permití "instalar apps de orígenes desconocidos" para el navegador.

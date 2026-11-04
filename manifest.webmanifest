@@ -1,6 +1,6 @@
 {
-  "name": "Odonto Voz",
-  "short_name": "Odonto Voz",
+  "name": "OdontoVoz",
+  "short_name": "OdontoVoz",
   "description": "Gestión odontológica: agenda, historias clínicas, odontograma por voz, caja y turnero online.",
   "lang": "es-AR",
   "start_url": "./",

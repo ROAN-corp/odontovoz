@@ -38,10 +38,10 @@
   function boot() {
     const SR = SRC(); if (!SR || !V.on) return;
     let rec; try { rec = new SR(); } catch (e) { fatal(MIC_BLOCKED); return; }
-    rec.lang = 'es-AR'; rec.continuous = V.mode !== 'once'; rec.interimResults = true; rec.maxAlternatives = 1;
+    rec.lang = 'es-AR'; rec.continuous = V.mode !== 'once'; rec.interimResults = true; rec.maxAlternatives = 5;
     rec.onresult = ev => {
       let interim = '';
-      for (let i = ev.resultIndex; i < ev.results.length; i++) { const r = ev.results[i]; if (r.isFinal) heard(r[0].transcript); else interim += r[0].transcript; }
+      for (let i = ev.resultIndex; i < ev.results.length; i++) { const r = ev.results[i]; if (r.isFinal) { const alts = []; for (let j = 0; j < (r.length || 1); j++) if (r[j] && r[j].transcript) alts.push(r[j].transcript); heard(A.pickAlt && alts.length > 1 ? A.pickAlt(alts) : r[0].transcript); } else interim += r[0].transcript; }
       if (interim) live(interim, true);
     };
     rec.onerror = ev => {
@@ -107,7 +107,7 @@
       ta.value = (ta.value ? ta.value.replace(/\s*$/, '') + ' ' : '') + cap.replace(/[.\s]*$/, '') + '. ';
       ta.dispatchEvent(new Event('input', { bubbles: true })); live('Anotado: ' + text); return;
     }
-    let phrase = text;
+    let phrase = text; A._lastRaw = text;
     if (V.mode === 'hands') {
       const w = C.stripWake(text);
       if (w.woke) {
@@ -399,7 +399,7 @@
     A.toast('Tus datos quedaron guardados. Ya podés cerrar esta pestaña.');
   }
   A.acts.exitNow = exitNow;
-  MF.exit = () => A.modalShell('¿Salir de Odonto Voz?', '<p style="margin:0">Tus datos quedan guardados en este dispositivo.</p><p class="hint" style="margin:0">Tocá atrás otra vez para salir enseguida.</p>', '<button class="btn" data-act="closeModal">Quedarme</button><button class="btn primary" data-act="exitNow">Salir</button>');
+  MF.exit = () => A.modalShell('¿Salir de OdontoVoz?', '<p style="margin:0">Tus datos quedan guardados en este dispositivo.</p><p class="hint" style="margin:0">Tocá atrás otra vez para salir enseguida.</p>', '<button class="btn" data-act="closeModal">Quedarme</button><button class="btn primary" data-act="exitNow">Salir</button>');
   /* botón atrás del teléfono */
   A.navInit = () => {
     const CP = window.OV_NATIVE && window.Capacitor.Plugins;
@@ -424,14 +424,14 @@
     if (t) {
       if (S.tab === 'ficha' && S.fichaPid && A.PAT(S.fichaPid)) { t.textContent = A.PAT(S.fichaPid).name; sb.textContent = (S.visit && S.visit.pid === S.fichaPid ? 'Atención · ' : '') + (SUBT[S.fichaTab] || ''); }
       else if (S.tab === 'agenda' && S.uimode === 'atencion') { t.textContent = 'Mi día'; sb.textContent = A.PRO(A.isSolo() ? A.PROS[0].id : S.me).name; }
-      else { t.textContent = TITLES[S.tab] || 'Odonto Voz'; sb.textContent = S.tab === 'inicio' ? A.CLINIC : ''; }
+      else { t.textContent = TITLES[S.tab] || 'OdontoVoz'; sb.textContent = S.tab === 'inicio' ? A.CLINIC : ''; }
     }
     const bb = $('#abBack'); if (bb) bb.disabled = S.tab === 'inicio' && !S.panel && !S.modal && NAV.stack.length <= 1 && !drawerOpen();
     document.body.classList.toggle('on-odon', S.tab === 'ficha' && S.fichaTab === 'odon');
     A.$$('.dnav[data-tab]').forEach(b => { const tb = b.getAttribute('data-tab'); if (tb === S.tab || (S.tab === 'ficha' && tb === 'pacientes')) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     const dc = $('#drClinic'); if (dc) dc.textContent = A.CLINIC;
     const dm = $('#drMode'); if (dm) dm.innerHTML = '<button class="mode-chip' + (A.DEMO ? '' : ' real') + '" data-act="modeOpen">' + (A.DEMO ? '● Modo prueba · datos de ejemplo' : '● Uso real · tus datos') + '</button>';
-    const dv = $('#drVer'); if (dv) dv.textContent = 'Odonto Voz ' + A.VERSION;
+    const dv = $('#drVer'); if (dv) dv.textContent = 'OdontoVoz ' + A.VERSION;
     V.ui();
   };
   /* reemplaza al ajuste de pantalla anterior (tipo de cuenta, modo atención/administración) */
@@ -537,7 +537,7 @@
      TUTORIAL, COMANDOS DE VOZ, SOPORTE, MODO PRUEBA / REAL, APARIENCIA
      ===================================================================== */
   const TUT = () => [
-    [IC.tooth, 'Bienvenido a Odonto Voz', 'En un minuto te muestro cómo se usa. Podés saltearlo y verlo cuando quieras desde el menú, en «Tutorial de uso».'],
+    [IC.tooth, 'Bienvenido a OdontoVoz', 'En un minuto te muestro cómo se usa. Podés saltearlo y verlo cuando quieras desde el menú, en «Tutorial de uso».'],
     [IC.menu, 'Menú, inicio y volver', 'Arriba a la izquierda: la flecha vuelve a la pantalla anterior (también el botón atrás del teléfono), el ☰ abre el menú con todas las secciones y la casita te lleva al inicio.'],
     [IC.mic, 'La voz, siempre a mano', 'El botón redondo de abajo a la derecha escucha y hace lo que pedís: «turno para Pérez mañana a las 10», «abrí la ficha de Gómez», «caries oclusal del 36». Sigue escuchando hasta que lo tocás de nuevo o decís «terminar dictado».'],
     [IC.hf, 'Manos libres', 'Con «Manos libres» activo, la app espera que digas «odontovoz» antes de cada pedido. Ideal para atender con guantes sin tocar la pantalla.'],
@@ -577,7 +577,7 @@
 
   A.SUPPORT = A.SUPPORT || { whatsapp: '', email: '' };
   const FAQ = [
-    ['El micrófono no anda', 'En la app instalada, aceptá el permiso de micrófono (Ajustes del teléfono → Apps → Odonto Voz → Permisos). En la computadora usá Chrome. En la vista previa dentro de Claude el micrófono está bloqueado.'],
+    ['El micrófono no anda', 'En la app instalada, aceptá el permiso de micrófono (Ajustes del teléfono → Apps → OdontoVoz → Permisos). En la computadora usá Chrome. En la vista previa dentro de Claude el micrófono está bloqueado.'],
     ['El dictado se corta', 'El micrófono sigue escuchando hasta que lo apagás. Si el teléfono bloquea la pantalla, se detiene: dejá la pantalla encendida mientras atendés.'],
     ['¿Dónde quedan mis datos?', 'Por ahora, en este dispositivo. Hacé copias seguido desde el menú → «Copia de seguridad». La copia automática en la nube viene en la próxima versión.'],
     ['Cambié de teléfono', 'En el teléfono viejo: menú → Copia de seguridad → Descargar. En el nuevo: instalá la app y usá «Restaurar desde una copia».'],
@@ -586,15 +586,15 @@
   A.acts.supportOpen = () => { A.hideDrawer(); S.modal = { type: 'support' }; A.renderModal(); };
   A.supportReport = () => {
     let errs = []; try { errs = JSON.parse(localStorage.getItem(ERRK) || '[]'); } catch (e) { /* nada */ }
-    return 'Odonto Voz ' + A.VERSION + ' · ' + (A.DEMO ? 'modo prueba' : 'uso real') + ' · ' + (A.isSolo() ? 'consultorio' : 'centro') + '\n' + (window.OV_NATIVE ? 'App Android' : (standalone() ? 'App instalada (web)' : 'Navegador')) + ' · ' + navigator.userAgent.slice(0, 140) + '\nVoz: ' + (V.supported() ? 'disponible' : 'no disponible') + ' · Guardado: ' + (A.saveOk === false ? 'con problemas' : 'bien') + '\nPacientes: ' + A.PATS.length + ' · Profesionales: ' + A.PROS.length +
+    return 'OdontoVoz ' + A.VERSION + ' · ' + (A.DEMO ? 'modo prueba' : 'uso real') + ' · ' + (A.isSolo() ? 'consultorio' : 'centro') + '\n' + (window.OV_NATIVE ? 'App Android' : (standalone() ? 'App instalada (web)' : 'Navegador')) + ' · ' + navigator.userAgent.slice(0, 140) + '\nVoz: ' + (V.supported() ? 'disponible' : 'no disponible') + ' · Guardado: ' + (A.saveOk === false ? 'con problemas' : 'bien') + '\nPacientes: ' + A.PATS.length + ' · Profesionales: ' + A.PROS.length +
       '\nÚltimos errores:\n' + (errs.length ? errs.slice(-8).map(e => e.t.slice(0, 16).replace('T', ' ') + ' ' + e.k + ': ' + e.m.split('\n')[0]).join('\n') : 'ninguno');
   };
   MF.support = () => {
     const s = A.SUPPORT, rep = A.supportReport();
     return A.modalShell('Ayuda y soporte', '<div class="cmd-list">' + FAQ.map(f => '<details class="block"><summary style="cursor:pointer;font-weight:700">' + esc(f[0]) + '</summary><p class="hint" style="margin:6px 0 0">' + esc(f[1]) + '</p></details>').join('') + '</div>' +
-      '<div class="block"><h3>Contactar al soporte</h3>' + (s.whatsapp || s.email ? '<div class="row-btns">' + (s.whatsapp ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + esc(s.whatsapp.replace(/\D/g, '')) + '?text=' + encodeURIComponent('Hola, necesito ayuda con Odonto Voz.\n\n' + rep) + '">WhatsApp de soporte</a><span class="mono hint">' + esc(s.whatsapp) + '</span>' : '') + (s.email ? '<span class="mono hint">' + esc(s.email) + '</span>' : '') + '</div>' : '<div class="hint" style="margin:0">El contacto de soporte se configura al publicar la app.</div>') +
+      '<div class="block"><h3>Contactar al soporte</h3>' + (s.whatsapp || s.email ? '<div class="row-btns">' + (s.whatsapp ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + esc(s.whatsapp.replace(/\D/g, '')) + '?text=' + encodeURIComponent('Hola, necesito ayuda con OdontoVoz.\n\n' + rep) + '">WhatsApp de soporte</a><span class="mono hint">' + esc(s.whatsapp) + '</span>' : '') + (s.email ? '<span class="mono hint">' + esc(s.email) + '</span>' : '') + '</div>' : '<div class="hint" style="margin:0">El contacto de soporte se configura al publicar la app.</div>') +
       '<div class="hint">Si algo falla, copiá este informe y mandalo al soporte: ayuda a encontrar el problema. No incluye datos de pacientes.</div><textarea id="supRep" class="inp" rows="6" readonly>' + esc(rep) + '</textarea><div class="row-btns"><button class="btn" data-act="copyText" data-text="' + esc(rep) + '">Copiar informe</button></div></div>' +
-      '<div class="small-note">Odonto Voz ' + esc(A.VERSION) + '</div>', '<button class="btn primary" data-act="closeModal">Listo</button>', true);
+      '<div class="small-note">OdontoVoz ' + esc(A.VERSION) + '</div>', '<button class="btn primary" data-act="closeModal">Listo</button>', true);
   };
 
   A.acts.modeOpen = () => { A.hideDrawer(); S.modal = { type: 'modeSel', step: 0 }; A.renderModal(); };

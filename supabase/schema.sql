@@ -1,4 +1,4 @@
--- Odonto Voz · base de datos en Supabase
+-- OdontoVoz · base de datos en Supabase
 -- Cómo usarlo: en el panel de Supabase, abrí «SQL Editor», pegá todo este archivo y tocá «Run».
 -- Crea la tabla donde cada cuenta guarda sus datos, con reglas para que nadie vea los datos de otra cuenta.
 
