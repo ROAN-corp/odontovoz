@@ -141,3 +141,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Panel de administración: https://rodribobadilla.github.io/odontovoz/admin.html (entrar con una cuenta administradora). Desde ahí: +1 mes, +1 año, suspender, reactivar, cambiar plan y notas.
 - Para sumar otro administrador (cuando tenga cuenta creada), en Supabase › SQL Editor:
   `insert into public.ov_admins (user_id) select id from auth.users where email = 'CORREO' on conflict do nothing;`
+
+## OdontoVoz 1.3
+- El resumen del paciente ya no «parpadea» cuando llegan cambios de otro equipo (queda quieto y en la misma posición).
+- Paciente nuevo: se abre la ficha completa (datos personales, fecha de nacimiento con edad automática, domicilio, localidad, obra social con N.º de afiliado y plan, motivo y anamnesis). El turno con paciente nuevo sigue siendo la versión corta.
+- Por voz: «fecha de nacimiento 3 de mayo de 1990», «domicilio…», «localidad…», «número de afiliado…», «plan…», «particular».
+- Agenda: más alta; los turnos de 15 minutos muestran nombre y hora en una línea, y los superpuestos se reparten el ancho para que se lean.

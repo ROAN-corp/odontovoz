@@ -2492,7 +2492,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   'use strict';
   const A = window.App, esc = A.esc, $ = A.$, S = A.S;
   A.modalFns = {}; A.modalAfter = {};
-  const SH = 20; // alto en px de cada tramo de 15 minutos
+  const SH = 28; // alto en px de cada tramo de 15 minutos (alcanza para leer el nombre en un turno de 15 min)
 
   A.visPros = () => (S.mode === 'consultorio' ? [A.PROS[0]] : A.PROS);
   function selPros() { const v = A.visPros(); const s = S.proSel ? v.filter(p => S.proSel.indexOf(p.id) >= 0) : v; return s.length ? s : v; }
@@ -2577,17 +2577,22 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const top = (a.start - g0) / 15 * SH, hgt = Math.max(SH - 2, a.dur / 15 * SH - 2), pat = a.type === 'block' ? null : A.PAT(a.pid);
     const pro = A.PRO(a.pro), pd = pat && S.role === 'profesional' ? A.alertsOf(a.pid).length : 0;
     const style = 'top:' + top + 'px;height:' + hgt + 'px;left:calc(' + (lane / n * 100) + '% + 2px);width:calc(' + (100 / n) + '% - 4px);' + '';
-    const cls = 'blk ' + (a.type === 'block' ? 'st-block' : 'st-' + a.status) + (a.sobre ? ' over' : '');
+    const cls = 'blk ' + (a.type === 'block' ? 'st-block' : 'st-' + a.status) + (a.sobre ? ' over' : '') + (a.dur <= 15 ? ' sz-xs' : a.dur <= 30 ? ' sz-s' : '') + (n > 1 ? ' narrow' : '');
     const t = A.mm(a.start) + '–' + A.mm(a.start + a.dur);
     const grip = '<button class="grip" data-act="noop" data-grip="' + a.id + '" aria-label="Arrastrar para mover" title="Arrastrar para mover">⠿</button>';
     if (a.type === 'block') return '<div class="' + cls + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" role="button" tabindex="0"><div class="t"><span>' + t + '</span>' + grip + '</div><div class="n">' + esc(a.label) + '</div></div>';
     const stb = A.stBtnHTML ? A.stBtnHTML(a) : '', sena = A.senaBadge ? A.senaBadge(a) : '';
-    return '<div class="' + cls + (sena ? ' has-sena' : '') + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" data-appt="' + a.id + '" role="button" tabindex="0" title="' + esc(pat.name + ' · ' + a.what + ' · ' + (A.STATUS_LABEL[a.status] || '')) + '"><div class="t"><span>' + t + (a.sobre ? ' <span class="sb">SOBRETURNO</span>' : '') + '</span>' + (A.waBtnHTML ? A.waBtnHTML(a) : '') + grip + '</div>' +
+    const ttl = esc(pat.name + ' · ' + A.mm(a.start) + '–' + A.mm(a.start + a.dur) + ' · ' + a.what + ' · ' + (A.STATUS_LABEL[a.status] || ''));
+    /* turno de 15 minutos: una sola línea con estado, nombre y hora */
+    if (a.dur <= 15) return '<div class="' + cls + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" data-appt="' + a.id + '" role="button" tabindex="0" title="' + ttl + '"><div class="n">' + stb + '<span class="nm">' + esc(pat.name) + '</span>' + (pd ? '<span class="al">⚠</span>' : '') + '<span class="tm">' + A.mm(a.start) + '</span>' + grip + '</div></div>';
+    return '<div class="' + cls + (sena ? ' has-sena' : '') + '" style="' + style + '" data-act="openAppt" data-id="' + a.id + '" data-appt="' + a.id + '" role="button" tabindex="0" title="' + ttl + '"><div class="t"><span>' + t + (a.sobre ? ' <span class="sb">SOBRETURNO</span>' : '') + '</span>' + (A.waBtnHTML ? A.waBtnHTML(a) : '') + grip + '</div>' +
       '<div class="n">' + stb + '<span class="nm">' + esc(pat.name) + '</span>' + (pd ? ' ⚠' : '') + '</div><div class="k">' + sena + esc(a.what) + (a.online ? ' <span class="onl">online</span>' : '') + '</div></div>';
   }
   function gridHTML(cols, key0) {
     const [g0, g1] = bounds(cols), H = (g1 - g0) / 15 * SH, today = A.today(), nowM = A.nowMin();
-    let h = '<div class="grid-wrap" id="gridWrap"><div class="grid" style="grid-template-columns:52px repeat(' + cols.length + ',minmax(150px,1fr));--sh:' + SH + 'px">';
+    /* si hay turnos superpuestos, la columna se ensancha para que cada uno se lea */
+    const L = Math.min(4, Math.max(1, ...cols.map(c => Math.max(1, ...lanes(c.items).map(x => x.ref.lanes)))));
+    let h = '<div class="grid-wrap" id="gridWrap"><div class="grid" style="grid-template-columns:52px repeat(' + cols.length + ',minmax(' + (cols.length === 1 && L > 1 ? 'min(' + (150 + (L - 1) * 120) + 'px,calc(100vw - 90px))' : (150 + (L - 1) * 120) + 'px') + ',1fr));--sh:' + SH + 'px">';
     h += '<div class="gutter"><div class="gh"></div><div style="position:relative;height:' + H + 'px">';
     for (let m = g0; m < g1; m += 60) h += '<span class="tl' + (m === g0 ? ' first' : '') + '" style="top:' + ((m - g0) / 15 * SH) + 'px">' + A.mm(m) + '</span>';
     h += '</div></div>';
@@ -3167,7 +3172,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const pid = S.fichaPid, p = A.PAT(pid), pd = A.pd(pid), pro = role(), sal = A.saldo(pid), host = $('#view-ficha');
     const tabs = TABS.filter(t => (pro || ['datos', 'docs', 'cuenta'].indexOf(t[0]) >= 0) && !(S.uimode === 'atencion' && t[0] === 'cuenta'));
     const al = pro ? A.alertsOf(pid) : [];
-    let h = '<div class="fh"><button class="btn" data-act="fichaBack">← ' + (S.from === 'agenda' ? 'Agenda' : 'Pacientes') + '</button><div><h1>' + esc(p.name) + '</h1><div class="sub">' + p.age + ' años · DNI ' + esc(p.dni) + ' · ' + esc(p.cov) + ' · ' + esc(p.phone) + '</div></div>' +
+    let h = '<div class="fh"><button class="btn" data-act="fichaBack">← ' + (S.from === 'agenda' ? 'Agenda' : 'Pacientes') + '</button><div><h1>' + esc(p.name) + '</h1><div class="sub">' + (p.age ? p.age + ' años · ' : '') + 'DNI ' + esc(p.dni) + ' · ' + esc(p.cov) + ' · ' + esc(p.phone) + '</div></div>' +
       (pro ? (al.length ? '<div class="alert-strip"><span class="label">Alertas</span>' + al.map(x => '<span>' + esc(x) + '</span>').join('<span>·</span>') + '</div>' : '<div class="alert-strip none">Sin alertas clínicas</div>') : '') +
       '<div class="top-right"><span class="chip ' + (sal > 0 ? 'bad' : 'ok') + '">' + (sal > 0 ? 'Debe ' + A.money(sal) : 'Cuenta al día') + '</span><button class="btn small" data-act="newApptFor" data-pid="' + pid + '">+ Turno</button></div></div>';
     h += '<div class="ftabs" role="tablist">' + tabs.map(t => '<button class="ftab" role="tab" data-act="fichaTab" data-tab="' + t[0] + '" aria-selected="' + (S.fichaTab === t[0]) + '">' + t[1] + (t[0] === 'plan' && pd.tx.some(x => x.status === 'plan') ? ' (' + pd.tx.filter(x => x.status === 'plan').length + ')' : '') + '</button>').join('') + '</div><div id="fichaBody"></div>';
@@ -3181,7 +3186,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function datosTab(pid) {
     const p = A.PAT(pid), pd = A.pd(pid), hc = pd.hc, pro = role();
     const f = (id, l, v, t) => '<div class="field"><label for="pf_' + id + '">' + l + '</label><input id="pf_' + id + '" data-chg="profField" data-k="' + id + '" value="' + esc(v == null ? '' : v) + '"' + (t ? ' type="' + t + '"' : '') + '></div>';
-    let h = '<div class="cols2"><div><section class="card"><h2>Datos personales <span class="saved" id="savedP"></span></h2><div class="row2">' + f('first', 'Nombre', p.first) + f('last', 'Apellido', p.last) + '</div><div class="row3">' + f('dni', 'DNI', p.dni) + f('age', 'Edad', p.age, 'number') + f('phone', 'Teléfono (WhatsApp)', p.phone) + '</div><div class="row2">' + f('email', 'Email', p.email) + f('addr', 'Domicilio', p.addr) + '</div><div class="row3">' + (A.covFieldHTML ? A.covFieldHTML(p) : f('cov', 'Cobertura', p.cov)) + f('afil', 'N.º de afiliado', p.afil) +
+    let h = '<div class="cols2"><div><section class="card"><h2>Datos personales <span class="saved" id="savedP"></span></h2><div class="row2">' + f('first', 'Nombre', p.first) + f('last', 'Apellido', p.last) + '</div><div class="row3">' + f('dni', 'DNI', p.dni) + f('birth', 'Fecha de nacimiento', p.birth, 'date') + '<div class="field"><label for="pf_age">Edad' + (p.birth ? ' (se calcula sola)' : '') + '</label><input id="pf_age" type="number" min="0" max="120" data-chg="profField" data-k="age" value="' + esc(p.age == null ? '' : p.age) + '"' + (p.birth ? ' readonly' : '') + '></div></div><div class="row2">' + f('phone', 'Teléfono (WhatsApp)', p.phone) + f('email', 'Email', p.email) + '</div><div class="row2">' + f('addr', 'Domicilio', p.addr) + f('loc', 'Localidad', p.loc) + '</div><h3 class="np-h">Obra social</h3><div class="row3">' + (A.covFieldHTML ? A.covFieldHTML(p) : f('cov', 'Cobertura', p.cov)) + f('afil', 'N.º de afiliado', p.afil) + f('plan', 'Plan', p.plan) + '</div><div class="row2">' +
       '<div class="field"><label for="pf_pro">Profesional de cabecera</label><select id="pf_pro" data-chg="profField" data-k="pro">' + A.PROS.map(x => '<option value="' + x.id + '"' + (x.id === p.pro ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></div></div>' +
       '<div class="small-note">Los cambios se guardan al salir de cada campo.</div></section>';
     if (pro) {
@@ -3202,7 +3207,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const k = el.getAttribute('data-k'); let v = el.value; const pid = S.fichaPid;
     if (k === 'age') v = parseInt(v, 10) || 0; if (k === 'dni') v = v.replace(/\D/g, '');
     if (k === 'dni' && v && A.PATS.some(p => String(p.dni) === v && p.id !== pid)) { A.toast('Ya existe otro paciente con ese DNI.'); el.value = A.PAT(pid).dni; return; }
-    A.setProfile(pid, { [k]: v }); const s = $('#savedP'); if (s) s.textContent = 'Guardado ✓'; if (k === 'first' || k === 'last') { const h1 = $('#view-ficha h1'); if (h1) h1.textContent = A.PAT(pid).name; }
+    A.setProfile(pid, { [k]: v }); if (k === 'birth') { const ag = $('#pf_age'); if (ag) { ag.value = A.PAT(pid).age; ag.readOnly = !!v; } } const s = $('#savedP'); if (s) s.textContent = 'Guardado ✓'; if (k === 'first' || k === 'last') { const h1 = $('#view-ficha h1'); if (h1) h1.textContent = A.PAT(pid).name; }
   };
   A.chg.hcCond = el => { const pd = A.pd(S.fichaPid); pd.hc.conds[el.getAttribute('data-k')] = el.checked; A.touchPd(S.fichaPid); const s = $('#savedH'); if (s) s.textContent = 'Guardado ✓'; refreshAlerts(); };
   A.chg.hcText = el => { const pd = A.pd(S.fichaPid); pd.hc[el.getAttribute('data-k')] = el.value; A.touchPd(S.fichaPid); const s = $('#savedH'); if (s) s.textContent = 'Guardado ✓'; refreshAlerts(); };
@@ -6500,8 +6505,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   function softRefresh() {
     const ae = document.activeElement, typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
-    if (typing) { pendingRefresh = true; ae.addEventListener('blur', () => { if (pendingRefresh) { pendingRefresh = false; A.refresh(); } }, { once: true }); return; }
-    A.refresh();
+    if (typing) { pendingRefresh = true; ae.addEventListener('blur', () => { if (pendingRefresh) { pendingRefresh = false; A._fromSync = true; try { A.refresh(); } finally { A._fromSync = false; } } }, { once: true }); return; }
+    A._fromSync = true; try { A.refresh(); } finally { A._fromSync = false; }
   }
   function setState(st, msg) { CL.state = st; CL.msg = msg || ''; if (A.cloudChrome) A.cloudChrome(); }
   function startLoop() { stopLoop(); loopT = setInterval(() => { if (!document.hidden && navigator.onLine !== false) CL.sync(); }, 8000); CL.sync(); }
@@ -7547,7 +7552,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.2';
+  A.VERSION = '1.3';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -7756,6 +7761,189 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   document.head.insertAdjacentHTML('beforeend', '<style>.lic-bar{position:fixed;left:0;right:0;bottom:0;z-index:118;background:#7a4b00;color:#fff;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:14px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center}.lic-bar.ro{background:#8a1f1a}.lic-bar .btn{background:#fff;color:#111;border-color:#fff}body:has(.lic-bar) .vdock{bottom:calc(var(--licH,80px) + 12px + env(safe-area-inset-bottom,0px))}</style>');
   if (CL.lic && CL.session) apply();
+})();
+/* ===== 1.3: resumen estable al sincronizar, ficha completa para paciente nuevo, edad por fecha de nacimiento ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
+  const N = s => A.norm(s);
+  const UC = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const cap = s => String(s).split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+  /* ---------- 1) el panel de resumen no se vuelve a «abrir» con cada cambio que llega de otro equipo ---------- */
+  const keyOf = p => (p ? p.type + ':' + (p.pid || p.id) : '');
+  const prevPanel = A.renderPanel;
+  A.renderPanel = () => {
+    const host = $('#panelHost'), key = keyOf(S.panel), old = host && host.querySelector('.panel');
+    const same = !!(old && key && host.getAttribute('data-key') === key);
+    let sc = 0, vals = null, focus = null;
+    if (same) {
+      sc = old.scrollTop; vals = {};
+      old.querySelectorAll('input[id],textarea[id],select[id]').forEach(el => { vals[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
+      const ae = document.activeElement; if (ae && old.contains(ae) && ae.id) focus = { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd };
+    }
+    prevPanel();
+    if (!host) return;
+    host.setAttribute('data-key', key);
+    if (!same) return;
+    const fromSync = !!A._fromSync;
+    const np = host.querySelector('.panel'); if (!np) return;
+    np.classList.add('still');
+    const sc2 = host.querySelector('.scrim'); if (sc2) sc2.classList.add('still');
+    /* lo que se estaba escribiendo (por ejemplo una nota rápida) no se pierde */
+    if (fromSync) Object.keys(vals).forEach(id => { const el = np.querySelector('#' + CSS.escape(id)); if (!el) return; if (el.type === 'checkbox') { if (el.checked !== vals[id] && !el.hasAttribute('data-chg')) el.checked = vals[id]; } else if (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !el.hasAttribute('data-chg'))) el.value = vals[id]; });
+    np.scrollTop = sc;
+    if (focus && fromSync) { const el = np.querySelector('#' + CSS.escape(focus.id)); if (el) { el.focus({ preventScroll: true }); try { el.setSelectionRange(focus.s, focus.e); } catch (e) { /* nada */ } } }
+  };
+
+  /* ---------- 2) edad calculada con la fecha de nacimiento ---------- */
+  A.ageFrom = b => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(b || '')); if (!m) return null;
+    const t = A.today().split('-').map(Number), y = +m[1], mo = +m[2], d = +m[3];
+    let a = t[0] - y; if (t[1] < mo || (t[1] === mo && t[2] < d)) a--;
+    return a >= 0 && a < 130 ? a : null;
+  };
+  const prevDerive = A.derive;
+  A.derive = p => { prevDerive(p); if (p.birth) { const a = A.ageFrom(p.birth); if (a != null) p.age = a; } return p; };
+  try { (A.PATS || []).forEach(p => { if (p.birth) A.derive(p); }); } catch (e) { /* nada */ }
+
+  /* fecha dicha o escrita: «3 de mayo de 1990», «03/05/1990», «3-5-90» */
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  A.parseBirth = txt => {
+    let s = N(txt).replace(/\bsetiembre\b/, 'septiembre').replace(/\bdel\b/g, 'de').replace(/\bel\b/g, ' ').trim(), d, mo, y;
+    let m = /(\d{1,2})\s*[/.\-\s]\s*(\d{1,2})\s*[/.\-\s]\s*(\d{2,4})/.exec(s);
+    if (m) { d = +m[1]; mo = +m[2]; y = +m[3]; }
+    else {
+      m = /(\S+(?:\s\S+)?)\s+de\s+([a-z]+)\s+(?:de\s+)?(.+)$/.exec(s); if (!m) return null;
+      mo = MESES.indexOf(m[2]) + 1; if (!mo) return null;
+      const num = w => { if (/^\d+$/.test(w)) return +w; try { const r = window.OVCmd.wordsNum(w.split(' ')); return r && r.value ? r.value : null; } catch (e) { return null; } };
+      d = num(m[1].replace(/^(?:primero|1ro)$/, '1').split(' ').pop()); y = num(m[3].replace(/\s+/g, ' ').trim());
+      if (d == null || y == null) return null;
+    }
+    if (y < 100) y += y > (+A.today().slice(2, 4)) ? 1900 : 2000;
+    if (!(d >= 1 && d <= 31 && mo >= 1 && mo <= 12 && y > 1900)) return null;
+    const iso = y + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    return iso <= A.today() ? iso : null;
+  };
+
+  /* ---------- 3) paciente nuevo: ficha completa de una vez ---------- */
+  const fld = (id, label, val, extra) => '<div class="field"><label for="' + id + '">' + label + '</label><input id="' + id + '" value="' + esc(val || '') + '"' + (extra || '') + '></div>';
+  MF.patient = m => {
+    const d = m.d || {}, pro = S.role === 'profesional', osOpts = (A.osList ? A.osList() : []).filter(o => !/^particular$/i.test(o.sigla));
+    let b = '<div class="np-cols"><div>';
+    b += '<section class="np-sec"><h3>Datos personales</h3>' +
+      '<div class="row2">' + fld('npF', 'Nombre *', d.first, ' autocomplete="off"') + fld('npL', 'Apellido *', d.last, ' autocomplete="off"') + '</div>' +
+      '<div class="row3">' + fld('npD', 'DNI', d.dni, ' inputmode="numeric"') + fld('npB', 'Fecha de nacimiento', d.birth, ' type="date" max="' + A.today() + '" data-in="npBirth"') +
+      '<div class="field"><label for="npA">Edad</label><input id="npA" type="number" min="0" max="120" value="' + esc(d.age || '') + '" placeholder="sale de la fecha"><div class="hint" id="npAgeHint"></div></div></div>' +
+      '<div class="row2">' + fld('npT', 'Teléfono (WhatsApp)', d.phone, ' inputmode="tel"') + fld('npE', 'Email', d.email, ' type="email"') + '</div>' +
+      '<div class="row2">' + fld('npAddr', 'Domicilio', d.addr) + fld('npLoc', 'Localidad', d.loc) + '</div>' +
+      '<div class="field"><label for="npPro">Profesional de cabecera</label><select id="npPro">' + A.PROS.map(x => '<option value="' + x.id + '"' + (x.id === (d.pro || (A.PROS[0] || {}).id) ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></div></section>';
+    const hasOs = d.cov && !/^particular$/i.test(d.cov);
+    b += '<section class="np-sec"><h3>Obra social</h3><div class="row-btns np-os-tg" role="radiogroup" aria-label="¿Tiene obra social?">' +
+      '<button class="pill" data-act="npOs" data-v="0" aria-pressed="' + !hasOs + '">Particular (sin obra social)</button><button class="pill" data-act="npOs" data-v="1" aria-pressed="' + !!hasOs + '">Tiene obra social o prepaga</button></div>' +
+      '<div id="npOsBox"' + (hasOs ? '' : ' hidden') + '><div class="field"><label for="npC">¿Cuál?</label><input id="npC" list="npOsDl" value="' + esc(hasOs ? d.cov : '') + '" placeholder="Elegí de la lista o escribí"><datalist id="npOsDl">' + osOpts.map(o => '<option value="' + esc(o.sigla) + '">' + esc(o.name) + '</option>').join('') + '</datalist></div>' +
+      '<div class="row2">' + fld('npAfil', 'N.º de afiliado', d.afil) + fld('npPlan', 'Plan', d.plan, ' placeholder="Ej.: 210, Bronce, PMO"') + '</div></div></section>';
+    b += '<section class="np-sec"><h3>Motivo de la consulta</h3><div class="field"><label for="npMot" class="sr">Motivo de la consulta</label><input id="npMot" value="' + esc(d.motivo || '') + '" placeholder="Ej.: dolor en una muela de abajo"></div></section>';
+    b += '</div><div>';
+    if (pro) {
+      b += '<section class="np-sec"><h3>Salud (anamnesis)</h3><div class="check-grid">' + A.ANAM.map(a => '<label><input type="checkbox" class="np-cond" value="' + a[0] + '"> ' + esc(a[1]) + '</label>').join('') + '</div>' +
+        '<div class="field" style="margin-top:10px"><label for="npMeds">Medicación actual</label><textarea id="npMeds" rows="2"></textarea></div>' +
+        '<div class="field"><label for="npAnt">Antecedentes odontológicos y hábitos</label><textarea id="npAnt" rows="2"></textarea></div>' +
+        '<div class="field"><label for="npAl">Alerta adicional (se ve en la agenda)</label><input id="npAl"></div></section>';
+    } else b += '<section class="np-sec"><h3>Salud</h3><div class="hint">La anamnesis la completa el profesional en la ficha.</div></section>';
+    b += '</div></div><div id="npMsg" class="hint bad"></div>';
+    const h = A.modalShell('Paciente nuevo · ficha completa', b, '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="npSave">Guardar y abrir la ficha</button>');
+    return h.replace('<div class="modal"', '<div class="modal np-full"');
+  };
+  A.modalAfter.patient = () => { npAge(); const f = $('#npF'); if (f && !f.value && !(A.voice && A.voice.on)) setTimeout(() => f.focus(), 60); };
+  function npAge() {
+    const b = $('#npB'), a = $('#npA'), h = $('#npAgeHint'); if (!b || !a) return;
+    const v = A.ageFrom(b.value);
+    if (v != null) { a.value = v; a.readOnly = true; if (h) h.textContent = 'Calculada con la fecha de nacimiento.'; }
+    else { a.readOnly = false; if (h) h.textContent = ''; }
+  }
+  A.ins.npBirth = () => npAge();
+  document.addEventListener('change', e => { if (e.target && e.target.id === 'npB') npAge(); });
+  A.acts.npOs = el => {
+    const on = el.getAttribute('data-v') === '1';
+    document.querySelectorAll('.np-os-tg .pill').forEach(p => p.setAttribute('aria-pressed', String(p === el)));
+    const box = $('#npOsBox'); if (box) box.hidden = !on;
+    if (on) { const c = $('#npC'); if (c) c.focus(); }
+  };
+  A.acts.newPatient = () => { S.modal = { type: 'patient' }; A.renderModal(); };
+  A.acts.npSave = () => {
+    const v = id => (($('#' + id) || {}).value || '').trim(), msg = t => { const e = $('#npMsg'); if (e) e.textContent = t; };
+    const first = cap(v('npF')), last = cap(v('npL'));
+    if (!first || !last) { msg('Completá nombre y apellido.'); ($('#' + (first ? 'npL' : 'npF')) || {}).focus && $('#' + (first ? 'npL' : 'npF')).focus(); return; }
+    const dni = v('npD').replace(/\D/g, '');
+    if (dni && A.PATS.some(p => String(p.dni) === dni)) { msg('Ya existe un paciente con ese DNI.'); return; }
+    const birth = v('npB'), age = A.ageFrom(birth);
+    const osOn = !($('#npOsBox') || {}).hidden, cov = osOn && v('npC') ? (A.osList().filter(o => N(o.sigla) === N(v('npC')) || N(o.name) === N(v('npC')))[0] || { sigla: v('npC') }).sigla : 'Particular';
+    const p = A.addPatient({ first, last, dni, phone: v('npT'), email: v('npE'), cov, age: age != null ? age : (parseInt(v('npA'), 10) || 0), pro: v('npPro') || undefined });
+    const extra = { age: age != null ? age : (parseInt(v('npA'), 10) || 0) };
+    if (birth) extra.birth = birth; if (v('npAddr')) extra.addr = v('npAddr'); if (v('npLoc')) extra.loc = v('npLoc');
+    if (osOn) { if (v('npAfil')) extra.afil = v('npAfil'); if (v('npPlan')) extra.plan = v('npPlan'); }
+    A.setProfile(p.id, extra);
+    const pd = A.pd(p.id), conds = Array.prototype.slice.call(document.querySelectorAll('.np-cond:checked')).map(x => x.value);
+    if (conds.length || v('npMeds') || v('npAnt') || v('npAl')) {
+      conds.forEach(c => { pd.hc.conds[c] = true; });
+      if (v('npMeds')) pd.hc.meds = v('npMeds'); if (v('npAnt')) pd.hc.ant = v('npAnt'); if (v('npAl')) pd.hc.alertExtra = v('npAl');
+      A.touchPd(p.id);
+    }
+    if (v('npMot') && A.setMotivo) A.setMotivo(p.id, v('npMot'));
+    S.modal = null; A.renderModal(); A.toast('Paciente creado: ' + p.name); A.openFicha(p.id, 'datos');
+    if (A.voice && A.voice.on && A.say) A.say('Listo, ficha de ' + p.name + ' guardada. Seguimos con la historia: decí «antecedentes…», «medicación…» o «alergia a…».');
+  };
+
+  /* ---------- 4) por voz: fecha de nacimiento, domicilio, localidad, afiliado y plan ---------- */
+  const FIELDS = [
+    ['birth', /^(?:la |su )?fecha de nacimiento(?: es)?\s*:?\s+(.+)$|^(?:nacio|nacida|nacido)(?: el)?\s+(.+)$/],
+    ['addr', /^(?:el |su )?(?:domicilio|direccion)(?: es)?\s*:?\s+(.+)$|^vive en\s+(.+)$/],
+    ['loc', /^(?:la |su )?(?:localidad|ciudad)(?: es)?\s*:?\s+(.+)$/],
+    ['afil', /^(?:el |su )?(?:numero de afiliado|n de afiliado|afiliado|credencial)(?: es)?\s*:?\s+(.+)$/],
+    ['plan', /^(?:el |su )?plan(?: es)?\s*:?\s+(.+)$/],
+    ['particular', /^(?:es )?particular$|^no tiene obra social$|^sin obra social$/]
+  ];
+  const NP = { birth: 'npB', addr: 'npAddr', loc: 'npLoc', afil: 'npAfil', plan: 'npPlan' };
+  const LBL = { birth: 'Fecha de nacimiento', addr: 'Domicilio', loc: 'Localidad', afil: 'N.º de afiliado', plan: 'Plan' };
+  const execPrev = A.cmd.exec;
+  A.cmd.exec = (text, o) => {
+    const inNew = S.modal && S.modal.type === 'patient', inFicha = !S.modal && S.tab === 'ficha' && S.fichaPid && S.fichaTab === 'datos';
+    if ((inNew || inFicha) && !(A.cloud && A.cloud.readonly)) {
+      let c = N(text).replace(/[.,;]+$/, '').trim();
+      const raw = String(A._lastRaw || text).replace(/[.,;]+$/, '').trim();
+      for (const [f, re] of FIELDS) {
+        const m = re.exec(c); if (!m) continue;
+        if (f === 'particular') { if (inNew) { const b = document.querySelector('.np-os-tg .pill[data-v="0"]'); if (b) A.acts.npOs(b); } else { A.setProfile(S.fichaPid, { cov: 'Particular' }); A.refresh(); } return { ok: true, msg: 'Particular, sin obra social.' }; }
+        let val = (m[1] || m[2] || '').trim(); const words = val.split(' ').length, rw = raw.split(/\s+/).slice(-words).join(' ');
+        if (N(rw) === val) val = rw;
+        if (f === 'birth') { const iso = A.parseBirth(val); if (!iso) return { ok: false, msg: 'No entendí la fecha. Decila así: «fecha de nacimiento 3 de mayo de 1990».' }; val = iso; }
+        else if (f === 'afil') { const d = val.replace(/\D/g, ''); val = d.length >= 3 ? d : val.replace(/\s+/g, ''); }
+        else val = cap(val);
+        const say = f === 'birth' ? A.fmtDMY(val) + ' (' + A.ageFrom(val) + ' años)' : val;
+        if (inNew) {
+          if ((f === 'afil' || f === 'plan')) { const b = document.querySelector('.np-os-tg .pill[data-v="1"]'); if (b && $('#npOsBox').hidden) A.acts.npOs(b); }
+          const el = $('#' + NP[f]); if (el) { el.value = val; el.dispatchEvent(new Event('input', { bubbles: true })); if (f === 'birth') npAge(); }
+        } else { A.setProfile(S.fichaPid, { [f]: val }); A.refresh(); }
+        return { ok: true, msg: LBL[f] + ': ' + say + '.' };
+      }
+      /* «obra social OSDE» en la ficha nueva: se marca que tiene obra social */
+      if (inNew && /^(?:la |su )?(?:obra social|cobertura|prepaga)\b/.test(c) && !/particular|ninguna|no tiene/.test(c)) { const b = document.querySelector('.np-os-tg .pill[data-v="1"]'); if (b && $('#npOsBox').hidden) A.acts.npOs(b); }
+      if (inNew && /^(?:la |su )?edad\b/.test(c) && ($('#npA') || {}).readOnly) return { ok: true, msg: 'La edad ya sale de la fecha de nacimiento: ' + $('#npA').value + ' años.' };
+    }
+    return execPrev(text, o);
+  };
+
+  document.head.insertAdjacentHTML('beforeend', '<style>' +
+    '.panel.still{animation:none}' +
+    '.modal.np-full{width:min(1080px,100%);max-height:calc(100vh - 24px)}.np-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}.np-sec{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}.np-sec h3,.np-h{margin:0 0 8px;font-size:14px;letter-spacing:.02em}.np-h{margin-top:12px}.np-os-tg{margin-bottom:8px}#npA[readonly],#pf_age[readonly]{background:var(--surface-2,rgba(0,0,0,.04))}' +
+    '@media (max-width:760px){.np-cols{grid-template-columns:1fr;gap:0}.modal-scrim:has(.np-full){padding:0}.modal.np-full{width:100%;max-height:none;height:100%;border-radius:0;padding-top:env(safe-area-inset-top,0px)}}' +
+    /* agenda: turnos cortos y superpuestos legibles */
+    '.blk.sz-xs{padding:0 6px;display:flex;align-items:center}.blk.sz-xs .n{flex:1;min-width:0;display:flex;align-items:center;gap:3px;font-size:12.5px}.blk.sz-xs .stb{width:20px;height:20px;font-size:11px;margin-right:2px;vertical-align:0}' +
+    '.blk.sz-xs .tm{font-family:var(--f-mono);font-size:10.5px;color:var(--ink-2);margin-left:auto;padding-left:4px;flex:0 0 auto}.blk.sz-xs .grip{flex:0 0 auto}.blk.sz-xs .al{flex:0 0 auto}' +
+    '.blk.sz-s{padding:2px 7px}.blk.sz-s .k{display:none}.blk.sz-s .t{font-size:10.5px}' +
+    '.blk.narrow{display:flex;flex-direction:column;padding-left:5px;padding-right:4px}.blk.narrow .n{order:-1}.blk.narrow .t .wab{display:none}.blk.narrow .t .sb{font-size:9px}.blk.narrow.sz-xs{flex-direction:row}.blk.narrow .stb{width:18px;height:18px;font-size:10px;margin-right:3px}.blk.narrow .n{font-size:12px}.blk.narrow.sz-xs .tm,.blk.narrow.sz-xs .al{display:none}.blk.narrow .grip{padding:0}' +
+    '</style>');
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

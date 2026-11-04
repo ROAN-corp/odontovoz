@@ -236,8 +236,8 @@
   };
   function softRefresh() {
     const ae = document.activeElement, typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
-    if (typing) { pendingRefresh = true; ae.addEventListener('blur', () => { if (pendingRefresh) { pendingRefresh = false; A.refresh(); } }, { once: true }); return; }
-    A.refresh();
+    if (typing) { pendingRefresh = true; ae.addEventListener('blur', () => { if (pendingRefresh) { pendingRefresh = false; A._fromSync = true; try { A.refresh(); } finally { A._fromSync = false; } } }, { once: true }); return; }
+    A._fromSync = true; try { A.refresh(); } finally { A._fromSync = false; }
   }
   function setState(st, msg) { CL.state = st; CL.msg = msg || ''; if (A.cloudChrome) A.cloudChrome(); }
   function startLoop() { stopLoop(); loopT = setInterval(() => { if (!document.hidden && navigator.onLine !== false) CL.sync(); }, 8000); CL.sync(); }
