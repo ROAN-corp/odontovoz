@@ -7365,7 +7365,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: '', supabaseAnonKey: '' };
     try {
       let rows;
       if (/\.(xlsx|xls)$/i.test(f.name)) { if (msg) msg.textContent = 'Leyendo el Excel…'; const X = await loadXLSX(), wb = X.read(await f.arrayBuffer(), { type: 'array', cellDates: true }); rows = X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' }); rows = rows.filter(r => r.some(c => String(c).trim())); }
-      else { const buf = await f.arrayBuffer(); let t = new TextDecoder('utf-8').decode(buf); if (/�/.test(t)) t = new TextDecoder('windows-1252').decode(buf); rows = parseCSV(t.replace(/^﻿/, '')); }
+      else { const buf = await f.arrayBuffer(); let t = new TextDecoder('utf-8').decode(buf); if (/\uFFFD/.test(t)) t = new TextDecoder('windows-1252').decode(buf); rows = parseCSV(t.replace(/^﻿/, '')); }
       if (!rows || rows.length < 2) throw new Error('El archivo no tiene filas de pacientes.');
       let hi = 0; for (let i = 0; i < Math.min(8, rows.length); i++) if (rows[i].filter(c => guess(c)).length >= 2) { hi = i; break; }
       rows = rows.slice(hi).map(r => r.map(c => String(c == null ? '' : c).trim()));
