@@ -228,3 +228,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Si se escribe un nombre que no existe y se toca «Agendar», se crea el paciente con ese nombre.
 - Turno nuevo: interruptor «Turno / Sobreturno», hora y minutos en dos listas con atajos ±15, y aviso en vivo de qué hay a esa hora; si choca, «Darlo como sobreturno» o «Buscar el próximo libre».
 - Agenda: los sobreturnos ya no achican los turnos; flotan semitransparentes y punteados sobre la mitad derecha. Turno abierto: «+ Sobreturno a las 10:30».
+
+## OdontoVoz 1.13 · cerrar sesión y agenda de cada profesional a medida
+- Menú: «Cerrar sesión» al fondo, con el correo de la cuenta (aparece cuando hay una cuenta en la nube abierta).
+- Centro, profesionales y horarios › Editar datos y horarios: cada día muestra sus horarios; «+ Agregar horario» permite elegir uno o varios días, desde, hasta y si es todas las semanas o semana por medio. Tocar un horario lo cambia o lo quita. «Empezar de cero» deja la agenda vacía (se puede deshacer).
+- Alta de profesional: nueva opción «Lo armo yo, de cero», que lo crea sin horarios y abre directamente el armado de su agenda.
