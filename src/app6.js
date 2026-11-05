@@ -227,7 +227,7 @@
     const f = S.modal && S.modal.f, when = A.fmtShort(date) + ' a las ' + A.mm(f ? f.start : pr.start || 0) + (f ? ', ' + f.dur + ' minutos' : '');
     if (pid) return { ok: true, msg: 'Turno para ' + A.PAT(pid).name + ' el ' + when + (A.isSolo() ? '' : ' con ' + A.PRO(pro).short) + '. Decí «agendar» para confirmar o «cancelar».' };
     if (res.many) return { ok: true, msg: 'Hay varios pacientes que coinciden con «' + pr.name + '». Elegí uno en la lista y decí «agendar».' };
-    if (newName) return { ok: true, msg: newName + ' no está en tus pacientes: lo creo como paciente nuevo. Turno el ' + when + '. ' + (f && f.n_last ? 'Decí «agendar» para guardar todo.' : 'Falta el apellido: escribilo y decí «agendar».') };
+    if (newName) return { ok: true, msg: newName + ' no está en tus pacientes: lo creo como paciente nuevo. Turno el ' + when + '. ' + 'Decí «agendar» para guardarlo' + (f && f.n_last ? '.' : ': el apellido y el DNI los completás cuando venga.') };
     return { ok: true, msg: 'Elegí el paciente. Turno el ' + when + '.' };
   }
   const origExec = A.cmd.exec;
