@@ -249,3 +249,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.16 · segundo plano configurable y profesionales al costado de la agenda
 - La app vuelve a Inicio recién después de 15 minutos en segundo plano. Se cambia en Menú › Apariencia (5, 10, 15, 20, 30 minutos, 1 hora o nunca), por equipo.
 - Centro: en la PC, columna de profesionales a la izquierda (tocás uno y ves su agenda, o «Todos») y calendario de tres meses a la derecha, con los días que atiende marcados. En el celular, fila de tarjetas de profesionales arriba de la tira de días.
+
+## OdontoVoz 1.17 · planes y alquiler de módulos
+- Nuevo plan Red (dueño de hasta 5 centros): ya está cargado en el servidor y en el panel de licencias. El modo Red para el dueño llega en la próxima versión.
+- La prueba gratis trae todo (todos los planes) para conocerla; al pagar, la cuenta queda con el plan contratado (se cambia desde el panel).
+- Menú › Mi plan: muestra el plan actual (o los días de prueba que quedan) y los planes con su precio; «Mejorar a este» abre el WhatsApp de soporte con el pedido armado.
+- Liquidaciones › cada profesional: «Cómo trabaja»: porcentaje de lo que factura, alquila un módulo (se queda con lo que factura y paga el módulo) o porcentaje + módulo. El módulo se cobra por hora, por turno o por día, se calcula solo con la agenda (hasta hoy, sin cancelados ni ausentes) y se descuenta automáticamente en la liquidación.

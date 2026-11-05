@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.16 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.17 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.16 (noviem
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -49,6 +49,8 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.16 (noviem
 - 1.14 (`src/app22.js` + `A.CFG.swipeDays` en el deslizar de la agenda de `index.html`): en el celular deslizar ya no cambia de día (se puede reactivar con `A.CFG.swipeDays = true`); agenda compacta arriba (fecha tocando el título, «Colores de los turnos» dentro de «Más», sin textos de ayuda), consultorios en varias líneas, la grilla del día se extiende con la página y flechas flotantes ‹ Hoy › abajo a la izquierda. Referencia que mandó el usuario: la agenda de Bilog en el celular (lista a pantalla completa con flechas abajo).
 - 1.15 (`src/app23.js` + `S._stripDate`/`S._stripKeep` en el render de la agenda y `decorateStrip()` de `src/app16.js`): la tira de días queda quieta y solo se centra cuando cambia el día elegido; la agenda abre siempre desde arriba (`A.scrollToNow` desactivado a pedido del usuario); al volver a la app después de 2 minutos o más, y al abrirla de cero, arranca en Inicio (si hay una ventana abierta se respeta).
 - 1.16 (`src/app24.js` y `src/app23.js`): volver a Inicio después de 15 minutos en segundo plano por defecto, configurable por equipo en Menú › Apariencia (`odontovoz.away`, 0 = nunca). Agenda de centro con la lista de profesionales (en la PC, columna a la izquierda; en el celular, fila de tarjetas) para ver la agenda de uno o de todos, y calendario de 3 meses a la derecha en la PC. Referencia: Bilog de escritorio (profesionales a la izquierda, agenda en el medio, varios meses a la derecha).
+- 1.17 (`src/app25.js`, `supabase/red.sql` ya corrido, `app19.js` PLAN, `admin.html` DEF): plan **Red** (dueño de hasta 5 centros, $161.900, 40 profesionales, 60 equipos) y la **prueba trae todo** (40 profesionales, 5 equipos, 5 consultorios, 5 centros); al pagar se pasa la cuenta al plan contratado desde el panel. Menú › «Mi plan» con los planes y botón a WhatsApp para mejorar/cambiar. Liquidaciones: forma de trabajo por profesional (`liqCfg(pid).mode`: pct, mod = alquila módulo, pctmod = porcentaje + módulo; `mod.by` hora/turno/dia y `mod.price`), el módulo se calcula con la agenda hasta hoy (`A.liqUse`) y entra como descuento automático.
+- Próximo (1.18, acordado con el usuario): **modo Red**. Una sola cuenta Red; la primera vez que se instala en un equipo se elige a qué centro pertenece (ve solo ese centro) y el dueño ve todo. Panel del dueño en árbol Red › centros › profesionales con cobrado, a pagar a cada profesional (porcentaje o módulo) y parte del dueño, por centro y total. Recién ahí sumar la tarjeta Red a `sitio/index.html`.
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 

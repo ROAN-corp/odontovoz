@@ -41,7 +41,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
 (function () {
   'use strict';
   const URL0 = 'https://hcppfvioiaaejayzzhpa.supabase.co', KEY = 'sb_publishable_N-Qc-l7kJc4A7rvX68ko7Q_CiTI2HtU';
-  const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio', centro: 'Centro' };
+  const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio', centro: 'Centro', red: 'Red' };
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let ses = null, rows = [], fb = null, q = '', filt = 'todas';
@@ -118,7 +118,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     if (x === 'on') { patch(id, { status: 'activa' }); return; }
     if (x === 'ed') edit(r);
   }
-  const DEF = { prueba: [1, 2, 2], basico: [1, 2, 1], consultorio: [3, 5, 1], centro: [8, 12, 5] };
+  const DEF = { prueba: [40, 5, 5], basico: [1, 2, 1], consultorio: [3, 5, 1], centro: [8, 12, 5], red: [40, 60, 5] };
   function edit(r, payTo) {
     const d = document.createElement('div'); d.className = 'drawer';
     d.innerHTML = '<div class="card"><h2 style="margin:0">' + esc(r.email) + '</h2><div class="row2"><div><label>Plan</label><select id="ePl">' + Object.keys(PLANES).map(k => '<option value="' + k + '"' + (k === r.plan ? ' selected' : '') + '>' + PLANES[k] + '</option>').join('') + '</select></div><div><label>Estado</label><select id="eSt"><option value="activa"' + (r.status === 'activa' ? ' selected' : '') + '>activa</option><option value="suspendida"' + (r.status === 'suspendida' ? ' selected' : '') + '>suspendida</option></select></div></div>' +
