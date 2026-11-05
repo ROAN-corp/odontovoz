@@ -5,12 +5,13 @@
 
   /* lo mismo que controla el servidor (supabase/limites.sql) */
   const PLAN = {
-    prueba: { name: 'Prueba gratis', pros: 1, devices: 2, locs: 2 },
+    prueba: { name: 'Prueba gratis', pros: 40, devices: 5, locs: 5, centros: 5 }, /* 1.17: la prueba trae todo, para conocer cualquier plan */
     basico: { name: 'Profesional', pros: 1, devices: 2, locs: 1 },
     consultorio: { name: 'Consultorio', pros: 3, devices: 5, locs: 1 },
-    centro: { name: 'Centro', pros: 8, devices: 12, locs: 5 }
+    centro: { name: 'Centro', pros: 8, devices: 12, locs: 5 },
+    red: { name: 'Red', pros: 40, devices: 60, locs: 5, centros: 5 }
   };
-  const NEXT = { prueba: 'consultorio', basico: 'consultorio', consultorio: 'centro', centro: null };
+  const NEXT = { prueba: null, basico: 'consultorio', consultorio: 'centro', centro: 'red', red: null };
   A.PLAN_INFO = PLAN;
   const lic = () => (CL && CL.lic) || null;
   const real = () => !!(CL && CL.session && !A.DEMO);
