@@ -1,169 +1,198 @@
-/* ===== 1.8: turno con solo el nombre y el teléfono, y sobreturnos más fáciles de dar y de ver ===== */
+/* ===== 1.7.1: evolución clínica: buscar y filtrar notas, borrar las del día y anular las anteriores (quedan guardadas, como pide la ley) ===== */
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
+  const N = s => A.norm(String(s || ''));
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const PASO = 30;
 
-  /* ---------------------------------------------------------------
-     PACIENTE NUEVO: alcanza con el nombre (y el teléfono para el WhatsApp).
-     Apellido, DNI y lo demás se completan cuando viene por primera vez.
-     --------------------------------------------------------------- */
-  const prevDerive = A.derive;
-  A.derive = p => { prevDerive(p); p.name = String(p.name || '').replace(/\s+/g, ' ').trim(); return p; };
-  A.PATS.forEach(p => { if (p.name) p.name = p.name.trim(); });
-  /* qué le falta a la ficha de un paciente cargado al paso */
-  A.patMissing = p => { if (!p) return []; const m = []; if (!String(p.last || '').trim()) m.push('apellido'); if (!String(p.dni || '').trim()) m.push('DNI'); return m; };
-  const cap = s => String(s || '').trim().replace(/\s+/g, ' ').replace(/(^|\s)(\S)/g, (x, a, b) => a + b.toUpperCase());
+  /* Una nota del día y sin firmar se puede borrar (fue un error al escribir).
+     Las de otros días no se borran: se ANULAN con motivo y fecha, quedan ocultas y figuran tachadas en el PDF
+     (Ley 26.529: la historia clínica es inviolable y se conserva 10 años). */
+  const isVoid = n => !!(n && n.void);
+  /* las automáticas (laboratorio, recetas, «se realizó») son un registro de movimientos: se pueden borrar siempre */
+  const canDelete = n => n && !isVoid(n) && !n.signed && !n.docId && (n.auto || n.date === A.today());
+  const LABRX = /^Laboratorio: /;
+  const labOf = (pid, n) => { const labs = A.pd(pid).labs || []; if (n.lab) return labs.filter(l => l.id === n.lab)[0] || null; if (!LABRX.test(n.text)) return null; return labs.filter(l => n.text.indexOf('Laboratorio: ' + l.work) === 0 && (!l.hist || !l.hist[0] || l.hist[0].d === n.date))[0] || null; };
+  const kindOf = n => (n.auto ? 'auto' : n.voice ? 'voz' : 'manual');
+  const KIND = { manual: 'Escritas', voz: 'Dictadas', auto: 'Automáticas' };
 
-  function quickCreate(f) {
-    const v = id => (($('#' + id) || {}).value || '').trim();
-    const first = cap(v('nc_first') || f.n_first), last = cap(v('nc_last') || f.n_last), dni = (v('nc_dni') || f.n_dni || '').replace(/\D/g, ''), phone = v('nc_phone') || f.n_phone || '';
-    if (!first && !last) return null;
-    const p = A.addPatient({ first: first || last, last: first ? last : '', dni, phone, age: 0 });
-    A.setProfile(p.id, { age: 0 }); A.save();
-    f.pid = p.id; f.creating = false; return p;
+  const F = pid => { if (!S.evF || S.evF.pid !== pid) S.evF = { pid, q: '', pro: '', kind: '', from: '', to: '', anul: false, n: PASO, open: {} }; return S.evF; };
+  const sorted = pid => (A.pd(pid).notes || []).map((n, i) => ({ n, i })).sort((a, b) => (a.n.date < b.n.date ? 1 : a.n.date > b.n.date ? -1 : a.i - b.i)).map(x => x.n);
+  function filtered(pid) {
+    const f = F(pid), words = N(f.q).split(/\s+/).filter(Boolean);
+    return sorted(pid).filter(n => {
+      if (isVoid(n) && !f.anul) return false;
+      if (f.pro && n.pro !== f.pro) return false;
+      if (f.kind && kindOf(n) !== f.kind) return false;
+      if (f.from && n.date < f.from) return false;
+      if (f.to && n.date > f.to) return false;
+      if (words.length) { const t = N(n.text + ' ' + A.fmtDMY(n.date) + ' ' + ((A.PRO(n.pro) || {}).name || '')); if (!words.every(w => t.indexOf(w) >= 0)) return false; }
+      return true;
+    });
   }
-  A.acts.naCreate = () => {
-    const f = S.modal.f, p = quickCreate(f), msg = $('#naMsg');
-    if (!p) { if (msg) { msg.className = 'hint bad'; msg.textContent = 'Escribí al menos el nombre (por ejemplo «Fulano»).'; } const i = $('#nc_first'); if (i) i.focus(); return; }
-    A.renderModal();
-  };
-
-  /* el formulario: «Nombre» es lo único necesario; el resto dice «opcional» */
-  const prevWrap = A.wrapNewAppt;
-  A.wrapNewAppt = (m, html) => {
-    html = prevWrap ? prevWrap(m, html) : html;
-    const f = m.f;
-    html = html.replace('<label for="nc_first">Nombre</label>', '<label for="nc_first">Nombre <span class="req">(alcanza con esto)</span></label>')
-      .replace('<label for="nc_last">Apellido</label>', '<label for="nc_last">Apellido <span class="opt">opcional</span></label>')
-      .replace('<label for="nc_dni">DNI</label>', '<label for="nc_dni">DNI <span class="opt">opcional</span></label>')
-      .replace('<label for="nc_phone">Teléfono (WhatsApp)</label>', '<label for="nc_phone">Teléfono (WhatsApp) <span class="opt">para el recordatorio</span></label>')
-      .replace('<button class="btn small primary" data-act="naCreate">Crear y elegir</button>', '<div class="hint">Si es la primera vez, con el nombre y el teléfono alcanza. La ficha completa la llenás cuando venga.</div><button class="btn small primary" data-act="naCreate">Usar este paciente</button>');
-    if (f.pid) { const p = A.PAT(f.pid), miss = A.patMissing(p); if (miss.length) html = html.replace(/<div class="hint">DNI [^<]*<\/div>/, '<div class="hint">' + (p.phone ? esc(p.phone) + ' · ' : '') + 'falta ' + miss.join(' y ') + ' (se completa cuando venga)</div>'); }
-
-    /* turno o sobreturno: un interruptor bien visible arriba */
-    const seg = '<div class="na-kind" role="group" aria-label="Tipo de turno"><button type="button" data-act="naKind" data-k="0" aria-pressed="' + !f.sobre + '"><b>Turno</b><small>en un horario libre</small></button><button type="button" data-act="naKind" data-k="1" aria-pressed="' + !!f.sobre + '"><b>Sobreturno</b><small>encima de otro turno</small></button></div>';
-    html = html.replace('<div class="field"><label for="naQ">Paciente</label>', seg + '<div class="field"><label for="naQ">Paciente</label>');
-    html = html.replace(/<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="naSobre"([^>]*)>[^<]*<\/label>/, '<input type="checkbox" id="naSobre"$1 hidden>');
-
-    /* la hora: hora y minutos por separado, con atajos de ±15 y los horarios cercanos */
-    const tm = /<input type="time" id="naTime"[^>]*>/;
-    if (tm.test(html)) {
-      const st = f.start, hh = Math.floor(st / 60), mi = st % 60;
-      let hs = ''; for (let x = 6; x <= 22; x++) hs += '<option value="' + x + '"' + (x === hh ? ' selected' : '') + '>' + String(x).padStart(2, '0') + ' h</option>';
-      let ms = ''; for (let x = 0; x < 60; x += 5) ms += '<option value="' + x + '"' + (x === mi - mi % 5 ? ' selected' : '') + '>' + String(x).padStart(2, '0') + '</option>';
-      html = html.replace(tm, '<input type="hidden" id="naTime" value="' + A.mm(st) + '"><div class="na-time"><select id="naH" aria-label="Hora">' + hs + '</select><span>:</span><select id="naMi" aria-label="Minutos">' + ms + '</select><button type="button" class="btn small" data-act="naStep" data-d="-15" aria-label="15 minutos antes">−15</button><button type="button" class="btn small" data-act="naStep" data-d="15" aria-label="15 minutos después">+15</button></div>');
-    }
-    html = html.replace('<div id="naMsg"', '<div id="naOcc" class="na-occ"></div><div id="naMsg"');
-    return html;
-  };
-
-  const readTime = () => { const h = $('#naH'), m = $('#naMi'); return h && m ? (+h.value) * 60 + (+m.value) : A.toMin(($('#naTime') || {}).value || '09:00'); };
-  function setTime(t) {
-    t = Math.max(360, Math.min(22 * 60 + 55, t));
-    const h = $('#naH'), m = $('#naMi'), hid = $('#naTime');
-    if (h) h.value = String(Math.floor(t / 60)); if (m) m.value = String(t % 60 - (t % 60) % 5);
-    if (hid) { hid.value = A.mm(t); hid.dispatchEvent(new Event('change', { bubbles: true })); }
-    if (S.modal && S.modal.f) S.modal.f.start = t;
-    occ();
+  /* resalta lo buscado sin romper los acentos: se compara sin tildes y se marca sobre el texto original */
+  function mark(text, q) {
+    const words = N(q).split(/\s+/).filter(w => w.length > 1); if (!words.length) return esc(text);
+    const plain = Array.from(text).map(ch => ch.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().charAt(0) || ch).join('');
+    if (plain.length !== text.length) return esc(text);
+    const on = new Array(text.length).fill(false);
+    words.forEach(w => { let i = plain.indexOf(w); while (i >= 0) { for (let k = i; k < i + w.length; k++) on[k] = true; i = plain.indexOf(w, i + w.length); } });
+    let h = '', open = false;
+    for (let k = 0; k < text.length; k++) { if (on[k] && !open) { h += '<mark>'; open = true; } if (!on[k] && open) { h += '</mark>'; open = false; } h += esc(text[k]); }
+    return h + (open ? '</mark>' : '');
   }
-  A.acts.naStep = el => setTime(readTime() + parseInt(el.getAttribute('data-d'), 10));
-  A.acts.naKind = el => {
-    const on = el.getAttribute('data-k') === '1', cb = $('#naSobre'); if (cb) cb.checked = on; if (S.modal && S.modal.f) S.modal.f.sobre = on;
-    document.querySelectorAll('.na-kind button').forEach(b => b.setAttribute('aria-pressed', String((b.getAttribute('data-k') === '1') === on)));
-    const ttl = document.querySelector('#modalHost .modal h2, #modalHost h2'); if (ttl && /^Nuevo (sobre)?turno$/.test(ttl.textContent)) ttl.textContent = on ? 'Nuevo sobreturno' : 'Nuevo turno';
-    const msg = $('#naMsg'); if (msg) { msg.textContent = ''; msg.className = 'hint'; }
-    occ();
-  };
-  A.acts.naAsSobre = () => { A.acts.naKind({ getAttribute: () => '1' }); A.acts.naSave(); };
+  const monthLabel = d => { const p = String(d || '').split('-'); return p.length < 2 ? 'Sin fecha' : MESES[+p[1] - 1] + ' ' + p[0]; };
 
-  /* aviso en vivo: qué hay a esa hora */
-  function occ() {
-    const host = $('#naOcc'); if (!host || !S.modal || S.modal.type !== 'newAppt') return;
-    const pro = ($('#naPro') || {}).value || S.modal.f.pro, date = ($('#naDate') || {}).value || S.modal.f.date, start = readTime(), dur = parseInt(($('#naDur') || {}).value, 10) || S.modal.f.dur || 30, sobre = !!($('#naSobre') || {}).checked;
-    const cf = A.day(date).filter(b => b.pro === pro && b.status !== 'cancelado' && !b.sobre && b.start < start + dur && start < b.start + b.dur);
-    const who = cf.map(c => '<b>' + esc(c.type === 'block' ? c.label : (A.PAT(c.pid) || {}).name || '') + '</b> (' + A.mm(c.start) + '–' + A.mm(c.start + c.dur) + ')').join(', ');
-    const blocked = cf.some(c => c.type === 'block');
-    if (!cf.length) { host.className = 'na-occ ok'; host.innerHTML = sobre ? 'A esa hora no hay otro turno: lo podés dar como turno común.' : 'Horario libre.'; return; }
-    if (sobre) { host.className = 'na-occ sb'; host.innerHTML = 'Queda como sobreturno junto a ' + who + '.' + (blocked ? ' Ojo: ese horario está bloqueado.' : ''); return; }
-    host.className = 'na-occ bad'; host.innerHTML = 'A esa hora ya está ' + who + '.<div class="row-btns"><button class="btn small primary" data-act="naAsSobre">Darlo como sobreturno</button><button class="btn small" data-act="naNextFree">Buscar el próximo libre</button></div>';
+  function noteLI(n, f) {
+    const pr = A.PRO(n.pro) || {}, long = n.text.length > 320, open = f.open[n.id] || N(f.q);
+    let h = '<li class="ev-n' + (n.auto ? ' done' : '') + (isVoid(n) ? ' void' : '') + '"><div class="meta"><span>' + A.fmtDMY(n.date) + '</span><span>' + esc(pr.short || pr.name || '') + '</span>' +
+      (n.auto ? '<span>automática</span>' : n.voice ? '<span>dictada</span>' : '') + (isVoid(n) ? '<span class="ev-tag">anulada</span>' : '') + '</div>';
+    h += '<div class="ev-txt' + (long && !open ? ' clamp' : '') + '">' + mark(n.text, f.q) + '</div>';
+    if (isVoid(n)) h += '<div class="ev-why">Anulada el ' + A.fmtDMY(n.void.date) + (n.void.by ? ' por ' + esc((A.PRO(n.void.by) || {}).short || '') : '') + ': ' + esc(n.void.why) + '</div>';
+    h += '<div class="ev-acts">' + (long && !N(f.q) ? '<button class="lnk" data-act="evOpen" data-id="' + n.id + '">' + (f.open[n.id] ? 'Ver menos' : 'Ver completa') + '</button>' : '') +
+      '<button class="lnk" data-act="evCopy" data-id="' + n.id + '">Copiar</button>' +
+      (isVoid(n) ? '<button class="lnk" data-act="evRestore" data-id="' + n.id + '">Quitar la anulación</button>' :
+        canDelete(n) ? '<button class="lnk bad" data-act="evDelAsk" data-id="' + n.id + '">Borrar</button>' : '<button class="lnk bad" data-act="evVoidAsk" data-id="' + n.id + '">Anular</button>') + '</div></li>';
+    return h;
   }
-  A.acts.naNextFree = () => {
-    const pro = ($('#naPro') || {}).value, date = ($('#naDate') || {}).value, dur = parseInt(($('#naDur') || {}).value, 10) || 30, from = readTime();
-    const items = A.day(date).filter(b => b.pro === pro && b.status !== 'cancelado' && !b.sobre);
-    const hrs = A.hoursFor(A.PRO(pro), date);
-    for (const r of hrs) for (let t = Math.max(r[0], Math.ceil(from / 5) * 5); t + dur <= r[1]; t += 5) if (!items.some(b => b.start < t + dur && t < b.start + b.dur)) { setTime(t); return; }
-    A.toast('No queda otro horario libre ese día.');
-  };
-  document.addEventListener('change', e => {
-    const id = e.target && e.target.id; if (!id || !S.modal || S.modal.type !== 'newAppt') return;
-    if (id === 'naH' || id === 'naMi') { setTime(readTime()); return; }
-    if (['naPro', 'naDate', 'naDur'].indexOf(id) >= 0) occ();
-  });
-  const prevRender = A.renderModal;
-  A.renderModal = () => { prevRender(); if (S.modal && S.modal.type === 'newAppt') occ(); };
+  function listHTML(pid) {
+    const f = F(pid), all = A.pd(pid).notes || [], list = filtered(pid), shown = list.slice(0, f.n), nVoid = all.filter(isVoid).length;
+    const busy = f.q || f.pro || f.kind || f.from || f.to;
+    let h = '<div class="ev-count">' + (busy ? (list.length ? list.length + ' nota' + (list.length > 1 ? 's' : '') + ' encontrada' + (list.length > 1 ? 's' : '') : 'No hay notas con esos filtros') : all.filter(n => !isVoid(n)).length + ' notas') +
+      (busy ? ' · <button class="lnk" data-act="evClear">Ver todas</button>' : '') + '</div>';
+    if (!all.length) return '<div class="empty">Todavía no hay notas.</div>';
+    if (!list.length) return h;
+    h += '<ul class="timeline ev-list">'; let m = '';
+    shown.forEach(n => { const ml = monthLabel(n.date); if (ml !== m) { m = ml; h += '<li class="ev-month">' + esc(ml) + '</li>'; } h += noteLI(n, f); });
+    h += '</ul>';
+    if (list.length > shown.length) h += '<div class="row-btns" style="justify-content:center;margin-top:10px"><button class="btn small" data-act="evMore">Ver más notas (quedan ' + (list.length - shown.length) + ')</button></div>';
+    if (nVoid && !f.anul) h += '<div class="small-note">' + nVoid + ' nota' + (nVoid > 1 ? 's anuladas' : ' anulada') + ' oculta' + (nVoid > 1 ? 's' : '') + '.</div>';
+    return h;
+  }
+  function toolsHTML(pid) {
+    const f = F(pid), pros = A.PROS || [], all = A.pd(pid).notes || [], nVoid = all.filter(isVoid).length;
+    if (all.length < 2 && !nVoid) return '';
+    return '<div class="ev-tools"><div class="field ev-q"><label for="evQ" class="sr">Buscar en la evolución</label><input id="evQ" type="search" data-in="evQ" autocomplete="off" placeholder="Buscar en las notas: «36», «endodoncia», «ibuprofeno»…" value="' + esc(f.q) + '"></div>' +
+      '<div class="ev-flt">' +
+      '<select data-chg="evKind" aria-label="Tipo de nota"><option value="">Todas</option>' + Object.keys(KIND).map(k => '<option value="' + k + '"' + (f.kind === k ? ' selected' : '') + '>' + KIND[k] + '</option>').join('') + '</select>' +
+      (!A.isSolo() && pros.length > 1 ? '<select data-chg="evPro" aria-label="Profesional"><option value="">Todos los profesionales</option>' + pros.map(p => '<option value="' + p.id + '"' + (f.pro === p.id ? ' selected' : '') + '>' + esc(p.short || p.name) + '</option>').join('') + '</select>' : '') +
+      '<label class="ev-d">Desde <input type="date" data-chg="evFrom" value="' + esc(f.from) + '"></label><label class="ev-d">Hasta <input type="date" data-chg="evTo" value="' + esc(f.to) + '"></label>' +
+      (nVoid ? '<label class="chk ev-a"><input type="checkbox" data-chg="evAnul"' + (f.anul ? ' checked' : '') + '> Mostrar anuladas (' + nVoid + ')</label>' : '') +
+      '</div></div>';
+  }
+  const paintList = () => { const host = $('#evList'); if (host && S.fichaPid) host.innerHTML = listHTML(S.fichaPid); };
 
-  /* agendar: si falta crear al paciente, se crea con lo que haya; si choca, se ofrece el sobreturno */
-  const prevSave = A.acts.naSave;
-  A.acts.naSave = (el, ev) => {
-    const m = S.modal; if (!m || m.type !== 'newAppt') return prevSave(el, ev);
-    const f = m.f, msg = $('#naMsg');
-    if (!f.pid && f.creating && !quickCreate(f)) { if (msg) { msg.className = 'hint bad'; msg.textContent = 'Escribí al menos el nombre del paciente.'; } return; }
-    if (!f.pid && !f.creating) {
-      const q = (($('#naQ') || {}).value || f.q || '').trim();
-      if (q.length >= 2 && !A.searchPats(q, 1).length) { f.creating = true; const w = q.split(/\s+/); f.n_first = w[0]; f.n_last = w.slice(1).join(' '); quickCreate(f); }
+  /* se monta sobre la tarjeta «Evolución clínica» que arma la ficha */
+  function mount() {
+    if (S.tab !== 'ficha' || !S.fichaPid) return;
+    const ta = $('#noteTxt'); if (!ta) return; const card = ta.closest('section'); if (!card || card.querySelector('#evList')) return;
+    const pid = S.fichaPid, old = card.querySelector('ul.timeline') || card.querySelector(':scope > .empty');
+    const box = document.createElement('div'); box.className = 'ev-box'; box.innerHTML = toolsHTML(pid) + '<div id="evList">' + listHTML(pid) + '</div>';
+    if (old) old.replaceWith(box); else { const btns = card.querySelector('.row-btns'); if (btns) btns.after(box); }
+    const cnt = card.querySelector('h2 .count'); if (cnt) { const k = (A.pd(pid).notes || []).filter(n => !isVoid(n)).length; cnt.textContent = k + ' nota' + (k === 1 ? '' : 's'); }
+    const note = card.querySelector('.small-note:last-child'); if (note && /Ley 26\.529/.test(note.textContent)) note.textContent = 'Las notas automáticas salen del odontograma y del plan cuando algo pasa a «realizado». Las automáticas (laboratorio, recetas, tratamientos) se pueden borrar siempre. Las que escribís vos se borran el mismo día; las de días anteriores se anulan con un motivo: no desaparecen de la historia clínica (Ley 26.529).';
+  }
+  const afterPrev = A.afterRefresh; A.afterRefresh = () => { if (afterPrev) afterPrev(); try { mount(); } catch (e) { if (A.logError) A.logError('evol', e); } };
+
+  /* filtros: la lista se repinta sola, sin perder el foco del buscador */
+  let tq = null;
+  A.ins.evQ = el => { F(S.fichaPid).q = el.value; F(S.fichaPid).n = PASO; clearTimeout(tq); tq = setTimeout(paintList, 120); };
+  A.chg.evKind = el => { F(S.fichaPid).kind = el.value; F(S.fichaPid).n = PASO; paintList(); };
+  A.chg.evPro = el => { F(S.fichaPid).pro = el.value; F(S.fichaPid).n = PASO; paintList(); };
+  A.chg.evFrom = el => { F(S.fichaPid).from = el.value; F(S.fichaPid).n = PASO; paintList(); };
+  A.chg.evTo = el => { F(S.fichaPid).to = el.value; F(S.fichaPid).n = PASO; paintList(); };
+  A.chg.evAnul = el => { F(S.fichaPid).anul = el.checked; paintList(); };
+  A.acts.evMore = () => { F(S.fichaPid).n += PASO; paintList(); };
+  A.acts.evOpen = el => { const o = F(S.fichaPid).open, id = el.getAttribute('data-id'); o[id] = !o[id]; paintList(); };
+  A.acts.evClear = () => { const f = F(S.fichaPid); Object.assign(f, { q: '', pro: '', kind: '', from: '', to: '', n: PASO }); S.evF = f; A.refresh(); };
+  A.acts.evCopy = el => {
+    const n = byId(el.getAttribute('data-id')); if (!n) return; const t = A.fmtDMY(n.date) + ' · ' + n.text;
+    try { navigator.clipboard.writeText(t).then(() => A.toast('Nota copiada.'), () => A.toast('No se pudo copiar.')); } catch (e) { A.toast('No se pudo copiar.'); }
+  };
+  const byId = id => (A.pd(S.fichaPid).notes || []).filter(n => n.id === id)[0];
+
+  /* borrar (solo las del día) */
+  A.acts.evDelAsk = el => { S.modal = { type: 'evDel', id: el.getAttribute('data-id') }; A.renderModal(); };
+  MF.evDel = m => {
+    const n = byId(m.id); if (!n) return A.modalShell('Borrar nota', '<p>La nota ya no está.</p>', '<button class="btn primary" data-act="closeModal">Listo</button>');
+    const lab = labOf(S.fichaPid, n);
+    return A.modalShell('Borrar nota', '<p>Se borra esta nota de todos tus equipos:</p><blockquote class="ev-q-box">' + esc(n.text) + '</blockquote>' +
+      (lab ? '<label class="chk"><input type="checkbox" id="evLabToo" checked> Quitar también el pedido de laboratorio «' + esc(lab.work) + '»</label>' : '') +
+      '<p class="hint">' + (n.auto ? (/^Se realizó/.test(n.text) ? 'Borrar la nota no deshace el tratamiento: si lo marcaste por error, volvelo a «pendiente» en el plan.' : 'Es una nota automática: se puede borrar cuando quieras.') : 'Las notas escritas se pueden borrar solo el mismo día. Desde mañana, en vez de borrarse, se anulan con un motivo.') + '</p>',
+      '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="evDelGo" data-id="' + n.id + '">Borrar</button>');
+  };
+  A.acts.evDelGo = el => {
+    const pid = S.fichaPid, pd = A.pd(pid), n = byId(el.getAttribute('data-id'));
+    if (n && canDelete(n)) {
+      const lab = labOf(pid, n), too = lab && $('#evLabToo') && $('#evLabToo').checked;
+      pd.notes = pd.notes.filter(x => x.id !== n.id); if (too) pd.labs = pd.labs.filter(l => l.id !== lab.id);
+      A.touchPd(pid); if (A.save) A.save(); A.toast(too ? 'Nota y pedido de laboratorio borrados.' : 'Nota borrada.');
     }
-    const hid = $('#naTime'); if (hid && $('#naH')) hid.value = A.mm(readTime());
-    const sobre = !!($('#naSobre') || {}).checked;
-    if (!sobre && f.pid) {
-      const pro = ($('#naPro') || {}).value || f.pro, date = ($('#naDate') || {}).value || f.date, start = readTime(), dur = parseInt(($('#naDur') || {}).value, 10) || f.dur;
-      const cf = A.conflicts({ pro, date, start, dur });
-      if (cf.length) { occ(); const o = $('#naOcc'); if (o) o.scrollIntoView({ block: 'nearest' }); return; }
+    A.closeModal(); A.refresh();
+  };
+
+  /* laboratorio: la nota automática queda unida a su pedido; si se quita el pedido, se va también su nota */
+  const labSavePrev = A.acts.labSave;
+  if (labSavePrev) A.acts.labSave = el => {
+    const m = S.modal, pid = m && m.pid, before = pid ? (A.pd(pid).labs || []).map(l => l.id) : [];
+    const r = labSavePrev(el);
+    if (pid) { const pd = A.pd(pid), nw = (pd.labs || []).filter(l => before.indexOf(l.id) < 0)[0]; if (nw) { const n = (pd.notes || []).filter(x => x.auto && !x.lab && LABRX.test(x.text))[0]; if (n) { n.lab = nw.id; A.touchPd(pid); } } }
+    return r;
+  };
+  const labDelPrev = A.acts.labDel;
+  if (labDelPrev) A.acts.labDel = el => {
+    const m = S.modal, pid = m && m.pid, id = m && m.f && m.f.id;
+    if (pid && id) { const pd = A.pd(pid), lab = (pd.labs || []).filter(l => l.id === id)[0]; if (lab) pd.notes = (pd.notes || []).filter(n => !(n.auto && !isVoid(n) && labOf(pid, n) === lab)); }
+    return labDelPrev(el);
+  };
+
+  /* anular (las de días anteriores): queda guardada, oculta y tachada en el PDF */
+  A.acts.evVoidAsk = el => { S.modal = { type: 'evVoid', id: el.getAttribute('data-id') }; A.renderModal(); };
+  MF.evVoid = m => {
+    const n = byId(m.id); if (!n) return A.modalShell('Anular nota', '<p>La nota ya no está.</p>', '<button class="btn primary" data-act="closeModal">Listo</button>');
+    return A.modalShell('Anular nota del ' + A.fmtDMY(n.date), '<blockquote class="ev-q-box">' + esc(n.text) + '</blockquote>' +
+      '<div class="field"><label for="evWhy">¿Por qué la anulás?</label><input id="evWhy" placeholder="Ej.: cargada en el paciente equivocado, dato erróneo" maxlength="200"></div><div class="hint" id="evWhyMsg"></div>' +
+      '<p class="hint">La nota no se borra de la historia clínica: queda oculta, con la fecha y el motivo, y en el PDF aparece tachada. Es lo que pide la ley (Ley 26.529, arts. 15 y 18). Si hace falta, agregá después una nota nueva con el dato correcto.</p>',
+    '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="evVoidGo" data-id="' + n.id + '">Anular nota</button>');
+  };
+  A.modalAfter = A.modalAfter || {};
+  A.modalAfter.evVoid = () => { const i = $('#evWhy'); if (i) i.focus(); };
+  A.acts.evVoidGo = el => {
+    const why = ($('#evWhy') || {}).value ? $('#evWhy').value.trim() : ''; if (!why) { const m = $('#evWhyMsg'); if (m) m.textContent = 'Escribí el motivo: queda registrado junto a la nota.'; return; }
+    const pid = S.fichaPid, n = byId(el.getAttribute('data-id')); if (!n) { A.closeModal(); return; }
+    n.void = { date: A.today(), at: new Date().toISOString(), by: S.me || (A.PAT(pid) || {}).pro || '', why };
+    A.touchPd(pid); A.closeModal(); A.refresh(); A.toast('Nota anulada. Sigue guardada y la ves con «Mostrar anuladas».');
+  };
+  A.acts.evRestore = el => { const pid = S.fichaPid, n = byId(el.getAttribute('data-id')); if (!n) return; delete n.void; A.touchPd(pid); A.refresh(); A.toast('La nota vuelve a estar vigente.'); };
+
+  /* las notas anuladas no aparecen en «Últimas notas» y en el PDF figuran como anuladas */
+  const withNotes = (pid, map, fn) => { const pd = A.pd(pid), orig = pd.notes; pd.notes = map(orig); try { return fn(); } finally { pd.notes = orig; } };
+  const qnPrev = A.quickNoteHTML; if (qnPrev) A.quickNoteHTML = (pid, opt) => withNotes(pid, l => l.filter(n => !isVoid(n)), () => qnPrev(pid, opt));
+  const pdfPrev = A.acts.pdfHC;
+  if (pdfPrev) A.acts.pdfHC = el => {
+    const pid = (el && el.getAttribute && el.getAttribute('data-pid')) || S.fichaPid;
+    return withNotes(pid, l => l.map(n => (isVoid(n) ? Object.assign({}, n, { text: '[ANULADA el ' + A.fmtDMY(n.void.date) + ': ' + n.void.why + '] ' + n.text }) : n)), () => pdfPrev(el));
+  };
+
+  /* por voz: «buscar en la evolución endodoncia» */
+  const execPrev = A.cmd.exec;
+  A.cmd.exec = (text, o) => {
+    if (S.tab === 'ficha' && S.fichaPid && S.fichaTab === 'datos') {
+      const m = /^(?:busca(?:r|me)?|encontra(?:r|me)?|mostra(?:r|me)?)\s+(?:en\s+)?(?:la\s+)?(?:evolucion|historia(?: clinica)?|notas?|las notas)\s+(?:de\s+|por\s+|sobre\s+|con\s+)?(.+)$/.exec(N(text).replace(/[.!?¿¡]/g, '').trim());
+      if (m) { const f = F(S.fichaPid); f.q = m[1]; f.n = PASO; A.refresh(); const k = filtered(S.fichaPid).length; return { ok: true, msg: k ? 'Encontré ' + k + ' nota' + (k > 1 ? 's' : '') + ' con «' + m[1] + '».' : 'No encontré notas con «' + m[1] + '».' }; }
     }
-    return prevSave(el, ev);
+    return execPrev(text, o);
   };
 
-  /* ---------------------------------------------------------------
-     SOBRETURNO DESDE LA AGENDA: en el turno abierto, «+ Sobreturno a las 10:30»;
-     y al tocar la agenda, el formulario ya permite elegir turno o sobreturno.
-     --------------------------------------------------------------- */
-  const prevPanel = A.renderPanel;
-  A.renderPanel = () => {
-    prevPanel();
-    if (!S.panel || S.panel.type !== 'appt') return;
-    const a = A.apptById(S.panel.id), host = $('#panelHost .panel'); if (!a || !host || host.querySelector('.sob-add')) return;
-    const head = host.querySelector('.panel-head');
-    let h = '';
-    if (a.type !== 'block' && a.status !== 'cancelado') h += '<div class="sob-add"><button class="btn small" data-act="sobHere" data-id="' + a.id + '">+ Sobreturno a las ' + A.mm(a.start) + '</button><span class="hint">otro paciente a la misma hora</span></div>';
-    const p = a.pid && A.PAT(a.pid), miss = A.patMissing(p);
-    if (p && miss.length) h += '<div class="quick-note">Paciente cargado al paso: falta ' + miss.join(' y ') + '. <button class="link" data-act="quickFill" data-pid="' + p.id + '">Completar ficha</button></div>';
-    if (h && head) head.insertAdjacentHTML('afterend', h);
-  };
-  A.acts.sobHere = el => { const a = A.apptById(el.getAttribute('data-id')); if (!a) return; S.panel = null; A.renderPanel(); A.openNewAppt({ date: a.date, pro: a.pro, start: a.start, dur: a.dur, sobre: true }); };
-  A.acts.quickFill = el => { S.panel = null; A.renderPanel(); A.openFicha(el.getAttribute('data-pid'), 'datos'); setTimeout(() => { const i = $('#pf_last') && !$('#pf_last').value ? $('#pf_last') : $('#pf_dni'); if (i) { i.focus(); i.scrollIntoView({ block: 'center' }); } }, 80); };
-
-  /* en la ficha: aviso de datos que faltan */
-  const prevFicha = A.render.ficha;
-  A.render.ficha = () => {
-    prevFicha();
-    const p = A.PAT(S.fichaPid), miss = A.patMissing(p), fh = document.querySelector('#view-ficha .fh');
-    if (!fh || !miss.length || document.querySelector('#view-ficha .quick-note')) return;
-    fh.insertAdjacentHTML('afterend', '<div class="quick-note">Paciente cargado al paso: falta ' + miss.join(' y ') + '.' + (S.fichaTab !== 'datos' ? ' <button class="link" data-act="quickFill" data-pid="' + p.id + '">Completar ficha</button>' : ' Completalo acá abajo en «Datos personales».') + '</div>');
-    const sub = document.querySelector('#view-ficha .fh .sub'); if (sub && !String(p.dni || '').trim()) sub.innerHTML = sub.innerHTML.replace(/DNI\s*(·\s*)?/, '');
-  };
-
-  /* Pacientes › Nuevo paciente: apellido opcional */
-  const prevPat = MF.patient;
-  if (prevPat) MF.patient = m => prevPat(m).replace('Apellido *', 'Apellido');
-
-  document.head.insertAdjacentHTML('beforeend', '<style>' +
-    '.na-kind{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.na-kind button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;font:inherit}.na-kind b{font-size:16px}.na-kind small{color:var(--ink-2);font-size:12.5px}' +
-    '.na-kind button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}.na-kind button[data-k="1"][aria-pressed="true"]{border-color:var(--warn);background:var(--warn-soft)}' +
-    '.na-time{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}.na-time select{width:auto!important;flex:1 1 0;min-width:62px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 17px var(--f-mono,inherit);padding:0 8px}.na-time span{font-weight:700}.na-time .btn{flex:0 0 auto;padding:0 8px;min-height:44px}' +
-    '.na-occ{border-radius:10px;padding:8px 10px;font-size:14px;margin:6px 0}.na-occ:empty{display:none}.na-occ.ok{background:var(--ok-soft,#e5f4ea);color:var(--ink)}.na-occ.bad{background:var(--red-soft,#fbe4e2)}.na-occ.sb{background:var(--warn-soft)}.na-occ .row-btns{margin-top:6px}' +
-    'label .opt,label .req{font-weight:400;color:var(--ink-2);font-size:12px;margin-left:4px}' +
-    '.sob-add{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 16px 0}.quick-note{margin:8px 16px 0;padding:8px 12px;border-radius:10px;background:var(--warn-soft);font-size:14px}#view-ficha .quick-note{margin:0 0 10px}.quick-note .link{background:none;border:0;color:var(--accent);font-weight:700;cursor:pointer;padding:0;text-decoration:underline}' +
-    /* sobreturno flotante: semitransparente y punteado, sobre la mitad derecha del turno */
-    '.blk.over{border:2px dashed var(--warn);border-left:5px solid var(--warn)}.blk.over.float{z-index:4;background-color:color-mix(in srgb,var(--surface) 70%,transparent);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);box-shadow:0 4px 14px rgba(0,0,0,.16)}.blk.over.float:hover{background-color:var(--surface)}' +
-    '.blk.under{padding-right:calc(50% + 4px)}.blk.under .t .wab{display:none}' +
-    '</style>');
+  /* estilos */
+  const css = document.createElement('style');
+  css.textContent = '.ev-tools{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px}.ev-flt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ev-flt select,.ev-flt input[type=date]{min-height:36px;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--surface,#fff);color:inherit}' +
+    '.ev-d{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}.ev-a{font-size:13px}.ev-count{font-size:13px;color:var(--ink-2);margin:0 0 8px}' +
+    '.ev-month{border:0!important;padding:6px 0 0!important;font:700 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}' +
+    '.ev-txt{white-space:pre-wrap;overflow-wrap:anywhere}.ev-txt.clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}.ev-txt mark{background:#ffe58a;color:inherit;border-radius:3px;padding:0 1px}' +
+    '.ev-acts{display:flex;gap:14px;margin-top:4px}.ev-acts .lnk,.ev-count .lnk{background:none;border:0;padding:4px 0;font:inherit;font-size:13px;color:var(--accent,#0d6b6b);cursor:pointer;text-decoration:underline;min-height:28px}.ev-acts .lnk.bad{color:var(--pat,#b3261e)}' +
+    '.ev-n.void .ev-txt{text-decoration:line-through;opacity:.6}.ev-why{font-size:13px;color:var(--pat,#b3261e);margin-top:2px}.ev-tag{color:var(--pat,#b3261e);font-weight:700}' +
+    '.pp-nums .clr{color:var(--pat,#b3261e);font-weight:800}.ev-q-box{margin:8px 0;padding:8px 12px;border-left:3px solid var(--line);white-space:pre-wrap;max-height:30vh;overflow:auto;color:var(--ink-2)}';
+  document.head.appendChild(css);
 })();

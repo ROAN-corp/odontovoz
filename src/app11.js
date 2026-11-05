@@ -110,7 +110,7 @@
   A.acts.npSave = () => {
     const v = id => (($('#' + id) || {}).value || '').trim(), msg = t => { const e = $('#npMsg'); if (e) e.textContent = t; };
     const first = cap(v('npF')), last = cap(v('npL'));
-    if (!first && !last) { msg('Escribí al menos el nombre. El resto lo podés completar después.'); ($('#npF') || {}).focus && $('#npF').focus(); return; }
+    if (!first || !last) { msg('Completá nombre y apellido.'); ($('#' + (first ? 'npL' : 'npF')) || {}).focus && $('#' + (first ? 'npL' : 'npF')).focus(); return; }
     const dni = v('npD').replace(/\D/g, '');
     if (dni && A.PATS.some(p => String(p.dni) === dni)) { msg('Ya existe un paciente con ese DNI.'); return; }
     const birth = v('npB'), age = A.ageFrom(birth);
