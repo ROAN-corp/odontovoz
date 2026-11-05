@@ -238,7 +238,11 @@
       if (S.modal && S.modal.type === 'setup' && A.S.setup) { S.modal = null; A.renderModal(); A.refresh(); }
       return { ch, up };
     } catch (e) {
-      if ((e.status === 403 || e.status === 401 && /row-level|42501/.test(JSON.stringify(e.data || ''))) && CL.onDenied) { CL.onDenied(); setState('ok'); return; }
+      if (e.status === 403 || e.status === 401 && /row-level|42501/.test(JSON.stringify(e.data || ''))) {
+        CL.devOk = false; CL.devFull = null; let ok = true; try { ok = await devCheck(); } catch (x) { /* nada */ }
+        if (!ok) { setState('err', 'Este equipo no está habilitado para tu cuenta.'); return; }
+        if (CL.onDenied) { CL.onDenied(); setState('ok'); return; }
+      }
       setState(e.offline ? 'offline' : 'err', e.message);
       if (e.status === 401 || e.status === 400 && /refresh/i.test(e.message)) { saveSession(null); setState('err', 'La sesión venció. Volvé a ingresar.'); }
       if (A.logError && !e.offline) A.logError('nube', e);
@@ -246,11 +250,13 @@
   };
   /* registro del equipo (se repite cada 6 horas para que figure activo) */
   async function devCheck() {
-    if (CL.devOk && Date.now() - (CL.devAt || 0) < 6 * 3600e3) return true;
+    /* se revisa cada minuto: si lo desconectaron desde el panel o desde otro equipo, se entera enseguida */
+    if (CL.devOk && Date.now() - (CL.devAt || 0) < 60e3) return true;
     if (!CL.devOk && CL.devFull && Date.now() - (CL.devFullAt || 0) < 60000) return false;
     try {
       const r = await api('/rest/v1/rpc/ov_device_register', { method: 'POST', body: { p_id: A.devId(), p_name: A.deviceLabel() } });
       if (r && r.ok) { CL.devOk = true; CL.devAt = Date.now(); CL.devFull = null; return true; }
+      if (r && r.revoked) { CL.devOk = false; if (A.onDeviceRevoked) A.onDeviceRevoked(r); return false; }
       CL.devOk = false; CL.devFull = r || { full: true }; CL.devFullAt = Date.now(); if (A.onDeviceFull) A.onDeviceFull(CL.devFull); return false;
     } catch (e) {
       /* el servidor todavía no tiene el control de equipos: se sigue como antes */

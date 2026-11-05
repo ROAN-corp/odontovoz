@@ -6512,7 +6512,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       if (S.modal && S.modal.type === 'setup' && A.S.setup) { S.modal = null; A.renderModal(); A.refresh(); }
       return { ch, up };
     } catch (e) {
-      if ((e.status === 403 || e.status === 401 && /row-level|42501/.test(JSON.stringify(e.data || ''))) && CL.onDenied) { CL.onDenied(); setState('ok'); return; }
+      if (e.status === 403 || e.status === 401 && /row-level|42501/.test(JSON.stringify(e.data || ''))) {
+        CL.devOk = false; CL.devFull = null; let ok = true; try { ok = await devCheck(); } catch (x) { /* nada */ }
+        if (!ok) { setState('err', 'Este equipo no está habilitado para tu cuenta.'); return; }
+        if (CL.onDenied) { CL.onDenied(); setState('ok'); return; }
+      }
       setState(e.offline ? 'offline' : 'err', e.message);
       if (e.status === 401 || e.status === 400 && /refresh/i.test(e.message)) { saveSession(null); setState('err', 'La sesión venció. Volvé a ingresar.'); }
       if (A.logError && !e.offline) A.logError('nube', e);
@@ -6520,11 +6524,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   /* registro del equipo (se repite cada 6 horas para que figure activo) */
   async function devCheck() {
-    if (CL.devOk && Date.now() - (CL.devAt || 0) < 6 * 3600e3) return true;
+    /* se revisa cada minuto: si lo desconectaron desde el panel o desde otro equipo, se entera enseguida */
+    if (CL.devOk && Date.now() - (CL.devAt || 0) < 60e3) return true;
     if (!CL.devOk && CL.devFull && Date.now() - (CL.devFullAt || 0) < 60000) return false;
     try {
       const r = await api('/rest/v1/rpc/ov_device_register', { method: 'POST', body: { p_id: A.devId(), p_name: A.deviceLabel() } });
       if (r && r.ok) { CL.devOk = true; CL.devAt = Date.now(); CL.devFull = null; return true; }
+      if (r && r.revoked) { CL.devOk = false; if (A.onDeviceRevoked) A.onDeviceRevoked(r); return false; }
       CL.devOk = false; CL.devFull = r || { full: true }; CL.devFullAt = Date.now(); if (A.onDeviceFull) A.onDeviceFull(CL.devFull); return false;
     } catch (e) {
       /* el servidor todavía no tiene el control de equipos: se sigue como antes */
@@ -7624,7 +7630,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.11';
+  A.VERSION = '1.11.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10565,6 +10571,22 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       else { await loadDevices(); A.renderModal(); A.toast('Equipo liberado.'); }
     } catch (e) { if (msg) msg.textContent = e.message || 'Sin conexión.'; el.disabled = false; }
   };
+  /* el equipo fue desconectado (desde el panel o desde otro equipo): se cierra la sesión y se borran los datos de acá */
+  let revoking = false;
+  A.onDeviceRevoked = r => {
+    if (revoking) return; revoking = true;
+    try { localStorage.removeItem('odontovoz.devid'); localStorage.setItem('odontovoz.revoked', JSON.stringify({ by: (r && r.by) || 'user', at: new Date().toISOString() })); } catch (e) { /* nada */ }
+    try { if (CL.signOut) CL.signOut(true); } catch (e) { /* nada */ }
+  };
+  /* al volver a abrir (ya sin sesión), se explica por qué */
+  (function () {
+    let info = null; try { info = JSON.parse(localStorage.getItem('odontovoz.revoked') || 'null'); } catch (e) { info = null; }
+    if (!info) return;
+    const show = () => { const w = document.getElementById('loginWrap'); const msg = '<div class="dv-revoked" role="alert"><b>Este equipo fue desconectado de la cuenta</b><span>' + (info.by === 'admin' ? 'Lo hizo el soporte de OdontoVoz.' : 'Se liberó desde otro equipo de la cuenta.') + ' Por seguridad se cerró la sesión y se borraron los datos de este equipo (en la nube están intactos). Para volver a usarlo, ingresá de nuevo: va a ocupar un lugar de equipo de tu plan.</span><button class="btn small" data-act="devRevokedOk">Entendido</button></div>';
+      if (w && !w.querySelector('.dv-revoked')) w.insertAdjacentHTML('afterbegin', msg); else if (!w && !document.querySelector('.dv-revoked')) document.body.insertAdjacentHTML('afterbegin', msg); };
+    setTimeout(show, 600); setTimeout(show, 2000);
+  })();
+  A.acts.devRevokedOk = el => { try { localStorage.removeItem('odontovoz.revoked'); } catch (e) { /* nada */ } const b = el.closest('.dv-revoked'); if (b) b.remove(); };
   A.acts.devRetry = async () => { const ok = await CL.devCheck(); if (ok) { S.modal = null; A.renderModal(); CL.sync(); } };
   /* «Cuenta y equipos»: plan, uso y lista de equipos */
   const acctPrev = MF.acct;
@@ -10591,7 +10613,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   css.textContent = '.pl-line{font-size:13px;color:var(--ink-2);margin:0 0 10px;padding:6px 10px;border-radius:8px;background:var(--surface-2)}.pl-count{font-size:13px;color:var(--ink-2);align-self:center}.pl-count.bad{color:var(--pat)}' +
     '.pl-grid{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0}.pl-grid span{display:flex;flex-direction:column;font-size:12px;color:var(--ink-2)}.pl-grid b{font:700 18px var(--f-mono);color:var(--ink)}' +
     '.dv-list{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px}.dv-list li{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.dv-n{flex:1;display:flex;flex-direction:column}.dv-n small{color:var(--ink-2)}' +
-    '.plan-over{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:8px 12px;padding:10px 14px;border-radius:12px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);font-size:14px}';
+    '.dv-revoked{display:flex;flex-direction:column;gap:6px;margin:12px auto;max-width:520px;padding:14px 16px;border-radius:12px;background:var(--alert-bg);color:var(--alert-ink);border:1px solid var(--pat);font-size:14px;position:relative;z-index:200}.dv-revoked .btn{align-self:flex-start}.plan-over{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:8px 12px;padding:10px 14px;border-radius:12px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);font-size:14px}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

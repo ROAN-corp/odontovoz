@@ -97,6 +97,22 @@
       else { await loadDevices(); A.renderModal(); A.toast('Equipo liberado.'); }
     } catch (e) { if (msg) msg.textContent = e.message || 'Sin conexión.'; el.disabled = false; }
   };
+  /* el equipo fue desconectado (desde el panel o desde otro equipo): se cierra la sesión y se borran los datos de acá */
+  let revoking = false;
+  A.onDeviceRevoked = r => {
+    if (revoking) return; revoking = true;
+    try { localStorage.removeItem('odontovoz.devid'); localStorage.setItem('odontovoz.revoked', JSON.stringify({ by: (r && r.by) || 'user', at: new Date().toISOString() })); } catch (e) { /* nada */ }
+    try { if (CL.signOut) CL.signOut(true); } catch (e) { /* nada */ }
+  };
+  /* al volver a abrir (ya sin sesión), se explica por qué */
+  (function () {
+    let info = null; try { info = JSON.parse(localStorage.getItem('odontovoz.revoked') || 'null'); } catch (e) { info = null; }
+    if (!info) return;
+    const show = () => { const w = document.getElementById('loginWrap'); const msg = '<div class="dv-revoked" role="alert"><b>Este equipo fue desconectado de la cuenta</b><span>' + (info.by === 'admin' ? 'Lo hizo el soporte de OdontoVoz.' : 'Se liberó desde otro equipo de la cuenta.') + ' Por seguridad se cerró la sesión y se borraron los datos de este equipo (en la nube están intactos). Para volver a usarlo, ingresá de nuevo: va a ocupar un lugar de equipo de tu plan.</span><button class="btn small" data-act="devRevokedOk">Entendido</button></div>';
+      if (w && !w.querySelector('.dv-revoked')) w.insertAdjacentHTML('afterbegin', msg); else if (!w && !document.querySelector('.dv-revoked')) document.body.insertAdjacentHTML('afterbegin', msg); };
+    setTimeout(show, 600); setTimeout(show, 2000);
+  })();
+  A.acts.devRevokedOk = el => { try { localStorage.removeItem('odontovoz.revoked'); } catch (e) { /* nada */ } const b = el.closest('.dv-revoked'); if (b) b.remove(); };
   A.acts.devRetry = async () => { const ok = await CL.devCheck(); if (ok) { S.modal = null; A.renderModal(); CL.sync(); } };
   /* «Cuenta y equipos»: plan, uso y lista de equipos */
   const acctPrev = MF.acct;
@@ -123,6 +139,6 @@
   css.textContent = '.pl-line{font-size:13px;color:var(--ink-2);margin:0 0 10px;padding:6px 10px;border-radius:8px;background:var(--surface-2)}.pl-count{font-size:13px;color:var(--ink-2);align-self:center}.pl-count.bad{color:var(--pat)}' +
     '.pl-grid{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0}.pl-grid span{display:flex;flex-direction:column;font-size:12px;color:var(--ink-2)}.pl-grid b{font:700 18px var(--f-mono);color:var(--ink)}' +
     '.dv-list{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:6px}.dv-list li{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px 10px}.dv-n{flex:1;display:flex;flex-direction:column}.dv-n small{color:var(--ink-2)}' +
-    '.plan-over{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:8px 12px;padding:10px 14px;border-radius:12px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);font-size:14px}';
+    '.dv-revoked{display:flex;flex-direction:column;gap:6px;margin:12px auto;max-width:520px;padding:14px 16px;border-radius:12px;background:var(--alert-bg);color:var(--alert-ink);border:1px solid var(--pat);font-size:14px;position:relative;z-index:200}.dv-revoked .btn{align-self:flex-start}.plan-over{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:8px 12px;padding:10px 14px;border-radius:12px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);font-size:14px}';
   document.head.appendChild(css);
 })();

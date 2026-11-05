@@ -214,3 +214,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - El servidor rechaza: pedidos de equipos no registrados (encabezado `x-ov-device`, tabla `ov_devices`), más profesionales o consultorios que los del plan y pasar a «consultorio o centro» con un plan de un profesional. La app avisa antes con «Límite de tu plan» y botón para pedir el cambio.
 - Equipos: cada equipo se registra solo; si se llega al máximo, pantalla para liberar uno (hasta 4 por mes; más, desde el panel). Prueba gratis desde un equipo que ya usó otra cuenta: queda marcada para revisar en el panel.
 - Tipos de cuenta con los nombres de la web: «Profesional» y «Consultorio o centro». Panel de licencias: plan con sus límites, excepciones, equipos por cuenta y sugerencias.
+
+## OdontoVoz 1.11.1 · desconectar equipos de verdad
+- «Quitar»/«Desconectar» un equipo (desde el panel o desde otro equipo) ya no borra el registro: lo marca desconectado (`removed_at`, `removed_by`; SQL `supabase/equipos-desconectar.sql`). Ese equipo no puede volver a registrarse solo.
+- La app revisa su registro cada minuto y en el acto si el servidor le rechaza un cambio; si está desconectado, cierra la sesión, borra los datos de ese equipo y al volver a abrir explica el motivo. Para usarlo otra vez hay que ingresar de nuevo y entra como equipo nuevo.
+- Las desconexiones hechas por el soporte no cuentan para el límite de 4 por mes del cliente.
