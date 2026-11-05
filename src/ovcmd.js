@@ -232,7 +232,7 @@
     ['caja', /^(?:la |el )?(caja|plata|cobros|economia|finanzas|ingresos|gastos|guita|numeros|balance)$/], ['liq', /^(?:las |los |la )?(liquidacion(?:es)?|honorarios|porcentajes)$/],
     ['cfg', /^(?:los |las |la )?(ajustes|configuracion|configurar|opciones|preferencias|settings)$/], ['turnero', /^(?:el )?(turnero(?: online| en linea| web)?|turnos online|reservas online)$/],
     ['tutorial', /^(?:el |la )?(tutorial|recorrido|guia(?: de uso)?)$/], ['support', /^(?:el )?(soporte|ayuda y soporte|contacto)$/]];
-  const SUB = [['odon', /^(?:el |la )?(odontograma|dientes|piezas|dentadura|boca|carta dental)$/], ['datos', /^(?:la |el |los )?(historia(?: clinica)?|anamnesis|antecedentes|datos(?: personales)?|evolucion|ficha|hc)$/],
+  const SUB = [['perio', /^(?:el |la )?(periodontograma|perio|sondaje|ficha periodontal|carta periodontal|registro periodontal|periodoncia|encias)$/], ['odon', /^(?:el |la )?(odontograma|dientes|piezas|dentadura|boca|carta dental)$/], ['datos', /^(?:la |el |los )?(historia(?: clinica)?|anamnesis|antecedentes|datos(?: personales)?|evolucion|ficha|hc)$/],
     ['plan', /^(?:el |la |los )?(plan(?: de tratamiento)?|tratamientos?(?: a realizar)?|a realizar|presupuestos?)$/], ['hecho', /^(?:lo )?(realizado|hecho|lo que se hizo|tratamientos (?:hechos|realizados))$/],
     ['rx', /^(?:las |la )?(recetas?|medicacion|medicamentos)$/], ['img', /^(?:las |la |los )?(imagenes|radiografias?|rx|placas?|fotos?|panoramicas?)$/],
     ['docs', /^(?:los |las |el )?(documentos|consentimientos?|firmas?|papeles)$/], ['cuenta', /^(?:la |el )?(cuenta(?: corriente)?|saldo|deuda|pagos|lo que debe|estado de cuenta)$/],

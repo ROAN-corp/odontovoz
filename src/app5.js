@@ -322,7 +322,7 @@
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         A.openFicha(res.pid, pr.sub);
         if (pr.budget && A.pd(res.pid).tx.some(t => t.status === 'plan')) A.acts.budgetNew();
-        return ok(A.PAT(res.pid).name + ' · ' + ({ odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'recetas', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
+        return ok(A.PAT(res.pid).name + ' · ' + ({ perio: 'periodontograma', odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'recetas', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
       case 'openPat':
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         if (pr.ficha || S.tab === 'ficha') A.openFicha(res.pid, 'datos'); else { S.panel = { type: 'pat', pid: res.pid }; A.renderPanel(); }
@@ -497,7 +497,7 @@
     go: i => {
       const v = S.visit; if (!v) return; v.step = Math.max(0, Math.min(STEPS.length - 1, i));
       A.stopOd && A.stopOd(); S.tab = 'ficha'; S.fichaPid = v.pid; S.panel = null;
-      let tab = STEPS[v.step].tab; if (S.role !== 'profesional' && ['odon', 'plan', 'hecho'].indexOf(tab) >= 0) tab = 'datos';
+      let tab = STEPS[v.step].tab; if (S.role !== 'profesional' && ['odon', 'perio', 'plan', 'hecho'].indexOf(tab) >= 0) tab = 'datos';
       if (S.fichaTab !== tab || !S.od) { if (!S.od) S.od = A.newOd(null); }
       S.fichaTab = tab; A.refresh(); window.scrollTo(0, 0);
     },
