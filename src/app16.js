@@ -344,7 +344,7 @@
   const mouse = () => window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   function decorateStrip() {
     const st = $('#dayStrip'); if (!st || st.parentNode.classList.contains('ds-wrap')) return;
-    const w = document.createElement('div'); w.className = 'ds-wrap'; st.parentNode.insertBefore(w, st); w.appendChild(st);
+    const keepX = S._stripKeep != null ? S._stripKeep : st.scrollLeft; S._stripKeep = null; const w = document.createElement('div'); w.className = 'ds-wrap'; st.parentNode.insertBefore(w, st); w.appendChild(st); if (keepX) { st.style.scrollBehavior = 'auto'; st.scrollLeft = keepX; requestAnimationFrame(() => { st.scrollLeft = keepX; st.style.scrollBehavior = ''; }); }
     w.insertAdjacentHTML('afterbegin', '<button class="ds-arr l" data-act="agStrip" data-d="-1" aria-label="Ver días anteriores">‹</button>');
     w.insertAdjacentHTML('beforeend', '<button class="ds-arr r" data-act="agStrip" data-d="1" aria-label="Ver días siguientes">›</button>');
     const hint = w.nextElementSibling; if (hint && hint.classList.contains('swipe-hint') && mouse()) hint.textContent = 'Arrastrá los días con el mouse, usá las flechas o las teclas ← → para cambiar de día.';
