@@ -2552,7 +2552,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       }
       k = A.add(k, 1);
     }
-    return h + '</div><p class="swipe-hint">Deslizá los días o la agenda hacia los costados para moverte.</p>';
+    return h + '</div><p class="swipe-hint">Tocá un día para verlo. Deslizá la tira de días para ver otras fechas.</p>';
   }
 
   /* ---------- cuadrícula horaria ---------- */
@@ -2680,7 +2680,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       t0 = { x: e.touches[0].clientX, y: e.touches[0].clientY, gw: gw ? { l: gw.scrollLeft, max: gw.scrollWidth - gw.clientWidth } : null };
     }, { passive: true });
     document.addEventListener('touchend', e => {
-      if (!t0) return; const p = e.changedTouches[0], dx = p.clientX - t0.x, dy = p.clientY - t0.y, g = t0.gw; t0 = null;
+      /* 1.14: deslizar ya no cambia de día (se cambiaba sin querer al mover las barras); el día se cambia con las flechas o la tira de días */
+      if (!t0 || !A.CFG.swipeDays) { t0 = null; return; } const p = e.changedTouches[0], dx = p.clientX - t0.x, dy = p.clientY - t0.y, g = t0.gw; t0 = null;
       if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2) return;
       if (g && g.max > 4 && ((dx < 0 && g.l < g.max - 4) || (dx > 0 && g.l > 4))) return; /* primero se desplazan las columnas de profesionales */
       shift(dx < 0 ? 1 : -1);
@@ -5825,7 +5826,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     [IC.menu, 'Menú, inicio y volver', 'Arriba a la izquierda: la flecha vuelve a la pantalla anterior (también el botón atrás del teléfono), el ☰ abre el menú con todas las secciones y la casita te lleva al inicio.'],
     [IC.mic, 'La voz, siempre a mano', 'El botón redondo de abajo a la derecha escucha y hace lo que pedís: «turno para Pérez mañana a las 10», «abrí la ficha de Gómez», «caries oclusal del 36». Sigue escuchando hasta que lo tocás de nuevo o decís «terminar dictado».'],
     [IC.hf, 'Manos libres', 'Con «Manos libres» activo, la app espera que digas «odontovoz» antes de cada pedido. Ideal para atender con guantes sin tocar la pantalla.'],
-    [IC.cal, 'Agenda', 'Deslizá los días hacia los costados. «+ Turno» da un turno; en «Más» están el sobreturno, los bloqueos y los recordatorios por WhatsApp.'],
+    [IC.cal, 'Agenda', 'Tocá un día de la tira o usá las flechas ‹ Hoy › de abajo. «+ Turno» da un turno; en «Más» están el sobreturno, los bloqueos y los recordatorios por WhatsApp.'],
     [IC.flow, 'La atención, paso a paso', 'Al tocar «Atender», la ficha te guía en orden: recepción, historia clínica, odontograma, consentimiento, plan, presupuesto, cobro y próximo turno. Decí «siguiente paso» para avanzar.'],
     [IC.flask, A.DEMO ? 'Modo prueba y uso real' : 'Tus datos', A.DEMO ? 'Ahora estás en modo prueba, con pacientes de ejemplo para mostrar la app. Cuando quieras empezar con tus datos, entrá al menú → «Modo prueba y uso real».' : 'Estás usando la app con tus datos reales. Hacé una copia de seguridad seguido desde el menú → «Copia de seguridad».']
   ];
@@ -7637,7 +7638,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.13';
+  A.VERSION = '1.14';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10925,6 +10926,61 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.ab-days{display:flex;flex-wrap:wrap;gap:6px}.ab-days .pill{min-height:40px;min-width:52px}.ab-row{display:flex;gap:16px;flex-wrap:wrap}' +
     '.ab-time{display:flex;align-items:center;gap:4px}.ab-time select{width:auto!important;min-width:70px;min-height:44px;font:600 17px var(--f-mono,inherit);border-radius:10px}.ab-time span{font-weight:700}#abQ{min-height:44px}' +
     '@media (max-width:480px){.ab-day{grid-template-columns:76px 1fr;padding:6px 8px}.ab-day>b{font-size:14px}.ab-chip{padding:5px 9px;font-size:13px}}' +
+    '</style>');
+})();
+/* ===== 1.14: agenda del celular más extendida: menos barras arriba, turnos a lo largo de la pantalla, consultorios visibles y sin cambiar de día al deslizar ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S;
+  const phone = () => matchMedia('(max-width: 640px)').matches;
+
+  /* en el celular, tocar el título del día abre el calendario (el campo de fecha queda oculto) */
+  document.addEventListener('click', e => {
+    const t = e.target && e.target.closest && e.target.closest('#view-agenda .ag-title'); if (!t || !phone()) return;
+    const d = $('#agDate'); if (!d) return;
+    try { if (d.showPicker) d.showPicker(); else d.click(); } catch (er) { d.focus(); d.click(); }
+  });
+
+  /* «Colores de los turnos» pasa adentro del menú «Más» en el celular */
+  const prevAgenda = A.render.agenda;
+  A.render.agenda = () => {
+    prevAgenda();
+    if (!phone()) return;
+    const leg = document.querySelector('#view-agenda details.pro-filter[data-key="legend"]');
+    const mm = document.querySelector('#view-agenda .more-menu');
+    if (leg && mm && !mm.querySelector('.mm-legend')) mm.insertAdjacentHTML('beforeend', '<div class="mm-legend">' + (leg.querySelector('.st-legend') || { outerHTML: '' }).outerHTML + '</div>');
+  };
+
+  /* flechas flotantes abajo a la izquierda para cambiar de día sin subir (como en otros sistemas) */
+  document.body.insertAdjacentHTML('beforeend', '<div class="ag-fnav" id="agFnav" hidden><button data-act="agPrev" aria-label="Día anterior">‹</button><button data-act="agToday" class="t">Hoy</button><button data-act="agNext" aria-label="Día siguiente">›</button></div>');
+  const prevAfter = A.afterRefresh;
+  A.afterRefresh = () => {
+    if (prevAfter) prevAfter();
+    const f = $('#agFnav'); if (!f) return;
+    f.hidden = !(phone() && S.tab === 'agenda' && !S.modal && !S.panel);
+    const t = f.querySelector('.t'); if (t) t.setAttribute('aria-pressed', String(S.date === A.today()));
+  };
+
+  document.head.insertAdjacentHTML('beforeend', '<style>' +
+    '.ag-fnav{position:fixed;left:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:3px}.ag-fnav[hidden]{display:none}' +
+    '.ag-fnav button{min-width:48px;height:48px;border:0;background:transparent;color:var(--ink);font:700 24px/1 inherit;border-radius:999px;cursor:pointer}.ag-fnav .t{font-size:15px;min-width:56px}.ag-fnav .t[aria-pressed="true"]{color:var(--accent)}.ag-fnav button:active{background:var(--accent-soft)}' +
+    '@media (max-width:640px){body:has(#agFnav:not([hidden])) #view-agenda{padding-bottom:80px}}' +
+    '@media (max-width:640px){' +
+    /* encabezado compacto: título, flechas y una sola fila de botones */
+    '#view-agenda .ag-head{padding-top:4px;gap:6px}#view-agenda .ag-head .btn{min-height:38px;min-width:38px;padding:0 10px}#view-agenda .ag-title{font-size:19px;line-height:1.15;cursor:pointer;text-decoration:underline dotted var(--line);text-underline-offset:5px}' +
+    '#view-agenda .ag-tools{flex-wrap:nowrap;gap:6px;padding:4px 0 6px}#view-agenda .ag-tools .grow{display:none}#view-agenda .ag-tools .seg button{padding:0 9px;min-height:38px}#view-agenda .ag-tools .btn{min-height:38px;padding:0 11px;white-space:nowrap}#view-agenda .ag-tools .btn.primary{margin-left:auto}' +
+    '#view-agenda #agDate{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}' +
+    '#view-agenda details.pro-filter[data-key="legend"]{display:none}.mm-legend{padding:8px 12px;border-top:1px solid var(--line)}.mm-legend .st-legend{display:flex;flex-wrap:wrap;gap:6px}' +
+    '#view-agenda .swipe-hint,#view-agenda .drag-note{display:none}' +
+    /* tira de días más baja */
+    '#view-agenda .daystrip{padding-bottom:4px;margin-bottom:4px;gap:4px}#view-agenda .daystrip .wk{width:46px;padding:4px 0}#view-agenda .daystrip .wk b{font-size:15px}#view-agenda .daystrip .wk small,#view-agenda .daystrip .wk span{font-size:10px}#view-agenda .ds-arr{height:46px;width:28px;font-size:18px}' +
+    /* resumen en una línea */
+    '#view-agenda .stats{flex-wrap:nowrap;gap:4px;margin-bottom:6px;overflow-x:auto;scrollbar-width:none}#view-agenda .stats::-webkit-scrollbar{display:none}#view-agenda .stat{padding:3px 8px;font-size:12px;white-space:nowrap}#view-agenda .stat b{font-size:13px}' +
+    /* consultorios: todos a la vista, sin tener que deslizar */
+    '#view-agenda .lbar{flex-wrap:wrap!important;overflow:visible!important;gap:5px;margin:2px 0 6px}#view-agenda .lchip{flex:0 1 auto!important;font-size:13px;padding:4px 10px;min-height:34px;max-width:100%}' +
+    /* la agenda del día se extiende hacia abajo: se recorre con la página, sin una caja con su propio scroll */
+    '#view-agenda .grid-wrap{max-height:none!important;min-height:0}' +
+    '}' +
     '</style>');
 })();
 /* ===== arranque, navegación y eventos ===== */

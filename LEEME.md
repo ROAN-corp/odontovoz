@@ -233,3 +233,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Menú: «Cerrar sesión» al fondo, con el correo de la cuenta (aparece cuando hay una cuenta en la nube abierta).
 - Centro, profesionales y horarios › Editar datos y horarios: cada día muestra sus horarios; «+ Agregar horario» permite elegir uno o varios días, desde, hasta y si es todas las semanas o semana por medio. Tocar un horario lo cambia o lo quita. «Empezar de cero» deja la agenda vacía (se puede deshacer).
 - Alta de profesional: nueva opción «Lo armo yo, de cero», que lo crea sin horarios y abre directamente el armado de su agenda.
+
+## OdontoVoz 1.14 · agenda del celular más extendida
+- Deslizar la agenda hacia los costados ya no cambia de día (pasaba sin querer al mover la barra de consultorios). El día se cambia tocando la tira de días o con las flechas.
+- Flechas flotantes «‹ Hoy ›» abajo a la izquierda, siempre a mano mientras se recorre la agenda.
+- Arriba ocupa mucho menos: Día/Semana/Mes, «+ Turno» y «Más» en una sola fila; la fecha se elige tocando el título; «Colores de los turnos» pasa adentro de «Más»; se sacan los textos de ayuda; tira de días y resumen más bajos.
+- Los consultorios se muestran todos (en dos líneas si hace falta), sin tener que deslizarlos.
+- La agenda del día se extiende hacia abajo y se recorre con la pantalla, sin una caja con su propio desplazamiento.

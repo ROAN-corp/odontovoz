@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.13 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.14 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.13 (noviem
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -46,6 +46,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.13 (noviem
 
 - 1.12 (`src/app20.js` + cambios en `block()`/`gridHTML()` de `index.html`): turno con solo el nombre (apellido y DNI opcionales, aviso «Paciente cargado al paso» con «Completar ficha»), interruptor Turno/Sobreturno, hora en dos listas con ±15, aviso en vivo de choques con «Darlo como sobreturno», «+ Sobreturno a las HH:MM» en el turno abierto, y sobreturnos flotantes semitransparentes en la mitad derecha.
 - 1.13 (`src/app21.js` + preset «Lo armo yo, de cero» en `PRESETS` de `index.html`): «Cerrar sesión» al fondo del menú (solo con cuenta en la nube) y armado libre de la agenda de cada profesional: chips de horarios por día, «+ Agregar horario» con varios días, desde/hasta y semana por medio; tocar un horario lo edita o lo quita. En modo profesional con varios consultorios sigue mandando «Mis consultorios y horarios».
+- 1.14 (`src/app22.js` + `A.CFG.swipeDays` en el deslizar de la agenda de `index.html`): en el celular deslizar ya no cambia de día (se puede reactivar con `A.CFG.swipeDays = true`); agenda compacta arriba (fecha tocando el título, «Colores de los turnos» dentro de «Más», sin textos de ayuda), consultorios en varias líneas, la grilla del día se extiende con la página y flechas flotantes ‹ Hoy › abajo a la izquierda. Referencia que mandó el usuario: la agenda de Bilog en el celular (lista a pantalla completa con flechas abajo).
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
 ## Pendiente
