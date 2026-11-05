@@ -3178,7 +3178,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   A.acts.fichaBack = () => { A.stopOd && A.stopOd(); S.tab = S.from && S.from !== 'ficha' ? S.from : 'pacientes'; A.refresh(); };
 
-  const TABS = [['datos', 'Datos e historia'], ['odon', 'Odontograma'], ['perio', 'Periodontograma'], ['plan', 'Plan y presupuesto'], ['hecho', 'Realizado'], ['lab', 'Laboratorios'], ['rx', 'Recetas'], ['img', 'Fotos y radiografías'], ['docs', 'Documentos y firmas'], ['cuenta', 'Cuenta']];
+  const TABS = [['datos', 'Datos e historia'], ['odon', 'Odontograma'], ['perio', 'Periodontograma'], ['plan', 'Plan y presupuesto'], ['hecho', 'Realizado'], ['lab', 'Laboratorios'], ['rx', 'Indicaciones'], ['img', 'Fotos y radiografías'], ['docs', 'Documentos y firmas'], ['cuenta', 'Cuenta']];
   A.render.ficha = () => {
     const pid = S.fichaPid, p = A.PAT(pid), pd = A.pd(pid), pro = role(), sal = A.saldo(pid), host = $('#view-ficha');
     const tabs = TABS.filter(t => (pro || ['datos', 'docs', 'cuenta'].indexOf(t[0]) >= 0) && !(S.uimode === 'atencion' && t[0] === 'cuenta'));
@@ -3958,23 +3958,23 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (c.renal && has(/ibuprofeno|diclofenac|naproxeno/)) out.push('Enfermedad renal: evitá antiinflamatorios no esteroideos.');
     return out;
   };
-  A.rxBody = (pid, rx) => ({ title: 'Receta ' + rx.num, lead: 'Indicación de medicamentos', sections: [{ h: 'Fecha', p: A.fmtDMY(rx.date) + ' · ' + A.PRO(rx.pro).name + ' · ' + A.PRO(rx.pro).mat }].concat(rx.dx ? [{ h: 'Diagnóstico / motivo', p: rx.dx }] : []).concat([{ h: 'Rp/', list: rx.items.map(i => i.name + ' — ' + i.pos + (i.dur ? ' durante ' + i.dur : '') + (i.qty ? ' (' + i.qty + ')' : '')) }]).concat(rx.notes ? [{ h: 'Indicaciones', p: rx.notes }] : []).concat([{ h: 'Aclaración', p: 'Comprobante de indicación interno. Para retirar medicamentos en farmacia se requiere receta electrónica emitida desde una plataforma habilitada (Ley 27.553 y reglamentación).' }]) });
+  A.rxBody = (pid, rx) => ({ title: 'Indicaciones para el paciente ' + rx.num, lead: 'Indicaciones del profesional. NO es una receta: no sirve para retirar medicamentos en farmacia.', sections: [{ h: 'Fecha', p: A.fmtDMY(rx.date) + ' · ' + A.PRO(rx.pro).name + ' · ' + A.PRO(rx.pro).mat }].concat(rx.dx ? [{ h: 'Diagnóstico / motivo', p: rx.dx }] : []).concat([{ h: 'Medicación indicada', list: rx.items.map(i => i.name + ' — ' + i.pos + (i.dur ? ' durante ' + i.dur : '') + (i.qty ? ' (' + i.qty + ')' : '')) }]).concat(rx.notes ? [{ h: 'Indicaciones', p: rx.notes }] : []).concat([{ h: 'Importante', p: 'Este documento NO es una receta. Para retirar medicamentos en farmacia, el profesional debe emitir una receta electrónica desde una plataforma inscripta en el Registro Nacional de Plataformas Digitales Sanitarias (Ley 27.553, Res. 1959/2024 del Ministerio de Salud).' }]) });
   A.render.rxTab = pid => {
     const pd = A.pd(pid);
-    let h = '<section class="card"><h2>Recetas <span class="count">' + pd.rx.length + '</span></h2><div class="row-btns" style="margin-bottom:10px"><button class="btn primary" data-act="rxNew">+ Nueva receta</button></div>';
-    h += pd.rx.length ? pd.rx.map(r => '<div class="doc-row"><div><div class="t">' + esc(r.num) + ' · ' + A.fmtDMY(r.date) + (r.docId ? ' <span class="chip ok">firmada</span>' : '') + '</div><div class="s">' + r.items.map(i => esc(i.name)).join(' · ') + '</div></div><div class="row-btns"><button class="btn small" data-act="rxView" data-id="' + r.id + '">Ver</button><button class="btn small" data-act="pdfRx" data-id="' + r.id + '">PDF</button></div></div>').join('') : '<div class="empty">No hay recetas registradas para este paciente.</div>';
-    return h + '<div class="small-note">Este módulo arma una indicación para el paciente y la guarda en la historia. No reemplaza a la receta electrónica obligatoria para dispensar en farmacia: eso requiere conectarse a una plataforma habilitada (en la versión comercial).</div></section>';
+    let h = '<section class="card"><h2>Indicaciones <span class="count">' + pd.rx.length + '</span></h2><div class="row-btns" style="margin-bottom:10px"><button class="btn primary" data-act="rxNew">+ Nuevas indicaciones</button></div>';
+    h += pd.rx.length ? pd.rx.map(r => '<div class="doc-row"><div><div class="t">' + esc(r.num) + ' · ' + A.fmtDMY(r.date) + (r.docId ? ' <span class="chip ok">firmada</span>' : '') + '</div><div class="s">' + r.items.map(i => esc(i.name)).join(' · ') + '</div></div><div class="row-btns"><button class="btn small" data-act="rxView" data-id="' + r.id + '">Ver</button><button class="btn small" data-act="pdfRx" data-id="' + r.id + '">PDF</button></div></div>').join('') : '<div class="empty">No hay indicaciones registradas para este paciente.</div>';
+    return h + '<div class="small-note"><b>Esto no es una receta.</b> Sirve para dejarle al paciente por escrito qué tomar y cómo, y queda en la historia clínica. Para que pueda comprar los medicamentos en farmacia tenés que hacerle la receta electrónica en una plataforma habilitada (Ley 27.553): por ejemplo, la de tu colegio o tu obra social.</div></section>';
   };
   A.acts.rxNew = () => { S.modal = { type: 'rx', pid: S.fichaPid, items: [], dx: '', notes: '' }; A.renderModal(); };
   MF.rx = m => {
     const p = A.PAT(m.pid), w = A.rxWarnings(m.pid, m.items);
-    return A.modalShell('Nueva receta · ' + p.name,
+    return A.modalShell('Nuevas indicaciones · ' + p.name, '<div class="hint warn" style="margin-top:0"><b>No es una receta para farmacia.</b> Para eso, hacé la receta electrónica en una plataforma habilitada.</div>' +
       (A.alertsOf(m.pid).length ? '<div class="alert-strip"><span class="label">Alertas</span>' + A.alertsOf(m.pid).map(x => '<span>' + esc(x) + '</span>').join('<span>·</span>') + '</div>' : '') +
       '<div class="field"><label for="rxTpl">Agregar medicamento de la lista</label><select id="rxTpl" data-chg="rxTpl"><option value="">Elegir…</option>' + MEDS.map((x, i) => '<option value="' + i + '">' + esc(x[0]) + '</option>').join('') + '<option value="x">Otro (escribirlo)</option></select></div>' +
       '<div id="rxItems">' + (m.items.length ? m.items.map((it, i) => '<div class="rx-item"><div class="field"><label>Medicamento y presentación</label><input data-chg="rxEdit" data-i="' + i + '" data-f="name" value="' + esc(it.name) + '"></div><div class="field"><label>Cómo tomarlo</label><input data-chg="rxEdit" data-i="' + i + '" data-f="pos" value="' + esc(it.pos) + '"></div><div class="row3"><div class="field"><label>Duración</label><input data-chg="rxEdit" data-i="' + i + '" data-f="dur" value="' + esc(it.dur) + '"></div><div class="field"><label>Cantidad</label><input data-chg="rxEdit" data-i="' + i + '" data-f="qty" value="' + esc(it.qty) + '"></div><div class="field" style="align-self:end"><button class="btn small ghost" data-act="rxDel" data-i="' + i + '">Quitar</button></div></div></div>').join('') : '<div class="empty">Elegí un medicamento de la lista o agregá uno propio.</div>') + '</div>' +
       (w.length ? '<div class="hint warn"><b>Revisá:</b><ul class="plain">' + w.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : '') +
       '<div class="field" style="margin-top:8px"><label for="rxDx">Diagnóstico / motivo (opcional)</label><input id="rxDx" data-chg="rxHead" data-f="dx" value="' + esc(m.dx) + '" placeholder="Ej.: posoperatorio de extracción 38"></div><div class="field" style="margin-top:8px"><label for="rxNotes">Indicaciones al paciente</label><textarea id="rxNotes" data-chg="rxHead" data-f="notes" placeholder="Ej.: evitar enjuagues las primeras 24 h, dieta blanda">' + esc(m.notes) + '</textarea></div><div class="hint">Las dosis de la lista son habituales para adultos y sirven de punto de partida: ajustalas a cada paciente. El profesional es quien prescribe.</div><div id="rxMsg" class="hint bad"></div>',
-      '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="rxSave">Guardar receta</button>', true);
+      '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="rxSave">Guardar indicaciones</button>', true);
   };
   A.chg.rxTpl = el => { const m = S.modal; rxHead(); if (el.value === '') return; if (el.value === 'x') m.items.push({ name: '', pos: '', dur: '', qty: '' }); else { const t = MEDS[parseInt(el.value, 10)]; m.items.push({ name: t[0], pos: t[1], dur: t[2], qty: t[3] }); } A.renderModal(); };
   function rxHead() { const m = S.modal; if ($('#rxDx')) { m.dx = $('#rxDx').value; m.notes = $('#rxNotes').value; } }
@@ -3984,16 +3984,16 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.rxSave = () => {
     rxHead(); const m = S.modal, items = m.items.filter(i => i.name.trim());
     if (!items.length) { $('#rxMsg').textContent = 'Agregá al menos un medicamento.'; return; }
-    const pid = m.pid, pd = A.pd(pid), pro = A.PAT(pid).pro, rx = { id: A.uid(), num: 'RX-' + pnum(pid) + '-' + ((pd.rxSeq = (pd.rxSeq || 0) + 1)), date: A.today(), pro, dx: m.dx.trim(), notes: m.notes.trim(), items: items.map(i => ({ name: i.name.trim(), pos: i.pos.trim(), dur: i.dur.trim(), qty: i.qty.trim() })) };
-    pd.rx.unshift(rx); pd.notes.unshift({ id: A.uid(), date: rx.date, pro, text: 'Receta ' + rx.num + ': ' + rx.items.map(i => i.name).join(', ') + '.', auto: true }); A.touchPd(pid);
+    const pid = m.pid, pd = A.pd(pid), pro = A.PAT(pid).pro, rx = { id: A.uid(), num: 'IND-' + pnum(pid) + '-' + ((pd.rxSeq = (pd.rxSeq || 0) + 1)), date: A.today(), pro, dx: m.dx.trim(), notes: m.notes.trim(), items: items.map(i => ({ name: i.name.trim(), pos: i.pos.trim(), dur: i.dur.trim(), qty: i.qty.trim() })) };
+    pd.rx.unshift(rx); pd.notes.unshift({ id: A.uid(), date: rx.date, pro, text: 'Indicaciones ' + rx.num + ': ' + rx.items.map(i => i.name).join(', ') + '.', auto: true }); A.touchPd(pid);
     S.modal = { type: 'rxView', pid, id: rx.id }; A.renderModal(); A.refresh(); A.renderModal();
   };
   A.acts.rxView = el => { S.modal = { type: 'rxView', pid: S.fichaPid, id: el.getAttribute('data-id') }; A.renderModal(); };
   MF.rxView = m => {
     const pd = A.pd(m.pid), r = pd.rx.filter(x => x.id === m.id)[0]; if (!r) return '';
-    const txt = 'Receta ' + r.num + ' · ' + A.PRO(r.pro).name + '\n' + r.items.map(i => '• ' + i.name + ': ' + i.pos + (i.dur ? ' durante ' + i.dur : '')).join('\n') + (r.notes ? '\n' + r.notes : '');
-    return A.modalShell('Receta ' + r.num, A.docPaperHTML(A.rxBody(m.pid, r), A.PAT(m.pid), { nosig: !r.docId }) + (r.docId ? '<div class="seal"><b>✓ Receta firmada y sellada</b><span>Constancia en la historia clínica.</span></div>' : ''),
-      (r.docId ? '' : '<button class="btn danger" data-act="rxRemove" data-id="' + r.id + '">Eliminar</button>') + '<button class="btn" data-act="pdfRx" data-id="' + r.id + '">Descargar PDF</button>' + (r.docId ? '<button class="btn" data-act="docOpen" data-id="' + r.docId + '">Ver firmada</button>' : '<button class="btn" data-act="rxSign" data-id="' + r.id + '">Firmar receta</button>') + '<button class="btn primary" data-act="copyText" data-text="' + esc(txt) + '">Copiar para WhatsApp</button>', true);
+    const txt = 'Indicaciones ' + r.num + ' · ' + A.PRO(r.pro).name + ' (no es receta)\n' + r.items.map(i => '• ' + i.name + ': ' + i.pos + (i.dur ? ' durante ' + i.dur : '')).join('\n') + (r.notes ? '\n' + r.notes : '');
+    return A.modalShell('Indicaciones ' + r.num, A.docPaperHTML(A.rxBody(m.pid, r), A.PAT(m.pid), { nosig: !r.docId }) + (r.docId ? '<div class="seal"><b>✓ Indicaciones firmadas y selladas</b><span>Constancia en la historia clínica.</span></div>' : ''),
+      (r.docId ? '' : '<button class="btn danger" data-act="rxRemove" data-id="' + r.id + '">Eliminar</button>') + '<button class="btn" data-act="pdfRx" data-id="' + r.id + '">Descargar PDF</button>' + (r.docId ? '<button class="btn" data-act="docOpen" data-id="' + r.docId + '">Ver firmada</button>' : '<button class="btn" data-act="rxSign" data-id="' + r.id + '">Firmar</button>') + '<button class="btn primary" data-act="copyText" data-text="' + esc(txt) + '">Copiar para WhatsApp</button>', true);
   };
   A.acts.rxRemove = el => { const pid = S.modal.pid, pd = A.pd(pid); pd.rx = pd.rx.filter(r => r.id !== el.getAttribute('data-id')); A.touchPd(pid); S.modal = null; A.renderModal(); A.refresh(); };
   A.acts.rxSign = el => { const pid = S.modal.pid, id = el.getAttribute('data-id'), r = A.pd(pid).rx.filter(x => x.id === id)[0]; S.modal = null; A.renderModal(); A.startSign({ pid, kind: 'rx', link: { rxId: id }, proId: r.pro }); };
@@ -4128,7 +4128,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.pdfRx = el => {
     const pid = S.modal ? S.modal.pid : S.fichaPid, r = A.pd(pid).rx.filter(x => x.id === el.getAttribute('data-id'))[0]; if (!r) return; const pat = A.PAT(pid);
     const doc = r.docId ? A.pd(pid).docs.filter(x => x.id === r.docId)[0] : null; if (doc) { A.pdfOfDoc(pid, doc); return; }
-    const o = Doc('Receta ' + r.num); if (!o) return; bodyToPdf(o, A.rxBody(pid, r), pat, r.num); o.y += 6; o.sigs([{ role: 'Profesional', name: A.PRO(r.pro).name, mat: A.PRO(r.pro).mat }]); return o.finish('receta-' + r.num.toLowerCase() + '-' + slug(pat.last) + '.pdf');
+    const o = Doc('Indicaciones ' + r.num); if (!o) return; bodyToPdf(o, A.rxBody(pid, r), pat, r.num); o.y += 6; o.sigs([{ role: 'Profesional', name: A.PRO(r.pro).name, mat: A.PRO(r.pro).mat }]); return o.finish('indicaciones-' + r.num.toLowerCase() + '-' + slug(pat.last) + '.pdf');
   };
   A.acts.pdfCuenta = el => {
     const pid = el.getAttribute('data-pid'), pat = A.PAT(pid), pd = A.pd(pid), o = Doc('Estado de cuenta'); if (!o) return;
@@ -4176,7 +4176,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     o.h('Tratamientos realizados'); if (done.length) o.table([{ h: 'Fecha', w: 22 }, { h: 'Práctica', w: 100 }, { h: 'Profesional', w: 44 }], done.map(t => [A.fmtDMY(t.doneDate || t.planDate), t.label, A.PRO(t.pro).name])); else o.p('Ninguno registrado.');
     o.h('Plan de tratamiento pendiente'); if (plan.length) o.table([{ h: 'Práctica', w: 124 }, { h: 'Importe', w: 42, a: 'r' }], plan.map(t => [t.label, A.money(t.price)])); else o.p('Sin tratamientos pendientes.');
     o.h('Evolución clínica'); if (pd.notes.length) o.table([{ h: 'Fecha', w: 22 }, { h: 'Profesional', w: 34 }, { h: 'Nota', w: 110 }], pd.notes.slice().sort((a, b) => (a.date < b.date ? -1 : 1)).map(n => [A.fmtDMY(n.date), A.PRO(n.pro).short, n.text])); else o.p('Sin notas registradas.');
-    if (pd.rx.length) { o.h('Recetas'); o.table([{ h: 'Fecha', w: 22 }, { h: 'N.º', w: 28 }, { h: 'Medicamentos', w: 116 }], pd.rx.map(r => [A.fmtDMY(r.date), r.num, r.items.map(i => i.name).join('; ')])); }
+    if (pd.rx.length) { o.h('Indicaciones de medicación'); o.table([{ h: 'Fecha', w: 22 }, { h: 'N.º', w: 28 }, { h: 'Medicamentos', w: 116 }], pd.rx.map(r => [A.fmtDMY(r.date), r.num, r.items.map(i => i.name).join('; ')])); }
     if (pd.images.length) { o.h('Imágenes archivadas'); o.p(pd.images.map(i => (A.IMG_KINDS[i.kind] || i.kind) + ' ' + A.fmtDMY(i.date) + (i.tooth ? ' (pieza ' + i.tooth + ')' : '')).join(' · '), 9, MUT); }
     if (pd.docs.length) { o.h('Documentos firmados'); o.table([{ h: 'Fecha', w: 26 }, { h: 'Documento', w: 100 }, { h: 'Estado', w: 20 }, { h: 'Sello', w: 30 }], pd.docs.map(d => [A.fmtDMY(d.sealedAt.slice(0, 10)), d.title, d.status, d.hash.slice(0, 12)])); }
     o.y += 4; o.sigs([{ role: 'Profesional', name: A.PRO(pat.pro).name, mat: A.PRO(pat.pro).mat }]);
@@ -4476,7 +4476,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let h = '<p class="setup-lead">Elegí cómo vas a usar OdontoVoz. Podés cambiarlo después desde <b>Ajustes</b>.</p><div class="setup-grid">' +
       card('solo', 'Soy un odontólogo', 'Consultorio individual', ['Agenda, odontograma e historias clínicas', 'Caja y presupuestos propios', 'Sin pestañas de centro ni de otros profesionales']) +
       card('centro', 'Somos un centro odontológico', 'Dos o más odontólogos', ['Agenda por profesional y vista de todo el centro', 'Recepción con acceso limitado', 'Caja del centro y liquidaciones por porcentaje']) + '</div>';
-    if (solo) h += '<div class="row2"><div class="field"><label for="suName">Tu nombre (como figura en recetas y firmas)</label><input id="suName" value="' + esc(f.proName != null ? f.proName : (A.DEMO ? 'Dra. Carolina Vega' : '')) + '" placeholder="Ej.: Dra. Ana López"></div><div class="field"><label for="suClin">Nombre del consultorio</label><input id="suClin" value="' + esc(f.clinic != null ? f.clinic : (A.DEMO ? 'Consultorio Odontológico' : '')) + '" placeholder="Ej.: Consultorio Dental López"></div></div>';
+    if (solo) h += '<div class="row2"><div class="field"><label for="suName">Tu nombre (como figura en indicaciones y firmas)</label><input id="suName" value="' + esc(f.proName != null ? f.proName : (A.DEMO ? 'Dra. Carolina Vega' : '')) + '" placeholder="Ej.: Dra. Ana López"></div><div class="field"><label for="suClin">Nombre del consultorio</label><input id="suClin" value="' + esc(f.clinic != null ? f.clinic : (A.DEMO ? 'Consultorio Odontológico' : '')) + '" placeholder="Ej.: Consultorio Dental López"></div></div>';
     if (cen) h += '<div class="row2"><div class="field"><label for="suClin">Nombre del centro</label><input id="suClin" value="' + esc(f.clinic != null ? f.clinic : (A.DEMO ? 'Centro Odontológico Ejemplo' : '')) + '" placeholder="Ej.: Centro Dental Norte"></div>' + (A.DEMO ? '<div class="field"><label>Profesionales</label><div class="hint" style="margin:0">Se cargan 3 profesionales de ejemplo. En Ajustes podés sumar o quitar profesionales y editar sus días y horarios.</div></div>' : '<div class="field"><label for="suName">Tu nombre (primer profesional)</label><input id="suName" value="' + esc(f.proName || '') + '" placeholder="Ej.: Dr. Pablo Sosa"><div class="hint" style="margin:0">Los demás profesionales se suman después en Ajustes.</div></div>') + '</div>';
     h += '<div id="suMsg" class="hint bad"></div><div class="hint">Todos los pacientes y turnos de esta versión son ficticios y quedan solo en este navegador.</div>';
     return '<div class="modal-scrim"><div class="modal wide" role="dialog" aria-modal="true" aria-label="Bienvenida"><div class="m-head"><h2>Bienvenido a OdontoVoz</h2></div><div class="m-body">' + h + '</div><div class="m-foot"><button class="btn primary" data-act="setupGo">Empezar</button></div></div></div>';
@@ -4502,7 +4502,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.proRename = () => {
     const g = $('#gearMenu'); if (g) g.hidden = true; S.modal = { type: 'pros' }; A.renderModal();
   };
-  MF.pros = () => A.modalShell('Profesionales', '<div class="hint">Nombre y especialidad de cada profesional (se usan en la agenda, recetas, firmas y liquidaciones).</div>' + A.visPros().map(p => '<div class="row3"><div class="field"><label>Nombre</label><input data-chg="proEdit" data-id="' + p.id + '" data-f="name" value="' + esc(p.name) + '"></div><div class="field"><label>Especialidad</label><input data-chg="proEdit" data-id="' + p.id + '" data-f="spec" value="' + esc(p.spec) + '"></div><div class="field"><label>Matrícula</label><input data-chg="proEdit" data-id="' + p.id + '" data-f="mat" value="' + esc(p.mat) + '"></div></div>').join(''), '<button class="btn primary" data-act="closeModal">Listo</button>');
+  MF.pros = () => A.modalShell('Profesionales', '<div class="hint">Nombre y especialidad de cada profesional (se usan en la agenda, indicaciones, firmas y liquidaciones).</div>' + A.visPros().map(p => '<div class="row3"><div class="field"><label>Nombre</label><input data-chg="proEdit" data-id="' + p.id + '" data-f="name" value="' + esc(p.name) + '"></div><div class="field"><label>Especialidad</label><input data-chg="proEdit" data-id="' + p.id + '" data-f="spec" value="' + esc(p.spec) + '"></div><div class="field"><label>Matrícula</label><input data-chg="proEdit" data-id="' + p.id + '" data-f="mat" value="' + esc(p.mat) + '"></div></div>').join(''), '<button class="btn primary" data-act="closeModal">Listo</button>');
   A.chg.proEdit = el => {
     const p = A.PRO(el.getAttribute('data-id')), f = el.getAttribute('data-f'); p[f] = el.value.trim() || p[f];
     if (f === 'name') { const m = p.name.replace(/^(Dra?\.)\s*/i, '').split(/\s+/); p.short = m[m.length - 1] || p.short; }
@@ -4595,7 +4595,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* ---------- 1) centro ---------- */
   function tabCentro() {
-    return '<div class="cfg-lead">Acá van los datos que se imprimen en presupuestos, recibos y recetas, y los que ve el paciente en el turnero online. Los cambios se guardan solos.</div>' +
+    return '<div class="cfg-lead">Acá van los datos que se imprimen en presupuestos, recibos e indicaciones, y los que ve el paciente en el turnero online. Los cambios se guardan solos.</div>' +
       '<div class="row2"><div class="field"><label for="cfClin">' + (solo() ? 'Nombre del consultorio' : 'Nombre del centro') + '</label><input id="cfClin" data-chg="cfgField" data-f="clinic" value="' + esc(A.CLINIC) + '"></div>' +
       '<div class="field"><label for="cfPhone">Teléfono / WhatsApp</label><input id="cfPhone" inputmode="tel" data-chg="cfgField" data-f="phone" value="' + esc(A.CFG.phone) + '" placeholder="Ej.: 11 5555-0000"></div></div>' +
       '<div class="field"><label for="cfAddr">Dirección</label><input id="cfAddr" data-chg="cfgField" data-f="addr" value="' + esc(A.CFG.addr) + '" placeholder="Calle, número, localidad"></div>' +
@@ -4616,7 +4616,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       '<div class="row-btns"><button class="btn small" data-act="cfgProEdit" data-id="' + p.id + '">Editar datos y horarios</button>' + (!solo() && A.PROS.length > 1 ? '<button class="btn small danger" data-act="cfgProRm" data-id="' + p.id + '">Quitar</button>' : '') + '</div></div>').join('');
     if (solo()) h += '<div class="tip">Esta cuenta es de un solo profesional. Para sumar más, cambiá el tipo de cuenta a «Centro odontológico» desde la pestaña <b>Consultorio</b>.</div>';
     else h += '<div class="row-btns"><button class="btn primary" data-act="cfgProNew">+ Agregar profesional</button></div>';
-    if (A.PROS_OLD.length && !solo()) h += '<div class="block"><h3>Dados de baja</h3><div class="hint">Ya no aparecen en la agenda, pero sus turnos anteriores, recetas y liquidaciones siguen con su nombre. Podés reactivarlos.</div>' + A.PROS_OLD.map(p => '<div class="cl-row"><span><i class="stdot" style="background:' + p.color + '"></i> ' + esc(p.name) + ' · ' + esc(p.spec) + '</span><button class="btn small" data-act="cfgProBack" data-id="' + p.id + '">Reactivar</button></div>').join('') + '</div>';
+    if (A.PROS_OLD.length && !solo()) h += '<div class="block"><h3>Dados de baja</h3><div class="hint">Ya no aparecen en la agenda, pero sus turnos anteriores, indicaciones y liquidaciones siguen con su nombre. Podés reactivarlos.</div>' + A.PROS_OLD.map(p => '<div class="cl-row"><span><i class="stdot" style="background:' + p.color + '"></i> ' + esc(p.name) + ' · ' + esc(p.spec) + '</span><button class="btn small" data-act="cfgProBack" data-id="' + p.id + '">Reactivar</button></div>').join('') + '</div>';
     return h;
   }
   A.acts.cfgProEdit = el => { S.modal.sel = el.getAttribute('data-id'); rerender(); };
@@ -4625,7 +4625,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function proEditor(m) {
     const p = A.PRO(m.sel), usedBy = id => A.PROS.some(x => x.id !== p.id && x.color === id);
     let h = '<div class="row-btns"><button class="btn small" data-act="cfgProList">‹ Volver a profesionales</button></div>' +
-      '<div class="row3"><div class="field"><label for="peName">Nombre (como figura en recetas y firmas)</label><input id="peName" data-chg="cfgPro" data-f="name" data-id="' + p.id + '" value="' + esc(p.name) + '"></div>' +
+      '<div class="row3"><div class="field"><label for="peName">Nombre (como figura en indicaciones y firmas)</label><input id="peName" data-chg="cfgPro" data-f="name" data-id="' + p.id + '" value="' + esc(p.name) + '"></div>' +
       '<div class="field"><label for="peSpec">Especialidad</label><input id="peSpec" data-chg="cfgPro" data-f="spec" data-id="' + p.id + '" value="' + esc(p.spec) + '"></div>' +
       '<div class="field"><label for="peMat">Matrícula</label><input id="peMat" data-chg="cfgPro" data-f="mat" data-id="' + p.id + '" value="' + esc(p.mat || '') + '" placeholder="M.P. / M.N."></div></div>' +
       '<div class="row2"><div class="field"><label for="peSlot">Duración de cada turno</label><select id="peSlot" data-chg="cfgPro" data-f="slot" data-id="' + p.id + '">' + [15, 20, 30, 40, 45, 60].map(n => '<option value="' + n + '"' + (A.slotOf(p) === n ? ' selected' : '') + '>' + n + ' minutos</option>').join('') + '</select><div class="hint">Define cuántos «turnos libres» se cuentan en el mes y qué horarios ofrece el turnero online.</div></div>' +
@@ -4741,7 +4741,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function wizard(m) {
     const w = m.wiz, f = w.f, st = n => '<span class="' + (w.step === n ? 'on' : '') + '">' + n + '. ' + ['Datos', 'Días y horarios', 'Revisar y agregar'][n - 1] + '</span>';
     let h = '<div class="steps" aria-label="Pasos">' + st(1) + st(2) + st(3) + '</div>';
-    if (w.step === 1) h += '<div class="cfg-lead">Paso 1: ¿quién se suma? Con el nombre alcanza; la especialidad y la matrícula salen en recetas y firmas, las podés completar después.</div>' +
+    if (w.step === 1) h += '<div class="cfg-lead">Paso 1: ¿quién se suma? Con el nombre alcanza; la especialidad y la matrícula salen en indicaciones y firmas, las podés completar después.</div>' +
       '<div class="row3"><div class="field"><label for="wzName">Nombre y apellido</label><input id="wzName" value="' + esc(f.name) + '" placeholder="Ej.: Dr. Pablo Sosa" autocomplete="off"></div><div class="field"><label for="wzSpec">Especialidad</label><input id="wzSpec" list="wzSpecs" value="' + esc(f.spec) + '"><datalist id="wzSpecs"><option>Odontología general</option><option>Ortodoncia</option><option>Endodoncia</option><option>Implantes y cirugía</option><option>Periodoncia</option><option>Odontopediatría</option><option>Prótesis</option></datalist></div><div class="field"><label for="wzMat">Matrícula (opcional)</label><input id="wzMat" value="' + esc(f.mat) + '"></div></div>';
     if (w.step === 2) h += '<div class="cfg-lead">Paso 2: ¿cuándo atiende? Elegí un esquema típico; después podés ajustar día por día.</div><div class="presets" role="group" aria-label="Esquemas de horario">' + PRESETS.map(p => '<button class="preset" data-act="cfgPreset" data-k="' + p.k + '" aria-pressed="' + (f.preset === p.k) + '"><b>' + p.t + '</b><span>' + p.s + '</span></button>').join('') + '</div>' +
       '<div class="field"><label for="wzSlot">Duración de cada turno</label><select id="wzSlot">' + [15, 20, 30, 40, 45, 60].map(n => '<option value="' + n + '"' + (f.slot === n ? ' selected' : '') + '>' + n + ' minutos</option>').join('') + '</select></div>';
@@ -4765,7 +4765,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.cfgProRm = el => { S.modal.tab = 'pros'; S.modal.rm = { id: el.getAttribute('data-id'), to: null, how: 'move' }; S.modal.sel = null; rerender(); };
   function removeView(m) {
     const p = A.PRO(m.rm.id), fut = futureReal(p.id), others = A.PROS.filter(x => x.id !== p.id);
-    return '<div class="cfg-lead">Vas a quitar a <b>' + esc(p.name) + '</b> de la agenda. No se borra nada de lo hecho: sus turnos pasados, recetas, firmas y liquidaciones siguen a su nombre, y podés reactivarlo cuando quieras.</div>' +
+    return '<div class="cfg-lead">Vas a quitar a <b>' + esc(p.name) + '</b> de la agenda. No se borra nada de lo hecho: sus turnos pasados, indicaciones, firmas y liquidaciones siguen a su nombre, y podés reactivarlo cuando quieras.</div>' +
       (fut.length ? '<div class="block"><h3>Tiene ' + fut.length + ' turno(s) por delante</h3><div class="hint">¿Qué hacemos con ellos?</div><label class="chk"><input type="radio" name="rmHow" value="move" data-chg="cfgRmHow"' + (m.rm.how === 'move' ? ' checked' : '') + '> Pasarlos a otro profesional (si el horario está ocupado quedan como sobreturno)</label>' +
         '<div class="field"><label for="rmTo">Pasar a</label><select id="rmTo" data-chg="cfgRmTo">' + others.map(x => '<option value="' + x.id + '"' + (x.id === (m.rm.to || others[0].id) ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></div>' +
         '<label class="chk"><input type="radio" name="rmHow" value="cancel" data-chg="cfgRmHow"' + (m.rm.how === 'cancel' ? ' checked' : '') + '> Cancelarlos (después avisás a los pacientes por WhatsApp)</label></div>' : '<div class="hint">No tiene turnos cargados por delante.</div>') +
@@ -5588,7 +5588,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         pid = curPid(); if (!pid) return no(noPat({}));
         A.openFicha(pid, 'rx'); A.acts.rxNew();
         if (pr.med) { const mm = (A.RX_MEDS || []).filter(x => A.norm(x[0]).indexOf(A.norm(pr.med).split(' ')[0]) >= 0)[0]; if (mm && S.modal) { S.modal.items.push({ name: mm[0], pos: mm[1], dur: mm[2], qty: mm[3] }); A.renderModal(); } }
-        return ok('Receta abierta. Revisá las dosis y decí «guardar».');
+        return ok('Indicaciones abiertas (no es una receta para farmacia). Revisá las dosis y decí «guardar».');
       }
       case 'pay': {
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
@@ -5610,7 +5610,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         A.openFicha(res.pid, pr.sub);
         if (pr.budget && A.pd(res.pid).tx.some(t => t.status === 'plan')) A.acts.budgetNew();
-        return ok(A.PAT(res.pid).name + ' · ' + ({ perio: 'periodontograma', odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'recetas', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
+        return ok(A.PAT(res.pid).name + ' · ' + ({ perio: 'periodontograma', odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'indicaciones', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
       case 'openPat':
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         if (pr.ficha || S.tab === 'ficha') A.openFicha(res.pid, 'datos'); else { S.panel = { type: 'pat', pid: res.pid }; A.renderPanel(); }
@@ -5705,7 +5705,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* barra superior, menú lateral y estado general después de cada cambio */
   const TITLES = { inicio: 'Inicio', agenda: 'Agenda', pacientes: 'Pacientes', caja: 'Caja', liq: 'Liquidaciones' };
-  const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Recetas', img: 'Fotos y radiografías', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
+  const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Indicaciones', img: 'Fotos y radiografías', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
   A.afterRefresh = () => {
     const mh = $('#modalHost'); if (!S.modal && mh && mh.innerHTML) A.renderModal(); /* algunas acciones cerraban la ventana sin quitarla de la pantalla */
     const t = $('#abTitle'), sb = $('#abSub');
@@ -6291,7 +6291,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
     set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } }
   };
-  const PRIV_VER = '2026-11';
+  const PRIV_VER = '2026-11-05';
+  A.TERMS_VER = PRIV_VER;
+  const WEB = 'https://roan-corp.github.io/odontovoz/';
 
   /* ---------- servidor (Supabase): dirección y clave pública del proyecto ---------- */
   const conf = () => {
@@ -6587,7 +6589,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (!np) h += '<div class="field"><label for="lgMail">Correo electrónico</label><input id="lgMail" type="email" autocomplete="email" inputmode="email" required value="' + esc(CL._mail || '') + '"></div>';
     if (!rec) h += '<div class="field"><label for="lgPass">' + (np ? 'Nueva contraseña' : 'Contraseña') + '</label><input id="lgPass" type="password" autocomplete="' + (up || np ? 'new-password' : 'current-password') + '" minlength="8" required></div>';
     if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
-    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto la <a href="#" data-act="privacyOpen">política de privacidad y condiciones de uso</a>.</label>' +
+    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
     h += '<div id="lgMsg" class="lg-alert" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
     h += '<button class="btn primary" type="submit" style="min-height:48px">' + (np ? 'Guardar contraseña' : rec ? 'Enviar enlace' : up ? 'Crear cuenta' : 'Ingresar') + '</button>';
@@ -6658,7 +6660,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (p !== p2) return lgErr('Las contraseñas no coinciden.'); if (!$('#lgOk1').checked || !$('#lgOk2').checked) return lgErr('Para crear la cuenta tenés que aceptar las dos casillas.');
     CL._onErr = null;
     busy('Creando…', async () => {
-      const r = await CL.signUp(m, p, { consent_privacy: PRIV_VER, consent_at: new Date().toISOString(), health_professional: true });
+      const r = await CL.signUp(m, p, { consent_privacy: PRIV_VER, consent_terms: PRIV_VER, consent_at: new Date().toISOString(), health_professional: true }); LS.set('odontovoz.termsSigned', PRIV_VER);
       if (r.in) afterLogin(); else CL.showSent(m);
     });
   };
@@ -6762,15 +6764,15 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.privacyOpen = (el, ev) => { if (ev) ev.preventDefault(); const w = $('#loginWrap'); if (w) w.style.display = 'none'; S.modal = { type: 'privacy', fromLogin: !!w }; A.renderModal(); };
   const origClose = A.closeModal;
   A.closeModal = () => { const fl = S.modal && S.modal.type === 'privacy' && S.modal.fromLogin; origClose(); if (fl) { const w = $('#loginWrap'); if (w) w.style.display = ''; } };
-  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen claro de cómo se tratan los datos en OdontoVoz.</p>' +
-    '<h3>Quién es responsable de qué</h3><p>El profesional o el centro que usa la app es el <b>responsable de la base de datos de sus pacientes</b> (Ley 25.326). OdontoVoz presta el servicio de software y de almacenamiento por cuenta del profesional y solo trata los datos para hacer funcionar la app.</p>' +
-    '<h3>Qué datos se guardan</h3><p>De la cuenta: correo, contraseña (guardada cifrada, nadie la puede leer) y la aceptación de estas condiciones. De los pacientes: lo que el profesional carga (datos de contacto, turnos, historia clínica, odontograma, presupuestos y pagos). Son <b>datos sensibles de salud</b>: solo los puede tratar el profesional, con secreto profesional y con el consentimiento del paciente (Ley 25.326, arts. 7, 8 y 10; Ley 26.529).</p>' +
-    '<h3>Dónde y cómo</h3><p>En servidores de Supabase en la <b>Unión Europea (Irlanda)</b>. La Argentina considera que los países de la Unión Europea tienen protección adecuada para transferir datos personales (AAIP). Los datos viajan cifrados (HTTPS) y se guardan cifrados. Cada cuenta solo puede leer sus propios registros (reglas de seguridad por usuario en la base de datos). Se guarda un historial de cambios de cada ficha para que la historia clínica no se pierda ni se altere sin rastro.</p>' +
-    '<h3>Sin cuenta</h3><p>Si usás la app sin cuenta, todo queda solo en tu equipo y nada se envía a internet.</p>' +
-    '<h3>Tus derechos y los de tus pacientes</h3><p>Acceso, rectificación, actualización y supresión (Ley 25.326, arts. 14 a 16). El acceso es gratuito cada seis meses salvo interés legítimo. Podés descargar todos tus datos desde Ajustes y borrar los de la nube desde «Cuenta y equipos». Recordá que la historia clínica debe conservarse al menos 10 años (Ley 26.529, art. 18).</p>' +
+  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen de cómo se tratan los datos. Los textos completos están en la web: <a href="' + WEB + 'privacidad.html" target="_blank" rel="noopener">política de privacidad</a> y <a href="' + WEB + 'terminos.html" target="_blank" rel="noopener">términos y condiciones</a>.</p>' +
+    '<h3>Quién es responsable</h3><p>El profesional o centro es el <b>responsable de los datos de sus pacientes</b> (Ley 25.326). ROAN corp, que hace OdontoVoz, es <b>encargado del tratamiento</b>: guarda los datos solo por su cuenta y para que la app funcione, con secreto, sin venderlos ni usarlos para otra cosa.</p>' +
+    '<h3>Dónde están</h3><p>En servidores de Supabase en la <b>Unión Europea (Irlanda)</b>, cifrados. Cada cuenta solo accede a lo suyo y solo desde sus equipos registrados.</p>' +
+    '<h3>Dictado por voz</h3><p>La voz usa el reconocimiento de Google (Chrome o Android): el audio de lo que dictás se envía a Google, principalmente en EE. UU. Por eso está apagada hasta que la actives y lo aceptes en tu equipo. Sin aceptarlo, la app funciona igual escribiendo.</p>' +
+    '<h3>Sin cuenta</h3><p>En el modo prueba todo queda solo en tu equipo.</p>' +
+    '<h3>Derechos</h3><p>Acceso, rectificación, actualización y supresión (Ley 25.326, arts. 14 a 16). Podés ver, corregir, descargar y borrar todo desde la app. La historia clínica se conserva al menos 10 años (Ley 26.529, art. 18).</p>' +
     '<p class="hint">LA AGENCIA DE ACCESO A LA INFORMACIÓN PÚBLICA, en su carácter de Órgano de Control de la Ley N° 25.326, tiene la atribución de atender las denuncias y reclamos que interpongan quienes resulten afectados en sus derechos por incumplimiento de las normas vigentes en materia de protección de datos personales.</p>' +
-    '<h3>Obligaciones del profesional</h3><p>Informar a sus pacientes y obtener su consentimiento; inscribir su base de datos en el Registro Nacional de Bases de Datos de la AAIP cuando corresponda; cuidar el acceso a sus equipos y su contraseña.</p>' +
-    '<h3>Contacto</h3><p>' + (A.SUPPORT && A.SUPPORT.email ? 'Escribinos a ' + esc(A.SUPPORT.email) + '.' : 'Desde Ayuda › Soporte dentro de la app.') + '</p>';
+    '<h3>Lo que te toca como profesional</h3><p>Informar a tus pacientes y pedirles el consentimiento (hay una plantilla firmable: «Uso de datos personales»); inscribir tu base de datos en el Registro Nacional de Bases de Datos de la AAIP cuando corresponda; cuidar tu contraseña y tus equipos.</p>' +
+    '<h3>Contacto</h3><p>' + (A.SUPPORT && A.SUPPORT.email ? esc(A.SUPPORT.email) : 'somosroan@gmail.com') + ' · <a href="' + WEB + 'baja.html" target="_blank" rel="noopener">Baja, arrepentimiento o eliminación de la cuenta</a></p>';
   MF.privacy = () => A.modalShell('Privacidad y condiciones', A.PRIVACY_HTML, '<button class="btn primary" data-act="closeModal">Entendido</button>', true);
 
   /* ---------- arranque ---------- */
@@ -7641,7 +7643,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.17.1';
+  A.VERSION = '1.18';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -7802,7 +7804,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
 
   /* modo solo lectura: se puede mirar, buscar, descargar e imprimir; no se puede cargar ni cambiar nada */
-  const ALLOW = /^(tab|navBack|goHome|gear|drawer|open|close|ficha(Tab|Back)|ag(Prev|Next|Today|GoDay|View|More|CalMon|Free(Day)?|Shift)|view|search|topRes|pdf|acct|login|privacy|support|lic|tutorial|tut|voiceHelp|appear|theme|conv|scrim|labAll|labFilter|labMoreDone|labGoPat|osOpen|osMon|osEdit|osBack|impSeePats|toast|odZoom|cfgOpen|cfgTab|bk|backup|exportAll|dl|download|stMenu|stOpen|mvCancel|noop|modeOpen|demo|tpClose|cmdSay|voiceToggle|voiceStop|handsFree|introGo|exitNow|exit|devName|cloudSyncNow|pin|evMore|evOpen|evClear|evCopy|tpWa|lbx|agStrip|tnLink|jrOpen|jrGo|remMenu|lookSet|homeEdit|homePick|homeReset|agTodayNow|fb|dev|planLim)/;
+  const ALLOW = /^(tab|navBack|goHome|gear|drawer|open|close|ficha(Tab|Back)|ag(Prev|Next|Today|GoDay|View|More|CalMon|Free(Day)?|Shift)|view|search|topRes|pdf|acct|login|privacy|support|lic|tutorial|tut|voiceHelp|appear|theme|conv|scrim|labAll|labFilter|labMoreDone|labGoPat|osOpen|osMon|osEdit|osBack|impSeePats|toast|odZoom|cfgOpen|cfgTab|bk|backup|exportAll|dl|download|stMenu|stOpen|mvCancel|noop|modeOpen|demo|tpClose|cmdSay|voiceToggle|voiceStop|handsFree|introGo|exitNow|exit|devName|cloudSyncNow|pin|evMore|evOpen|evClear|evCopy|tpWa|lbx|agStrip|tnLink|jrOpen|jrGo|remMenu|lookSet|homeEdit|homePick|homeReset|agTodayNow|fb|dev|planLim|voice|termsYes|req)/;
   const blocked = el => CL.readonly && el && !ALLOW.test(el.getAttribute('data-act') || '');
   const nope = () => A.toast('Solo lectura: tu suscripción no está vigente. Podés ver y descargar tus datos.');
   document.addEventListener('click', e => {
@@ -11283,6 +11285,164 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.jr-list .jr-go{color:var(--accent);font-weight:600;flex:1 1 auto;min-height:40px;display:flex;align-items:center;gap:4px}.jr-list .jr-go span{margin-left:auto;font-size:20px;line-height:1}' +
     '.jr-flash{outline:3px solid var(--accent)!important;outline-offset:2px;border-radius:12px;transition:outline-color .3s}' +
     '</style>');
+})();
+/* ===== 1.18: puesta en regla legal: aceptación de la voz y de los términos, baja / arrepentimiento / eliminación, consentimiento de datos del paciente ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, CL = A.cloud;
+  const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
+  const WEB = 'https://roan-corp.github.io/odontovoz/';
+  const VER = A.TERMS_VER || '2026-11-05', VOICE_VER = '2026-11-05';
+  const real = () => !!(CL && CL.session && !A.DEMO);
+  const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
+
+  /* =====================================================================
+     1) DICTADO POR VOZ: el audio pasa por Google. Se pide aceptación en cada equipo antes de usarla.
+     ===================================================================== */
+  const voiceOk = () => LS.get('odontovoz.voiceOk', '') === VOICE_VER;
+  A.voiceAllowed = voiceOk;
+  function wrapSR(name) {
+    const Orig = window[name]; if (!Orig || Orig.__ovWrapped) return;
+    const W = function () {
+      const r = new Orig(); const st = r.start;
+      r.start = function () {
+        if (voiceOk()) return st.apply(r, arguments);
+        askVoice();
+        setTimeout(() => { try { if (typeof r.onerror === 'function') r.onerror({ error: 'not-allowed', message: 'consent' }); } catch (e) { /* nada */ } }, 0);
+      };
+      return r;
+    };
+    W.__ovWrapped = true; W.prototype = Orig.prototype;
+    try { window[name] = W; } catch (e) { /* propiedad de solo lectura */ }
+  }
+  wrapSR('SpeechRecognition'); wrapSR('webkitSpeechRecognition');
+  /* mientras se muestra el aviso de la voz no aparecen los mensajes de «micrófono bloqueado» */
+  const toastPrev = A.toast;
+  A.toast = function () { if (S.modal && S.modal.type === 'voiceOk') return; return toastPrev.apply(this, arguments); };
+  let asking = false;
+  function askVoice() { if (asking || (S.modal && S.modal.type === 'voiceOk')) return; asking = true; S.modal = { type: 'voiceOk', back: S.modal }; A.renderModal(); }
+  MF.voiceOk = () => A.modalShell('Antes de usar la voz',
+    '<p>Para pasar tu voz a texto, OdontoVoz usa el reconocimiento de voz de <b>Google</b> que viene en Chrome y en Android. <b>El audio de lo que dictás se envía a Google</b>, principalmente a servidores en EE. UU., y puede incluir datos de salud de tus pacientes.</p>' +
+    '<ul class="plain"><li>Google lo usa para convertirlo en texto; nosotros no guardamos el audio.</li><li>Evitá dictar nombres completos o DNI cuando no haga falta, y usala donde no te escuchen terceros.</li><li>Si no lo aceptás, la app funciona igual escribiendo. Podés cambiarlo cuando quieras en Menú › Cuenta y equipos.</li></ul>' +
+    '<label class="chk"><input type="checkbox" id="voOk"> <span>Entiendo y acepto que el audio de lo que dicto se envíe a Google para pasarlo a texto, según la <a href="' + WEB + 'privacidad.html#voz" target="_blank" rel="noopener">política de privacidad</a>.</span></label><div class="hint bad" id="voMsg"></div>',
+    '<button class="btn" data-act="voiceNo">Ahora no</button><button class="btn primary" data-act="voiceYes">Activar la voz</button>');
+  A.acts.voiceYes = () => {
+    if (!$('#voOk') || !$('#voOk').checked) { $('#voMsg').textContent = 'Para activar la voz, tildá la casilla.'; return; }
+    LS.set('odontovoz.voiceOk', VOICE_VER); asking = false; S.modal = null; A.renderModal();
+    if (real()) rpc('ov_accept', { p_kind: 'voz', p_version: VOICE_VER, p_accepted: true }).catch(() => { /* se registra la próxima vez */ });
+    A.toast('Listo: la voz quedó activada en este equipo. Tocá el micrófono de nuevo.');
+  };
+  A.acts.voiceNo = () => { asking = false; S.modal = null; A.renderModal(); A.toast('La voz queda apagada. Podés seguir escribiendo.'); };
+  A.acts.voiceOff = () => { LS.set('odontovoz.voiceOk', null); if (real()) rpc('ov_accept', { p_kind: 'voz', p_version: VOICE_VER, p_accepted: false }).catch(() => {}); A.renderModal(); A.toast('Voz desactivada en este equipo.'); };
+
+  /* =====================================================================
+     2) TÉRMINOS: se registra en el servidor qué versión aceptó cada cuenta; si cambian, se piden de nuevo
+     ===================================================================== */
+  let termsBusy = false;
+  async function checkTerms() {
+    if (!real() || termsBusy) return; const l = CL.lic; if (!l || !('terms_version' in l)) return;
+    if (l.terms_version === VER) return;
+    /* recién creada: ya aceptó en el registro, se guarda sin volver a preguntar */
+    if (LS.get('odontovoz.termsSigned', '') === VER) { termsBusy = true; try { await rpc('ov_accept', { p_kind: 'terminos', p_version: VER, p_accepted: true }); l.terms_version = VER; } catch (e) { /* reintenta */ } termsBusy = false; return; }
+    if (!S.modal || S.modal.type !== 'termsNew') { S.modal = { type: 'termsNew' }; A.renderModal(); }
+  }
+  MF.termsNew = () => '<div class="modal-scrim"><div class="modal" role="dialog" aria-modal="true" aria-label="Términos actualizados"><div class="m-head"><h2>Actualizamos los términos y la privacidad</h2></div><div class="m-body">' +
+    '<p>Para seguir usando OdontoVoz con tu cuenta, leé y aceptá la versión del ' + esc(A.fmtDMY ? A.fmtDMY(VER) : VER) + '. Los cambios principales:</p><ul class="plain"><li>Términos y condiciones completos, con el <b>contrato de encargado de datos</b> de tus pacientes.</li><li>Botón de baja, arrepentimiento en 10 días y cómo pedir la eliminación de la cuenta.</li><li>El dictado por voz usa Google: ahora se pide permiso en cada equipo.</li><li>Las «recetas» pasan a llamarse «indicaciones» y aclaran que no sirven para farmacia.</li></ul>' +
+    '<p><a href="' + WEB + 'terminos.html" target="_blank" rel="noopener">Leer los términos y condiciones</a> · <a href="' + WEB + 'privacidad.html" target="_blank" rel="noopener">Leer la política de privacidad</a></p>' +
+    '<label class="chk"><input type="checkbox" id="tnOk"> Leí y acepto los términos y condiciones (incluido el contrato de encargado) y la política de privacidad.</label><div class="hint bad" id="tnMsg"></div></div>' +
+    '<div class="m-foot"><a class="btn" href="' + WEB + 'baja.html" target="_blank" rel="noopener">No acepto: quiero darme de baja</a><button class="btn primary" data-act="termsYes">Aceptar y seguir</button></div></div></div>';
+  A.acts.termsYes = async () => {
+    if (!$('#tnOk').checked) { $('#tnMsg').textContent = 'Para seguir, tildá la casilla.'; return; }
+    try { await rpc('ov_accept', { p_kind: 'terminos', p_version: VER, p_accepted: true }); if (CL.lic) CL.lic.terms_version = VER; LS.set('odontovoz.termsSigned', VER); S.modal = null; A.renderModal(); A.toast('Gracias. Términos aceptados.'); }
+    catch (e) { $('#tnMsg').textContent = /could not find|schema cache|404/i.test(String(e.message)) ? 'El servidor todavía se está actualizando. Probá en unos minutos.' : (e.message || 'Sin conexión.'); }
+  };
+  setInterval(checkTerms, 30000); setTimeout(checkTerms, 4000);
+
+  /* =====================================================================
+     3) BAJA, ARREPENTIMIENTO Y ELIMINACIÓN DE LA CUENTA (también en la web: baja.html)
+     ===================================================================== */
+  const KINDS = {
+    baja: { t: 'Dar de baja la suscripción', p: 'Dejamos de cobrarte desde el próximo mes. La cuenta funciona hasta el final del período pagado y después queda en <b>solo lectura</b>: podés ver y descargar todo. No se borra nada.', ok: 'Quiero dar de baja mi suscripción.' },
+    arrepentimiento: { t: 'Arrepentimiento (10 días)', p: 'Dentro de los <b>10 días corridos</b> desde que contrataste o pagaste por primera vez, revocás la contratación sin dar motivos y te devolvemos todo lo pagado.', ok: 'Quiero revocar la contratación y que me devuelvan lo pagado.' },
+    eliminar: { t: 'Eliminar la cuenta y todos los datos', p: 'Se borran la cuenta, los pacientes, las historias clínicas, los turnos, las fotos y los documentos. <b>No se puede deshacer.</b> Antes descargá una copia: la ley te obliga a conservar las historias clínicas al menos 10 años (Ley 26.529, art. 18).', ok: 'Descargué mi copia y entiendo que se borra todo y no se puede deshacer.' }
+  };
+  A.acts.reqOpen = () => { S.modal = { type: 'reqPick' }; A.renderModal(); };
+  MF.reqPick = () => A.modalShell('Baja o eliminación', '<div class="setup-grid">' + Object.keys(KINDS).map(k => '<button class="setup-card" data-act="reqGo" data-k="' + k + '"><b>' + esc(KINDS[k].t) + '</b><span>' + KINDS[k].p.replace(/<[^>]+>/g, '') + '</span></button>').join('') + '</div><p class="hint">También se puede hacer sin entrar a la app, desde <a href="' + WEB + 'baja.html" target="_blank" rel="noopener">la página de baja</a>.</p>',
+    '<button class="btn primary" data-act="closeModal">Volver</button>');
+  A.acts.reqGo = el => { S.modal = { type: 'reqForm', k: el.getAttribute('data-k') }; A.renderModal(); };
+  MF.reqForm = m => {
+    const K = KINDS[m.k];
+    if (m.done) return A.modalShell('Pedido recibido', '<p>Tu código de constancia:</p><div class="req-code">' + esc(m.done.code) + '</div><p class="hint">' + esc(K.t) + ' · ' + new Date(m.done.at || Date.now()).toLocaleString('es-AR') + '. Guardalo: te escribimos al correo de la cuenta dentro de las 24 horas para confirmarlo.</p>' + (m.k === 'eliminar' && m.media != null ? '<p class="hint">Se borraron ' + m.media + ' fotos de la nube.</p>' : ''),
+      '<button class="btn primary" data-act="closeModal">Listo</button>');
+    return A.modalShell(K.t, '<p>' + K.p + '</p>' + (m.k === 'eliminar' ? '<div class="row-btns"><button class="btn small" data-act="exportAll">Descargar mi copia ahora</button></div>' : '') +
+      '<div class="field"><label for="rqDt">Comentario (opcional)</label><textarea id="rqDt" rows="2" maxlength="1000"></textarea></div>' +
+      (m.k === 'eliminar' ? '<div class="field"><label for="rqTy">Para confirmar, escribí ELIMINAR</label><input id="rqTy" autocomplete="off"></div>' : '') +
+      '<label class="chk"><input type="checkbox" id="rqOk"> ' + esc(K.ok) + '</label><div class="hint bad" id="rqMsg"></div>',
+    '<button class="btn" data-act="reqOpen">Volver</button><button class="btn ' + (m.k === 'eliminar' ? 'danger' : 'primary') + '" data-act="reqSend">Enviar pedido</button>');
+  };
+  /* borra las fotos de la nube de esta cuenta (el servidor no deja borrarlas desde la base) */
+  async function wipeMedia() {
+    const conf = CL.conf(), uid = CL.session.user.id, H = { apikey: conf.key, Authorization: 'Bearer ' + CL.session.access_token, 'Content-Type': 'application/json' };
+    let n = 0;
+    const list = async prefix => { const r = await fetch(conf.url + '/storage/v1/object/list/ov-media', { method: 'POST', headers: H, body: JSON.stringify({ prefix, limit: 1000, offset: 0 }) }); return r.ok ? r.json() : []; };
+    const walk = async prefix => { const items = await list(prefix); let files = []; for (const it of items) { if (it.id) files.push(prefix + it.name); else files = files.concat(await walk(prefix + it.name + '/')); } return files; };
+    const files = await walk(uid + '/');
+    for (let i = 0; i < files.length; i += 100) { const part = files.slice(i, i + 100); const r = await fetch(conf.url + '/storage/v1/object/ov-media', { method: 'DELETE', headers: H, body: JSON.stringify({ prefixes: part }) }); if (r.ok) n += part.length; }
+    return n;
+  }
+  A.acts.reqSend = async () => {
+    const m = S.modal, msg = $('#rqMsg');
+    if (!$('#rqOk').checked) { msg.textContent = 'Tildá la casilla para confirmar.'; return; }
+    if (m.k === 'eliminar' && ($('#rqTy').value || '').trim().toUpperCase() !== 'ELIMINAR') { msg.textContent = 'Escribí ELIMINAR para confirmar.'; return; }
+    if (!real()) { window.open(WEB + 'baja.html#' + m.k, '_blank', 'noopener'); return; }
+    msg.textContent = 'Enviando…';
+    try {
+      let media = null;
+      if (m.k === 'eliminar') { try { media = await wipeMedia(); } catch (e) { media = null; } try { await rpc('ov_delete_my_data'); } catch (e) { /* el administrador borra el resto */ } }
+      const r = await rpc('ov_request', { p_kind: m.k, p_email: '', p_name: (A.PROS[0] || {}).name || '', p_detail: ($('#rqDt').value || '').trim() });
+      if (!r || !r.ok) { msg.textContent = (r && r.msg) || 'No se pudo enviar.'; return; }
+      S.modal = Object.assign({}, m, { done: r, media }); A.renderModal();
+    } catch (e) { msg.textContent = /could not find|schema cache/i.test(String(e.message)) ? 'El servidor todavía se está actualizando: usá la página de baja.' : (e.message || 'Sin conexión.'); }
+  };
+
+  /* en «Cuenta y equipos»: voz, documentos legales, baja */
+  const acctPrev = MF.acct;
+  if (acctPrev) MF.acct = m => {
+    const h = acctPrev(m);
+    const block = '<div class="block"><h3>Privacidad y legales</h3>' +
+      '<div class="lg-row"><span>Dictado por voz en este equipo: <b>' + (voiceOk() ? 'activado' : 'apagado') + '</b></span>' + (voiceOk() ? '<button class="btn small" data-act="voiceOff">Desactivar</button>' : '<button class="btn small" data-act="voiceAsk">Activar</button>') + '</div>' +
+      '<div class="lg-row"><span>Términos aceptados: <b>' + esc((CL.lic && CL.lic.terms_version) || (LS.get('odontovoz.termsSigned', '') || '—')) + '</b></span><span><a href="' + WEB + 'terminos.html" target="_blank" rel="noopener">Términos</a> · <a href="' + WEB + 'privacidad.html" target="_blank" rel="noopener">Privacidad</a></span></div>' +
+      '<div class="hint" style="margin:6px 0">Si tenés pacientes, inscribí tu base de datos en el <a href="https://www.argentina.gob.ar/aaip/datospersonales/registro" target="_blank" rel="noopener">Registro Nacional de Bases de Datos (AAIP)</a> y pediles el consentimiento con la plantilla «Uso de datos personales».</div>' +
+      '<div class="row-btns"><button class="btn small" data-act="reqOpen">Baja, arrepentimiento o eliminar la cuenta</button></div></div>';
+    return h.replace('<div class="block"><h3>Bloqueo con PIN</h3>', block + '<div class="block"><h3>Bloqueo con PIN</h3>');
+  };
+  A.acts.voiceAsk = () => askVoice();
+
+  /* =====================================================================
+     4) PLANTILLA: CONSENTIMIENTO PARA EL USO DE DATOS PERSONALES (Ley 25.326, arts. 5, 6 y 7)
+     ===================================================================== */
+  if (A.CONSENTS) {
+    A.CONSENTS.datos = { title: 'Uso de datos personales', proc: () => '', risks: [], alts: '' };
+    const cbPrev = A.consentBody;
+    A.consentBody = (pid, tpl) => {
+      if (tpl !== 'datos') return cbPrev(pid, tpl);
+      const pro = A.PRO(A.PAT(pid).pro) || {}, clin = A.CLINIC || 'el consultorio';
+      return { title: 'Consentimiento para el uso de datos personales', lead: 'Información y consentimiento según la Ley 25.326 de Protección de Datos Personales y la Ley 26.529 de Derechos del Paciente.', sections: [
+        { h: 'Responsable', p: clin + (A.CFG && A.CFG.addr ? ', ' + A.CFG.addr : '') + '. Profesional: ' + (pro.name || '') + (pro.mat ? ', ' + pro.mat : '') + '.' },
+        { h: 'Para qué se usan mis datos', p: 'Para mi atención odontológica: historia clínica, turnos, presupuestos, cobros, recordatorios y comunicaciones sobre mi tratamiento. No se usan para publicidad ni se ceden a terceros, salvo obligación legal, a mi obra social para lo que corresponda o con mi autorización.' },
+        { h: 'Qué datos', p: 'Datos de identificación y contacto, obra social, y datos de salud (antecedentes, diagnósticos, tratamientos, radiografías y fotos clínicas). Los datos de salud son sensibles y están protegidos por el secreto profesional.' },
+        { h: 'Dónde se guardan', p: 'En el sistema de gestión OdontoVoz, de ROAN corp, que los guarda por cuenta del consultorio en servidores de la Unión Europea, cifrados y con acceso restringido. La historia clínica se conserva al menos 10 años (Ley 26.529, art. 18).' },
+        { h: 'Comunicaciones', p: 'Acepto recibir recordatorios de turnos e información sobre mi tratamiento por WhatsApp, mensaje o correo al contacto que di. Puedo pedir que no me escriban por esos medios.' },
+        { h: 'Mis derechos', p: 'Puedo pedir acceso a mis datos y a mi historia clínica, su rectificación, actualización o supresión cuando no sea obligatorio conservarlos (Ley 25.326, arts. 14 a 16; Ley 26.529, art. 14). El acceso es gratuito a intervalos no menores a seis meses. LA AGENCIA DE ACCESO A LA INFORMACIÓN PÚBLICA, en su carácter de Órgano de Control de la Ley N° 25.326, tiene la atribución de atender las denuncias y reclamos que interpongan quienes resulten afectados en sus derechos por incumplimiento de las normas vigentes en materia de protección de datos personales.' },
+        { h: 'Declaración', list: ['Fui informado/a de lo anterior de forma clara.', 'Doy mi consentimiento libre, expreso e informado para el tratamiento de mis datos, incluidos los de salud, con las finalidades descriptas.', 'Sé que puedo revocar este consentimiento, salvo en lo que la ley obligue a conservar.'] }
+      ] };
+    };
+  }
+
+  /* estilos */
+  const css = document.createElement('style');
+  css.textContent = '.lg-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}.req-code{font:800 26px var(--f-mono,monospace);letter-spacing:.06em;margin:4px 0 8px}';
+  document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es-AR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baja y arrepentimiento · OdontoVoz</title>
+<meta name="description" content="Botón de baja de servicio, botón de arrepentimiento y pedido de eliminación de la cuenta de OdontoVoz.">
+<link rel="icon" href="img/icono.png">
+<link rel="stylesheet" href="legal.css"></head>
+<body><main>
+<div class="top"><a href="./">← OdontoVoz</a><span><a href="terminos.html">Términos</a> · <a href="privacidad.html">Privacidad</a></span></div>
+<h1>Baja, arrepentimiento y eliminación de la cuenta</h1>
+<p class="meta">Sin trámites ni registro previo. Al enviar el pedido te damos un código de constancia en el momento.</p>
+
+<div class="btns" role="tablist" aria-label="Tipo de pedido">
+<button class="btn" data-k="baja" id="t-baja" role="tab">Botón de baja de servicio</button>
+<button class="btn" data-k="arrepentimiento" id="t-arrepentimiento" role="tab">Botón de arrepentimiento</button>
+<button class="btn" data-k="eliminar" id="t-eliminar" role="tab">Eliminar mi cuenta y mis datos</button>
+</div>
+
+<div class="box" id="info"></div>
+
+<form id="f" class="box" novalidate>
+<label for="em">Correo de la cuenta de OdontoVoz</label><input id="em" type="email" autocomplete="email" required>
+<label for="nm">Nombre y apellido</label><input id="nm" autocomplete="name">
+<label for="dt">Comentario <span class="small">(opcional)</span></label><textarea id="dt" rows="3" maxlength="1000"></textarea>
+<label class="chk" id="okRow"><input type="checkbox" id="ok"> <span id="okTxt"></span></label>
+<div class="err" id="err" role="alert"></div>
+<button class="btn main" type="submit" id="go" style="margin-top:14px">Enviar pedido</button>
+</form>
+
+<div class="box" id="done" hidden></div>
+
+<p class="small">También podés hacerlo desde la app: Menú › Cuenta y equipos › «Baja o eliminación». ¿Dudas? <a href="mailto:somosroan@gmail.com">somosroan@gmail.com</a> · WhatsApp 2984 513279 / 2984 764428.</p>
+</main>
+<footer><a href="./">OdontoVoz</a> · <a href="terminos.html">Términos y condiciones</a> · <a href="privacidad.html">Privacidad</a></footer>
+<script>
+(function () {
+  'use strict';
+  /* clave pública (publicable) del servidor: solo permite registrar el pedido */
+  const SB = { url: 'https://hcppfvioiaaejayzzhpa.supabase.co', key: 'sb_publishable_N-Qc-l7kJc4A7rvX68ko7Q_CiTI2HtU' };
+  const $ = s => document.querySelector(s);
+  const INFO = {
+    baja: { t: 'Botón de baja de servicio', p: 'Dejamos de cobrarte desde el próximo mes. Tu cuenta sigue funcionando hasta el final del período que ya pagaste y después queda en <b>solo lectura</b>: podés entrar, ver y descargar todo, pero no cargar cosas nuevas. Tus datos no se borran (la historia clínica se debe conservar al menos 10 años).', ok: 'Quiero dar de baja mi suscripción a OdontoVoz.' },
+    arrepentimiento: { t: 'Botón de arrepentimiento', p: 'Dentro de los <b>10 días corridos</b> desde que contrataste (o desde tu primer pago) podés revocar la contratación sin dar motivos y te devolvemos todo lo pagado por el mismo medio (Código Civil y Comercial, art. 1110; Ley 24.240). Tu cuenta vuelve a la versión gratuita de prueba o queda en solo lectura.', ok: 'Quiero revocar la contratación (arrepentimiento) y que me devuelvan lo pagado.' },
+    eliminar: { t: 'Eliminar mi cuenta y mis datos', p: 'Borramos la cuenta y <b>todos sus datos</b> (pacientes, historias clínicas, turnos, fotos y documentos) dentro de los 10 días hábiles. <b>No se puede deshacer.</b> Antes, descargá una copia desde la app (Ajustes › Exportar): la ley te obliga a conservar las historias clínicas al menos 10 años (Ley 26.529, art. 18). Para borrar también las fotos, conviene pedirlo desde la app.', ok: 'Entiendo que se borran todos los datos de la cuenta y que no se puede deshacer.' }
+  };
+  let kind = (location.hash || '').replace('#', '');
+  if (!INFO[kind]) kind = 'baja';
+  function show() {
+    document.querySelectorAll('[data-k]').forEach(b => { const on = b.getAttribute('data-k') === kind; b.classList.toggle('main', on); b.setAttribute('aria-selected', on); });
+    const I = INFO[kind]; $('#info').innerHTML = '<h2 style="margin:0 0 6px;border:0;padding:0">' + I.t + '</h2><p style="margin:0">' + I.p + '</p>';
+    $('#info').classList.toggle('warn', kind === 'eliminar'); $('#okTxt').textContent = I.ok; $('#ok').checked = false; $('#err').textContent = '';
+  }
+  document.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => { kind = b.getAttribute('data-k'); history.replaceState(null, '', '#' + kind); $('#f').hidden = false; $('#done').hidden = true; show(); }));
+  $('#f').addEventListener('submit', async e => {
+    e.preventDefault(); const em = $('#em').value.trim(), nm = $('#nm').value.trim(), dt = $('#dt').value.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { $('#err').textContent = 'Escribí el correo de tu cuenta.'; return; }
+    if (!$('#ok').checked) { $('#err').textContent = 'Para enviar el pedido, tildá la casilla de confirmación.'; return; }
+    $('#go').disabled = true; $('#go').textContent = 'Enviando…'; $('#err').textContent = '';
+    try {
+      const r = await fetch(SB.url + '/rest/v1/rpc/ov_request', { method: 'POST', headers: { apikey: SB.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_kind: kind, p_email: em, p_name: nm, p_detail: dt }) });
+      const d = await r.json().catch(() => null);
+      if (!r.ok || !d || !d.ok) throw new Error((d && (d.msg || d.message)) || 'No se pudo registrar el pedido.');
+      const when = new Date(d.at || Date.now()).toLocaleString('es-AR');
+      $('#f').hidden = true; $('#done').hidden = false;
+      $('#done').innerHTML = '<h2 style="margin:0 0 6px;border:0;padding:0">Pedido recibido</h2><p style="margin:0">Tu código de constancia es:</p><div class="code">' + d.code + '</div><p class="small" style="margin:0">' + INFO[kind].t + ' · ' + when + ' · ' + em.replace(/[<>]/g, '') + '</p><p>Guardá este código. Te escribimos al correo de la cuenta dentro de las 24 horas para confirmarlo.</p><button class="btn" onclick="window.print()">Imprimir o guardar en PDF</button>';
+      window.scrollTo(0, 0);
+    } catch (er) { $('#err').textContent = er.message === 'Failed to fetch' ? 'No hay conexión. Probá de nuevo o escribinos a somosroan@gmail.com.' : er.message; }
+    $('#go').disabled = false; $('#go').textContent = 'Enviar pedido';
+  });
+  show();
+})();
+</script>
+</body></html>

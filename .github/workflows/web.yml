@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 20
       - name: Instalar jsPDF
-        run: npm install --no-audit --no-fund --ignore-scripts jspdf@2.5.1
+        run: npm install --no-audit --no-fund --ignore-scripts jspdf@2.5.1 @fontsource/bricolage-grotesque@5 @fontsource/ibm-plex-mono@5 @fontsource/instrument-sans@5 @fontsource/atkinson-hyperlegible@5 @fontsource/schibsted-grotesk@5
       - name: Armar la app web (www)
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}

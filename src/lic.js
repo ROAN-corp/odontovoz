@@ -53,7 +53,7 @@
   }
 
   /* modo solo lectura: se puede mirar, buscar, descargar e imprimir; no se puede cargar ni cambiar nada */
-  const ALLOW = /^(tab|navBack|goHome|gear|drawer|open|close|ficha(Tab|Back)|ag(Prev|Next|Today|GoDay|View|More|CalMon|Free(Day)?|Shift)|view|search|topRes|pdf|acct|login|privacy|support|lic|tutorial|tut|voiceHelp|appear|theme|conv|scrim|labAll|labFilter|labMoreDone|labGoPat|osOpen|osMon|osEdit|osBack|impSeePats|toast|odZoom|cfgOpen|cfgTab|bk|backup|exportAll|dl|download|stMenu|stOpen|mvCancel|noop|modeOpen|demo|tpClose|cmdSay|voiceToggle|voiceStop|handsFree|introGo|exitNow|exit|devName|cloudSyncNow|pin|evMore|evOpen|evClear|evCopy|tpWa|lbx|agStrip|tnLink|jrOpen|jrGo|remMenu|lookSet|homeEdit|homePick|homeReset|agTodayNow|fb|dev|planLim)/;
+  const ALLOW = /^(tab|navBack|goHome|gear|drawer|open|close|ficha(Tab|Back)|ag(Prev|Next|Today|GoDay|View|More|CalMon|Free(Day)?|Shift)|view|search|topRes|pdf|acct|login|privacy|support|lic|tutorial|tut|voiceHelp|appear|theme|conv|scrim|labAll|labFilter|labMoreDone|labGoPat|osOpen|osMon|osEdit|osBack|impSeePats|toast|odZoom|cfgOpen|cfgTab|bk|backup|exportAll|dl|download|stMenu|stOpen|mvCancel|noop|modeOpen|demo|tpClose|cmdSay|voiceToggle|voiceStop|handsFree|introGo|exitNow|exit|devName|cloudSyncNow|pin|evMore|evOpen|evClear|evCopy|tpWa|lbx|agStrip|tnLink|jrOpen|jrGo|remMenu|lookSet|homeEdit|homePick|homeReset|agTodayNow|fb|dev|planLim|voice|termsYes|req)/;
   const blocked = el => CL.readonly && el && !ALLOW.test(el.getAttribute('data-act') || '');
   const nope = () => A.toast('Solo lectura: tu suscripción no está vigente. Podés ver y descargar tus datos.');
   document.addEventListener('click', e => {

@@ -6,7 +6,9 @@
     get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
     set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } }
   };
-  const PRIV_VER = '2026-11';
+  const PRIV_VER = '2026-11-05';
+  A.TERMS_VER = PRIV_VER;
+  const WEB = 'https://roan-corp.github.io/odontovoz/';
 
   /* ---------- servidor (Supabase): dirección y clave pública del proyecto ---------- */
   const conf = () => {
@@ -302,7 +304,7 @@
     if (!np) h += '<div class="field"><label for="lgMail">Correo electrónico</label><input id="lgMail" type="email" autocomplete="email" inputmode="email" required value="' + esc(CL._mail || '') + '"></div>';
     if (!rec) h += '<div class="field"><label for="lgPass">' + (np ? 'Nueva contraseña' : 'Contraseña') + '</label><input id="lgPass" type="password" autocomplete="' + (up || np ? 'new-password' : 'current-password') + '" minlength="8" required></div>';
     if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
-    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto la <a href="#" data-act="privacyOpen">política de privacidad y condiciones de uso</a>.</label>' +
+    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
     h += '<div id="lgMsg" class="lg-alert" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
     h += '<button class="btn primary" type="submit" style="min-height:48px">' + (np ? 'Guardar contraseña' : rec ? 'Enviar enlace' : up ? 'Crear cuenta' : 'Ingresar') + '</button>';
@@ -373,7 +375,7 @@
     if (p !== p2) return lgErr('Las contraseñas no coinciden.'); if (!$('#lgOk1').checked || !$('#lgOk2').checked) return lgErr('Para crear la cuenta tenés que aceptar las dos casillas.');
     CL._onErr = null;
     busy('Creando…', async () => {
-      const r = await CL.signUp(m, p, { consent_privacy: PRIV_VER, consent_at: new Date().toISOString(), health_professional: true });
+      const r = await CL.signUp(m, p, { consent_privacy: PRIV_VER, consent_terms: PRIV_VER, consent_at: new Date().toISOString(), health_professional: true }); LS.set('odontovoz.termsSigned', PRIV_VER);
       if (r.in) afterLogin(); else CL.showSent(m);
     });
   };
@@ -477,15 +479,15 @@
   A.acts.privacyOpen = (el, ev) => { if (ev) ev.preventDefault(); const w = $('#loginWrap'); if (w) w.style.display = 'none'; S.modal = { type: 'privacy', fromLogin: !!w }; A.renderModal(); };
   const origClose = A.closeModal;
   A.closeModal = () => { const fl = S.modal && S.modal.type === 'privacy' && S.modal.fromLogin; origClose(); if (fl) { const w = $('#loginWrap'); if (w) w.style.display = ''; } };
-  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen claro de cómo se tratan los datos en OdontoVoz.</p>' +
-    '<h3>Quién es responsable de qué</h3><p>El profesional o el centro que usa la app es el <b>responsable de la base de datos de sus pacientes</b> (Ley 25.326). OdontoVoz presta el servicio de software y de almacenamiento por cuenta del profesional y solo trata los datos para hacer funcionar la app.</p>' +
-    '<h3>Qué datos se guardan</h3><p>De la cuenta: correo, contraseña (guardada cifrada, nadie la puede leer) y la aceptación de estas condiciones. De los pacientes: lo que el profesional carga (datos de contacto, turnos, historia clínica, odontograma, presupuestos y pagos). Son <b>datos sensibles de salud</b>: solo los puede tratar el profesional, con secreto profesional y con el consentimiento del paciente (Ley 25.326, arts. 7, 8 y 10; Ley 26.529).</p>' +
-    '<h3>Dónde y cómo</h3><p>En servidores de Supabase en la <b>Unión Europea (Irlanda)</b>. La Argentina considera que los países de la Unión Europea tienen protección adecuada para transferir datos personales (AAIP). Los datos viajan cifrados (HTTPS) y se guardan cifrados. Cada cuenta solo puede leer sus propios registros (reglas de seguridad por usuario en la base de datos). Se guarda un historial de cambios de cada ficha para que la historia clínica no se pierda ni se altere sin rastro.</p>' +
-    '<h3>Sin cuenta</h3><p>Si usás la app sin cuenta, todo queda solo en tu equipo y nada se envía a internet.</p>' +
-    '<h3>Tus derechos y los de tus pacientes</h3><p>Acceso, rectificación, actualización y supresión (Ley 25.326, arts. 14 a 16). El acceso es gratuito cada seis meses salvo interés legítimo. Podés descargar todos tus datos desde Ajustes y borrar los de la nube desde «Cuenta y equipos». Recordá que la historia clínica debe conservarse al menos 10 años (Ley 26.529, art. 18).</p>' +
+  A.PRIVACY_HTML = '<p><b>Versión ' + PRIV_VER + '.</b> Resumen de cómo se tratan los datos. Los textos completos están en la web: <a href="' + WEB + 'privacidad.html" target="_blank" rel="noopener">política de privacidad</a> y <a href="' + WEB + 'terminos.html" target="_blank" rel="noopener">términos y condiciones</a>.</p>' +
+    '<h3>Quién es responsable</h3><p>El profesional o centro es el <b>responsable de los datos de sus pacientes</b> (Ley 25.326). ROAN corp, que hace OdontoVoz, es <b>encargado del tratamiento</b>: guarda los datos solo por su cuenta y para que la app funcione, con secreto, sin venderlos ni usarlos para otra cosa.</p>' +
+    '<h3>Dónde están</h3><p>En servidores de Supabase en la <b>Unión Europea (Irlanda)</b>, cifrados. Cada cuenta solo accede a lo suyo y solo desde sus equipos registrados.</p>' +
+    '<h3>Dictado por voz</h3><p>La voz usa el reconocimiento de Google (Chrome o Android): el audio de lo que dictás se envía a Google, principalmente en EE. UU. Por eso está apagada hasta que la actives y lo aceptes en tu equipo. Sin aceptarlo, la app funciona igual escribiendo.</p>' +
+    '<h3>Sin cuenta</h3><p>En el modo prueba todo queda solo en tu equipo.</p>' +
+    '<h3>Derechos</h3><p>Acceso, rectificación, actualización y supresión (Ley 25.326, arts. 14 a 16). Podés ver, corregir, descargar y borrar todo desde la app. La historia clínica se conserva al menos 10 años (Ley 26.529, art. 18).</p>' +
     '<p class="hint">LA AGENCIA DE ACCESO A LA INFORMACIÓN PÚBLICA, en su carácter de Órgano de Control de la Ley N° 25.326, tiene la atribución de atender las denuncias y reclamos que interpongan quienes resulten afectados en sus derechos por incumplimiento de las normas vigentes en materia de protección de datos personales.</p>' +
-    '<h3>Obligaciones del profesional</h3><p>Informar a sus pacientes y obtener su consentimiento; inscribir su base de datos en el Registro Nacional de Bases de Datos de la AAIP cuando corresponda; cuidar el acceso a sus equipos y su contraseña.</p>' +
-    '<h3>Contacto</h3><p>' + (A.SUPPORT && A.SUPPORT.email ? 'Escribinos a ' + esc(A.SUPPORT.email) + '.' : 'Desde Ayuda › Soporte dentro de la app.') + '</p>';
+    '<h3>Lo que te toca como profesional</h3><p>Informar a tus pacientes y pedirles el consentimiento (hay una plantilla firmable: «Uso de datos personales»); inscribir tu base de datos en el Registro Nacional de Bases de Datos de la AAIP cuando corresponda; cuidar tu contraseña y tus equipos.</p>' +
+    '<h3>Contacto</h3><p>' + (A.SUPPORT && A.SUPPORT.email ? esc(A.SUPPORT.email) : 'somosroan@gmail.com') + ' · <a href="' + WEB + 'baja.html" target="_blank" rel="noopener">Baja, arrepentimiento o eliminación de la cuenta</a></p>';
   MF.privacy = () => A.modalShell('Privacidad y condiciones', A.PRIVACY_HTML, '<button class="btn primary" data-act="closeModal">Entendido</button>', true);
 
   /* ---------- arranque ---------- */

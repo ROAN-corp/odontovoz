@@ -258,3 +258,14 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.17.1 · «Cambios de hoy» con enlaces
 - Cada cambio de la lista se ve como enlace y lleva a su lugar, marcado por un momento: el turno en la agenda (y lo abre), la sección de la ficha que se tocó (evolución, cuenta, presupuestos…), los recordatorios del inicio, la caja, o la configuración del consultorio, logo o turnero.
+
+## OdontoVoz 1.18 · puesta en regla legal
+- Páginas nuevas en la web: **Términos y condiciones** (con el contrato de encargado de datos y las bases de las promociones), **Política de privacidad** reescrita y **Botón de baja / Botón de arrepentimiento** (`sitio/baja.html`), con código de constancia en el momento. La portada muestra los dos botones arriba de todo.
+- La voz pide permiso en cada equipo antes de usarse, porque el audio pasa por Google. Se puede desactivar en Cuenta y equipos.
+- Al registrarse se acepta la versión de los términos y queda guardada en el servidor (versión y fecha). Si los términos cambian, la app los pide de nuevo.
+- En Cuenta y equipos: «Privacidad y legales» con baja, arrepentimiento o eliminación de la cuenta (borra también las fotos de la nube).
+- Las «recetas» pasan a llamarse «Indicaciones para el paciente» y aclaran que no sirven para farmacia (Ley 27.553).
+- Nueva plantilla de consentimiento: «Uso de datos personales» (Ley 25.326).
+- Las fuentes de letra se sirven desde la propia app (no se pide nada a Google Fonts).
+- Panel de licencias: pedidos de baja/arrepentimiento/eliminación, versión de términos aceptada y botón para eliminar una cuenta.
+- SQL: `supabase/legal.sql` (correr una vez en Supabase › SQL Editor).

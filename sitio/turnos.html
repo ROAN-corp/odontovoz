@@ -76,7 +76,7 @@ footer a { color: inherit; }
 <body>
 <header><div class="wrap hd"><svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.2 0-3.4 1.2-5 1.2S11.2 4 9 4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><div><h1 id="cl">Turnos online</h1><p id="cla">Cargando…</p></div></div></header>
 <main class="wrap" id="app" aria-live="polite"><div class="empty">Cargando los horarios…</div></main>
-<footer>Turnos con <a href="./">OdontoVoz</a> · <a href="privacidad.html">Privacidad</a></footer>
+<footer>Turnos con <a href="./">OdontoVoz</a> · <a href="privacidad.html#pacientes">Privacidad para pacientes</a></footer>
 <script>
 (function () {
   'use strict';
@@ -138,7 +138,7 @@ footer a { color: inherit; }
         '<div class="row"><div><label class="f" for="fDni">DNI</label><input class="i" id="fDni" inputmode="numeric" value="' + esc(F.dni) + '"></div><div><label class="f" for="fPhone">Celular (WhatsApp)</label><input class="i" id="fPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej.: 298 4123456" value="' + esc(F.phone) + '"></div></div>' +
         '<div class="row"><div><label class="f" for="fCov">Obra social <span class="note">(opcional)</span></label><input class="i" id="fCov" value="' + esc(F.cov) + '" placeholder="Particular, OSDE, IOSFA…"></div><div><label class="f" for="fMail">Correo <span class="note">(opcional)</span></label><input class="i" id="fMail" type="email" autocomplete="email" value="' + esc(F.email) + '"></div></div>' +
         '<label class="f" for="fNote">¿Algo que quieras contar? <span class="note">(opcional)</span></label><textarea class="i" id="fNote" rows="2" maxlength="300">' + esc(F.note) + '</textarea>' +
-        '<label class="chk"><input type="checkbox" id="fOk"' + (F.ok ? ' checked' : '') + '> <span>Acepto que el consultorio use estos datos para darme el turno y contactarme (<a href="privacidad.html" target="_blank">privacidad</a>).</span></label>' +
+        '<label class="chk"><input type="checkbox" id="fOk"' + (F.ok ? ' checked' : '') + '> <span>Acepto que el consultorio use estos datos para darme el turno y contactarme (<a href="privacidad.html#pacientes" target="_blank">cómo se tratan tus datos</a>).</span></label>' +
         (F.err ? '<div class="err" role="alert">' + esc(F.err) + '</div>' : '') + '<button class="btn main" data-a="to" data-s="4">Revisar</button>';
     } else if (F.step === 4) {
       h = steps(4) + '<button class="back" data-a="to" data-s="3">‹ Corregir mis datos</button><h2>Revisá tu turno</h2><div class="box sum"><b>' + esc(longDay(F.date)) + ' · ' + mm(F.slot[1]) + ' h</b><span>' + esc(typeLabel()) + (D.pros.length > 1 ? ' con ' + esc(proName(F.slot[0])) : '') + '</span><span>' + esc(F.first + ' ' + F.last) + ' · DNI ' + esc(F.dni) + ' · ' + esc(F.phone) + '</span></div>' +

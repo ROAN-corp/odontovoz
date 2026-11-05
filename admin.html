@@ -44,7 +44,8 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
   const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio', centro: 'Centro', red: 'Red' };
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let ses = null, rows = [], fb = null, q = '', filt = 'todas';
+  let ses = null, rows = [], fb = null, rq = null, q = '', filt = 'todas';
+  const RQK = { baja: 'Baja de servicio', arrepentimiento: 'Arrepentimiento (10 días)', eliminar: 'Eliminar cuenta y datos' };
   try { ses = JSON.parse(sessionStorage.getItem('ovadm') || 'null'); } catch (e) { ses = null; }
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   const addDays = (k, n) => { const d = new Date(k + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
@@ -84,6 +85,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
       if (!ad || !ad.length) { app.innerHTML = '<div class="card">Esta cuenta no es administradora. Pedile a otro administrador que te agregue.</div>'; return; }
       rows = await http('/rest/v1/rpc/ov_admin_accounts', { method: 'POST', body: {} }) || [];
       try { fb = await http('/rest/v1/ov_feedback?select=*&order=created_at.desc&limit=100') || []; } catch (e) { fb = null; }
+      try { rq = await http('/rest/v1/ov_requests?select=*&order=created_at.desc&limit=200') || []; } catch (e) { rq = null; }
       render();
     } catch (e) { app.innerHTML = '<div class="card err">' + esc(e.message) + '</div>'; }
   }
@@ -99,16 +101,25 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
         '<td class="muted">' + (r.limits ? '<b style="color:inherit">' + (r.devices || 0) + '/' + r.limits.devices + '</b> equipos · ' + r.limits.pros + ' prof.<br>' : '') + (r.flags ? '<span class="chip warn" title="' + esc(r.flags) + '">revisar</span> ' : '') + (r.records || 0) + ' registros<br>' + (r.last_sync ? 'sincronizó ' + dmy(r.last_sync.slice(0, 10)) : 'sin datos aún') + '</td>' +
         '<td><div class="acts"><button class="small" data-x="m30" data-id="' + r.owner + '">+1 mes</button><button class="small" data-x="y1" data-id="' + r.owner + '">+1 año</button>' +
         (r.status === 'suspendida' ? '<button class="small primary" data-x="on" data-id="' + r.owner + '">Reactivar</button>' : '<button class="small danger" data-x="off" data-id="' + r.owner + '">Suspender</button>') +
-        '<button class="small" data-x="ed" data-id="' + r.owner + '">Editar</button><button class="small" data-x="dv" data-id="' + r.owner + '">Equipos</button></div></td></tr>').join('') : '<tr><td colspan="6" class="muted">No hay cuentas con ese filtro.</td></tr>') + '</tbody></table>' +
+        '<button class="small" data-x="ed" data-id="' + r.owner + '">Editar</button><button class="small" data-x="dv" data-id="' + r.owner + '">Equipos</button><button class="small danger" data-x="del" data-id="' + r.owner + '">Eliminar</button></div>' + ('terms_version' in r ? '<div class="muted" style="margin-top:4px">Términos: ' + (r.terms_version ? esc(r.terms_version) + (r.terms_at ? ' (' + dmy(r.terms_at.slice(0, 10)) + ')' : '') : '<span style="color:#b33">sin aceptar</span>') + '</div>' : '') + '</td></tr>').join('') : '<tr><td colspan="6" class="muted">No hay cuentas con ese filtro.</td></tr>') + '</tbody></table>' +
+      (rq ? '<h2 style="margin:28px 0 8px">Pedidos de baja, arrepentimiento y eliminación <span class="muted">(' + rq.filter(x => x.status === 'nuevo' || x.status === 'en curso').length + ' pendientes · responder dentro de las 24 h)</span></h2>' + (rq.length ? '<table><thead><tr><th>Fecha</th><th>Código</th><th>Pedido</th><th>Correo</th><th>Estado</th><th></th></tr></thead><tbody>' + rq.map(x => '<tr' + (x.status === 'nuevo' ? ' style="background:var(--acc-bg,#fff6e0)"' : '') + '><td class="muted">' + esc(new Date(x.created_at).toLocaleString('es-AR')) + '</td><td><b>' + esc(x.code) + '</b></td><td>' + esc(RQK[x.kind] || x.kind) + (x.detail ? '<div class="muted">' + esc(x.detail) + '</div>' : '') + '</td><td>' + esc(x.email) + (x.name ? '<div class="muted">' + esc(x.name) + '</div>' : '') + (x.owner ? '' : '<div class="muted">sin cuenta asociada</div>') + '</td><td>' + esc(x.status) + (x.done_at ? '<div class="muted">' + esc(new Date(x.done_at).toLocaleDateString('es-AR')) + '</div>' : '') + '</td><td><div class="acts">' + (x.status === 'nuevo' ? '<button class="small" data-rq="en curso" data-id="' + x.id + '">En curso</button>' : '') + (x.status !== 'hecho' ? '<button class="small primary" data-rq="hecho" data-id="' + x.id + '">Hecho</button>' : '') + (x.kind === 'eliminar' && x.owner && x.status !== 'hecho' ? '<button class="small danger" data-del="' + x.owner + '">Eliminar cuenta</button>' : '') + '</div></td></tr>').join('') + '</tbody></table>' : '<p class="muted">Todavía no hay pedidos.</p>') + '<p class="muted">Baja: dejar de cobrar desde el próximo período (no borrar datos). Arrepentimiento: devolver todo lo pagado si está dentro de los 10 días. Eliminación: confirmar por correo con la persona y recién después tocar «Eliminar cuenta». Las pantallas de la app ya borran las fotos cuando el pedido sale desde la app.</p>' : '') +
       (fb ? '<h2 style="margin:28px 0 8px">Comentarios y sugerencias <span class="muted">(' + fb.filter(x => x.status === 'nuevo').length + ' nuevos)</span></h2>' + (fb.length ? '<table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Tipo</th><th>Comentario</th><th></th></tr></thead><tbody>' + fb.map(x => '<tr' + (x.status === 'nuevo' ? ' style="font-weight:600"' : '') + '><td>' + dmy((x.created_at || '').slice(0, 10)) + '</td><td>' + esc(x.email || '') + '<div class="muted">' + esc(x.app || '') + '</div></td><td>' + esc(x.kind) + '</td><td style="white-space:pre-wrap;max-width:520px">' + esc(x.text) + '</td><td>' + (x.status === 'nuevo' ? '<button class="small" data-fb="' + x.id + '">Marcar leído</button>' : '<span class="muted">' + esc(x.status) + '</span>') + '</td></tr>').join('') + '</tbody></table>' : '<p class="muted">Todavía no llegaron comentarios.</p>') : '') +
       '<p class="muted">«+1 mes» y «+1 año» suman desde hoy o desde el vencimiento actual, lo que sea más tarde, y dejan la cuenta activa. Una cuenta vencida o suspendida queda en solo lectura: ve y descarga sus datos, pero el servidor no acepta cambios.</p>';
     $('#qq').oninput = e => { q = e.target.value.toLowerCase(); const p = e.target.selectionStart; render(); const i = $('#qq'); i.focus(); i.setSelectionRange(p, p); };
     $('#ff').onchange = e => { filt = e.target.value; render(); };
     $('#rl').onclick = load;
     app.querySelectorAll('[data-x]').forEach(b => { b.onclick = () => act(b.getAttribute('data-x'), b.getAttribute('data-id')); });
+    app.querySelectorAll('[data-rq]').forEach(b => { b.onclick = async () => { const st = b.getAttribute('data-rq'); try { await http('/rest/v1/ov_requests?id=eq.' + b.getAttribute('data-id'), { method: 'PATCH', body: { status: st, done_at: st === 'hecho' ? new Date().toISOString() : null }, headers: { Prefer: 'return=minimal' } }); load(); } catch (e) { alert(e.message); } }; });
+    app.querySelectorAll('[data-del]').forEach(b => { b.onclick = () => delAcct(b.getAttribute('data-del')); });
     app.querySelectorAll('[data-fb]').forEach(b => { b.onclick = async () => { try { await http('/rest/v1/ov_feedback?id=eq.' + b.getAttribute('data-fb'), { method: 'PATCH', body: { status: 'leido' } }); load(); } catch (e) { alert(e.message); } }; });
   }
   async function patch(id, body) { await http('/rest/v1/ov_accounts?owner=eq.' + id, { method: 'PATCH', body: Object.assign(body, { updated_at: new Date().toISOString() }), headers: { Prefer: 'return=minimal' } }); await load(); }
+  async function delAcct(id) {
+    const r = rows.filter(z => z.owner === id)[0], em = r ? r.email : id;
+    const t = prompt('Esto borra para siempre la cuenta ' + em + ' con todos sus pacientes, historias, turnos y equipos. Hacelo solo si la persona lo pidió y lo confirmaste por correo.\n\nPara confirmar, escribí el correo de la cuenta:');
+    if (t == null) return; if (t.trim().toLowerCase() !== String(em).toLowerCase()) { alert('El correo no coincide. No se borró nada.'); return; }
+    try { await http('/rest/v1/rpc/ov_admin_delete_account', { method: 'POST', body: { p_owner: id } }); alert('Cuenta eliminada.'); load(); } catch (e) { alert(/could not find|schema cache/i.test(e.message) ? 'Falta correr supabase/legal.sql en Supabase.' : e.message); }
+  }
   function act(x, id) {
     const r = rows.filter(z => z.owner === id)[0]; if (!r) return;
     const base = [today(), r.paid_until].filter(Boolean).sort().pop();
@@ -117,6 +128,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     if (x === 'off') { if (confirm('¿Suspender ' + r.email + '? Va a quedar en solo lectura.')) patch(id, { status: 'suspendida' }); return; }
     if (x === 'on') { patch(id, { status: 'activa' }); return; }
     if (x === 'ed') edit(r);
+    if (x === 'del') delAcct(id);
   }
   const DEF = { prueba: [40, 5, 5], basico: [1, 2, 1], consultorio: [3, 5, 1], centro: [8, 12, 5], red: [40, 60, 5] };
   function edit(r, payTo) {

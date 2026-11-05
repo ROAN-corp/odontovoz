@@ -59,6 +59,9 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .btn svg { width: 20px; height: 20px; flex: none; }
 
 /* ---------- cabecera ---------- */
+.legal-bar { background: var(--deep); border-bottom: 1px solid rgba(255,255,255,.12); font-size: 13px; }
+.legal-bar .wrap { display: flex; justify-content: flex-end; gap: 18px; min-height: 30px; align-items: center; flex-wrap: wrap; }
+.legal-bar a { color: #cfe7e3; text-decoration: underline; text-underline-offset: 3px; }
 .top { position: sticky; top: 0; z-index: 20; background: var(--deep); color: #fff; }
 .top .wrap { display: flex; align-items: center; gap: 18px; min-height: 64px; }
 .brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font: 800 21px/1 var(--display); }
@@ -246,6 +249,7 @@ footer .brand { margin-right: auto; }
 </head>
 <body>
 
+<div class="legal-bar"><div class="wrap"><a href="baja.html#arrepentimiento">Botón de arrepentimiento</a><a href="baja.html">Botón de baja de servicio</a></div></div>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="#" aria-label="OdontoVoz, inicio">
@@ -546,7 +550,11 @@ footer .brand { margin-right: auto; }
   <div class="wrap">
     <span class="brand">OdontoVoz</span>
     <a href="app/">Abrir la app</a>
+    <a href="terminos.html">Términos y condiciones</a>
     <a href="privacidad.html">Política de privacidad</a>
+    <a href="baja.html">Botón de baja de servicio</a>
+    <a href="baja.html#arrepentimiento">Botón de arrepentimiento</a>
+    <a href="terminos.html#promociones">Bases de las promociones</a>
     <span id="contactFoot"></span>
     <span>Un producto de <a href="https://roan-corp.github.io/">ROAN corp</a> · Hecho en la Patagonia, Argentina · 2026</span>
   </div>
@@ -565,7 +573,7 @@ const PLANES = [
 ];
 /* promoción: se muestra sola entre estas fechas (hora de Argentina) y desaparece después */
 const PROMO = { desde: '2026-11-01T00:00:00-03:00', hasta: '2026-12-01T00:00:00-03:00', descuento: 35, titulo: 'Noviembre: 35% de descuento en tu primer mes', texto: 'Si te sumás en noviembre, el primer mes de cualquier plan te sale 35% menos. Es por única vez: desde el segundo mes pagás el precio normal.' };
-const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, sin permanencia: podés cambiar de plan o sumar y quitar consultorios mes a mes.';
+const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, sin permanencia: podés cambiar de plan o sumar y quitar consultorios mes a mes. Ver términos y bases de las promociones.';
 
 (function () {
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
