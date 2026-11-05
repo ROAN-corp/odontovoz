@@ -136,7 +136,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
 ## OdontoVoz 1.2 · suscripciones
-- Cada cuenta nueva recibe 30 días de prueba gratis (tabla `ov_accounts`, script `supabase/licencias.sql`).
+- Cada cuenta nueva recibe 7 días de prueba gratis; las primeras 50 del lanzamiento, 14 días (tabla `ov_accounts`, columna `promo`, scripts `supabase/licencias.sql` y `supabase/prueba-7-dias.sql`).
 - Si la suscripción vence o se suspende, la cuenta queda en **solo lectura**: ve y descarga sus datos, pero no puede cargar nada nuevo. El servidor lo hace cumplir (no se puede saltear desde el teléfono).
 - Panel de administración: https://roan-corp.github.io/odontovoz/admin.html (entrar con una cuenta administradora). Desde ahí: +1 mes, +1 año, suspender, reactivar, cambiar plan y notas.
 - Para sumar otro administrador (cuando tenga cuenta creada), en Supabase › SQL Editor:

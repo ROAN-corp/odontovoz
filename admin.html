@@ -41,7 +41,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
 (function () {
   'use strict';
   const URL0 = 'https://hcppfvioiaaejayzzhpa.supabase.co', KEY = 'sb_publishable_N-Qc-l7kJc4A7rvX68ko7Q_CiTI2HtU';
-  const PLANES = { prueba: 'Prueba', basico: 'Básico', consultorio: 'Consultorio', centro: 'Centro' };
+  const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio', centro: 'Centro' };
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let ses = null, rows = [], q = '', filt = 'todas';

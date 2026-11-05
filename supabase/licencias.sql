@@ -24,7 +24,8 @@ create table if not exists public.ov_accounts (
   email        text,
   plan         text not null default 'prueba',          -- prueba, basico, consultorio, centro (se pueden sumar)
   status       text not null default 'activa' check (status in ('activa', 'suspendida')),
-  trial_until  date not null default (current_date + 30),
+  trial_until  date not null default (current_date + 7),
+  promo        text,                                   -- 'lanzamiento50': de los primeros 50, prueba de 14 días
   paid_until   date,
   max_devices  int  not null default 3,
   notes        text,
@@ -51,11 +52,20 @@ language sql stable security definer set search_path = public as $$
 $$;
 grant execute on function public.ov_is_active(uuid) to authenticated;
 
+alter table public.ov_accounts add column if not exists promo text;
+alter table public.ov_accounts alter column trial_until set default (current_date + 7);
+
 -- 3) Toda cuenta nueva recibe su licencia de prueba automáticamente
 create or replace function public.ov_new_account() returns trigger
 language plpgsql security definer set search_path = public as $$
+declare usados int;
 begin
-  insert into public.ov_accounts (owner, email) values (new.id, new.email) on conflict (owner) do nothing;
+  -- lanzamiento: las primeras 50 cuentas nuevas tienen 14 días de prueba; después, 7
+  perform pg_advisory_xact_lock(4202611);
+  select count(*) into usados from public.ov_accounts where promo = 'lanzamiento50';
+  insert into public.ov_accounts (owner, email, trial_until, promo)
+  values (new.id, new.email, current_date + case when usados < 50 then 14 else 7 end, case when usados < 50 then 'lanzamiento50' end)
+  on conflict (owner) do nothing;
   return new;
 end $$;
 drop trigger if exists ov_new_account on auth.users;
