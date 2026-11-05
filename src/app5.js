@@ -575,7 +575,7 @@
   A.acts.cmdSayH = el => { const r = A.cmd.exec(el.getAttribute('data-say'), {}); if (S.modal && S.modal.type === 'voiceHelp') { const o = $('#cmdOut'); if (o) o.textContent = r.msg || ''; } else if (r.msg) A.toast(r.msg); };
   A.chg.ttsSet = el => { V.tts = el.checked; try { localStorage.setItem('odontovoz.tts', el.checked ? '1' : '0'); } catch (e) { /* nada */ } };
 
-  A.SUPPORT = A.SUPPORT || { whatsapp: '', email: 'somosroan@gmail.com' };
+  A.SUPPORT = A.SUPPORT || { whatsapp: '5492984513279', email: 'somosroan@gmail.com', lines: [['Rodrigo', '5492984513279'], ['Angel', '5492984764428']] };
   const FAQ = [
     ['El micrófono no anda', 'En la app instalada, aceptá el permiso de micrófono (Ajustes del teléfono → Apps → OdontoVoz → Permisos). En la computadora usá Chrome. En la vista previa dentro de Claude el micrófono está bloqueado.'],
     ['El dictado se corta', 'El micrófono sigue escuchando hasta que lo apagás. Si el teléfono bloquea la pantalla, se detiene: dejá la pantalla encendida mientras atendés.'],
@@ -592,7 +592,7 @@
   MF.support = () => {
     const s = A.SUPPORT, rep = A.supportReport();
     return A.modalShell('Ayuda y soporte', '<div class="cmd-list">' + FAQ.map(f => '<details class="block"><summary style="cursor:pointer;font-weight:700">' + esc(f[0]) + '</summary><p class="hint" style="margin:6px 0 0">' + esc(f[1]) + '</p></details>').join('') + '</div>' +
-      '<div class="block"><h3>Contactar al soporte</h3>' + (s.whatsapp || s.email ? '<div class="row-btns">' + (s.whatsapp ? '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + esc(s.whatsapp.replace(/\D/g, '')) + '?text=' + encodeURIComponent('Hola, necesito ayuda con OdontoVoz.\n\n' + rep) + '">WhatsApp de soporte</a><span class="mono hint">' + esc(s.whatsapp) + '</span>' : '') + (s.email ? '<span class="mono hint">' + esc(s.email) + '</span>' : '') + '</div>' : '<div class="hint" style="margin:0">El contacto de soporte se configura al publicar la app.</div>') +
+      '<div class="block"><h3>Contactar al soporte</h3>' + (s.whatsapp || s.email ? '<div class="row-btns">' + (s.whatsapp ? (s.lines || [['', s.whatsapp]]).map(L => '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/' + esc(L[1].replace(/\D/g, '')) + '?text=' + encodeURIComponent('Hola' + (L[0] ? ' ' + L[0] : '') + ', necesito ayuda con OdontoVoz.\n\n' + rep) + '">WhatsApp' + (L[0] ? ' ' + esc(L[0]) : ' de soporte') + '</a><span class="mono hint">' + esc(L[1].replace(/^549/, '').replace(/^(\d{4})(\d{6})$/, '$1 $2')) + '</span>').join('') : '') + (s.email ? '<span class="mono hint">' + esc(s.email) + '</span>' : '') + '</div>' : '<div class="hint" style="margin:0">El contacto de soporte se configura al publicar la app.</div>') +
       '<div class="hint">Si algo falla, copiá este informe y mandalo al soporte: ayuda a encontrar el problema. No incluye datos de pacientes.</div><textarea id="supRep" class="inp" rows="6" readonly>' + esc(rep) + '</textarea><div class="row-btns"><button class="btn" data-act="copyText" data-text="' + esc(rep) + '">Copiar informe</button></div></div>' +
       '<div class="small-note">OdontoVoz ' + esc(A.VERSION) + '</div>', '<button class="btn primary" data-act="closeModal">Listo</button>', true);
   };

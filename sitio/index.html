@@ -158,6 +158,11 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .plan .btn { width: 100%; min-height: 48px; font-size: 16px; }
 .plan.star .btn { background: var(--sun); color: #2b2100; }
 .plans-note { margin-top: 22px; color: var(--ink-2); font-size: 16px; max-width: 80ch; }
+.plan .price .was { font: 600 16px var(--body); display: flex; gap: 8px; align-items: center; opacity: .8; }
+.plan .price .was em { font-style: normal; font-weight: 800; background: var(--sun); color: #2b2100; border-radius: 999px; padding: 2px 9px; font-size: 14px; }
+.plan li s { opacity: .7; }
+.promo { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; background: var(--sun); color: #2b2100; border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; font-size: 17px; }
+.promo b { font: 800 19px var(--display); }
 @media (max-width: 1000px) { .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .plans { grid-template-columns: 1fr; } }
 
@@ -277,7 +282,7 @@ footer .brand { margin-right: auto; }
         </a>
         <a class="btn line" href="app/">Usarla en la web</a>
       </div>
-      <p class="fine">30 días de prueba gratis, sin tarjeta. Tus datos siempre son tuyos.</p>
+      <p class="fine">7 días de prueba gratis (14 para los primeros 50), sin tarjeta. Tus datos siempre son tuyos.</p>
     </div>
 
     <div class="demo" role="img" aria-label="Ejemplo: se dice «caries en el 36 por oclusal» y el odontograma marca la cara oclusal del 36 en azul.">
@@ -550,25 +555,39 @@ footer .brand { margin-right: auto; }
 <script>
 /* ====== DATOS EDITABLES: planes y contacto ======
    Para cambiar precios o textos de los planes, se edita solo esta parte. */
-const CONTACTO = { whatsapp: '', email: 'somosroan@gmail.com' }; // ej.: whatsapp: '5492995551234', email: 'hola@odontovoz.com.ar'
+const CONTACTO = { whatsapp: ['5492984513279', '5492984764428'], nombres: ['Rodrigo', 'Angel'], email: 'somosroan@gmail.com' }; // números con código de país (549 + área + número)
+/* precio: en pesos por mes (número); los textos se arman solos */
 const PLANES = [
-  { nombre: 'Prueba', quien: 'Para conocerla con tus pacientes reales.', precio: 'Gratis', por: '30 días', items: ['Todas las funciones', '1 profesional', 'Hasta 2 equipos', 'Sin tarjeta de crédito'], boton: 'Empezar gratis', link: 'app/' },
-  { nombre: 'Profesional', quien: 'Un odontólogo, en uno o varios consultorios.', precio: '$19.900', por: 'por mes', items: ['1 profesional', '1 consultorio incluido', 'Consultorio adicional: precio a confirmar (hasta 5)', 'Hasta 2 equipos (celular y PC)', 'Asistente por voz y respaldo en la nube'], boton: 'Contratar', destacado: false },
-  { nombre: 'Consultorio', quien: 'Varios profesionales con recepción.', precio: '$34.900', por: 'por mes', items: ['Hasta 3 profesionales', 'Recepción incluida', 'Hasta 5 equipos', 'Agenda compartida en vivo'], boton: 'Contratar', destacado: true },
-  { nombre: 'Centro', quien: 'Clínicas y centros odontológicos.', precio: '$59.900', por: 'por mes', items: ['Hasta 8 profesionales', 'Hasta 12 equipos', 'Liquidación por obra social', 'Ayuda para migrar los datos'], boton: 'Consultar' }
+  { nombre: 'Prueba', quien: 'Para conocerla con tus pacientes reales.', precio: 0, por: '7 días', items: ['Todas las funciones', '1 profesional', 'Hasta 2 equipos', 'Sin tarjeta de crédito', 'Lanzamiento: los primeros 50 tienen 14 días'], boton: 'Empezar gratis', link: 'app/' },
+  { nombre: 'Profesional', quien: 'Un odontólogo, en uno o varios consultorios.', precio: 26900, items: ['1 profesional', '1 consultorio incluido', 'Consultorio adicional (hasta 5 en total): {4900}', 'Hasta 2 equipos (celular y PC)', 'Asistente por voz y respaldo en la nube'], boton: 'Contratar' },
+  { nombre: 'Consultorio', quien: 'Varios profesionales con recepción.', precio: 51900, items: ['Hasta 3 profesionales', 'Recepción incluida', 'Hasta 5 equipos', 'Agenda compartida en vivo'], boton: 'Contratar', destacado: true },
+  { nombre: 'Centro', quien: 'Clínicas y centros odontológicos.', precio: 89900, items: ['Hasta 8 profesionales', 'Hasta 12 equipos', 'Liquidación por obra social', 'Ayuda para migrar los datos'], boton: 'Consultar' }
 ];
-const NOTA_PLANES = 'Precios de lanzamiento en pesos argentinos, IVA incluido, de referencia: pueden cambiar antes del lanzamiento oficial. Pagando el año completo, dos meses sin cargo.';
+/* promoción: se muestra sola entre estas fechas (hora de Argentina) y desaparece después */
+const PROMO = { desde: '2026-11-01T00:00:00-03:00', hasta: '2026-12-01T00:00:00-03:00', descuento: 35, titulo: 'Noviembre: 35% de descuento en tu primer mes', texto: 'Si te sumás en noviembre, el primer mes de cualquier plan te sale 35% menos. Es por única vez: desde el segundo mes pagás el precio normal.' };
+const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, sin permanencia: podés cambiar de plan o sumar y quitar consultorios mes a mes.';
 
 (function () {
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const WA = [].concat(CONTACTO.whatsapp || []).filter(Boolean);
   const contactLink = (plan) => {
-    if (CONTACTO.whatsapp) return 'https://wa.me/' + CONTACTO.whatsapp.replace(/\D/g, '') + '?text=' + encodeURIComponent('Hola, quiero el plan ' + plan + ' de OdontoVoz.');
-    if (CONTACTO.email) return 'mailto:' + CONTACTO.email + '?subject=' + encodeURIComponent('Plan ' + plan + ' de OdontoVoz');
+    if (WA.length) return 'https://wa.me/' + WA[0].replace(/\D/g, '') + '?text=' + encodeURIComponent(plan ? 'Hola, quiero el plan ' + plan + ' de OdontoVoz.' : 'Hola, quiero hacer una consulta sobre OdontoVoz.');
+    if (CONTACTO.email) return 'mailto:' + CONTACTO.email + '?subject=' + encodeURIComponent(plan ? 'Plan ' + plan + ' de OdontoVoz' : 'Consulta sobre OdontoVoz');
     return 'app/';
   };
-  document.getElementById('plans').innerHTML = PLANES.map(p => '<article class="plan' + (p.destacado ? ' star' : '') + '"><h3>' + esc(p.nombre) + '</h3><p class="who">' + esc(p.quien) + '</p><p class="price">' + esc(p.precio) + ' <small>' + esc(p.por) + '</small></p><ul>' + p.items.map(i => '<li>' + esc(i) + '</li>').join('') + '</ul><a class="btn ' + (p.destacado ? '' : 'teal') + '" href="' + esc(p.link || contactLink(p.nombre)) + '">' + esc(p.link || CONTACTO.whatsapp || CONTACTO.email ? p.boton : 'Probar gratis') + '</a></article>').join('');
-  document.getElementById('plansNote').textContent = NOTA_PLANES + (CONTACTO.whatsapp || CONTACTO.email ? '' : ' Todos empiezan con la prueba gratis; al terminar, elegís el plan desde la app.');
-  if (CONTACTO.whatsapp || CONTACTO.email) document.getElementById('contactFoot').innerHTML = '<a href="' + esc(contactLink('')) + '">Contacto</a>';
+  const now = Date.now(), promo = now >= Date.parse(PROMO.desde) && now < Date.parse(PROMO.hasta) ? PROMO : null;
+  const pesos = n => '$' + Math.round(n).toLocaleString('es-AR');
+  const conDesc = n => promo ? Math.round(n * (100 - promo.descuento) / 100) : n;
+  const item = t => esc(t).replace(/\{(\d+)\}/g, (m, n) => pesos(+n) + ' por mes cada uno' + (promo ? '; el primer mes, ' + pesos(conDesc(+n)) : ''));
+  const precio = p => {
+    if (!p.precio) return '<p class="price">Gratis <small>' + esc(p.por || '') + '</small></p>';
+    if (!promo) return '<p class="price">' + pesos(p.precio) + ' <small>por mes</small></p>';
+    return '<p class="price"><span class="was"><s>' + pesos(p.precio) + '</s> <em>−' + promo.descuento + '%</em></span>' + pesos(conDesc(p.precio)) + ' <small>el primer mes · después ' + pesos(p.precio) + ' por mes</small></p>';
+  };
+  if (promo) document.getElementById('plans').insertAdjacentHTML('beforebegin', '<div class="promo" role="note"><b>' + esc(promo.titulo) + '</b><span>' + esc(promo.texto) + '</span></div>');
+  document.getElementById('plans').innerHTML = PLANES.map(p => '<article class="plan' + (p.destacado ? ' star' : '') + '"><h3>' + esc(p.nombre) + '</h3><p class="who">' + esc(p.quien) + '</p>' + precio(p) + '<ul>' + p.items.map(i => '<li>' + item(i) + '</li>').join('') + '</ul><a class="btn ' + (p.destacado ? '' : 'teal') + '" href="' + esc(p.link || contactLink(p.nombre)) + '">' + esc(p.link || WA.length || CONTACTO.email ? p.boton : 'Probar gratis') + '</a></article>').join('');
+  document.getElementById('plansNote').textContent = NOTA_PLANES + ' Todos empiezan con la prueba gratis.';
+  if (WA.length || CONTACTO.email) document.getElementById('contactFoot').innerHTML = '<a href="' + esc(contactLink('')) + '">Contacto</a>' + WA.map((n, i) => ' · <a href="https://wa.me/' + esc(n.replace(/\D/g, '')) + '">WhatsApp ' + esc((CONTACTO.nombres || [])[i] || '') + ' ' + esc(n.replace(/^549/, '').replace(/^(\d{4})(\d{6})$/, '$1 $2')) + '</a>').join('');
 
   /* versión del APK desde GitHub */
   fetch('https://api.github.com/repos/ROAN-corp/odontovoz/releases/latest').then(r => r.ok ? r.json() : null).then(d => {
