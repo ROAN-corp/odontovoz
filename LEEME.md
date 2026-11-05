@@ -219,3 +219,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - «Quitar»/«Desconectar» un equipo (desde el panel o desde otro equipo) ya no borra el registro: lo marca desconectado (`removed_at`, `removed_by`; SQL `supabase/equipos-desconectar.sql`). Ese equipo no puede volver a registrarse solo.
 - La app revisa su registro cada minuto y en el acto si el servidor le rechaza un cambio; si está desconectado, cierra la sesión, borra los datos de ese equipo y al volver a abrir explica el motivo. Para usarlo otra vez hay que ingresar de nuevo y entra como equipo nuevo.
 - Las desconexiones hechas por el soporte no cuentan para el límite de 4 por mes del cliente.
+
+## OdontoVoz 1.11.2
+- Agenda: el menú «Más» ya no se corta en los días que no son hoy (se acomoda siempre dentro de la pantalla). Se sacó el botón «Hoy» repetido; el de siempre ahora también lleva a la hora actual.

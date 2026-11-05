@@ -222,13 +222,23 @@
   /* =====================================================================
      8) AGENDA: botón «Hoy» cuando estás en otro día; lleva a la hora actual
      ===================================================================== */
-  A.acts.agTodayNow = () => { S.date = A.today(); S.calM = null; A.refresh(); setTimeout(() => { if (A.scrollToNow) A.scrollToNow(true); }, 90); };
-  function mountToday() {
-    const head = document.querySelector('#view-agenda .ag-head'); if (!head) return;
-    const has = head.querySelector('.ag-today'), need = S.date !== A.today();
-    if (need && !has) { const n = head.querySelector('[data-act="agNext"]'); if (n) n.insertAdjacentHTML('beforebegin', '<button class="btn ag-today" data-act="agTodayNow" title="Volver a hoy, a la hora actual">Hoy</button>'); }
-    if (!need && has) has.remove();
+  /* el botón «Hoy» que ya trae la agenda ahora también lleva a la hora actual (no se agrega otro) */
+  const agTodayPrev = A.acts.agToday;
+  A.acts.agToday = (el, ev) => { if (agTodayPrev) agTodayPrev(el, ev); else { S.date = A.today(); A.refresh(); } S.calM = null; setTimeout(() => { if (A.scrollToNow) A.scrollToNow(true); }, 90); };
+  A.acts.agTodayNow = A.acts.agToday;
+  function mountToday() { const dup = document.querySelector('#view-agenda .ag-today'); if (dup) dup.remove(); }
+  /* el menú «Más» nunca se sale de la pantalla */
+  function fitMenus() {
+    document.querySelectorAll('.more-menu').forEach(m => {
+      m.style.left = ''; m.style.right = ''; m.style.maxWidth = '';
+      const vw = document.documentElement.clientWidth, r = m.getBoundingClientRect(), pr = m.offsetParent ? m.offsetParent.getBoundingClientRect() : { left: 0, right: vw };
+      if (r.right > vw - 8) { m.style.left = 'auto'; m.style.right = '0px'; }
+      const r2 = m.getBoundingClientRect();
+      if (r2.left < 8) { m.style.right = 'auto'; m.style.left = (8 - pr.left) + 'px'; m.style.maxWidth = (vw - 16) + 'px'; }
+    });
   }
+  A.fitMenus = fitMenus;
+  window.addEventListener('resize', () => fitMenus());
 
   /* ---------- migración: motivos del turnero ---------- */
   let migrated = false;
@@ -238,7 +248,7 @@
   }
 
   const afterPrev = A.afterRefresh;
-  A.afterRefresh = () => { if (afterPrev) afterPrev(); try { migrate(); if (S.tab === 'inicio') { mountHome(); mountLogo(); } if (S.tab === 'agenda') mountToday(); } catch (e) { if (A.logError) A.logError('v110', e); } };
+  A.afterRefresh = () => { if (afterPrev) afterPrev(); try { migrate(); if (S.tab === 'inicio') { mountHome(); mountLogo(); } if (S.tab === 'agenda') { mountToday(); fitMenus(); } } catch (e) { if (A.logError) A.logError('v110', e); } };
 
   /* ---------- estilos ---------- */
   const css = document.createElement('style');
@@ -250,7 +260,7 @@
     '.home-actions.many{grid-template-columns:repeat(2,minmax(0,1fr))}@media (min-width:760px){.home-actions.many{grid-template-columns:repeat(4,minmax(0,1fr))}}' +
     '.home-actions.editing .ha{border-style:dashed;cursor:grab;touch-action:none;animation:hwig .35s ease-in-out infinite alternate}.home-actions .ha.dragging{opacity:.75;box-shadow:var(--shadow);cursor:grabbing;animation:none}@keyframes hwig{from{transform:rotate(-.6deg)}to{transform:rotate(.6deg)}}' +
     '.he-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0;font-size:14px;color:var(--ink-2)}.he-bar span{flex:1 1 auto}.hp-list{display:grid;gap:4px}' +
-    '.ag-today{font-weight:800;color:var(--accent);border-color:var(--accent)}' +
+    '[data-act="agToday"]{font-weight:800;color:var(--accent);border-color:var(--accent)}' +
     '.mc-d{position:relative;align-items:center;justify-content:center;padding:3px 0;min-height:34px}.mc-d .mc-n{line-height:1.1}.mc-d .mc-t{font:600 9.5px var(--f-mono,monospace);color:var(--ink-2);line-height:1}.mc-d.sel .mc-t{color:inherit;opacity:.85}.mc-d i{display:none}';
   document.head.appendChild(css);
 })();
