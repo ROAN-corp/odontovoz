@@ -2,7 +2,7 @@
 const fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..'), file = path.join(root, 'index.html');
 let lines = fs.readFileSync(file, 'utf8').split('\n');
-const order = ['ovcmd.js', 'app5.js', 'app6.js', 'app7.js', 'app8.js', 'app9.js', 'app10.js', 'cloud.js', 'lic.js', 'app11.js', 'app12.js', 'app13.js', 'app14.js', 'app15.js', 'app16.js', 'app17.js', 'app18.js', 'app19.js', 'app20.js', 'app21.js', 'app22.js', 'app23.js'];
+const order = ['ovcmd.js', 'app5.js', 'app6.js', 'app7.js', 'app8.js', 'app9.js', 'app10.js', 'cloud.js', 'lic.js', 'app11.js', 'app12.js', 'app13.js', 'app14.js', 'app15.js', 'app16.js', 'app17.js', 'app18.js', 'app19.js', 'app20.js', 'app21.js', 'app22.js', 'app23.js', 'app24.js'];
 for (const name of order) {
   const p = path.join(root, 'src', name); if (!fs.existsSync(p)) continue;
   const src = fs.readFileSync(p, 'utf8').replace(/\n+$/, '').split('\n'), head = src[0];
