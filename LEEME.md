@@ -136,7 +136,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
 ## OdontoVoz 1.2 · suscripciones
-- Cada cuenta nueva recibe 30 días de prueba gratis (tabla `ov_accounts`, script `supabase/licencias.sql`).
+- Cada cuenta nueva recibe 7 días de prueba gratis; las primeras 50 del lanzamiento, 14 días (tabla `ov_accounts`, columna `promo`, scripts `supabase/licencias.sql` y `supabase/prueba-7-dias.sql`).
 - Si la suscripción vence o se suspende, la cuenta queda en **solo lectura**: ve y descarga sus datos, pero no puede cargar nada nuevo. El servidor lo hace cumplir (no se puede saltear desde el teléfono).
 - Panel de administración: https://roan-corp.github.io/odontovoz/admin.html (entrar con una cuenta administradora). Desde ahí: +1 mes, +1 año, suspender, reactivar, cambiar plan y notas.
 - Para sumar otro administrador (cuando tenga cuenta creada), en Supabase › SQL Editor:
@@ -180,3 +180,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Carga con el dedo (teclado numérico abajo) o por voz: «empezar sondaje», «tres dos tres», «323 sangra distal», «4 5 3 sangra todo», «placa», «recesión 1 0 1», «movilidad 2», «furca 1 en el 46», «falta el 18», «implante en el 13», «saltear», «anterior», «borrá», «ir al 36 por lingual», «bolsa de 7 en el 46 por distal», «pasá a palatino», «resumen», «dónde estoy», «terminar».
 - Comandos nuevos en cualquier pantalla: «periodontograma de Pérez», «hola», «gracias», «qué hora es», «qué día es hoy», «cuántos me quedan», «cuánto cobré hoy», «quién está en la sala», «qué tengo mañana / el jueves», «¿tengo lugar el viernes?», «¿a qué hora viene Pérez?», «ya atendí a Gómez», «está en el sillón», «pasá el turno de Pérez al jueves a las 17», «mandale un WhatsApp a Pérez», «llamá a Gómez», «repetí».
 - Si no entiende una frase, sugiere ejemplos según la pantalla donde estás.
+
+## OdontoVoz 1.7.1 · planes nuevos y correcciones en la historia clínica
+- Planes: prueba gratis de 7 días (14 para las primeras 50 cuentas, columna `promo` en `ov_accounts`, script `supabase/prueba-7-dias.sql`). Profesional $26.900 (+ $4.900 por consultorio adicional), Consultorio $51.900, Centro $89.900. Abono mensual, sin permanencia. En noviembre de 2026 la web muestra 35% de descuento (se apaga sola el 1.º de diciembre; datos en `PROMO` al final de `sitio/index.html`).
+- Periodontograma: botón ⌫ en el teclado para borrar la casilla elegida, «Borrar 18 vestibular» para toda la cara, «Eliminar este» para el examen del día y, por voz, «borrar la 36» o «borrar la 36 por lingual».
+- Evolución clínica (`src/app15.js`): las notas automáticas (laboratorio, recetas, «se realizó») se borran siempre; la del laboratorio queda unida a su pedido (al borrarla se puede quitar el pedido, y al quitar el pedido se va su nota). Buscador con resaltado, filtros por tipo, profesional y fechas, agrupado por mes, «Ver más» (antes mostraba solo 40), notas largas plegadas y «Copiar». Las notas de hoy se borran; las de días anteriores se anulan con motivo: quedan ocultas («Mostrar anuladas») y en el PDF figuran como ANULADA (Ley 26.529). Por voz: «buscar en la evolución endodoncia».

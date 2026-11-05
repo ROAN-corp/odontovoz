@@ -100,7 +100,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.7.${{ github.run_number }}
-          name: OdontoVoz 1.7 (compilación ${{ github.run_number }})
+          name: OdontoVoz 1.7.1 (compilación ${{ github.run_number }})
           body: |
             Teléfono: descargá **OdontoVoz.apk** e instalalo.
             PC: descargá **OdontoVoz-web.html** y abrilo con doble clic (Chrome o Edge).
