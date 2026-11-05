@@ -541,7 +541,7 @@
     [IC.menu, 'Menú, inicio y volver', 'Arriba a la izquierda: la flecha vuelve a la pantalla anterior (también el botón atrás del teléfono), el ☰ abre el menú con todas las secciones y la casita te lleva al inicio.'],
     [IC.mic, 'La voz, siempre a mano', 'El botón redondo de abajo a la derecha escucha y hace lo que pedís: «turno para Pérez mañana a las 10», «abrí la ficha de Gómez», «caries oclusal del 36». Sigue escuchando hasta que lo tocás de nuevo o decís «terminar dictado».'],
     [IC.hf, 'Manos libres', 'Con «Manos libres» activo, la app espera que digas «odontovoz» antes de cada pedido. Ideal para atender con guantes sin tocar la pantalla.'],
-    [IC.cal, 'Agenda', 'Deslizá los días hacia los costados. «+ Turno» da un turno; en «Más» están el sobreturno, los bloqueos y los recordatorios por WhatsApp.'],
+    [IC.cal, 'Agenda', 'Tocá un día de la tira o usá las flechas ‹ Hoy › de abajo. «+ Turno» da un turno; en «Más» están el sobreturno, los bloqueos y los recordatorios por WhatsApp.'],
     [IC.flow, 'La atención, paso a paso', 'Al tocar «Atender», la ficha te guía en orden: recepción, historia clínica, odontograma, consentimiento, plan, presupuesto, cobro y próximo turno. Decí «siguiente paso» para avanzar.'],
     [IC.flask, A.DEMO ? 'Modo prueba y uso real' : 'Tus datos', A.DEMO ? 'Ahora estás en modo prueba, con pacientes de ejemplo para mostrar la app. Cuando quieras empezar con tus datos, entrá al menú → «Modo prueba y uso real».' : 'Estás usando la app con tus datos reales. Hacé una copia de seguridad seguido desde el menú → «Copia de seguridad».']
   ];
