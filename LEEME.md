@@ -166,3 +166,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Laboratorio: lista compacta con pestañas (activos, atrasados, en el laboratorio, para probar o instalar, entregados), filtro por laboratorio, acción principal en cada fila y menú ⋮.
 - Avisos: cuando otro equipo marca que llegó un paciente, este equipo suena, vibra y muestra un aviso (y una notificación del sistema si se activa). Ajustes › Avisos y sonidos.
 - Al abrir la app: logo animado con un acorde suave (se puede apagar).
+
+## OdontoVoz 1.6 · varios consultorios para el profesional
+- Modo profesional: hasta 5 consultorios (Menú › Mis consultorios y horarios). Cada uno con nombre, dirección, color, modalidad (propio, a porcentaje, institución) y tu porcentaje.
+- Semana de trabajo libre: franjas por día y consultorio (ej. lunes 9–12 en el 1 y 14–19 en el 2), con «repetir en» otros días y control de superposición.
+- Agenda única con franjas de color por consultorio, punto de color en cada turno, filtro por consultorio y «Hoy trabajás en…» en el inicio.
+- Turno nuevo: se sugiere el consultorio según la hora; se puede cambiar, también desde el turno abierto. Los pacientes son del profesional y se comparten entre consultorios.
+- Cobros por consultorio: al cobrar se elige el consultorio; resumen mensual con atendidos, cobrado, tu parte y lo que corresponde al consultorio.
+- Plan: `ov_accounts.max_locs` (1 a 5; vacío = 5 en prueba y plan Centro, 1 en los demás). Se edita en el panel de administración. Script: `supabase/consultorios.sql`.
