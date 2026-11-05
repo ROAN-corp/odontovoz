@@ -168,6 +168,7 @@
     else if (k === 'cash') A.S.cash = v;
     else if (k === 'liq') A.S.liq = v;
     else if (k === 'setup') { A.S.setup = v; A.applySetup(); }
+    if (A.journalSeen) A.journalSeen(k); /* lo que llega de otro equipo no se anota como cambio propio */
   }
   /* avisos de lo que hizo otro equipo (por ejemplo, la recepción) */
   function watchDay(old, nw) {

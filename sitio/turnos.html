@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedir turno · OdontoVoz</title>
+<meta name="description" content="Pedí tu turno online: elegí el motivo, el día y el horario.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="img/icono.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Schibsted+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f2f6f5; --white: #ffffff; --ink: #0f2a2b; --ink-2: #4a6264; --line: #d3e0de;
+  --teal: #0b6b6f; --deep: #08484b; --mint: #bfe8df; --sun: #f6c453; --red: #b3261e;
+  --display: 'Schibsted Grotesk', system-ui, sans-serif; --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #0d1b1c; --white: #132627; --ink: #e5efee; --ink-2: #9db4b3; --line: #24403f; --mint: #1d4a45; --teal: #3fb3ad; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #0d1b1c; --white: #132627; --ink: #e5efee; --ink-2: #9db4b3; --line: #24403f; --mint: #1d4a45; --teal: #3fb3ad; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 17px/1.5 var(--body); }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+header { background: var(--deep); color: #fff; padding: 22px 0 20px; }
+header .wrap { padding-bottom: 0; }
+header h1 { font: 800 26px/1.15 var(--display); margin: 0; }
+header p { margin: 4px 0 0; color: #cfe7e3; font-size: 15px; }
+h2 { font: 800 21px/1.2 var(--display); margin: 22px 0 10px; }
+.steps { display: flex; gap: 6px; margin: 16px 0 4px; }
+.steps span { flex: 1; height: 5px; border-radius: 99px; background: var(--line); }
+.steps span.on { background: var(--teal); }
+.opts { display: grid; gap: 8px; }
+.opt { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--white); color: inherit; font: inherit; cursor: pointer; min-height: 56px; }
+.opt:hover, .opt:focus-visible { border-color: var(--teal); outline: none; }
+.opt[aria-pressed="true"] { border-color: var(--teal); background: color-mix(in srgb, var(--teal) 10%, var(--white)); }
+.opt small { color: var(--ink-2); }
+.days { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.day { padding: 10px 6px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--white); color: inherit; font: inherit; cursor: pointer; text-align: center; line-height: 1.2; }
+.day b { display: block; font: 800 22px var(--display); }
+.day small { color: var(--ink-2); font-size: 13px; }
+.day[aria-pressed="true"] { border-color: var(--teal); background: color-mix(in srgb, var(--teal) 10%, var(--white)); }
+.times { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.time { padding: 12px 6px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--white); color: inherit; font: 700 17px var(--display); cursor: pointer; }
+.time[aria-pressed="true"] { background: var(--teal); color: #fff; border-color: var(--teal); }
+.pro-h { font-size: 14px; color: var(--ink-2); margin: 14px 0 6px; font-weight: 700; }
+label.f { display: block; font-size: 14px; font-weight: 700; margin: 12px 0 4px; }
+input.i, select.i, textarea.i { width: 100%; min-height: 48px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--white); color: inherit; font: inherit; }
+input.i:focus, select.i:focus, textarea.i:focus { border-color: var(--teal); outline: none; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 22px; border-radius: 999px; border: 0; font: 700 17px var(--display); cursor: pointer; text-decoration: none; }
+.btn.main { background: var(--teal); color: #fff; width: 100%; margin-top: 18px; }
+.btn.main:disabled { opacity: .5; cursor: default; }
+.btn.line { background: transparent; color: var(--teal); border: 1.5px solid var(--teal); }
+.back { background: none; border: 0; color: var(--teal); font: 700 15px var(--body); padding: 8px 0; cursor: pointer; }
+.box { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin: 12px 0; }
+.sum { display: grid; gap: 2px; }
+.sum b { font-family: var(--display); }
+.note { font-size: 14px; color: var(--ink-2); }
+.err { color: var(--red); font-weight: 700; margin-top: 10px; }
+.chk { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; margin-top: 14px; }
+.chk input { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; }
+.ok-ic { width: 64px; height: 64px; border-radius: 50%; background: var(--mint); display: grid; place-items: center; margin: 24px auto 8px; font-size: 32px; color: var(--deep); }
+.code { font: 800 28px var(--display); letter-spacing: .08em; text-align: center; margin: 6px 0; }
+.center { text-align: center; }
+.empty { text-align: center; padding: 36px 8px; color: var(--ink-2); }
+footer { text-align: center; font-size: 13px; color: var(--ink-2); padding: 18px 0 28px; }
+footer a { color: inherit; }
+@media (max-width: 420px) { .row { grid-template-columns: 1fr; } header h1 { font-size: 23px; } }
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1 id="cl">Turnos online</h1><p id="cla">Cargando…</p></div></header>
+<main class="wrap" id="app" aria-live="polite"><div class="empty">Cargando los horarios…</div></main>
+<footer>Turnos con <a href="./">OdontoVoz</a> · <a href="privacidad.html">Privacidad</a></footer>
+<script>
+(function () {
+  'use strict';
+  /* clave pública (publicable) del servidor: solo permite usar las dos funciones del turnero */
+  const SB = { url: 'https://hcppfvioiaaejayzzhpa.supabase.co', key: 'sb_publishable_N-Qc-l7kJc4A7rvX68ko7Q_CiTI2HtU' };
+  const slug = (new URLSearchParams(location.search).get('c') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const $ = s => document.querySelector(s), app = $('#app');
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const mm = t => String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+  const DOW = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'], MON = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const dt = k => new Date(k + 'T12:00:00');
+  const longDay = k => { const d = dt(k); return DOW[d.getDay()] + ' ' + d.getDate() + ' de ' + MON[d.getMonth()]; };
+  const money = n => '$' + Math.round(n).toLocaleString('es-AR');
+  async function rpc(fn, body) {
+    const r = await fetch(SB.url + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: SB.key, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const t = await r.text(); let d = null; try { d = t ? JSON.parse(t) : null; } catch (e) { d = null; }
+    if (!r.ok) throw new Error((d && (d.message || d.hint)) || 'Error ' + r.status);
+    return d;
+  }
+  let D = null;
+  const F = { step: 1, type: null, pro: 'any', date: null, slot: null, first: '', last: '', dni: '', phone: '', email: '', cov: '', note: '', ok: false, err: '', busy: false, done: null };
+  const steps = n => '<div class="steps" aria-hidden="true">' + [1, 2, 3, 4].map(i => '<span class="' + (i <= n ? 'on' : '') + '"></span>').join('') + '</div>';
+  const slotsFor = () => { const s = (D.slots || {})[F.type] || {}, out = {}; Object.keys(s).sort().forEach(k => { const l = s[k].filter(x => F.pro === 'any' || x[0] === F.pro); if (l.length) out[k] = l; }); return out; };
+  const proName = id => ((D.pros || []).filter(p => p.id === id)[0] || {}).name || '';
+
+  function render() {
+    let h = '';
+    if (F.done) {
+      h = '<div class="ok-ic" aria-hidden="true">✓</div><h2 class="center">¡Listo, pediste tu turno!</h2><div class="code">' + esc(F.done.code) + '</div><p class="center note">Guardá este código.</p>' +
+        '<div class="box sum"><b>' + esc(longDay(F.date)) + ' · ' + mm(F.slot[1]) + ' h</b><span>' + esc((D.types.filter(t => t.k === F.type)[0] || {}).label || '') + (D.pros.length > 1 ? ' con ' + esc(proName(F.slot[0])) : '') + '</span><span>' + esc(F.first + ' ' + F.last) + '</span></div>' +
+        '<div class="box"><b>¿Y ahora?</b><p style="margin:4px 0 0">El consultorio te va a escribir por WhatsApp para <b>confirmar</b> el turno' + (D.sena ? ' y coordinar la seña de <b>' + money(D.sena) + '</b>' : '') + '. Hasta entonces el turno queda reservado como pendiente.</p></div>' +
+        (D.wa ? '<a class="btn line" style="width:100%" href="https://wa.me/' + esc(D.wa) + '?text=' + encodeURIComponent('Hola! Pedí un turno online para el ' + longDay(F.date) + ' a las ' + mm(F.slot[1]) + '. Código ' + F.done.code + '. ' + F.first + ' ' + F.last + '.') + '" target="_blank" rel="noopener">Escribirle al consultorio</a>' : '') +
+        '<button class="back" data-a="again" style="display:block;margin:14px auto 0">Pedir otro turno</button>';
+    } else if (F.step === 1) {
+      h = steps(1) + '<h2>¿Por qué querés venir?</h2><div class="opts">' + D.types.map(t => { const n = Object.keys((D.slots || {})[t.k] || {}).length; return '<button class="opt" data-a="type" data-k="' + esc(t.k) + '"' + (n ? '' : ' disabled') + '><span>' + esc(t.label) + '</span><small>' + (n ? n + ' día' + (n > 1 ? 's' : '') + ' con lugar' : 'sin lugar') + '</small></button>'; }).join('') + '</div>';
+      if (D.pros.length > 1) h += '<h2>¿Con quién?</h2><div class="opts"><button class="opt" data-a="pro" data-id="any" aria-pressed="' + (F.pro === 'any') + '"><span>Me da igual: el primer horario libre</span></button>' + D.pros.map(p => '<button class="opt" data-a="pro" data-id="' + esc(p.id) + '" aria-pressed="' + (F.pro === p.id) + '"><span>' + esc(p.name) + '</span><small>' + esc(p.spec) + '</small></button>').join('') + '</div>';
+      if (D.msg) h += '<p class="note">' + esc(D.msg) + '</p>';
+    } else if (F.step === 2) {
+      const s = slotsFor(), days = Object.keys(s);
+      h = steps(2) + '<button class="back" data-a="to" data-s="1">‹ Cambiar motivo</button><h2>Elegí el día</h2>';
+      if (!days.length) h += '<div class="empty">No hay horarios libres para este motivo. Probá con otro o escribile al consultorio.</div>';
+      else {
+        h += '<div class="days">' + days.map(k => { const d = dt(k); return '<button class="day" data-a="date" data-d="' + k + '" aria-pressed="' + (F.date === k) + '"><small>' + DOW[d.getDay()].slice(0, 3) + '</small><b>' + d.getDate() + '</b><small>' + MON[d.getMonth()].slice(0, 3) + ' · ' + s[k].length + '</small></button>'; }).join('') + '</div>';
+        if (F.date && s[F.date]) {
+          h += '<h2>Elegí el horario · ' + esc(longDay(F.date)) + '</h2>';
+          const by = {}; s[F.date].forEach(x => { (by[x[0]] = by[x[0]] || []).push(x); });
+          Object.keys(by).forEach(pid => { if (D.pros.length > 1) h += '<div class="pro-h">' + esc(proName(pid)) + '</div>'; h += '<div class="times">' + by[pid].map(x => '<button class="time" data-a="slot" data-p="' + esc(x[0]) + '" data-t="' + x[1] + '" data-u="' + x[2] + '" aria-pressed="' + (!!F.slot && F.slot[0] === x[0] && F.slot[1] === x[1]) + '">' + mm(x[1]) + '</button>').join('') + '</div>'; });
+          h += '<button class="btn main" data-a="to" data-s="3"' + (F.slot ? '' : ' disabled') + '>Seguir</button>';
+        }
+      }
+    } else if (F.step === 3) {
+      h = steps(3) + '<button class="back" data-a="to" data-s="2">‹ Cambiar día u horario</button><h2>Tus datos</h2>' +
+        '<div class="row"><div><label class="f" for="fFirst">Nombre</label><input class="i" id="fFirst" autocomplete="given-name" value="' + esc(F.first) + '"></div><div><label class="f" for="fLast">Apellido</label><input class="i" id="fLast" autocomplete="family-name" value="' + esc(F.last) + '"></div></div>' +
+        '<div class="row"><div><label class="f" for="fDni">DNI</label><input class="i" id="fDni" inputmode="numeric" value="' + esc(F.dni) + '"></div><div><label class="f" for="fPhone">Celular (WhatsApp)</label><input class="i" id="fPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej.: 298 4123456" value="' + esc(F.phone) + '"></div></div>' +
+        '<div class="row"><div><label class="f" for="fCov">Obra social <span class="note">(opcional)</span></label><input class="i" id="fCov" value="' + esc(F.cov) + '" placeholder="Particular, OSDE, IOSFA…"></div><div><label class="f" for="fMail">Correo <span class="note">(opcional)</span></label><input class="i" id="fMail" type="email" autocomplete="email" value="' + esc(F.email) + '"></div></div>' +
+        '<label class="f" for="fNote">¿Algo que quieras contar? <span class="note">(opcional)</span></label><textarea class="i" id="fNote" rows="2" maxlength="300">' + esc(F.note) + '</textarea>' +
+        '<label class="chk"><input type="checkbox" id="fOk"' + (F.ok ? ' checked' : '') + '> <span>Acepto que el consultorio use estos datos para darme el turno y contactarme (<a href="privacidad.html" target="_blank">privacidad</a>).</span></label>' +
+        (F.err ? '<div class="err" role="alert">' + esc(F.err) + '</div>' : '') + '<button class="btn main" data-a="to" data-s="4">Revisar</button>';
+    } else if (F.step === 4) {
+      h = steps(4) + '<button class="back" data-a="to" data-s="3">‹ Corregir mis datos</button><h2>Revisá tu turno</h2><div class="box sum"><b>' + esc(longDay(F.date)) + ' · ' + mm(F.slot[1]) + ' h</b><span>' + esc((D.types.filter(t => t.k === F.type)[0] || {}).label || '') + (D.pros.length > 1 ? ' con ' + esc(proName(F.slot[0])) : '') + '</span><span>' + esc(F.first + ' ' + F.last) + ' · DNI ' + esc(F.dni) + ' · ' + esc(F.phone) + '</span></div>' +
+        (D.sena ? '<p class="note">Para confirmar el turno se pide una seña de <b>' + money(D.sena) + '</b>: el consultorio te escribe para coordinarla. Si cancelás con al menos ' + (D.cancelHours || 24) + ' h de anticipación, la seña queda a favor para tu próxima consulta.</p>' : '<p class="note">El consultorio te va a escribir para confirmarlo.</p>') +
+        (F.err ? '<div class="err" role="alert">' + esc(F.err) + '</div>' : '') + '<button class="btn main" data-a="send"' + (F.busy ? ' disabled' : '') + '>' + (F.busy ? 'Enviando…' : 'Pedir el turno') + '</button>';
+    }
+    app.innerHTML = h;
+  }
+  function readForm() { const g = id => ($('#' + id) || {}).value || ''; if (!$('#fFirst')) return; F.first = g('fFirst').trim(); F.last = g('fLast').trim(); F.dni = g('fDni').replace(/\D/g, ''); F.phone = g('fPhone').trim(); F.cov = g('fCov').trim(); F.email = g('fMail').trim(); F.note = g('fNote').trim(); F.ok = !!($('#fOk') || {}).checked; }
+  function valid() {
+    if (F.first.length < 2 || F.last.length < 2) return 'Escribí tu nombre y apellido.';
+    if (F.dni.length < 6) return 'Revisá el DNI (solo números).';
+    if (F.phone.replace(/\D/g, '').length < 8) return 'Escribí tu celular con código de área.';
+    if (F.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(F.email)) return 'Revisá el correo o dejalo vacío.';
+    if (!F.ok) return 'Para seguir, aceptá el uso de tus datos para el turno.';
+    return '';
+  }
+  app.addEventListener('click', async e => {
+    const b = e.target.closest('[data-a]'); if (!b) return; const a = b.getAttribute('data-a');
+    if (a === 'type') { F.type = b.getAttribute('data-k'); F.date = null; F.slot = null; F.step = 2; }
+    else if (a === 'pro') { F.pro = b.getAttribute('data-id'); F.date = null; F.slot = null; }
+    else if (a === 'date') { F.date = b.getAttribute('data-d'); F.slot = null; }
+    else if (a === 'slot') { F.slot = [b.getAttribute('data-p'), +b.getAttribute('data-t'), +b.getAttribute('data-u')]; }
+    else if (a === 'to') { const s = +b.getAttribute('data-s'); if (F.step === 3) readForm(); F.err = ''; if (s === 4) { const v = valid(); if (v) { F.err = v; render(); return; } } F.step = s; window.scrollTo(0, 0); }
+    else if (a === 'again') { Object.assign(F, { step: 1, type: null, date: null, slot: null, done: null, err: '' }); await load(); return; }
+    else if (a === 'send') {
+      F.busy = true; F.err = ''; render();
+      try {
+        const r = await rpc('ov_booking_request', { p_slug: slug, p_req: { type: F.type, date: F.date, start: F.slot[1], dur: F.slot[2], pro: F.slot[0], first: F.first, last: F.last, dni: F.dni, phone: F.phone, email: F.email, cov: F.cov, note: F.note } });
+        if (r && r.ok) F.done = r; else { F.err = (r && r.msg) || 'No se pudo pedir el turno.'; if (r && r.taken) { F.step = 2; F.slot = null; await load(true); } }
+      } catch (er) { F.err = 'No hay conexión. Revisá internet y probá de nuevo.'; }
+      F.busy = false; window.scrollTo(0, 0);
+    }
+    render();
+    if (a === 'date') { const t = document.querySelector('.times'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  });
+  async function load(keep) {
+    if (!slug) { app.innerHTML = '<div class="empty">Este link está incompleto. Pedile al consultorio que te lo vuelva a mandar.</div>'; $('#cla').textContent = ''; return; }
+    try { D = await rpc('ov_booking_get', { p_slug: slug }); } catch (e) { app.innerHTML = '<div class="empty">No pudimos cargar los horarios. Revisá tu conexión y recargá la página.</div>'; return; }
+    if (!D) { app.innerHTML = '<div class="empty">Este turnero no está disponible en este momento. Comunicate con el consultorio.</div>'; $('#cla').textContent = ''; return; }
+    D.types = D.types || []; D.pros = D.pros || [];
+    $('#cl').textContent = D.clinic || 'Turnos online'; document.title = 'Pedir turno · ' + (D.clinic || 'OdontoVoz');
+    $('#cla').textContent = [D.addr, D.phone].filter(Boolean).join(' · ') || 'Pedí tu turno online';
+    if (!keep) render(); else render();
+  }
+  load();
+})();
+</script>
+</body>
+</html>
