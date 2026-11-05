@@ -85,7 +85,7 @@ El segundo proceso publica la app en `https://TU_USUARIO.github.io/odontovoz/`. 
 ### Activar las cuentas (una sola vez)
 1. Crear una cuenta gratis en https://supabase.com y un proyecto nuevo. **Región: Central EU (Frankfurt)**, porque la Argentina reconoce a la Unión Europea con protección adecuada para datos personales.
 2. En el proyecto: **SQL Editor** › pegar todo `supabase/schema.sql` › **Run**.
-3. **Authentication › URL Configuration**: en *Site URL* y en *Redirect URLs* poner `https://rodribobadilla.github.io/odontovoz/`.
+3. **Authentication › URL Configuration**: en *Site URL* y en *Redirect URLs* poner `https://roan-corp.github.io/odontovoz/`.
 4. **Authentication › Providers › Email**: dejar activado «Confirm email» y poner largo mínimo de contraseña 8.
 5. **Project Settings › API**: copiar *Project URL* y la clave **anon public** (la otra, *service_role*, no se comparte nunca).
 6. En GitHub: **Settings › Secrets and variables › Actions › pestaña Variables**: crear `SUPABASE_URL` y `SUPABASE_ANON_KEY` con esos dos valores.
@@ -133,12 +133,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.1
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
-- Versión web publicada en https://rodribobadilla.github.io/odontovoz/
+- Versión web publicada en https://roan-corp.github.io/odontovoz/
 
 ## OdontoVoz 1.2 · suscripciones
 - Cada cuenta nueva recibe 30 días de prueba gratis (tabla `ov_accounts`, script `supabase/licencias.sql`).
 - Si la suscripción vence o se suspende, la cuenta queda en **solo lectura**: ve y descarga sus datos, pero no puede cargar nada nuevo. El servidor lo hace cumplir (no se puede saltear desde el teléfono).
-- Panel de administración: https://rodribobadilla.github.io/odontovoz/admin.html (entrar con una cuenta administradora). Desde ahí: +1 mes, +1 año, suspender, reactivar, cambiar plan y notas.
+- Panel de administración: https://roan-corp.github.io/odontovoz/admin.html (entrar con una cuenta administradora). Desde ahí: +1 mes, +1 año, suspender, reactivar, cambiar plan y notas.
 - Para sumar otro administrador (cuando tenga cuenta creada), en Supabase › SQL Editor:
   `insert into public.ov_admins (user_id) select id from auth.users where email = 'CORREO' on conflict do nothing;`
 
@@ -155,8 +155,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Administradores: rodribobadilla5630@gmail.com y angelagatielo@gmail.com (cuentas principales, plan Centro sin vencimiento).
 
 ## Página web pública
-- `sitio/` es la página de OdontoVoz (presentación, planes, descargas, guía de instalación). Se publica en https://rodribobadilla.github.io/odontovoz/
-- La app web pasó a https://rodribobadilla.github.io/odontovoz/app/ (el panel sigue en /admin.html).
+- `sitio/` es la página de OdontoVoz (presentación, planes, descargas, guía de instalación). Se publica en https://roan-corp.github.io/odontovoz/
+- La app web pasó a https://roan-corp.github.io/odontovoz/app/ (el panel sigue en /admin.html).
 - Precios, textos de planes y contacto (WhatsApp/correo): al final de `sitio/index.html`, en `PLANES`, `NOTA_PLANES` y `CONTACTO`.
 
 ## OdontoVoz 1.5

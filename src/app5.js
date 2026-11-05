@@ -575,7 +575,7 @@
   A.acts.cmdSayH = el => { const r = A.cmd.exec(el.getAttribute('data-say'), {}); if (S.modal && S.modal.type === 'voiceHelp') { const o = $('#cmdOut'); if (o) o.textContent = r.msg || ''; } else if (r.msg) A.toast(r.msg); };
   A.chg.ttsSet = el => { V.tts = el.checked; try { localStorage.setItem('odontovoz.tts', el.checked ? '1' : '0'); } catch (e) { /* nada */ } };
 
-  A.SUPPORT = A.SUPPORT || { whatsapp: '', email: '' };
+  A.SUPPORT = A.SUPPORT || { whatsapp: '', email: 'somosroan@gmail.com' };
   const FAQ = [
     ['El micrófono no anda', 'En la app instalada, aceptá el permiso de micrófono (Ajustes del teléfono → Apps → OdontoVoz → Permisos). En la computadora usá Chrome. En la vista previa dentro de Claude el micrófono está bloqueado.'],
     ['El dictado se corta', 'El micrófono sigue escuchando hasta que lo apagás. Si el teléfono bloquea la pantalla, se detiene: dejá la pantalla encendida mientras atendés.'],
