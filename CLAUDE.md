@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.7 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.8 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.7 (noviemb
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app13, app14). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -36,8 +36,12 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.7 (noviemb
 - No crear cuentas ni escribir contraseñas en formularios. Pedir permiso antes de cambiar configuraciones de servicios.
 - No repetir credenciales en el chat.
 
+## Planes (hechos en 1.7.1/1.8)
+- Prueba 7 días (14 para las primeras 50 cuentas, `promo = 'lanzamiento50'`, ya cargado en Supabase). Profesional $26.900 + $4.900 por consultorio adicional; Consultorio $51.900; Centro $89.900; IVA incluido, abono mensual. Noviembre 2026: 35% solo el primer mes (`PROMO` en `sitio/index.html`, se apaga solo).
+- Soporte por WhatsApp: Rodrigo 5492984513279 y Angel 5492984764428 (`A.SUPPORT` en `src/app5.js`, `CONTACTO` en `sitio/index.html`).
+- La evolución clínica (`src/app15.js`) borra notas del día y automáticas; las manuales viejas se anulan (Ley 26.529). El plan de tratamiento está en `src/app16.js`.
+
 ## Pendiente
-- Precios de los planes y del consultorio adicional («a confirmar»); número de WhatsApp de contacto (`A.SUPPORT` en `src/app5.js` y `PLANES`/`CONTACTO` al final de `sitio/index.html`).
 - SMTP con la cuenta somosroan@gmail.com (el usuario genera la contraseña de aplicación); después cargar las plantillas `supabase/correos/*.html` en Supabase › Auth › Email templates y subir el límite de envíos.
 - Página de la empresa: crear el repo `roan-corp.github.io` en ROAN-corp y subir su `index.html` (diseño ya hecho, con la cordillera).
 - Publicar en Play Store y App Store (hoy el APK se instala desde la web).
