@@ -99,8 +99,8 @@ jobs:
       - name: Publicar para descargar desde el teléfono
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.14.${{ github.run_number }}
-          name: OdontoVoz 1.14 (compilación ${{ github.run_number }})
+          tag_name: v1.15.${{ github.run_number }}
+          name: OdontoVoz 1.15 (compilación ${{ github.run_number }})
           body: |
             Teléfono: descargá **OdontoVoz.apk** e instalalo.
             PC: descargá **OdontoVoz-web.html** y abrilo con doble clic (Chrome o Edge).
