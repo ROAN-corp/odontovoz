@@ -9253,7 +9253,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
      Las de otros días no se borran: se ANULAN con motivo y fecha, quedan ocultas y figuran tachadas en el PDF
      (Ley 26.529: la historia clínica es inviolable y se conserva 10 años). */
   const isVoid = n => !!(n && n.void);
-  const canDelete = n => n && !isVoid(n) && n.date === A.today() && !n.signed && !n.docId;
+  /* las automáticas (laboratorio, recetas, «se realizó») son un registro de movimientos: se pueden borrar siempre */
+  const canDelete = n => n && !isVoid(n) && !n.signed && !n.docId && (n.auto || n.date === A.today());
+  const LABRX = /^Laboratorio: /;
+  const labOf = (pid, n) => { const labs = A.pd(pid).labs || []; if (n.lab) return labs.filter(l => l.id === n.lab)[0] || null; if (!LABRX.test(n.text)) return null; return labs.filter(l => n.text.indexOf('Laboratorio: ' + l.work) === 0 && (!l.hist || !l.hist[0] || l.hist[0].d === n.date))[0] || null; };
   const kindOf = n => (n.auto ? 'auto' : n.voice ? 'voz' : 'manual');
   const KIND = { manual: 'Escritas', voz: 'Dictadas', auto: 'Automáticas' };
 
@@ -9331,7 +9334,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const box = document.createElement('div'); box.className = 'ev-box'; box.innerHTML = toolsHTML(pid) + '<div id="evList">' + listHTML(pid) + '</div>';
     if (old) old.replaceWith(box); else { const btns = card.querySelector('.row-btns'); if (btns) btns.after(box); }
     const cnt = card.querySelector('h2 .count'); if (cnt) { const k = (A.pd(pid).notes || []).filter(n => !isVoid(n)).length; cnt.textContent = k + ' nota' + (k === 1 ? '' : 's'); }
-    const note = card.querySelector('.small-note:last-child'); if (note && /Ley 26\.529/.test(note.textContent)) note.textContent = 'Las notas automáticas salen del odontograma y del plan cuando algo pasa a «realizado». Las notas de hoy se pueden borrar; las de días anteriores se anulan con un motivo: no desaparecen de la historia clínica (Ley 26.529).';
+    const note = card.querySelector('.small-note:last-child'); if (note && /Ley 26\.529/.test(note.textContent)) note.textContent = 'Las notas automáticas salen del odontograma y del plan cuando algo pasa a «realizado». Las automáticas (laboratorio, recetas, tratamientos) se pueden borrar siempre. Las que escribís vos se borran el mismo día; las de días anteriores se anulan con un motivo: no desaparecen de la historia clínica (Ley 26.529).';
   }
   const afterPrev = A.afterRefresh; A.afterRefresh = () => { if (afterPrev) afterPrev(); try { mount(); } catch (e) { if (A.logError) A.logError('evol', e); } };
 
@@ -9356,13 +9359,35 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.evDelAsk = el => { S.modal = { type: 'evDel', id: el.getAttribute('data-id') }; A.renderModal(); };
   MF.evDel = m => {
     const n = byId(m.id); if (!n) return A.modalShell('Borrar nota', '<p>La nota ya no está.</p>', '<button class="btn primary" data-act="closeModal">Listo</button>');
-    return A.modalShell('Borrar nota', '<p>Se borra esta nota de hoy de todos tus equipos:</p><blockquote class="ev-q-box">' + esc(n.text) + '</blockquote><p class="hint">Las notas se pueden borrar solo el mismo día. Desde mañana, en vez de borrarse, se anulan con un motivo.</p>',
+    const lab = labOf(S.fichaPid, n);
+    return A.modalShell('Borrar nota', '<p>Se borra esta nota de todos tus equipos:</p><blockquote class="ev-q-box">' + esc(n.text) + '</blockquote>' +
+      (lab ? '<label class="chk"><input type="checkbox" id="evLabToo" checked> Quitar también el pedido de laboratorio «' + esc(lab.work) + '»</label>' : '') +
+      '<p class="hint">' + (n.auto ? (/^Se realizó/.test(n.text) ? 'Borrar la nota no deshace el tratamiento: si lo marcaste por error, volvelo a «pendiente» en el plan.' : 'Es una nota automática: se puede borrar cuando quieras.') : 'Las notas escritas se pueden borrar solo el mismo día. Desde mañana, en vez de borrarse, se anulan con un motivo.') + '</p>',
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="evDelGo" data-id="' + n.id + '">Borrar</button>');
   };
   A.acts.evDelGo = el => {
     const pid = S.fichaPid, pd = A.pd(pid), n = byId(el.getAttribute('data-id'));
-    if (n && canDelete(n)) { pd.notes = pd.notes.filter(x => x.id !== n.id); A.touchPd(pid); A.toast('Nota borrada.'); }
+    if (n && canDelete(n)) {
+      const lab = labOf(pid, n), too = lab && $('#evLabToo') && $('#evLabToo').checked;
+      pd.notes = pd.notes.filter(x => x.id !== n.id); if (too) pd.labs = pd.labs.filter(l => l.id !== lab.id);
+      A.touchPd(pid); if (A.save) A.save(); A.toast(too ? 'Nota y pedido de laboratorio borrados.' : 'Nota borrada.');
+    }
     A.closeModal(); A.refresh();
+  };
+
+  /* laboratorio: la nota automática queda unida a su pedido; si se quita el pedido, se va también su nota */
+  const labSavePrev = A.acts.labSave;
+  if (labSavePrev) A.acts.labSave = el => {
+    const m = S.modal, pid = m && m.pid, before = pid ? (A.pd(pid).labs || []).map(l => l.id) : [];
+    const r = labSavePrev(el);
+    if (pid) { const pd = A.pd(pid), nw = (pd.labs || []).filter(l => before.indexOf(l.id) < 0)[0]; if (nw) { const n = (pd.notes || []).filter(x => x.auto && !x.lab && LABRX.test(x.text))[0]; if (n) { n.lab = nw.id; A.touchPd(pid); } } }
+    return r;
+  };
+  const labDelPrev = A.acts.labDel;
+  if (labDelPrev) A.acts.labDel = el => {
+    const m = S.modal, pid = m && m.pid, id = m && m.f && m.f.id;
+    if (pid && id) { const pd = A.pd(pid), lab = (pd.labs || []).filter(l => l.id === id)[0]; if (lab) pd.notes = (pd.notes || []).filter(n => !(n.auto && !isVoid(n) && labOf(pid, n) === lab)); }
+    return labDelPrev(el);
   };
 
   /* anular (las de días anteriores): queda guardada, oculta y tachada en el PDF */
