@@ -222,3 +222,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.11.2
 - Agenda: el menú «Más» ya no se corta en los días que no son hoy (se acomoda siempre dentro de la pantalla). Se sacó el botón «Hoy» repetido; el de siempre ahora también lleva a la hora actual.
+
+## OdontoVoz 1.12 · turnos más ágiles y sobreturnos
+- Paciente al paso: para dar un turno alcanza con el nombre (y el teléfono para el recordatorio). Apellido y DNI son opcionales; la ficha y el turno avisan «falta apellido y DNI» con un botón para completarla cuando el paciente viene. También desde Pacientes › Nuevo paciente y por voz.
+- Si se escribe un nombre que no existe y se toca «Agendar», se crea el paciente con ese nombre.
+- Turno nuevo: interruptor «Turno / Sobreturno», hora y minutos en dos listas con atajos ±15, y aviso en vivo de qué hay a esa hora; si choca, «Darlo como sobreturno» o «Buscar el próximo libre».
+- Agenda: los sobreturnos ya no achican los turnos; flotan semitransparentes y punteados sobre la mitad derecha. Turno abierto: «+ Sobreturno a las 10:30».

@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.11 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.12 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.11 (noviem
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -43,6 +43,9 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.11 (noviem
 - 1.9 (`src/app17.js`): turnero online con link (`sitio/turnos.html`, tablas `ov_booking` y `ov_booking_req`, SQL `supabase/turnero.sql`), recordatorios en el inicio y «Cambios de hoy» para deshacer en el día.
 - 1.10 (`src/app18.js`): ventanas que solo cierran con Cerrar/✕, borrar turnos, borrar profesionales sin historia, apariencia por equipo (`odontovoz.look`), accesos del inicio (`odontovoz.home`), sugerencias (`ov_feedback`, SQL `supabase/sugerencias.sql`), botón Hoy y «12t» en el calendario.
 - 1.11 (`src/app19.js`, `supabase/limites.sql`): límites por plan controlados por el servidor. Profesionales, equipos (tabla `ov_devices`, encabezado `x-ov-device` que manda `src/cloud.js`), consultorios y tipo de cuenta. Mantener iguales la tabla `PLAN` de `app19.js`, `ov_limits()` del SQL, `DEF` de `admin.html` y las tarjetas de `sitio/index.html`.
+
+- 1.12 (`src/app20.js` + cambios en `block()`/`gridHTML()` de `index.html`): turno con solo el nombre (apellido y DNI opcionales, aviso «Paciente cargado al paso» con «Completar ficha»), interruptor Turno/Sobreturno, hora en dos listas con ±15, aviso en vivo de choques con «Darlo como sobreturno», «+ Sobreturno a las HH:MM» en el turno abierto, y sobreturnos flotantes semitransparentes en la mitad derecha.
+- Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
 ## Pendiente
 - SMTP con la cuenta somosroan@gmail.com (el usuario genera la contraseña de aplicación); después cargar las plantillas `supabase/correos/*.html` en Supabase › Auth › Email templates y subir el límite de envíos.
