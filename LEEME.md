@@ -174,3 +174,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Turno nuevo: se sugiere el consultorio según la hora; se puede cambiar, también desde el turno abierto. Los pacientes son del profesional y se comparten entre consultorios.
 - Cobros por consultorio: al cobrar se elige el consultorio; resumen mensual con atendidos, cobrado, tu parte y lo que corresponde al consultorio.
 - Plan: `ov_accounts.max_locs` (1 a 5; vacío = 5 en prueba y plan Centro, 1 en los demás). Se edita en el panel de administración. Script: `supabase/consultorios.sql`.
+
+## OdontoVoz 1.7 · periodontograma y más comandos de voz
+- Ficha › Periodontograma: sondaje guiado de 6 sitios por pieza (superior vestibular → palatino → inferior lingual → vestibular), saltea las ausentes. Profundidad de sondaje, margen gingival, sangrado, placa, supuración, movilidad, furca, ausentes e implantes. Gráfico de margen y fondo de bolsa, índices (PS media, NIC, % sangrado, % placa, sitios ≥ 4 y ≥ 6 mm), historial de exámenes y PDF.
+- Carga con el dedo (teclado numérico abajo) o por voz: «empezar sondaje», «tres dos tres», «323 sangra distal», «4 5 3 sangra todo», «placa», «recesión 1 0 1», «movilidad 2», «furca 1 en el 46», «falta el 18», «implante en el 13», «saltear», «anterior», «borrá», «ir al 36 por lingual», «bolsa de 7 en el 46 por distal», «pasá a palatino», «resumen», «dónde estoy», «terminar».
+- Comandos nuevos en cualquier pantalla: «periodontograma de Pérez», «hola», «gracias», «qué hora es», «qué día es hoy», «cuántos me quedan», «cuánto cobré hoy», «quién está en la sala», «qué tengo mañana / el jueves», «¿tengo lugar el viernes?», «¿a qué hora viene Pérez?», «ya atendí a Gómez», «está en el sillón», «pasá el turno de Pérez al jueves a las 17», «mandale un WhatsApp a Pérez», «llamá a Gómez», «repetí».
+- Si no entiende una frase, sugiere ejemplos según la pantalla donde estás.
