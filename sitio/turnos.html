@@ -26,6 +26,8 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 400 17px/1.
 .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
 header { background: var(--deep); color: #fff; padding: 22px 0 20px; }
 header .wrap { padding-bottom: 0; }
+header .hd { display: flex; gap: 12px; align-items: center; }
+header .mark { width: 34px; height: 34px; flex: 0 0 auto; color: #bfe8df; opacity: .9; }
 header h1 { font: 800 26px/1.15 var(--display); margin: 0; }
 header p { margin: 4px 0 0; color: #cfe7e3; font-size: 15px; }
 h2 { font: 800 21px/1.2 var(--display); margin: 22px 0 10px; }
@@ -72,7 +74,7 @@ footer a { color: inherit; }
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1 id="cl">Turnos online</h1><p id="cla">Cargando…</p></div></header>
+<header><div class="wrap hd"><svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.2 0-3.4 1.2-5 1.2S11.2 4 9 4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><div><h1 id="cl">Turnos online</h1><p id="cla">Cargando…</p></div></div></header>
 <main class="wrap" id="app" aria-live="polite"><div class="empty">Cargando los horarios…</div></main>
 <footer>Turnos con <a href="./">OdontoVoz</a> · <a href="privacidad.html">Privacidad</a></footer>
 <script>
@@ -80,7 +82,9 @@ footer a { color: inherit; }
   'use strict';
   /* clave pública (publicable) del servidor: solo permite usar las dos funciones del turnero */
   const SB = { url: 'https://hcppfvioiaaejayzzhpa.supabase.co', key: 'sb_publishable_N-Qc-l7kJc4A7rvX68ko7Q_CiTI2HtU' };
-  const slug = (new URLSearchParams(location.search).get('c') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const QS = new URLSearchParams(location.search);
+  const slug = (QS.get('c') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const onlyPro = (QS.get('p') || '').replace(/[^\w-]/g, '');
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const mm = t => String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
@@ -95,21 +99,24 @@ footer a { color: inherit; }
     return d;
   }
   let D = null;
-  const F = { step: 1, type: null, pro: 'any', date: null, slot: null, first: '', last: '', dni: '', phone: '', email: '', cov: '', note: '', ok: false, err: '', busy: false, done: null };
+  const F = { step: 1, type: null, other: '', pro: 'any', date: null, slot: null, first: '', last: '', dni: '', phone: '', email: '', cov: '', note: '', ok: false, err: '', busy: false, done: null };
   const steps = n => '<div class="steps" aria-hidden="true">' + [1, 2, 3, 4].map(i => '<span class="' + (i <= n ? 'on' : '') + '"></span>').join('') + '</div>';
   const slotsFor = () => { const s = (D.slots || {})[F.type] || {}, out = {}; Object.keys(s).sort().forEach(k => { const l = s[k].filter(x => F.pro === 'any' || x[0] === F.pro); if (l.length) out[k] = l; }); return out; };
+  const typeLabel = () => (F.type === 'otro' && F.other ? F.other : ((D.types.filter(t => t.k === F.type)[0] || {}).label || ''));
   const proName = id => ((D.pros || []).filter(p => p.id === id)[0] || {}).name || '';
 
   function render() {
     let h = '';
     if (F.done) {
       h = '<div class="ok-ic" aria-hidden="true">✓</div><h2 class="center">¡Listo, pediste tu turno!</h2><div class="code">' + esc(F.done.code) + '</div><p class="center note">Guardá este código.</p>' +
-        '<div class="box sum"><b>' + esc(longDay(F.date)) + ' · ' + mm(F.slot[1]) + ' h</b><span>' + esc((D.types.filter(t => t.k === F.type)[0] || {}).label || '') + (D.pros.length > 1 ? ' con ' + esc(proName(F.slot[0])) : '') + '</span><span>' + esc(F.first + ' ' + F.last) + '</span></div>' +
+        '<div class="box sum"><b>' + esc(longDay(F.date)) + ' · ' + mm(F.slot[1]) + ' h</b><span>' + esc(typeLabel()) + (D.pros.length > 1 ? ' con ' + esc(proName(F.slot[0])) : '') + '</span><span>' + esc(F.first + ' ' + F.last) + '</span></div>' +
         '<div class="box"><b>¿Y ahora?</b><p style="margin:4px 0 0">El consultorio te va a escribir por WhatsApp para <b>confirmar</b> el turno' + (D.sena ? ' y coordinar la seña de <b>' + money(D.sena) + '</b>' : '') + '. Hasta entonces el turno queda reservado como pendiente.</p></div>' +
         (D.wa ? '<a class="btn line" style="width:100%" href="https://wa.me/' + esc(D.wa) + '?text=' + encodeURIComponent('Hola! Pedí un turno online para el ' + longDay(F.date) + ' a las ' + mm(F.slot[1]) + '. Código ' + F.done.code + '. ' + F.first + ' ' + F.last + '.') + '" target="_blank" rel="noopener">Escribirle al consultorio</a>' : '') +
         '<button class="back" data-a="again" style="display:block;margin:14px auto 0">Pedir otro turno</button>';
     } else if (F.step === 1) {
-      h = steps(1) + '<h2>¿Por qué querés venir?</h2><div class="opts">' + D.types.map(t => { const n = Object.keys((D.slots || {})[t.k] || {}).length; return '<button class="opt" data-a="type" data-k="' + esc(t.k) + '"' + (n ? '' : ' disabled') + '><span>' + esc(t.label) + '</span><small>' + (n ? n + ' día' + (n > 1 ? 's' : '') + ' con lugar' : 'sin lugar') + '</small></button>'; }).join('') + '</div>';
+      const isOther = k => k === 'otro';
+      h = steps(1) + '<h2>¿Por qué querés venir?</h2><div class="opts">' + D.types.map(t => { const n = Object.keys((D.slots || {})[t.k] || {}).length; return '<button class="opt" data-a="type" data-k="' + esc(t.k) + '"' + (n ? '' : ' disabled') + ' aria-pressed="' + (F.type === t.k) + '"><span>' + esc(t.label) + '</span><small>' + (n ? (isOther(t.k) ? 'lo escribís vos' : n + ' día' + (n > 1 ? 's' : '') + ' con lugar') : 'sin lugar') + '</small></button>'; }).join('') + '</div>';
+      if (F.type === 'otro') h += '<label class="f" for="fOther">Contanos el motivo</label><input class="i" id="fOther" maxlength="120" value="' + esc(F.other) + '" placeholder="Ej.: se me rompió un diente, control de una corona…">' + (F.err ? '<div class="err" role="alert">' + esc(F.err) + '</div>' : '') + '<button class="btn main" data-a="otherGo">Seguir</button>';
       if (D.pros.length > 1) h += '<h2>¿Con quién?</h2><div class="opts"><button class="opt" data-a="pro" data-id="any" aria-pressed="' + (F.pro === 'any') + '"><span>Me da igual: el primer horario libre</span></button>' + D.pros.map(p => '<button class="opt" data-a="pro" data-id="' + esc(p.id) + '" aria-pressed="' + (F.pro === p.id) + '"><span>' + esc(p.name) + '</span><small>' + esc(p.spec) + '</small></button>').join('') + '</div>';
       if (D.msg) h += '<p class="note">' + esc(D.msg) + '</p>';
     } else if (F.step === 2) {
@@ -134,7 +141,7 @@ footer a { color: inherit; }
         '<label class="chk"><input type="checkbox" id="fOk"' + (F.ok ? ' checked' : '') + '> <span>Acepto que el consultorio use estos datos para darme el turno y contactarme (<a href="privacidad.html" target="_blank">privacidad</a>).</span></label>' +
         (F.err ? '<div class="err" role="alert">' + esc(F.err) + '</div>' : '') + '<button class="btn main" data-a="to" data-s="4">Revisar</button>';
     } else if (F.step === 4) {
-      h = steps(4) + '<button class="back" data-a="to" data-s="3">‹ Corregir mis datos</button><h2>Revisá tu turno</h2><div class="box sum"><b>' + esc(longDay(F.date)) + ' · ' + mm(F.slot[1]) + ' h</b><span>' + esc((D.types.filter(t => t.k === F.type)[0] || {}).label || '') + (D.pros.length > 1 ? ' con ' + esc(proName(F.slot[0])) : '') + '</span><span>' + esc(F.first + ' ' + F.last) + ' · DNI ' + esc(F.dni) + ' · ' + esc(F.phone) + '</span></div>' +
+      h = steps(4) + '<button class="back" data-a="to" data-s="3">‹ Corregir mis datos</button><h2>Revisá tu turno</h2><div class="box sum"><b>' + esc(longDay(F.date)) + ' · ' + mm(F.slot[1]) + ' h</b><span>' + esc(typeLabel()) + (D.pros.length > 1 ? ' con ' + esc(proName(F.slot[0])) : '') + '</span><span>' + esc(F.first + ' ' + F.last) + ' · DNI ' + esc(F.dni) + ' · ' + esc(F.phone) + '</span></div>' +
         (D.sena ? '<p class="note">Para confirmar el turno se pide una seña de <b>' + money(D.sena) + '</b>: el consultorio te escribe para coordinarla. Si cancelás con al menos ' + (D.cancelHours || 24) + ' h de anticipación, la seña queda a favor para tu próxima consulta.</p>' : '<p class="note">El consultorio te va a escribir para confirmarlo.</p>') +
         (F.err ? '<div class="err" role="alert">' + esc(F.err) + '</div>' : '') + '<button class="btn main" data-a="send"' + (F.busy ? ' disabled' : '') + '>' + (F.busy ? 'Enviando…' : 'Pedir el turno') + '</button>';
     }
@@ -151,7 +158,8 @@ footer a { color: inherit; }
   }
   app.addEventListener('click', async e => {
     const b = e.target.closest('[data-a]'); if (!b) return; const a = b.getAttribute('data-a');
-    if (a === 'type') { F.type = b.getAttribute('data-k'); F.date = null; F.slot = null; F.step = 2; }
+    if (a === 'type') { F.type = b.getAttribute('data-k'); F.date = null; F.slot = null; F.err = ''; if (F.type !== 'otro') F.step = 2; else { render(); const i = $('#fOther'); if (i) i.focus(); return; } }
+    else if (a === 'otherGo') { F.other = (($('#fOther') || {}).value || '').trim(); if (F.other.length < 3) { F.err = 'Escribí brevemente el motivo.'; render(); return; } F.err = ''; F.step = 2; }
     else if (a === 'pro') { F.pro = b.getAttribute('data-id'); F.date = null; F.slot = null; }
     else if (a === 'date') { F.date = b.getAttribute('data-d'); F.slot = null; }
     else if (a === 'slot') { F.slot = [b.getAttribute('data-p'), +b.getAttribute('data-t'), +b.getAttribute('data-u')]; }
@@ -160,7 +168,7 @@ footer a { color: inherit; }
     else if (a === 'send') {
       F.busy = true; F.err = ''; render();
       try {
-        const r = await rpc('ov_booking_request', { p_slug: slug, p_req: { type: F.type, date: F.date, start: F.slot[1], dur: F.slot[2], pro: F.slot[0], first: F.first, last: F.last, dni: F.dni, phone: F.phone, email: F.email, cov: F.cov, note: F.note } });
+        const r = await rpc('ov_booking_request', { p_slug: slug, p_req: { type: F.type, date: F.date, start: F.slot[1], dur: F.slot[2], pro: F.slot[0], first: F.first, last: F.last, dni: F.dni, phone: F.phone, email: F.email, cov: F.cov, note: (F.type === 'otro' ? 'Motivo: ' + F.other + (F.note ? '. ' : '') : '') + F.note } });
         if (r && r.ok) F.done = r; else { F.err = (r && r.msg) || 'No se pudo pedir el turno.'; if (r && r.taken) { F.step = 2; F.slot = null; await load(true); } }
       } catch (er) { F.err = 'No hay conexión. Revisá internet y probá de nuevo.'; }
       F.busy = false; window.scrollTo(0, 0);
@@ -173,6 +181,7 @@ footer a { color: inherit; }
     try { D = await rpc('ov_booking_get', { p_slug: slug }); } catch (e) { app.innerHTML = '<div class="empty">No pudimos cargar los horarios. Revisá tu conexión y recargá la página.</div>'; return; }
     if (!D) { app.innerHTML = '<div class="empty">Este turnero no está disponible en este momento. Comunicate con el consultorio.</div>'; $('#cla').textContent = ''; return; }
     D.types = D.types || []; D.pros = D.pros || [];
+    if (onlyPro && D.pros.some(p => p.id === onlyPro)) { D.pros = D.pros.filter(p => p.id === onlyPro); F.pro = onlyPro; D.clinic = D.pros[0].name + (D.clinic ? ' · ' + D.clinic : ''); }
     $('#cl').textContent = D.clinic || 'Turnos online'; document.title = 'Pedir turno · ' + (D.clinic || 'OdontoVoz');
     $('#cla').textContent = [D.addr, D.phone].filter(Boolean).join(' · ') || 'Pedí tu turno online';
     if (!keep) render(); else render();

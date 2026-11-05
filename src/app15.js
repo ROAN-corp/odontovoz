@@ -187,11 +187,11 @@
 
   /* estilos */
   const css = document.createElement('style');
-  css.textContent = '.ev-tools{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px}.ev-flt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ev-flt select,.ev-flt input[type=date]{min-height:36px;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--card,#fff);color:inherit}' +
+  css.textContent = '.ev-tools{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px}.ev-flt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ev-flt select,.ev-flt input[type=date]{min-height:36px;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--surface,#fff);color:inherit}' +
     '.ev-d{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink-2)}.ev-a{font-size:13px}.ev-count{font-size:13px;color:var(--ink-2);margin:0 0 8px}' +
     '.ev-month{border:0!important;padding:6px 0 0!important;font:700 12px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}' +
     '.ev-txt{white-space:pre-wrap;overflow-wrap:anywhere}.ev-txt.clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}.ev-txt mark{background:#ffe58a;color:inherit;border-radius:3px;padding:0 1px}' +
-    '.ev-acts{display:flex;gap:14px;margin-top:4px}.ev-acts .lnk,.ev-count .lnk{background:none;border:0;padding:4px 0;font:inherit;font-size:13px;color:var(--acc,#0d6b6b);cursor:pointer;text-decoration:underline;min-height:28px}.ev-acts .lnk.bad{color:var(--pat,#b3261e)}' +
+    '.ev-acts{display:flex;gap:14px;margin-top:4px}.ev-acts .lnk,.ev-count .lnk{background:none;border:0;padding:4px 0;font:inherit;font-size:13px;color:var(--accent,#0d6b6b);cursor:pointer;text-decoration:underline;min-height:28px}.ev-acts .lnk.bad{color:var(--pat,#b3261e)}' +
     '.ev-n.void .ev-txt{text-decoration:line-through;opacity:.6}.ev-why{font-size:13px;color:var(--pat,#b3261e);margin-top:2px}.ev-tag{color:var(--pat,#b3261e);font-weight:700}' +
     '.pp-nums .clr{color:var(--pat,#b3261e);font-weight:800}.ev-q-box{margin:8px 0;padding:8px 12px;border-left:3px solid var(--line);white-space:pre-wrap;max-height:30vh;overflow:auto;color:var(--ink-2)}';
   document.head.appendChild(css);

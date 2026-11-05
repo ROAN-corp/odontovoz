@@ -96,7 +96,7 @@
   MF.jr = () => {
     const l = todayList();
     const body = '<p class="hint" style="margin-top:0">Todo lo que se cambió hoy en este equipo. Tocá «Deshacer» y vuelve a como estaba. Mañana esta lista empieza de cero: lo que quede en la historia clínica se corrige anulando, no borrando.</p>' +
-      (l.length ? '<ul class="jr-list">' + l.map(e => '<li><span class="jr-t mono">' + esc(e.at) + '</span><span class="jr-l">' + esc(e.label) + '</span><button class="btn small" data-act="jrUndoAsk" data-id="' + e.id + '">Deshacer</button></li>').join('') + '</ul>' : '<div class="empty">Hoy todavía no hay cambios en este equipo.</div>');
+      (l.length ? '<ul class="jr-list">' + l.map(e => '<li><span class="jr-t mono">' + esc(e.at) + '</span><button class="jr-l jr-go" data-act="jrGo" data-id="' + e.id + '" title="Ir a este cambio">' + esc(e.label) + ' <span aria-hidden="true">›</span></button><button class="btn small" data-act="jrUndoAsk" data-id="' + e.id + '">Deshacer</button></li>').join('') + '</ul>' : '<div class="empty">Hoy todavía no hay cambios en este equipo.</div>');
     return A.modalShell('Cambios de hoy', body, '<button class="btn primary" data-act="closeModal">Listo</button>', true);
   };
   A.acts.jrUndoAsk = el => {
@@ -117,6 +117,26 @@
     A.saveNow();
     S.modal = { type: 'jr' }; A.renderModal(); A.refresh(); A.toast('Listo, volvió a como estaba.');
   }
+  /* tocar un cambio lleva al lugar donde se hizo */
+  const TAB_OF = { notes: 'datos', hc: 'datos', prof: 'datos', controls: 'datos', tx: 'plan', tplan: 'plan', budgets: 'plan', odon: 'odon', perio: 'perio', ledger: 'cuenta', labs: 'lab', images: 'img', docs: 'docs', rx: 'rx' };
+  A.acts.jrGo = el => {
+    const e = JR.list.filter(x => x.id === el.getAttribute('data-id'))[0]; if (!e) return;
+    A.closeModal();
+    try {
+      if (e.key.indexOf('day:') === 0) {
+        const d = e.key.slice(4), B = JSON.parse(e.before || '[]') || [], Aa = JSON.parse(e.after || '[]') || [], bm = {}; B.forEach(x => { bm[x.id] = J(x); });
+        const ch = Aa.filter(x => bm[x.id] !== J(x))[0] || B.filter(x => !Aa.some(y => y.id === x.id))[0];
+        S.tab = 'agenda'; S.view = 'dia'; S.date = d; S.panel = null; A.refresh();
+        if (ch) setTimeout(() => { const b = document.querySelector('[data-appt="' + ch.id + '"]'); if (b) { b.scrollIntoView({ behavior: 'smooth', block: 'center' }); b.classList.add('jr-flash'); setTimeout(() => b.classList.remove('jr-flash'), 2200); } if (Aa.some(y => y.id === ch.id) && A.acts.openAppt) A.acts.openAppt({ getAttribute: k => (k === 'data-id' ? ch.id : null) }); }, 120);
+      } else if (e.key.indexOf('pd:') === 0) {
+        const pid = e.key.slice(3), B = JSON.parse(e.before || '{}') || {}, Aa = JSON.parse(e.after || '{}') || {};
+        if (!A.PAT(pid) || (Aa && Aa.deleted)) { A.toast('Ese paciente ya no está.'); return; }
+        const sec = Object.keys(Object.assign({}, B, Aa)).filter(x => TAB_OF[x] && J(B[x]) !== J(Aa[x]))[0];
+        A.openFicha(pid, TAB_OF[sec] || 'datos');
+      } else if (e.key === 'cfg') { S.tab = 'inicio'; A.refresh(); }
+      else if (e.key === 'cash') { S.tab = 'caja'; A.refresh(); }
+    } catch (er) { if (A.logError) A.logError('jrGo', er); }
+  };
   function paintJrBtn() { const b = $('#jrBtn'); if (b) { const n = todayList().length; b.querySelector('span').textContent = n ? n : ''; } const h = $('#jrHome'); if (h) { const n = todayList().length; h.hidden = !n; h.querySelector('b').textContent = n; } }
   /* botón en el menú */
   (function () {
@@ -211,12 +231,19 @@
      ===================================================================== */
   const O = () => A.CFG.online || (A.CFG.online = {});
   const slug = () => { const o = O(); if (!o.slug) { const al = 'abcdefghjkmnpqrstuvwxyz23456789'; o.slug = Array.from({ length: 8 }, () => al[Math.floor(Math.random() * al.length)]).join(''); A.save(); } return o.slug; };
-  const link = () => PUBLIC + 'turnos.html?c=' + slug();
+  const link = pro => PUBLIC + 'turnos.html?c=' + slug() + (pro ? '&p=' + encodeURIComponent(pro) : '');
   const TS = { state: 'idle', msg: '', at: null, count: 0, lastJ: null, busy: false };
   const proList = () => A.PROS.filter(p => O().pros && O().pros[p.id] === false ? false : p.sched && Object.keys(p.sched).length);
+  const DEF_TYPES = ['primera', 'control', 'limpieza', 'composite', 'endodoncia', 'extraccion', 'urgencia', 'corona', 'ortodoncia', 'implante', 'blanq'];
+  const PUB_LABEL = { primera: 'Primera consulta', control: 'Control', limpieza: 'Limpieza y control', composite: 'Arreglo de caries / restauración', endodoncia: 'Tratamiento de conducto (endodoncia)', extraccion: 'Extracción', urgencia: 'Urgencia · dolor', corona: 'Corona (prueba o cementado)', ortodoncia: 'Control de ortodoncia', implante: 'Control de implante', blanq: 'Blanqueamiento' };
+  A.PUB_TYPES = DEF_TYPES;
   const typeDur = (k, p) => { const s = A.slotOf(p), d = (A.TYPES[k] || ['', 30])[1]; return Math.max(s, Math.ceil(d / s) * s); };
   function pubData() {
-    const o = O(), types = (o.types && o.types.length ? o.types : ['primera', 'control', 'urgencia', 'limpieza']).filter(k => A.TYPES[k]), pros = proList(), slots = {}, today = A.today();
+    const o = O(), pros = proList(), slots = {}, today = A.today();
+    /* si nunca se tocaron los motivos, se ofrecen todos los habituales (antes eran solo 4) */
+    const OLD4 = 'primera,control,urgencia,limpieza';
+    let types = (o.types && o.types.length && (o.typesSet || o.types.join(',') !== OLD4) ? o.types : DEF_TYPES).filter(k => A.TYPES[k]);
+    if (o.other !== false) types = types.concat(['otro']);
     let n = 0;
     types.forEach(k => {
       const byD = {};
@@ -224,13 +251,13 @@
         const d = A.add(today, i);
         if (A.closedOn && A.closedOn(d)) continue;
         const l = [];
-        pros.forEach(p => { const dur = typeDur(k, p); A.freeSlots(p, d, dur, { minMin: (o.minHours || 0) * 60 }).forEach(t => l.push([p.id, t, dur])); });
+        pros.forEach(p => { const dur = k === 'otro' ? Math.max(A.slotOf(p), 30) : typeDur(k, p); A.freeSlots(p, d, dur, { minMin: (o.minHours || 0) * 60 }).forEach(t => l.push([p.id, t, dur])); });
         if (l.length) { byD[d] = l.sort((a, b) => a[1] - b[1]); n += l.length; }
       }
       slots[k] = byD;
     });
     return { n, data: { clinic: A.CLINIC, addr: A.CFG.addr || '', phone: A.CFG.phone || '', wa: A.waNumber ? A.waNumber(A.CFG.phone || '') || '' : '', sena: o.sena || 0, cancelHours: o.cancelHours || 24, msg: o.msg || '',
-      types: types.map(k => ({ k, label: A.TYPES[k][0] })), pros: pros.map(p => ({ id: p.id, name: p.name, spec: p.spec || '' })), slots, solo: A.isSolo() } };
+      types: types.map(k => ({ k, label: k === 'otro' ? 'Otro motivo (lo escribo yo)' : PUB_LABEL[k] || A.TYPES[k][0] })), pros: pros.map(p => ({ id: p.id, name: p.name, spec: p.spec || '' })), slots, solo: A.isSolo() } };
   }
   async function publish(force) {
     if (!real() || TS.busy) return; const o = O();
@@ -256,7 +283,7 @@
       let pat = dni ? A.PATS.filter(x => String(x.dni || '').replace(/\D/g, '') === dni)[0] : null;
       if (!pat) pat = A.addPatient({ first: d.first, last: d.last, dni: d.dni, phone: d.phone, email: d.email, cov: d.cov || 'Particular', pro: d.pro });
       else if (!pat.phone && d.phone) A.setProfile(pat.id, { phone: d.phone });
-      const a = { id: A.uid(), pid: pat.id, pro: A.PRO(d.pro) ? d.pro : (A.PROS[0] || {}).id, date: d.date, start: +d.start, dur: +d.dur || 30, what: (A.TYPES[d.type] || [d.type || 'Turno'])[0], status: 'pendiente', rem: 'porenviar', online: true, code: r.code, onlineAt: r.created_at, note: d.note || '' };
+      const a = { id: A.uid(), pid: pat.id, pro: A.PRO(d.pro) ? d.pro : (A.PROS[0] || {}).id, date: d.date, start: +d.start, dur: +d.dur || 30, what: d.type === 'otro' ? ((m => m ? m.charAt(0).toUpperCase() + m.slice(1) : 'Otro motivo')(String(d.note || '').replace(/^Motivo:\s*/, '').split('. ')[0].trim())) : (A.TYPES[d.type] || [d.type || 'Turno'])[0], status: 'pendiente', rem: 'porenviar', online: true, code: r.code, onlineAt: r.created_at, note: d.note || '' };
       if (A.locAt) { const l = A.locAt(a.date, a.start, a.pro); if (l) a.loc = l; }
       A.mutate([a.date], () => { A.day(a.date).push(a); });
       A.toast('Turno pedido online: ' + pat.name + ', ' + A.fmtShort(a.date) + ' ' + A.mm(a.start) + '. Confirmalo por WhatsApp.');
@@ -279,6 +306,7 @@
     const st = TS.state === 'ok' ? 'Publicado ' + (TS.at ? 'a las ' + hhmm(TS.at) : '') + ' · ' + TS.count + ' horarios libres' : TS.state === 'notables' ? 'Falta activar el turnero en el servidor.' : TS.state === 'offline' ? 'Sin internet: se publica apenas vuelva.' : TS.state === 'err' ? 'No se pudo publicar: ' + esc(TS.msg) : TS.state === 'off' || !on ? 'Pausado: los pacientes no pueden pedir turnos.' : 'Publicando…';
     return '<div class="tn-link" id="tnLink"><div class="tl-h"><b>Link para tus pacientes</b><label class="chk"><input type="checkbox" data-chg="tnLinkOn"' + (on ? ' checked' : '') + '> Recibir pedidos online</label></div>' +
       (on ? '<div class="tl-u"><input readonly value="' + esc(link()) + '" aria-label="Link del turnero" onclick="this.select()"><button class="btn small primary" data-act="tnLinkCopy">Copiar</button><button class="btn small" data-act="tnLinkWa">WhatsApp</button>' + (navigator.share ? '<button class="btn small" data-act="tnLinkShare">Compartir</button>' : '') + '<a class="btn small" href="' + esc(link()) + '" target="_blank" rel="noopener">Abrir</a></div>' : '') +
+      (on && !A.isSolo() && proList().length > 1 ? '<details class="tl-pros"><summary>Un link para cada profesional</summary><p class="hint" style="margin:4px 0">Cada uno muestra solo a ese profesional: sus pacientes no ven a los demás del centro.</p>' + proList().map(p => '<div class="tl-u"><span class="tl-pn"><i class="stdot" style="background:' + p.color + '"></i> ' + esc(p.name) + '</span><input readonly value="' + esc(link(p.id)) + '" onclick="this.select()" aria-label="Link de ' + esc(p.name) + '"><button class="btn small" data-act="tnLinkCopy" data-p="' + p.id + '">Copiar</button><button class="btn small" data-act="tnLinkWa" data-p="' + p.id + '">WhatsApp</button></div>').join('') + '</details>' : '') +
       '<div class="tl-s' + (TS.state === 'err' || TS.state === 'notables' ? ' bad' : '') + '">' + st + '</div>' +
       '<p class="hint" style="margin:4px 0 0">El paciente ve solo los horarios libres de los próximos ' + (o.maxDays || 30) + ' días y pide el turno. Te llega a la agenda como <b>pendiente · online</b> para que lo confirmes por WhatsApp' + (o.sena ? ' y le pidas la seña de ' + A.money(o.sena) : '') + '. Horarios, motivos y anticipación: Ajustes › Turnero online.</p>' +
       '<p class="tl-demo">Abajo, una muestra de lo que ve el paciente.</p><button class="btn small" data-act="tnClose">Volver a la app</button></div>';
@@ -292,11 +320,11 @@
   const tnHostObs = () => { const h = $('#tnHost'); if (h && !h.__ovObs) { h.__ovObs = true; mo.observe(h, { childList: true }); } };
   setInterval(tnHostObs, 2000);
   A.chg.tnLinkOn = el => { const o = O(); o.link = el.checked; if (el.checked && o.on === false) o.on = true; A.save(); if (el.checked) publish(true); else unpublish(); paintTn(); };
-  A.acts.tnLinkCopy = () => { try { navigator.clipboard.writeText(link()).then(() => A.toast('Link copiado.'), () => A.toast('Copialo a mano: ' + link())); } catch (e) { A.toast('Copialo a mano: ' + link()); } };
-  const invite = () => 'Hola! Podés sacar tu turno en ' + A.CLINIC + ' desde este link: ' + link();
-  A.acts.tnLinkWa = () => window.open('https://wa.me/?text=' + encodeURIComponent(invite()), '_blank', 'noopener');
+  A.acts.tnLinkCopy = el => { const u = link(el && el.getAttribute && el.getAttribute('data-p')); try { navigator.clipboard.writeText(u).then(() => A.toast('Link copiado.'), () => A.toast('Copialo a mano: ' + u)); } catch (e) { A.toast('Copialo a mano: ' + u); } };
+  const invite = pro => 'Hola! Podés sacar tu turno ' + (pro && A.PRO(pro) ? 'con ' + A.PRO(pro).name + ' ' : '') + 'en ' + A.CLINIC + ' desde este link: ' + link(pro);
+  A.acts.tnLinkWa = el => window.open('https://wa.me/?text=' + encodeURIComponent(invite(el && el.getAttribute && el.getAttribute('data-p'))), '_blank', 'noopener');
   A.acts.tnLinkShare = () => { try { navigator.share({ title: 'Turnos online · ' + A.CLINIC, text: invite(), url: link() }); } catch (e) { /* nada */ } };
-  A.tnLink = link; A.tnPublish = publish; A.tnClaim = claim;
+  A.tnLink = () => link(); A.tnPublish = publish; A.tnClaim = claim;
 
   /* ---------- estilos ---------- */
   const css = document.createElement('style');
@@ -305,8 +333,8 @@
     '.rem ul{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}.rem li{display:flex;align-items:center;gap:8px;padding:3px 0 3px 8px;border-left:3px solid var(--rc,#f6c453)}.rem li input{width:18px;height:18px;flex:0 0 auto}.rem-t{background:none;border:0;padding:2px 0;font:inherit;font-size:15px;color:inherit;text-align:left;cursor:pointer;flex:1;min-width:0}' +
     '.rem-w{font:600 12px var(--f-mono,monospace);color:var(--ink-2);white-space:nowrap}.rem li.due .rem-w{color:var(--pat,#b3261e)}.rem-e{font-size:13px;color:var(--ink-2);padding:2px 0}.rem-off{margin:6px 0}' +
     '.rem-cols{display:flex;gap:12px;flex-wrap:wrap}.rem-cols label{display:flex;gap:6px;align-items:center;font-size:14px}.rem-cols i{width:16px;height:16px;border-radius:50%;display:inline-block}' +
-    '.jr-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.jr-list li{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0}.jr-t{font-size:12px;color:var(--ink-2)}.jr-l{flex:1;min-width:0;font-size:14px}.jr-n{margin-left:auto;font:700 12px var(--f-mono,monospace);color:var(--ink-2)}.jr-home{display:block;margin:2px 0 8px;font-size:13px}' +
-    '.tn-link{max-width:760px;margin:12px auto;padding:14px 16px;border:2px solid var(--acc,#0d6b6b);border-radius:14px;background:var(--card,#fff)}.tl-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}.tl-u{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}.tl-u input{flex:1 1 260px;min-width:0;font:13px var(--f-mono,monospace);padding:8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit}' +
-    '.tl-s{font-size:13px;color:var(--ink-2)}.tl-s.bad{color:var(--pat,#b3261e)}.tl-demo{margin:10px 0 6px;font-size:13px;font-weight:700;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:8px}';
+    '.jr-go{background:none;border:0;padding:4px 0;font:inherit;font-size:14px;color:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent);text-underline-offset:3px}.jr-go:hover{color:var(--accent,#0d6b6b)}@keyframes jrfl{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 3px var(--accent,#0d6b6b)}}.jr-flash{animation:jrfl 1.1s ease 2}.jr-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.jr-list li{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0}.jr-t{font-size:12px;color:var(--ink-2)}.jr-l{flex:1;min-width:0;font-size:14px}.jr-n{margin-left:auto;font:700 12px var(--f-mono,monospace);color:var(--ink-2)}.jr-home{display:block;margin:2px 0 8px;font-size:13px}' +
+    '.tn-link{max-width:760px;margin:12px auto;padding:14px 16px;border:2px solid var(--accent,#0d6b6b);border-radius:14px;background:var(--surface,#fff)}.tl-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}.tl-u{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}.tl-u input{flex:1 1 260px;min-width:0;font:13px var(--f-mono,monospace);padding:8px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit}' +
+    '.tl-pros{margin:6px 0}.tl-pros summary{cursor:pointer;font-weight:700;font-size:14px}.tl-pn{flex:0 0 100%;font-size:13px;font-weight:700}.tl-s{font-size:13px;color:var(--ink-2)}.tl-s.bad{color:var(--pat,#b3261e)}.tl-demo{margin:10px 0 6px;font-size:13px;font-weight:700;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:8px}';
   document.head.appendChild(css);
 })();

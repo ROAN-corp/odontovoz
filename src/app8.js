@@ -61,7 +61,7 @@
     for (let i = 0; i < 42; i++) {
       const k = A.add(start, i), out = k.slice(0, 7) !== m0; if (i >= 35 && out) break;
       const n = A.day(k).filter(a => a.type !== 'block' && a.status !== 'cancelado' && pros.some(p => p.id === a.pro)).length;
-      h += '<button class="mc-d' + (out ? ' out' : '') + (k === today ? ' today' : '') + (k === S.date ? ' sel' : '') + '" data-act="agGoDay" data-date="' + k + '" aria-label="' + esc(A.fmtLong(k) + (n ? ': ' + n + ' turnos' : '')) + '">' + A.parse(k).getDate() + (n ? '<i title="' + n + ' turnos"></i>' : '') + '</button>';
+      h += '<button class="mc-d' + (out ? ' out' : '') + (k === today ? ' today' : '') + (k === S.date ? ' sel' : '') + '" data-act="agGoDay" data-date="' + k + '" aria-label="' + esc(A.fmtLong(k) + (n ? ': ' + n + ' turnos' : '')) + '">' + '<span class="mc-n">' + A.parse(k).getDate() + '</span>' + (n ? '<small class="mc-t">' + n + 't</small>' : '') + '</button>';
     }
     h += '</div>';
     const l = A.day(S.date).filter(a => a.type !== 'block' && a.status !== 'cancelado' && pros.some(p => p.id === a.pro));

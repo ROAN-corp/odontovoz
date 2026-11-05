@@ -44,7 +44,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
   const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio', centro: 'Centro' };
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let ses = null, rows = [], q = '', filt = 'todas';
+  let ses = null, rows = [], fb = null, q = '', filt = 'todas';
   try { ses = JSON.parse(sessionStorage.getItem('ovadm') || 'null'); } catch (e) { ses = null; }
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
   const addDays = (k, n) => { const d = new Date(k + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
@@ -82,7 +82,9 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     try {
       const ad = await http('/rest/v1/ov_admins?select=user_id&user_id=eq.' + ses.id);
       if (!ad || !ad.length) { app.innerHTML = '<div class="card">Esta cuenta no es administradora. Pedile a otro administrador que te agregue.</div>'; return; }
-      rows = await http('/rest/v1/rpc/ov_admin_accounts', { method: 'POST', body: {} }) || []; render();
+      rows = await http('/rest/v1/rpc/ov_admin_accounts', { method: 'POST', body: {} }) || [];
+      try { fb = await http('/rest/v1/ov_feedback?select=*&order=created_at.desc&limit=100') || []; } catch (e) { fb = null; }
+      render();
     } catch (e) { app.innerHTML = '<div class="card err">' + esc(e.message) + '</div>'; }
   }
   function render() {
@@ -98,11 +100,13 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
         '<td><div class="acts"><button class="small" data-x="m30" data-id="' + r.owner + '">+1 mes</button><button class="small" data-x="y1" data-id="' + r.owner + '">+1 año</button>' +
         (r.status === 'suspendida' ? '<button class="small primary" data-x="on" data-id="' + r.owner + '">Reactivar</button>' : '<button class="small danger" data-x="off" data-id="' + r.owner + '">Suspender</button>') +
         '<button class="small" data-x="ed" data-id="' + r.owner + '">Editar</button></div></td></tr>').join('') : '<tr><td colspan="6" class="muted">No hay cuentas con ese filtro.</td></tr>') + '</tbody></table>' +
+      (fb ? '<h2 style="margin:28px 0 8px">Comentarios y sugerencias <span class="muted">(' + fb.filter(x => x.status === 'nuevo').length + ' nuevos)</span></h2>' + (fb.length ? '<table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Tipo</th><th>Comentario</th><th></th></tr></thead><tbody>' + fb.map(x => '<tr' + (x.status === 'nuevo' ? ' style="font-weight:600"' : '') + '><td>' + dmy((x.created_at || '').slice(0, 10)) + '</td><td>' + esc(x.email || '') + '<div class="muted">' + esc(x.app || '') + '</div></td><td>' + esc(x.kind) + '</td><td style="white-space:pre-wrap;max-width:520px">' + esc(x.text) + '</td><td>' + (x.status === 'nuevo' ? '<button class="small" data-fb="' + x.id + '">Marcar leído</button>' : '<span class="muted">' + esc(x.status) + '</span>') + '</td></tr>').join('') + '</tbody></table>' : '<p class="muted">Todavía no llegaron comentarios.</p>') : '') +
       '<p class="muted">«+1 mes» y «+1 año» suman desde hoy o desde el vencimiento actual, lo que sea más tarde, y dejan la cuenta activa. Una cuenta vencida o suspendida queda en solo lectura: ve y descarga sus datos, pero el servidor no acepta cambios.</p>';
     $('#qq').oninput = e => { q = e.target.value.toLowerCase(); const p = e.target.selectionStart; render(); const i = $('#qq'); i.focus(); i.setSelectionRange(p, p); };
     $('#ff').onchange = e => { filt = e.target.value; render(); };
     $('#rl').onclick = load;
     app.querySelectorAll('[data-x]').forEach(b => { b.onclick = () => act(b.getAttribute('data-x'), b.getAttribute('data-id')); });
+    app.querySelectorAll('[data-fb]').forEach(b => { b.onclick = async () => { try { await http('/rest/v1/ov_feedback?id=eq.' + b.getAttribute('data-fb'), { method: 'PATCH', body: { status: 'leido' } }); load(); } catch (e) { alert(e.message); } }; });
   }
   async function patch(id, body) { await http('/rest/v1/ov_accounts?owner=eq.' + id, { method: 'PATCH', body: Object.assign(body, { updated_at: new Date().toISOString() }), headers: { Prefer: 'return=minimal' } }); await load(); }
   function act(x, id) {

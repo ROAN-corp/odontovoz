@@ -198,3 +198,13 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Turnero online de verdad (`src/app17.js`, `sitio/turnos.html`, SQL `supabase/turnero.sql`): cada cuenta tiene su link `turnos.html?c=CODIGO` (código en `CFG.online.slug`). La app publica solo los horarios libres en `ov_booking` (sin datos de pacientes) y toma los pedidos de `ov_booking_req` con `ov_booking_claim()`: entran a la agenda como «pendiente · online» con código. En la vista de muestra del turnero, arriba, está el link con Copiar, WhatsApp y Compartir, y el tilde para pausar los pedidos.
 - Recordatorios en el inicio (`CFG.rem`): opcionales, chicos y enmarcados; texto, día, hora, color y quién los ve; se tildan como hechos (con deshacer). Por voz: «recordatorio enviar el modelo al laboratorio antes de las 17».
 - Cambios de hoy (menú › «Cambios de hoy · deshacer» y link en el inicio): cada cambio en pacientes, agenda, ajustes y caja se anota con cómo estaba antes y se puede deshacer en el día (en este equipo; se guarda en IndexedDB `odontovoz.journal`). Lo que llega de otro equipo no se anota. Al día siguiente la lista empieza de cero y en la historia clínica se anula.
+
+## OdontoVoz 1.10 · ventanas firmes, borrar turnos, inicio a gusto y más
+- Ventanas emergentes: ya no se cierran al tocar afuera ni al soltar el mouse fuera del cuadro; solo con «Cerrar»/«Cancelar» o la ✕ (`src/app18.js`).
+- Turnos: «Borrar turno» en el turno y en el menú de estado; deja el horario libre y se puede deshacer.
+- Profesionales: los dados de baja que nunca tuvieron turnos ni tratamientos se pueden borrar del todo; los que tienen historia se conservan.
+- Turnero: motivos habituales para el paciente (restauración, conducto, extracción, corona, etc.), «Otro motivo» escrito por el paciente (`CFG.online.other`) y un link por profesional (`turnos.html?c=…&p=ID`) además del link del centro.
+- Ayuda: caja «Ayudanos a mejorar»; llega a la tabla `ov_feedback` (SQL `supabase/sugerencias.sql`) y se ve en el panel de licencias; si no se puede, abre el correo.
+- Apariencia (por equipo): color principal, fondo y tamaño de letra; accesos del inicio para elegir y ordenar manteniendo apretado.
+- Agenda: botón «Hoy» cuando estás en otro día (lleva a la hora actual); el calendario de la web muestra «12t» con la cantidad de turnos.
+- «Cambios de hoy»: cada cambio es un enlace que lleva al paciente o al turno. Logo sutil en el inicio, cuadros vacíos, Ayuda y la página de turnos.
