@@ -240,3 +240,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Arriba ocupa mucho menos: Día/Semana/Mes, «+ Turno» y «Más» en una sola fila; la fecha se elige tocando el título; «Colores de los turnos» pasa adentro de «Más»; se sacan los textos de ayuda; tira de días y resumen más bajos.
 - Los consultorios se muestran todos (en dos líneas si hace falta), sin tener que deslizarlos.
 - La agenda del día se extiende hacia abajo y se recorre con la pantalla, sin una caja con su propio desplazamiento.
+
+## OdontoVoz 1.15 · agenda quieta y la app arranca en Inicio
+- La tira de días ya no se mueve sola al tocar otras opciones de la agenda (Más, + Turno, Día/Semana…): solo se centra cuando elegís otro día o tocás «Hoy».
+- Al entrar a la agenda se ve desde arriba, sin saltar a la hora actual.
+- Al abrir la app, o al volver a ella después de 2 minutos o más, arranca en la carátula de Inicio. Si había una ventana abierta (por ejemplo, un turno a medio cargar) se respeta para no perder lo escrito.

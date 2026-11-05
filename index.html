@@ -2660,13 +2660,16 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const oldStrip = $('#dayStrip'), stripPos = oldStrip ? oldStrip.scrollLeft : null;
     host.innerHTML = h;
     const w2 = $('#gridWrap');
-    if (w2) { if (st) { w2.scrollTop = st[0]; w2.scrollLeft = st[1]; } else if (S.date === A.today()) { const n = $('.now', w2); if (n) w2.scrollTop = Math.max(0, n.offsetTop - 140); } }
+    if (w2 && st) { w2.scrollTop = st[0]; w2.scrollLeft = st[1]; } /* 1.15: la agenda arranca desde arriba, sin saltar a la hora actual */
     if (w2 && S._slide) { w2.classList.add(S._slide); }
     S._slide = null;
     const strip = $('#dayStrip'), selB = strip && $('.wk[aria-pressed="true"]', strip);
     if (strip && selB) {
       const target = Math.max(0, selB.offsetLeft - strip.clientWidth / 2 + selB.offsetWidth / 2);
-      if (stripPos != null) { strip.style.scrollBehavior = 'auto'; strip.scrollLeft = stripPos; strip.style.scrollBehavior = ''; try { strip.scrollTo({ left: target, behavior: 'smooth' }); } catch (e) { strip.scrollLeft = target; } }
+      /* 1.15: la tira de días queda quieta; solo se centra cuando cambia el día elegido */
+      const sameDay = S._stripDate === S.date; S._stripDate = S.date;
+      if (stripPos != null && sameDay) { S._stripKeep = stripPos; strip.style.scrollBehavior = 'auto'; strip.scrollLeft = stripPos; strip.style.scrollBehavior = ''; }
+      else if (stripPos != null) { strip.style.scrollBehavior = 'auto'; strip.scrollLeft = stripPos; strip.style.scrollBehavior = ''; try { strip.scrollTo({ left: target, behavior: 'smooth' }); } catch (e) { strip.scrollLeft = target; } }
       else { strip.style.scrollBehavior = 'auto'; strip.scrollLeft = target; strip.style.scrollBehavior = ''; }
     }
   };
@@ -7638,7 +7641,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.14';
+  A.VERSION = '1.15';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -9823,7 +9826,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const mouse = () => window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   function decorateStrip() {
     const st = $('#dayStrip'); if (!st || st.parentNode.classList.contains('ds-wrap')) return;
-    const w = document.createElement('div'); w.className = 'ds-wrap'; st.parentNode.insertBefore(w, st); w.appendChild(st);
+    const keepX = S._stripKeep != null ? S._stripKeep : st.scrollLeft; S._stripKeep = null; const w = document.createElement('div'); w.className = 'ds-wrap'; st.parentNode.insertBefore(w, st); w.appendChild(st); if (keepX) { st.style.scrollBehavior = 'auto'; st.scrollLeft = keepX; requestAnimationFrame(() => { st.scrollLeft = keepX; st.style.scrollBehavior = ''; }); }
     w.insertAdjacentHTML('afterbegin', '<button class="ds-arr l" data-act="agStrip" data-d="-1" aria-label="Ver días anteriores">‹</button>');
     w.insertAdjacentHTML('beforeend', '<button class="ds-arr r" data-act="agStrip" data-d="1" aria-label="Ver días siguientes">›</button>');
     const hint = w.nextElementSibling; if (hint && hint.classList.contains('swipe-hint') && mouse()) hint.textContent = 'Arrastrá los días con el mouse, usá las flechas o las teclas ← → para cambiar de día.';
@@ -10982,6 +10985,52 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '#view-agenda .grid-wrap{max-height:none!important;min-height:0}' +
     '}' +
     '</style>');
+})();
+/* ===== 1.15: agenda que abre desde arriba, tira de días quieta y la app que vuelve siempre al inicio ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S;
+
+  /* la agenda ya no salta sola a la hora actual (ni al entrar, ni al tocar «Hoy», ni después de un rato sin tocarla) */
+  A.scrollToNow = () => {};
+
+  /* cada vez que se entra a la agenda se ve desde arriba */
+  let lastTab = null;
+  const prevAfter = A.afterRefresh;
+  A.afterRefresh = () => {
+    if (prevAfter) prevAfter();
+    if (S.tab === 'agenda' && lastTab !== 'agenda') {
+      const g = $('#gridWrap'); if (g) g.scrollTop = 0;
+      window.scrollTo(0, 0);
+    }
+    lastTab = S.tab;
+  };
+
+  /* al volver a abrir la app (después de cerrarla o de dejarla un rato en segundo plano) arranca en Inicio.
+     Si había una ventana abierta (por ejemplo, un turno a medio cargar) se respeta para no perder lo escrito. */
+  const AWAY_MS = 2 * 60 * 1000;
+  let hiddenAt = 0;
+  function backHome() {
+    if (S.modal) return;
+    if (A.stopOd) A.stopOd();
+    S.panel = null; S.date = A.today(); S.tab = 'inicio';
+    if (A.hideDrawer) A.hideDrawer();
+    A.renderPanel(); A.refresh(); window.scrollTo(0, 0);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt >= AWAY_MS) backHome();
+    hiddenAt = 0;
+  });
+  /* en el APK, además, el evento propio de Android al volver a la app */
+  try {
+    const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if (App && App.addListener) App.addListener('appStateChange', st => {
+      if (!st.isActive) { hiddenAt = hiddenAt || Date.now(); return; }
+      if (hiddenAt && Date.now() - hiddenAt >= AWAY_MS) backHome();
+      hiddenAt = 0;
+    });
+  } catch (e) { /* sin plugin: alcanza con visibilitychange */ }
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {
