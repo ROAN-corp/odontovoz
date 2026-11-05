@@ -245,3 +245,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - La tira de días ya no se mueve sola al tocar otras opciones de la agenda (Más, + Turno, Día/Semana…): solo se centra cuando elegís otro día o tocás «Hoy».
 - Al entrar a la agenda se ve desde arriba, sin saltar a la hora actual.
 - Al abrir la app, o al volver a ella después de 2 minutos o más, arranca en la carátula de Inicio. Si había una ventana abierta (por ejemplo, un turno a medio cargar) se respeta para no perder lo escrito.
+
+## OdontoVoz 1.16 · segundo plano configurable y profesionales al costado de la agenda
+- La app vuelve a Inicio recién después de 15 minutos en segundo plano. Se cambia en Menú › Apariencia (5, 10, 15, 20, 30 minutos, 1 hora o nunca), por equipo.
+- Centro: en la PC, columna de profesionales a la izquierda (tocás uno y ves su agenda, o «Todos») y calendario de tres meses a la derecha, con los días que atiende marcados. En el celular, fila de tarjetas de profesionales arriba de la tira de días.

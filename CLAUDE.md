@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.15 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.16 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.15 (noviem
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -48,6 +48,8 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.15 (noviem
 - 1.13 (`src/app21.js` + preset «Lo armo yo, de cero» en `PRESETS` de `index.html`): «Cerrar sesión» al fondo del menú (solo con cuenta en la nube) y armado libre de la agenda de cada profesional: chips de horarios por día, «+ Agregar horario» con varios días, desde/hasta y semana por medio; tocar un horario lo edita o lo quita. En modo profesional con varios consultorios sigue mandando «Mis consultorios y horarios».
 - 1.14 (`src/app22.js` + `A.CFG.swipeDays` en el deslizar de la agenda de `index.html`): en el celular deslizar ya no cambia de día (se puede reactivar con `A.CFG.swipeDays = true`); agenda compacta arriba (fecha tocando el título, «Colores de los turnos» dentro de «Más», sin textos de ayuda), consultorios en varias líneas, la grilla del día se extiende con la página y flechas flotantes ‹ Hoy › abajo a la izquierda. Referencia que mandó el usuario: la agenda de Bilog en el celular (lista a pantalla completa con flechas abajo).
 - 1.15 (`src/app23.js` + `S._stripDate`/`S._stripKeep` en el render de la agenda y `decorateStrip()` de `src/app16.js`): la tira de días queda quieta y solo se centra cuando cambia el día elegido; la agenda abre siempre desde arriba (`A.scrollToNow` desactivado a pedido del usuario); al volver a la app después de 2 minutos o más, y al abrirla de cero, arranca en Inicio (si hay una ventana abierta se respeta).
+- 1.16 (`src/app24.js` y `src/app23.js`): volver a Inicio después de 15 minutos en segundo plano por defecto, configurable por equipo en Menú › Apariencia (`odontovoz.away`, 0 = nunca). Agenda de centro con la lista de profesionales (en la PC, columna a la izquierda; en el celular, fila de tarjetas) para ver la agenda de uno o de todos, y calendario de 3 meses a la derecha en la PC. Referencia: Bilog de escritorio (profesionales a la izquierda, agenda en el medio, varios meses a la derecha).
+- Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
 ## Pendiente
