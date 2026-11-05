@@ -204,6 +204,30 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .trust p { color: var(--ink-2); font-size: 17px; margin-top: 6px; }
 @media (max-width: 760px) { .trust { grid-template-columns: 1fr; } }
 
+/* ---------- dinámica y firma ---------- */
+.dyn { background: var(--paper); }
+.dyn-grid, .firma-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 80px); align-items: center; }
+.dyn-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.dyn-list li { display: grid; gap: 2px; padding-left: 22px; border-left: 4px solid var(--mint); }
+.dyn-list b { font: 700 20px/1.3 var(--display); }
+.dyn-list span { color: var(--ink-2); font-size: 17px; }
+.reel { margin: 0; justify-self: center; width: min(340px, 100%); }
+.reel video { width: 100%; aspect-ratio: 9 / 16; border-radius: 28px; border: 8px solid #10282a; background: #08484b; display: block; }
+.reel figcaption { text-align: center; color: var(--ink-2); font-size: 15px; margin-top: 10px; }
+.firma { background: var(--deep); color: #fff; }
+.firma .lede, .firma .dyn-list span { color: #cfe7e3; }
+.firma .dyn-list li { border-left-color: #2f8f8a; }
+.firma-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+.doc-mock { background: #fff; color: #0f2a2b; border-radius: 26px; padding: 28px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 40px 80px -40px rgba(0,0,0,.6); }
+.doc-mock b { font: 800 22px var(--display); } .doc-mock .m { color: #4a6264; font-size: 15px; }
+.doc-mock i { display: block; height: 9px; width: 92%; background: #e6eeed; border-radius: 5px; }
+.doc-mock .sig { border: 3px dashed #cfdcda; border-radius: 18px; padding: 10px 14px 18px; margin-top: 8px; }
+.doc-mock .sig svg { width: 100%; height: auto; display: block; border-bottom: 2px solid #b8c4c8; }
+.doc-mock .seal { border: 3px solid #1d6b45; color: #1d6b45; border-radius: 16px; padding: 10px 14px; font-weight: 700; display: flex; flex-direction: column; gap: 2px; }
+.doc-mock code { font-size: 13px; color: #3a7a59; }
+@media (max-width: 860px) { .dyn-grid, .firma-grid { grid-template-columns: 1fr; } .firma-grid .doc-mock { order: 2; } }
+@media (prefers-reduced-motion: reduce) { .reel video { animation: none; } }
+
 footer { background: var(--deep); color: #cfe7e3; padding: 40px 0 calc(40px + env(safe-area-inset-bottom, 0px)); font-size: 15px; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
 footer a { color: #fff; }
@@ -220,6 +244,7 @@ footer .brand { margin-right: auto; }
     </a>
     <nav aria-label="Secciones">
       <a href="#como">Cómo funciona</a>
+      <a href="#firma">Firma</a>
       <a href="#planes">Planes</a>
       <a href="#descargas">Descargas</a>
       <a href="#instalar">Instalación</a>
@@ -287,13 +312,60 @@ footer .brand { margin-right: auto; }
     </div>
 
     <div class="feats">
-      <div><h3>Agenda para varios profesionales</h3><p>Día, semana y mes. Turnos de 15 minutos a varias horas, sobreturnos, bloqueos de horario, seña y arrastrar para mover.</p></div>
-      <div><h3>Historia clínica completa</h3><p>Datos personales, obra social con afiliado y plan, anamnesis con alertas que se ven en la agenda, evolución y firma del paciente.</p></div>
-      <div><h3>Obras sociales y aranceles</h3><p>Nomenclador cargado, con las obras sociales de Neuquén y Río Negro (ISSN, IPROSS) y las nacionales. Vos ajustás los valores.</p></div>
-      <div><h3>Laboratorios</h3><p>Tus laboratorios con sus trabajos y precios. Cada pedido con etapa, fecha de entrega y lo que pagó el paciente.</p></div>
-      <div><h3>Celular, tablet y PC sincronizados</h3><p>Lo que carga recepción aparece en el celular del profesional en segundos. Sin conexión, sigue funcionando y sincroniza después.</p></div>
-      <div><h3>Un profesional, varios consultorios</h3><p>¿Atendés en tu consultorio, en otro a porcentaje y en un sindicato? Cargás hasta cinco consultorios con sus días y horarios, ves todo en una sola agenda pintada por consultorio y sabés cuánto cobraste y cuál es tu parte en cada uno.</p></div>
+      <div><h3>Agenda para uno o varios profesionales</h3><p>Día, semana y mes. Turnos de 15 minutos a varias horas, sobreturnos, bloqueos, seña y arrastrar para mover. Los turnos cortos y superpuestos se leen bien.</p></div>
+      <div><h3>Un profesional, varios consultorios</h3><p>Hasta cinco consultorios con sus días y horarios, en una sola agenda pintada por consultorio, y cuánto cobraste y cuál es tu parte en cada uno.</p></div>
+      <div><h3>Historia clínica completa</h3><p>Datos personales con edad automática, obra social con afiliado y plan, motivo de consulta, anamnesis con alertas que se ven en la agenda y evolución.</p></div>
+      <div><h3>Odontograma por voz o a mano</h3><p>Dentición permanente y temporaria, por caras, con lo existente y lo que hay que hacer. Le hablás como en el consultorio: «tiene una resina en el 16 por vestibular».</p></div>
+      <div><h3>Fotos y radiografías en la nube</h3><p>Periapicales, panorámicas, intraorales y extraorales ordenadas por paciente. Las sacás con el celular y las ves en la PC.</p></div>
+      <div><h3>Firma del paciente en la pantalla</h3><p>Consentimientos, anamnesis y presupuestos firmados con el dedo y sellados para que no se puedan alterar.</p></div>
+      <div><h3>Aviso de sala de espera</h3><p>Cuando recepción marca que llegó un paciente, tu celular suena, vibra y te muestra quién es.</p></div>
+      <div><h3>Presupuestos, cobros y caja</h3><p>Plan de tratamiento con presupuesto, señas, cobros con recibo y saldo de cada paciente. Lo realizado pasa solo a la historia.</p></div>
+      <div><h3>Obras sociales y aranceles</h3><p>Nomenclador cargado, con las obras sociales de Neuquén y Río Negro (ISSN, IPROSS) y las nacionales. Vos ajustás los valores y el coseguro sale solo.</p></div>
+      <div><h3>Laboratorios</h3><p>Tus laboratorios con sus trabajos y precios; cada pedido con etapa, fecha de entrega y aviso si se atrasa.</p></div>
+      <div><h3>Recordatorios por WhatsApp</h3><p>Un toque y se abre el chat del paciente con el recordatorio del turno escrito.</p></div>
       <div><h3>Pasá tus pacientes de otro sistema</h3><p>Importás el listado desde Excel o CSV (por ejemplo, la exportación de Bilog) y no empezás de cero.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="dyn" aria-labelledby="t-dyn">
+  <div class="wrap dyn-grid">
+    <div>
+      <div class="sec-head">
+        <h2 id="t-dyn">Una app que se adapta a cómo trabajás</h2>
+        <p class="lede">No te obliga a cambiar tu forma de atender: se arma a tu medida y crece con vos.</p>
+      </div>
+      <ul class="dyn-list">
+        <li><b>Consultorio o centro</b><span>Para un odontólogo solo o para un centro con varios profesionales y recepción. Cambiás cuando quieras sin perder datos.</span></li>
+        <li><b>Uno o varios consultorios</b><span>Tu semana como es de verdad: el lunes a la mañana acá, a la tarde allá. Los horarios los editás vos.</span></li>
+        <li><b>Por voz o con el dedo</b><span>Dictás con las manos ocupadas o tocás la pantalla; cada cosa se puede hacer de las dos formas.</span></li>
+        <li><b>En vivo en todos tus equipos</b><span>Recepción, consultorio y tu casa ven lo mismo a los segundos. Sin internet sigue andando y sincroniza después.</span></li>
+        <li><b>Mejora todo el tiempo</b><span>Las actualizaciones llegan solas a la versión web y se instalan encima en Android, sin perder nada.</span></li>
+      </ul>
+    </div>
+    <figure class="reel"><video src="video/odontovoz.mp4" poster="video/poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Video de 28 segundos que muestra OdontoVoz: dictado al odontograma, aviso de llegada, varios consultorios y firma en pantalla."></video><figcaption>OdontoVoz en 30 segundos</figcaption></figure>
+  </div>
+</section>
+
+<section class="firma" id="firma" aria-labelledby="t-firma">
+  <div class="wrap firma-grid">
+    <div class="doc-mock" aria-hidden="true">
+      <b>Consentimiento informado</b>
+      <span class="m">Extracción · pieza 48 · Laura Sánchez</span>
+      <i></i><i style="width:78%"></i><i style="width:86%"></i>
+      <div class="sig"><svg viewBox="0 0 640 200"><path d="M40 150 C70 60 110 40 120 110 C126 160 150 150 170 90 C182 55 196 60 196 100 C196 140 214 150 236 112 C256 78 268 84 272 118 C276 150 300 150 320 104 C334 74 352 72 356 106 C360 138 386 140 410 98 C428 68 448 66 452 100 C456 130 478 140 520 96 C540 76 560 70 600 88" fill="none" stroke="#12304a" stroke-width="7" stroke-linecap="round"/></svg></div>
+      <div class="seal">✓ Documento sellado <code>SHA-256 · 8e24529c f90fc267…</code></div>
+    </div>
+    <div>
+      <div class="sec-head">
+        <h2 id="t-firma">El paciente firma en la pantalla. Sin papeles.</h2>
+        <p class="lede">Consentimientos informados, anamnesis, historia clínica y presupuestos: el paciente los lee y firma con el dedo en el celular o la tablet, y después firmás vos.</p>
+      </div>
+      <ul class="dyn-list">
+        <li><b>Sellado contra cambios</b><span>Cada documento queda congelado con una huella digital (SHA-256). Si alguien lo modificara después, la app lo detecta.</span></li>
+        <li><b>Registro de auditoría</b><span>Queda guardado quién firmó, cuándo, en qué equipo y con qué contenido; también si el paciente revoca un consentimiento.</span></li>
+        <li><b>Con respaldo legal</b><span>Es una firma electrónica en los términos de la Ley 25.506 (art. 5) y forma parte de la historia clínica (Ley 26.529). Se descarga en PDF cuando lo necesites.</span></li>
+      </ul>
     </div>
   </div>
 </section>
@@ -496,6 +568,8 @@ const NOTA_PLANES = 'Precios de lanzamiento en pesos argentinos, IVA incluido, d
     document.getElementById('apkMeta').innerHTML = '<b>Versión ' + esc(v) + '</b>, publicada el ' + esc(f) + (a ? ' · ' + (a.size / 1048576).toFixed(1).replace('.', ',') + ' MB' : '');
   }).catch(() => {});
 
+  /* el video no arranca solo si la persona pidió menos movimiento */
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.reel video').forEach(v => { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
   /* pestañas de instalación */
   const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
   const sel = t => { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; }); };
