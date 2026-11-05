@@ -36,6 +36,8 @@ t('turnero online', { intent: 'nav', tab: 'turnero' });
 t('odontograma', { intent: 'ficha', sub: 'odon', name: null });
 t('abrí el odontograma de Quiroga', { intent: 'ficha', sub: 'odon', name: 'quiroga' });
 t('mostrame la historia clínica', { intent: 'ficha', sub: 'datos' });
+t('abrí el periodontograma de Quiroga', { intent: 'ficha', sub: 'perio', name: 'quiroga' });
+t('periodontograma', { intent: 'ficha', sub: 'perio', name: null });
 t('plan de tratamiento', { intent: 'ficha', sub: 'plan' });
 t('la cuenta de Benítez', { intent: 'ficha', sub: 'cuenta', name: 'benitez' });
 t('radiografías', { intent: 'ficha', sub: 'img' });
