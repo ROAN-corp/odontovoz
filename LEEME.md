@@ -255,3 +255,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - La prueba gratis trae todo (todos los planes) para conocerla; al pagar, la cuenta queda con el plan contratado (se cambia desde el panel).
 - Menú › Mi plan: muestra el plan actual (o los días de prueba que quedan) y los planes con su precio; «Mejorar a este» abre el WhatsApp de soporte con el pedido armado.
 - Liquidaciones › cada profesional: «Cómo trabaja»: porcentaje de lo que factura, alquila un módulo (se queda con lo que factura y paga el módulo) o porcentaje + módulo. El módulo se cobra por hora, por turno o por día, se calcula solo con la agenda (hasta hoy, sin cancelados ni ausentes) y se descuenta automáticamente en la liquidación.
+
+## OdontoVoz 1.17.1 · «Cambios de hoy» con enlaces
+- Cada cambio de la lista se ve como enlace y lleva a su lugar, marcado por un momento: el turno en la agenda (y lo abre), la sección de la ficha que se tocó (evolución, cuenta, presupuestos…), los recordatorios del inicio, la caja, o la configuración del consultorio, logo o turnero.
