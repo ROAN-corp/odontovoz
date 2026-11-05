@@ -114,7 +114,7 @@
     const P = perio(pid), ex = curExam(pid), c = pc();
     let h = '<section class="card pr-card"><div class="pr-head"><h2>Periodontograma</h2><div class="row-btns">' +
       (P.exams.length > 1 ? '<select data-chg="pcExamSel" aria-label="Examen">' + P.exams.slice().reverse().map(e => '<option value="' + e.id + '"' + (ex && e.id === ex.id ? ' selected' : '') + '>' + A.fmtDMY(e.date) + '</option>').join('') + '</select>' : '') +
-      '<button class="btn small" data-act="pcNew">+ Nuevo</button>' + (ex ? '<button class="btn small" data-act="pcPdf">PDF</button>' : '') + '</div></div>';
+      '<button class="btn small" data-act="pcNew">+ Nuevo</button>' + (ex ? '<button class="btn small" data-act="pcPdf">PDF</button>' : '') + (ex && ex.date === A.today() ? '<button class="btn small" data-act="pcDelAsk">Eliminar este</button>' : '') + '</div></div>';
     if (!ex) {
       h += '<div class="empty">Todavía no hay periodontogramas de este paciente.<br>Tocá <b>Empezar sondaje</b> y dictá las profundidades: «tres dos tres», «sangra distal», «movilidad uno», «furca dos», «ausente»… o cargalas tocando cada casilla.</div><div class="row-btns" style="justify-content:center"><button class="btn primary" data-act="pcStart">Empezar sondaje</button></div></section>';
       return h;
@@ -136,9 +136,10 @@
     const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     return '<div class="pr-pad" id="prPad"><div class="pp-top"><b>' + st.t + ' · ' + faceName(st.t, st.f) + ' · ' + SITE[site] + '</b>' +
       '<div class="seg pp-seg"><button data-act="pcField" data-fl="ps" aria-pressed="' + (c.field === 'ps') + '">Sondaje</button><button data-act="pcField" data-fl="mg" aria-pressed="' + (c.field === 'mg') + '">Margen</button></div></div>' +
-      '<div class="pp-nums">' + (c.field === 'mg' ? '<button data-act="pcNeg" class="neg">−</button>' : '') + nums.map(n => '<button data-act="pcKey" data-v="' + n + '">' + n + '</button>').join('') + '</div>' +
+      '<div class="pp-nums">' + (c.field === 'mg' ? '<button data-act="pcNeg" class="neg">−</button>' : '') + nums.map(n => '<button data-act="pcKey" data-v="' + n + '">' + n + '</button>').join('') + '<button data-act="pcClr" class="clr" aria-label="Borrar esta casilla">⌫</button></div>' +
       '<div class="pp-tools"><button data-act="pcMark" data-k="bop" aria-pressed="' + !!o[st.f].bop[site] + '" class="t-b">Sangra</button><button data-act="pcMark" data-k="pl" aria-pressed="' + !!o[st.f].pl[site] + '" class="t-p">Placa</button><button data-act="pcMark" data-k="sup" aria-pressed="' + !!o[st.f].sup[site] + '" class="t-s">Supura</button>' +
       '<button data-act="pcMob">Movilidad ' + (o.mob || 0) + '</button>' + (molar(st.t) ? '<button data-act="pcFur">Furca ' + (o.fur[st.f] || 0) + '</button>' : '') +
+      '<button data-act="pcClrFace" aria-label="Borrar toda esta cara de la pieza">Borrar ' + st.t + ' ' + faceName(st.t, st.f) + '</button>' +
       '<button data-act="pcAbs">Ausente</button><button data-act="pcImp" aria-pressed="' + !!o.imp + '">Implante</button><button data-act="pcMove" data-d="-1" aria-label="Pieza anterior">◀</button><button data-act="pcMove" data-d="1" aria-label="Pieza siguiente">▶</button><button data-act="pcStop" class="t-x">Listo</button></div></div>';
   }
   const pid = () => S.fichaPid;
@@ -173,6 +174,24 @@
   A.acts.pcAbs = () => { const e = ex(), o = tooth(e, curStep().t); o.x = o.x ? 0 : 1; if (o.x) advance(e, 1); save(); redraw(); };
   A.acts.pcImp = () => { const e = ex(), o = tooth(e, curStep().t); o.imp = o.imp ? 0 : 1; save(); redraw(); };
   A.acts.pcMove = el => { const e = ex(), d = +el.getAttribute('data-d'), c = pc(); if (c.k > 0 && d < 0) c.k = 0; else advance(e, d); redraw(); };
+  /* borrar: la casilla elegida, toda la cara de la pieza o el examen del día */
+  const siteNow = () => { const c = pc(), st = curStep(); return { st, site: stepSites(st)[c.k] }; };
+  A.acts.pcClr = () => {
+    const e = ex(); if (!e) return; const c = pc(), { st, site } = siteNow(), o = tooth(e, st.t);
+    delete o[st.f][c.field][site]; if (c.field === 'ps') ['bop', 'pl', 'sup'].forEach(k => { delete o[st.f][k][site]; });
+    c.last = null; save(); redraw(); A.toast('Borré ' + (c.field === 'ps' ? 'el sondaje' : 'el margen') + ' de la ' + st.t + ' ' + faceName(st.t, st.f) + ' ' + SITE[site] + '.');
+  };
+  A.acts.pcClrFace = () => {
+    const e = ex(); if (!e) return; const c = pc(), st = curStep(), o = tooth(e, st.t);
+    ['ps', 'mg', 'bop', 'pl', 'sup'].forEach(k => { o[st.f][k] = {}; }); o.fur[st.f] = 0; if (st.f === 'v') o.mob = 0;
+    c.k = 0; c.last = null; save(); redraw(); A.toast('Borré la ' + st.t + ' por ' + faceName(st.t, st.f) + '.');
+  };
+  A.acts.pcDelAsk = () => { S.modal = { type: 'pcDel', pid: pid() }; A.renderModal(); };
+  MF.pcDel = m => { const e = curExam(m.pid); return A.modalShell('Eliminar periodontograma', '<p>Se elimina el periodontograma del <b>' + A.fmtDMY(e.date) + '</b> con todo lo cargado. No se puede deshacer.</p><p class="hint">Solo se puede con el del día (por ejemplo, si lo empezaste por error). Si es de otro día, corregí las casillas.</p>', '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="pcDelGo">Eliminar</button>'); };
+  A.acts.pcDelGo = () => {
+    const e = curExam(pid()), P = perio(pid()); if (!e || e.date !== A.today()) { A.closeModal ? A.closeModal() : (S.modal = null, A.renderModal()); return; }
+    P.exams = P.exams.filter(x => x.id !== e.id); if (S.pcExam) delete S.pcExam[pid()]; S.pc = null; save(); S.modal = null; A.renderModal(); document.body.classList.remove('pc-open'); A.refresh(); A.toast('Periodontograma eliminado.');
+  };
   A.acts.pcVoice = () => { A.acts.pcStart(); if (A.voice && !A.voice.on && A.acts.voiceToggle) A.acts.voiceToggle(); else if (A.voice && A.voice.on) A.say('Te escucho. Dictá los valores de la ' + curStep().t + '.'); };
 
   /* PDF del periodontograma */
@@ -228,6 +247,11 @@
     if (/^(?:anterior|pieza anterior|volve|volver|atras|para atras|el anterior|la anterior|volvamos)$/.test(c)) { advance(e, -1); const st = curStep(); return done('Volvimos a la ' + st.t + '.'); }
     if (/^(?:borra(?:r|lo)?|repeti(?:r)?|corregi(?:r)?|corrijo|de nuevo|otra vez|mal|me equivoque|eso no|esta mal)(?: (?:esa|esta|la|la ultima) pieza)?(?: de nuevo)?$/.test(c)) {
       const ls = pc().lastStep != null ? pc().lastStep : pc().i, st = SEQ[ls], o = tooth(e, st.t); ['ps', 'mg', 'bop', 'pl', 'sup'].forEach(k => { o[st.f][k] = {}; }); pc().i = ls; pc().k = 0; save(); return done('Borré la ' + st.t + ' por ' + faceName(st.t, st.f) + '. Dictala de nuevo.');
+    }
+    if ((m = /^(?:borra(?:r|me|le)?|limpia(?:r)?|elimina(?:r)?)\s+(?:todo\s+)?(?:la\s+|el\s+)?(?:pieza\s+|diente\s+)?(\d{2})(?:\s+(?:por\s+(?:la\s+)?)?(vestibular|bucal|palatino|palatina|lingual))?$/.exec(c)) && ALL.indexOf(+m[1]) >= 0) {
+      const t = +m[1], fs = m[2] ? [FACEW(m[2])] : ['v', 'l'], o = tooth(e, t);
+      fs.forEach(f => { ['ps', 'mg', 'bop', 'pl', 'sup'].forEach(k => { o[f][k] = {}; }); o.fur[f] = 0; }); if (!m[2]) o.mob = 0;
+      pc().i = seqIndex(t, fs[0]); pc().k = 0; save(); return done('Borré la ' + t + (m[2] ? ' por ' + faceName(t, fs[0]) : ', las dos caras') + '.');
     }
     /* cambiar de cara: «pasá a palatino», «ahora lingual», «por vestibular» */
     if ((m = /^(?:pasa(?:r|mos)? a|vamos (?:a|con)|ahora(?: por)?|cara|por|la cara)\s+(?:la\s+)?(vestibular|bucal|palatino|palatina|lingual)$/.exec(c)) || (m = /^(vestibular|palatino|palatina|lingual)$/.exec(c))) {

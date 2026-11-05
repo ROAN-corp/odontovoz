@@ -53,7 +53,7 @@
   }
 
   /* modo solo lectura: se puede mirar, buscar, descargar e imprimir; no se puede cargar ni cambiar nada */
-  const ALLOW = /^(tab|navBack|goHome|gear|drawer|open|close|ficha(Tab|Back)|ag(Prev|Next|Today|GoDay|View|More|CalMon|Free(Day)?|Shift)|view|search|topRes|pdf|acct|login|privacy|support|lic|tutorial|tut|voiceHelp|appear|theme|conv|scrim|labAll|labFilter|labMoreDone|labGoPat|osOpen|osMon|osEdit|osBack|impSeePats|toast|odZoom|cfgOpen|cfgTab|bk|backup|exportAll|dl|download|stMenu|stOpen|mvCancel|noop|modeOpen|demo|tpClose|cmdSay|voiceToggle|voiceStop|handsFree|introGo|exitNow|exit|devName|cloudSyncNow|pin)/;
+  const ALLOW = /^(tab|navBack|goHome|gear|drawer|open|close|ficha(Tab|Back)|ag(Prev|Next|Today|GoDay|View|More|CalMon|Free(Day)?|Shift)|view|search|topRes|pdf|acct|login|privacy|support|lic|tutorial|tut|voiceHelp|appear|theme|conv|scrim|labAll|labFilter|labMoreDone|labGoPat|osOpen|osMon|osEdit|osBack|impSeePats|toast|odZoom|cfgOpen|cfgTab|bk|backup|exportAll|dl|download|stMenu|stOpen|mvCancel|noop|modeOpen|demo|tpClose|cmdSay|voiceToggle|voiceStop|handsFree|introGo|exitNow|exit|devName|cloudSyncNow|pin|evMore|evOpen|evClear|evCopy)/;
   const blocked = el => CL.readonly && el && !ALLOW.test(el.getAttribute('data-act') || '');
   const nope = () => A.toast('Solo lectura: tu suscripción no está vigente. Podés ver y descargar tus datos.');
   document.addEventListener('click', e => {
@@ -64,7 +64,7 @@
   ['change', 'submit'].forEach(t => document.addEventListener(t, e => {
     if (!CL.readonly) return;
     const k = e.target.getAttribute && (e.target.getAttribute('data-chg') || e.target.getAttribute('data-sub'));
-    if (k && !/^(theme|conv|devName|topSearch|pinGo|login|osQ|rsDate)/.test(k) && !(e.target.closest && e.target.closest('#loginWrap, #pinWrap'))) { e.stopImmediatePropagation(); e.preventDefault(); nope(); }
+    if (k && !/^(theme|conv|devName|topSearch|pinGo|login|osQ|rsDate|evKind|evPro|evFrom|evTo|evAnul)/.test(k) && !(e.target.closest && e.target.closest('#loginWrap, #pinWrap'))) { e.stopImmediatePropagation(); e.preventDefault(); nope(); }
   }, true));
   /* por voz: solo consultar y moverse */
   const execPrev = A.cmd.exec;
