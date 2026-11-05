@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>OdontoVoz · Agenda e historia clínica odontológica por voz</title>
-<meta name="description" content="OdontoVoz organiza la agenda, las historias clínicas y el odontograma de tu consultorio. Le dictás con las manos ocupadas y lo anota. Android, web y PC.">
+<title>OdontoVoz · Gestión odontológica con dictado por voz</title>
+<meta name="description" content="Software de gestión odontológica: agenda, pacientes, historias clínicas y varios consultorios en una sola app, con dictado por voz. Android, web y PC.">
 <meta name="theme-color" content="#08484b">
 <link rel="icon" href="img/icono.png">
 <link rel="apple-touch-icon" href="img/icono.png">
@@ -71,10 +71,15 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 
 /* ---------- portada ---------- */
 .hero { background: var(--deep); color: #fff; padding: clamp(40px, 7vw, 88px) 0 clamp(56px, 8vw, 96px); overflow: hidden; }
-.hero .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(32px, 5vw, 64px); align-items: center; }
-.hero h1 { font-size: clamp(42px, 6.6vw, 76px); font-weight: 800; letter-spacing: -.025em; }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 64px); align-items: center; }
+.hero h1 { font-size: clamp(40px, 5vw, 64px); font-weight: 800; letter-spacing: -.025em; text-wrap: balance; }
 .hero .lede { color: #cfe7e3; margin-top: 20px; }
 .hero .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.pillars { list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.pillars li { display: inline-flex; align-items: center; gap: 9px; padding: 9px 16px 9px 12px; border-radius: 999px; border: 1.5px solid rgba(191, 232, 223, .35); color: #e6f6f3; font: 700 16px/1 var(--display); background: rgba(255, 255, 255, .04); }
+.pillars svg { width: 22px; height: 22px; fill: none; stroke: #bfe8df; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pillars li.star { background: var(--sun); border-color: var(--sun); color: #2b2100; }
+.pillars li.star svg { stroke: #2b2100; }
 .hero .fine { margin-top: 16px; font-size: 15px; color: #9fcbc4; }
 @media (max-width: 900px) { .hero .wrap { grid-template-columns: 1fr; } }
 
@@ -257,8 +262,14 @@ footer .brand { margin-right: auto; }
 <section class="hero" aria-labelledby="t-hero">
   <div class="wrap">
     <div>
-      <h1 id="t-hero">Dictale la consulta. OdontoVoz la anota.</h1>
-      <p class="lede">Agenda, historia clínica y odontograma para tu consultorio. Con los guantes puestos le decís lo que ves y queda cargado en la ficha del paciente, en el celular y en la PC de recepción al mismo tiempo.</p>
+      <h1 id="t-hero">Gestión odontológica que se maneja con la voz.</h1>
+      <p class="lede">Agenda, pacientes, historias clínicas y todos tus consultorios en una sola app. Lo que nos distingue: le dictás con los guantes puestos y queda anotado.</p>
+      <ul class="pillars" aria-label="Qué incluye">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Agenda</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg>Pacientes</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5.5-7 11-7 11s-7-5.5-7-11a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Consultorios</li>
+        <li class="star"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg>Dictado por voz</li>
+      </ul>
       <div class="cta">
         <a class="btn solid" href="#descargas">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
