@@ -208,3 +208,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Apariencia (por equipo): color principal, fondo y tamaño de letra; accesos del inicio para elegir y ordenar manteniendo apretado.
 - Agenda: botón «Hoy» cuando estás en otro día (lleva a la hora actual); el calendario de la web muestra «12t» con la cantidad de turnos.
 - «Cambios de hoy»: cada cambio es un enlace que lleva al paciente o al turno. Logo sutil en el inicio, cuadros vacíos, Ayuda y la página de turnos.
+
+## OdontoVoz 1.11 · límites de cada plan controlados por el servidor
+- Planes y límites (`supabase/limites.sql`, `src/app19.js`): Prueba 1 profesional, 2 equipos, 2 consultorios · Profesional (`basico`) 1 profesional, 2 equipos, 1 consultorio (+ adicionales con `max_locs`) · Consultorio 3 profesionales, 5 equipos · Centro 8 profesionales, 12 equipos. Excepciones por cuenta en el panel (`lim_pros`, `lim_devices`, `max_locs`).
+- El servidor rechaza: pedidos de equipos no registrados (encabezado `x-ov-device`, tabla `ov_devices`), más profesionales o consultorios que los del plan y pasar a «consultorio o centro» con un plan de un profesional. La app avisa antes con «Límite de tu plan» y botón para pedir el cambio.
+- Equipos: cada equipo se registra solo; si se llega al máximo, pantalla para liberar uno (hasta 4 por mes; más, desde el panel). Prueba gratis desde un equipo que ya usó otra cuenta: queda marcada para revisar en el panel.
+- Tipos de cuenta con los nombres de la web: «Profesional» y «Consultorio o centro». Panel de licencias: plan con sus límites, excepciones, equipos por cuenta y sugerencias.

@@ -96,10 +96,10 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
       '<div class="tools"><input id="qq" placeholder="Buscar por correo o nota" value="' + esc(q) + '"><select id="ff">' + ['todas', 'activa', 'prueba', 'vencida', 'suspendida'].map(f => '<option value="' + f + '"' + (f === filt ? ' selected' : '') + '>' + (f === 'todas' ? 'Todas' : f) + ' (' + c[f] + ')</option>').join('') + '</select><button class="small" id="rl">Actualizar</button></div>' +
       '<table><thead><tr><th>Cuenta</th><th>Plan</th><th>Estado</th><th>Vence</th><th>Uso</th><th>Acciones</th></tr></thead><tbody>' +
       (list.length ? list.map(r => '<tr><td><b>' + esc(r.email) + '</b><div class="muted">Alta ' + dmy((r.created_at || '').slice(0, 10)) + (r.notes ? ' · ' + esc(r.notes) : '') + '</div></td><td>' + esc(PLANES[r.plan] || r.plan) + (r.max_locs > 1 ? '<div class="muted">' + r.max_locs + ' consultorios</div>' : '') + '</td><td>' + chip(state(r)) + '</td><td>' + dmy(until(r)) + '</td>' +
-        '<td class="muted">' + (r.records || 0) + ' registros<br>' + (r.last_sync ? 'sincronizó ' + dmy(r.last_sync.slice(0, 10)) : 'sin datos aún') + '</td>' +
+        '<td class="muted">' + (r.limits ? '<b style="color:inherit">' + (r.devices || 0) + '/' + r.limits.devices + '</b> equipos · ' + r.limits.pros + ' prof.<br>' : '') + (r.flags ? '<span class="chip warn" title="' + esc(r.flags) + '">revisar</span> ' : '') + (r.records || 0) + ' registros<br>' + (r.last_sync ? 'sincronizó ' + dmy(r.last_sync.slice(0, 10)) : 'sin datos aún') + '</td>' +
         '<td><div class="acts"><button class="small" data-x="m30" data-id="' + r.owner + '">+1 mes</button><button class="small" data-x="y1" data-id="' + r.owner + '">+1 año</button>' +
         (r.status === 'suspendida' ? '<button class="small primary" data-x="on" data-id="' + r.owner + '">Reactivar</button>' : '<button class="small danger" data-x="off" data-id="' + r.owner + '">Suspender</button>') +
-        '<button class="small" data-x="ed" data-id="' + r.owner + '">Editar</button></div></td></tr>').join('') : '<tr><td colspan="6" class="muted">No hay cuentas con ese filtro.</td></tr>') + '</tbody></table>' +
+        '<button class="small" data-x="ed" data-id="' + r.owner + '">Editar</button><button class="small" data-x="dv" data-id="' + r.owner + '">Equipos</button></div></td></tr>').join('') : '<tr><td colspan="6" class="muted">No hay cuentas con ese filtro.</td></tr>') + '</tbody></table>' +
       (fb ? '<h2 style="margin:28px 0 8px">Comentarios y sugerencias <span class="muted">(' + fb.filter(x => x.status === 'nuevo').length + ' nuevos)</span></h2>' + (fb.length ? '<table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Tipo</th><th>Comentario</th><th></th></tr></thead><tbody>' + fb.map(x => '<tr' + (x.status === 'nuevo' ? ' style="font-weight:600"' : '') + '><td>' + dmy((x.created_at || '').slice(0, 10)) + '</td><td>' + esc(x.email || '') + '<div class="muted">' + esc(x.app || '') + '</div></td><td>' + esc(x.kind) + '</td><td style="white-space:pre-wrap;max-width:520px">' + esc(x.text) + '</td><td>' + (x.status === 'nuevo' ? '<button class="small" data-fb="' + x.id + '">Marcar leído</button>' : '<span class="muted">' + esc(x.status) + '</span>') + '</td></tr>').join('') + '</tbody></table>' : '<p class="muted">Todavía no llegaron comentarios.</p>') : '') +
       '<p class="muted">«+1 mes» y «+1 año» suman desde hoy o desde el vencimiento actual, lo que sea más tarde, y dejan la cuenta activa. Una cuenta vencida o suspendida queda en solo lectura: ve y descarga sus datos, pero el servidor no acepta cambios.</p>';
     $('#qq').oninput = e => { q = e.target.value.toLowerCase(); const p = e.target.selectionStart; render(); const i = $('#qq'); i.focus(); i.setSelectionRange(p, p); };
@@ -112,24 +112,44 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
   function act(x, id) {
     const r = rows.filter(z => z.owner === id)[0]; if (!r) return;
     const base = [today(), r.paid_until].filter(Boolean).sort().pop();
-    if (x === 'm30' || x === 'y1') { const n = x === 'm30' ? 30 : 365; patch(id, { paid_until: addDays(base, n), status: 'activa', plan: r.plan === 'prueba' ? 'consultorio' : r.plan }); return; }
+    if (x === 'm30' || x === 'y1') { const n = x === 'm30' ? 30 : 365; if (r.plan === 'prueba') { edit(r, addDays(base, n)); return; } patch(id, { paid_until: addDays(base, n), status: 'activa' }); return; }
+    if (x === 'dv') { devs(r); return; }
     if (x === 'off') { if (confirm('¿Suspender ' + r.email + '? Va a quedar en solo lectura.')) patch(id, { status: 'suspendida' }); return; }
     if (x === 'on') { patch(id, { status: 'activa' }); return; }
     if (x === 'ed') edit(r);
   }
-  function edit(r) {
+  const DEF = { prueba: [1, 2, 2], basico: [1, 2, 1], consultorio: [3, 5, 1], centro: [8, 12, 5] };
+  function edit(r, payTo) {
     const d = document.createElement('div'); d.className = 'drawer';
     d.innerHTML = '<div class="card"><h2 style="margin:0">' + esc(r.email) + '</h2><div class="row2"><div><label>Plan</label><select id="ePl">' + Object.keys(PLANES).map(k => '<option value="' + k + '"' + (k === r.plan ? ' selected' : '') + '>' + PLANES[k] + '</option>').join('') + '</select></div><div><label>Estado</label><select id="eSt"><option value="activa"' + (r.status === 'activa' ? ' selected' : '') + '>activa</option><option value="suspendida"' + (r.status === 'suspendida' ? ' selected' : '') + '>suspendida</option></select></div></div>' +
       '<div class="row2"><div><label>Prueba hasta</label><input type="date" id="eTr" value="' + esc(r.trial_until || '') + '"></div><div><label>Pagado hasta</label><input type="date" id="ePa" value="' + esc(r.paid_until || '') + '"></div></div>' +
-      '<div><label>Equipos permitidos</label><input type="number" min="1" max="20" id="eDv" value="' + (r.max_devices || 3) + '"></div><div><label>Consultorios (modo profesional, 1 a 5)</label><input type="number" min="1" max="5" id="eLc" placeholder="Según el plan" value="' + (r.max_locs || '') + '"></div><div><label>Notas (pagos, teléfono, acuerdos)</label><textarea id="eNo" rows="3">' + esc(r.notes || '') + '</textarea></div><div class="err" id="eEr"></div>' +
+      '<p class="muted" id="eDef" style="margin:0"></p><div class="row2"><div><label>Profesionales (vacío = según el plan)</label><input type="number" min="1" max="50" id="ePr" value="' + (r.lim_pros || '') + '"></div><div><label>Equipos (vacío = según el plan)</label><input type="number" min="1" max="50" id="eDv" value="' + (r.lim_devices || '') + '"></div></div><div><label>Consultorios del modo profesional (1 a 5, vacío = según el plan)</label><input type="number" min="1" max="5" id="eLc" value="' + (r.max_locs || '') + '"></div>' + (r.flags ? '<div class="err" style="color:inherit"><b>Aviso:</b> ' + esc(r.flags) + ' <button class="small" id="eFl">Quitar aviso</button></div>' : '') + '<div><label>Notas (pagos, teléfono, acuerdos)</label><textarea id="eNo" rows="3">' + esc(r.notes || '') + '</textarea></div><div class="err" id="eEr"></div>' +
       '<div class="acts" style="justify-content:flex-end"><button id="eCa">Cancelar</button><button class="primary" id="eOk">Guardar</button></div></div>';
     document.body.appendChild(d);
     d.onclick = e => { if (e.target === d) d.remove(); };
     $('#eCa').onclick = () => d.remove();
+    const defs = () => { const v = DEF[$('#ePl').value] || DEF.prueba; $('#eDef').textContent = 'El plan ' + PLANES[$('#ePl').value] + ' incluye ' + v[0] + ' profesional' + (v[0] > 1 ? 'es' : '') + ', ' + v[1] + ' equipos y ' + v[2] + ' consultorio' + (v[2] > 1 ? 's' : '') + '. Completá un número solo para hacer una excepción.'; $('#ePr').placeholder = v[0]; $('#eDv').placeholder = v[1]; $('#eLc').placeholder = v[2]; };
+    $('#ePl').onchange = defs; defs();
+    if (payTo) { $('#ePa').value = payTo; $('#eSt').value = 'activa'; if ($('#ePl').value === 'prueba') $('#ePl').value = 'basico'; defs(); $('#eEr').textContent = 'Elegí el plan que contrató y guardá.'; }
+    if ($('#eFl')) $('#eFl').onclick = async () => { await patch(r.owner, { flags: null }); d.remove(); };
     $('#eOk').onclick = async () => {
-      try { await patch(r.owner, { plan: $('#ePl').value, status: $('#eSt').value, trial_until: $('#eTr').value || r.trial_until, paid_until: $('#ePa').value || null, max_devices: parseInt($('#eDv').value, 10) || 3, max_locs: Math.min(5, Math.max(1, parseInt($('#eLc').value, 10))) || null, notes: $('#eNo').value.trim() || null }); d.remove(); }
+      try { await patch(r.owner, { plan: $('#ePl').value, status: $('#eSt').value, trial_until: $('#eTr').value || r.trial_until, paid_until: $('#ePa').value || null, lim_pros: parseInt($('#ePr').value, 10) || null, lim_devices: parseInt($('#eDv').value, 10) || null, max_locs: Math.min(5, Math.max(1, parseInt($('#eLc').value, 10))) || null, notes: $('#eNo').value.trim() || null }); d.remove(); }
       catch (e) { $('#eEr').textContent = e.message; }
     };
+  }
+  async function devs(r) {
+    const d = document.createElement('div'); d.className = 'drawer'; d.innerHTML = '<div class="card"><h2 style="margin:0">Equipos de ' + esc(r.email) + '</h2><p class="muted">Cargando…</p></div>'; document.body.appendChild(d);
+    d.onclick = e => { if (e.target === d) d.remove(); };
+    const draw = async () => {
+      let l = []; try { l = await http('/rest/v1/rpc/ov_admin_devices', { method: 'POST', body: { p_owner: r.owner } }) || []; } catch (e) { d.querySelector('.card').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; return; }
+      const act = l.filter(x => !x.removed_at);
+      d.querySelector('.card').innerHTML = '<h2 style="margin:0">Equipos de ' + esc(r.email) + '</h2><p class="muted" style="margin:4px 0 10px">' + act.length + ' en uso de ' + (r.limits ? r.limits.devices : '?') + ' permitidos.</p><table><tbody>' + (l.length ? l.map(x => '<tr><td><b>' + esc(x.name || 'Equipo') + '</b><div class="muted">' + esc(x.id.slice(0, 8)) + '…</div></td><td class="muted">' + (x.removed_at ? 'liberado ' + dmy(x.removed_at.slice(0, 10)) : 'usado ' + dmy((x.last_seen || '').slice(0, 10))) + '</td><td>' + (x.removed_at ? '' : '<button class="small" data-dv="' + esc(x.id) + '">Quitar</button>') + '</td></tr>').join('') : '<tr><td class="muted">Todavía no entró desde ningún equipo.</td></tr>') + '</tbody></table>' +
+        '<div class="acts" style="justify-content:space-between;margin-top:12px"><button class="small danger" id="dvAll">Borrar todos (empieza de cero)</button><button class="primary" id="dvOk">Listo</button></div>';
+      d.querySelectorAll('[data-dv]').forEach(b => { b.onclick = async () => { await http('/rest/v1/rpc/ov_admin_device_reset', { method: 'POST', body: { p_owner: r.owner, p_id: b.getAttribute('data-dv') } }); draw(); }; });
+      d.querySelector('#dvAll').onclick = async () => { if (!confirm('¿Borrar todos los equipos de ' + r.email + '? Al volver a entrar, cada equipo se registra de nuevo.')) return; await http('/rest/v1/rpc/ov_admin_device_reset', { method: 'POST', body: { p_owner: r.owner } }); draw(); };
+      d.querySelector('#dvOk').onclick = () => { d.remove(); load(); };
+    };
+    draw();
   }
   $('#outBtn').onclick = async () => { try { await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual */ } ses = null; sessionStorage.removeItem('ovadm'); login(); };
   if (ses) load(); else login();

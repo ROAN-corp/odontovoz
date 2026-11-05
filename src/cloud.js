@@ -20,6 +20,8 @@
   try { CL.session = JSON.parse(LS.get('odontovoz.session', 'null')); } catch (e) { CL.session = null; }
   const saveSession = s => { CL.session = s; LS.set('odontovoz.session', s ? JSON.stringify(s) : null); };
   A.deviceLabel = () => LS.get('odontovoz.devname', '') || (window.OV_NATIVE ? 'Teléfono' : 'Computadora');
+  /* cada equipo tiene un número propio: el servidor solo acepta los equipos registrados (límite del plan) */
+  A.devId = () => { let d = LS.get('odontovoz.devid', ''); if (!/^[A-Za-z0-9_-]{12,64}$/.test(d || '')) { const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; d = ''; const r = (window.crypto && crypto.getRandomValues) ? crypto.getRandomValues(new Uint8Array(24)) : Array.from({ length: 24 }, () => Math.floor(Math.random() * 256)); for (let i = 0; i < 24; i++) d += al[r[i] % al.length]; LS.set('odontovoz.devid', d); } return d; };
 
   /* ---------- pedidos al servidor ---------- */
   async function http(path, opt) {
@@ -27,6 +29,7 @@
     opt = opt || {};
     const h = Object.assign({ apikey: c.key, 'Content-Type': 'application/json' }, opt.headers || {});
     if (opt.auth !== false && CL.session) h.Authorization = 'Bearer ' + CL.session.access_token;
+    h['x-ov-device'] = A.devId();
     let r;
     try { r = await fetch(c.url + path, { method: opt.method || 'GET', headers: h, body: opt.body ? JSON.stringify(opt.body) : undefined }); }
     catch (e) { const er = new Error('Sin conexión con el servidor.'); er.offline = true; throw er; }
@@ -216,7 +219,7 @@
   }
   async function push() {
     const all = collect(); let n = 0;
-    for (const k of Object.keys(all)) { const b = BASE[k]; if (!b || J(b.v) !== J(all[k])) { await pushKey(k, all[k]); n++; } }
+    for (const k of Object.keys(all)) { const b = BASE[k]; if (A.recAllowed && !A.recAllowed(k, all[k])) continue; if (!b || J(b.v) !== J(all[k])) { await pushKey(k, all[k]); n++; } }
     return n;
   }
   CL.sync = async () => {
@@ -226,6 +229,7 @@
     try {
       await baseLoad();
       if (CL.checkLicense) await CL.checkLicense();
+      if (!(await devCheck())) { setState('err', 'Este equipo no está habilitado para tu cuenta.'); return; }
       const ch = await pull(); const up = CL.readonly ? 0 : await push();
       CL.last = Date.now(); LS.set('odontovoz.cloud.last', String(CL.last)); setState('ok');
       if (ch || pendingRefresh) { pendingRefresh = false; A.noCloudPush = true; A.saveNow(); A.noCloudPush = false; softRefresh(); }
@@ -240,6 +244,21 @@
       if (A.logError && !e.offline) A.logError('nube', e);
     } finally { running = false; if (again) { again = false; setTimeout(CL.sync, 300); } }
   };
+  /* registro del equipo (se repite cada 6 horas para que figure activo) */
+  async function devCheck() {
+    if (CL.devOk && Date.now() - (CL.devAt || 0) < 6 * 3600e3) return true;
+    if (!CL.devOk && CL.devFull && Date.now() - (CL.devFullAt || 0) < 60000) return false;
+    try {
+      const r = await api('/rest/v1/rpc/ov_device_register', { method: 'POST', body: { p_id: A.devId(), p_name: A.deviceLabel() } });
+      if (r && r.ok) { CL.devOk = true; CL.devAt = Date.now(); CL.devFull = null; return true; }
+      CL.devOk = false; CL.devFull = r || { full: true }; CL.devFullAt = Date.now(); if (A.onDeviceFull) A.onDeviceFull(CL.devFull); return false;
+    } catch (e) {
+      /* el servidor todavía no tiene el control de equipos: se sigue como antes */
+      if (e.status === 404 || /could not find the function|schema cache/i.test(String(e.message))) { CL.devOk = true; CL.devAt = Date.now(); return true; }
+      throw e;
+    }
+  }
+  CL.devCheck = () => { CL.devOk = false; CL.devFull = null; return devCheck(); };
   function softRefresh() {
     const ae = document.activeElement, typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
     if (typing) { pendingRefresh = true; ae.addEventListener('blur', () => { if (pendingRefresh) { pendingRefresh = false; A._fromSync = true; try { A.refresh(); } finally { A._fromSync = false; } } }, { once: true }); return; }
