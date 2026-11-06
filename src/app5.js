@@ -315,6 +315,7 @@
         if (pr.tab === 'turnero') { A.acts.tnOpen(); return ok('Turnero online.'); }
         if (pr.tab === 'tutorial') { A.openTutorial(); return ok('Tutorial.'); }
         if (pr.tab === 'support') { A.acts.supportOpen(); return ok('Ayuda y soporte.'); }
+        if (pr.tab === 'empresa') { if (!A.isEmp || !A.isEmp()) return no('El modo Empresa no está activo. Se activa desde el menú.'); if (A.empTabAllowed && !A.empTabAllowed('empresa')) return no('La sección Empresa es solo para el dueño y la administración.'); A.acts.tab(fake({ 'data-tab': 'empresa' })); return ok('Empresa.'); }
         if ((pr.tab === 'caja' || pr.tab === 'pacientes' || pr.tab === 'liq') && S.uimode === 'atencion') A.acts.uiMode(fake({ 'data-ui': 'admin' }));
         if (pr.tab === 'liq' && A.isSolo()) return no('Las liquidaciones son para centros con varios profesionales.');
         A.acts.tab(fake({ 'data-tab': pr.tab })); return ok({ pacientes: 'Pacientes.', caja: 'Caja.', liq: 'Liquidaciones.' }[pr.tab] || '');
@@ -557,7 +558,7 @@
   A.acts.tutSkip = () => { S.tutorialSeen = true; A.save(); A.closeModal(); A.afterRefresh(); };
 
   const CMDS = [
-    ['Navegar', ['inicio', 'abrí la agenda', 'agenda de mañana', 'agenda del lunes', 'la semana que viene', 'pacientes', 'mostrame la caja', 'volver', 'abrí el menú']],
+    ['Navegar (decilo como te salga)', ['llevame al inicio', '¿me podés llevar a la pantalla de inicio?', 'quiero ver la agenda de mañana', 'agenda del lunes', 'la semana que viene', 'pasame a los pacientes', '¿me mostrás la caja?', 'llevame a la empresa', 'volver', 'abrí el menú']],
     ['Turnos', ['turno para Pérez mañana a las 10', 'agendame a Gómez el 15 a las 9 para limpieza', 'sobreturno para Ríos hoy a las 11 por dolor', 'confirmá el turno de Sosa', 'cancelá el turno de Paz', 'Quiroga no vino']],
     ['Atención', ['llegó Benítez', 'quién sigue', 'atender al siguiente', 'atender a Lucía Benítez', 'siguiente paso', 'terminar la atención', 'cómo viene el día']],
     ['Pacientes', ['abrí a Lucía Benítez', 'traeme la ficha de Quiroga', 'odontograma de Ortega', 'nuevo paciente Juan Pérez', 'cuánto debe Benítez']],

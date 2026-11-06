@@ -16,6 +16,19 @@ function t(phrase, exp) {
 ['volver', 'atrás', 'para atrás', 'cerrá', 'salir'].forEach(p => t(p, { intent: 'back' }));
 ['inicio', 'andá al inicio', 'llevame a la pantalla principal', 'casita', 'volvé a la casa'].forEach(p => t(p, { intent: 'home' }));
 t('abrí el menú', { intent: 'menu' });
+// navegación dicha de muchas formas (1.20)
+['llévame llévame a la puerta de inicio', 'llévame el inicio', '¿me puedes llevar el inicio?', 'llévame a la pantalla de inicio', 'quiero que me lleves a la pantalla de inicio',
+ 'me podés llevar al inicio', '¿me podrías llevar a la pantalla principal?', 'volvé al menú principal', 'andá a la página principal', 'quiero ir al inicio', 'necesito volver al inicio',
+ 'llevame a la pantalla inicial', 'regresá al inicio', 'mandame al inicio de nuevo', 'ir a la portada', 'volvé a la pantalla de inicio por favor', 'haceme el favor de llevarme al inicio'].forEach(p => t(p, { intent: 'home' }));
+['me podés llevar a la agenda', 'quiero ver la agenda', 'llevame a la pantalla de la agenda', 'necesito ir a los turnos', '¿me mostrás el calendario?'].forEach(p => t(p, { intent: 'nav', tab: 'agenda' }));
+t('me podés llevar a la agenda de mañana', { intent: 'nav', tab: 'agenda', date: '2026-11-05' });
+['pasame a la pantalla de pacientes', '¿me mostrás los pacientes?', 'quiero que me lleves a la lista de pacientes', 'llevame a pacientes'].forEach(p => t(p, { intent: 'nav', tab: 'pacientes' }));
+['quiero ir a la caja', 'llevame a la sección de caja', '¿me podés mostrar la caja?'].forEach(p => t(p, { intent: 'nav', tab: 'caja' }));
+['llevame a las liquidaciones', 'quiero ver los honorarios'].forEach(p => t(p, { intent: 'nav', tab: 'liq' }));
+['llevame a la empresa', 'quiero ver el panel de la empresa', 'mostrame todos los consultorios'].forEach(p => t(p, { intent: 'nav', tab: 'empresa' }));
+['llevame a los ajustes', 'quiero ir a la configuración'].forEach(p => t(p, { intent: 'nav', tab: 'cfg' }));
+t('me podés abrir el odontograma de Pérez', { intent: 'ficha', sub: 'odon', name: 'perez' });
+t('pone un turno a Pérez mañana a las 10', { intent: 'newAppt', name: 'perez', start: 600 });
 // navegación
 t('agenda', { intent: 'nav', tab: 'agenda' });
 t('abrí la agenda', { intent: 'nav', tab: 'agenda' });

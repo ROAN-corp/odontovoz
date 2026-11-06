@@ -45,10 +45,10 @@
   }
 
   /* ---------- muletillas al principio y al final ---------- */
-  const LEAD = /^(?:che|eh+|em+|mm+|este|bueno|bien|ok|okey|oka|a ver|aver|mira|mire|miren|oime|oiga|escuchame|escucha|porfa|por favor|porfis|please|ahora|tipo|o sea|osea|boludo|amigo|loco|hola|buenas|buen dia|disculpa|perdon|vamos|vamo|venga|epa|ey|hey|y bueno|bueno che|dale que|dale|listo y|necesito que|quiero que|podes|podrias|me podes|me podrias|haceme el favor de|por favor)\s+/;
-  const TAIL = /\s+(?:por favor|porfa|porfis|please|dale|gracias|che|ya|ahora|si podes|cuando puedas|rapidito)$/;
+  const LEAD = /^(?:che|eh+|em+|mm+|este|bueno|bien|ok|okey|oka|a ver|aver|mira|mire|miren|oime|oiga|escuchame|escucha|porfa|por favor|porfis|please|ahora|tipo|o sea|osea|boludo|amigo|loco|hola|buenas|buen dia|disculpa|perdon|vamos|vamo|venga|epa|ey|hey|y bueno|bueno che|dale que|dale|listo y|necesito que|quiero que|podes|podrias|me podes|me podrias|haceme el favor de|por favor|puedes|me puedes|me podria|podria|pudieras|quisiera que|me gustaria que|necesitaria que|te pido que|seria posible|se puede|hola navi|oye|oi|fijate si|fijate de)\s+/;
+  const TAIL = /\s+(?:por favor|porfa|porfis|please|dale|gracias|che|ya|ahora|si podes|si puedes|cuando puedas|rapidito|de nuevo|otra vez|nuevamente|ya mismo|un toque|un momento)$/;
   function clean(t) {
-    let s = N(t), prev;
+    let s = N(t).replace(/\b([a-z]{3,})(?:\s+\1\b)+/g, '$1'), prev;
     do { prev = s; s = s.replace(LEAD, ''); } while (s !== prev);
     do { prev = s; s = s.replace(TAIL, ''); } while (s !== prev);
     return s.trim();
@@ -231,18 +231,44 @@
   const SECT = [['agenda', /^(?:la |el |mi |los )?(agenda|calendario|turnos(?: del dia| de hoy)?|turnero interno)$/], ['pacientes', /^(?:los |la |el )?(pacientes|lista de pacientes|fichero|listado de pacientes)$/],
     ['caja', /^(?:la |el )?(caja|plata|cobros|economia|finanzas|ingresos|gastos|guita|numeros|balance)$/], ['liq', /^(?:las |los |la )?(liquidacion(?:es)?|honorarios|porcentajes)$/],
     ['cfg', /^(?:los |las |la )?(ajustes|configuracion|configurar|opciones|preferencias|settings)$/], ['turnero', /^(?:el )?(turnero(?: online| en linea| web)?|turnos online|reservas online)$/],
-    ['tutorial', /^(?:el |la )?(tutorial|recorrido|guia(?: de uso)?)$/], ['support', /^(?:el )?(soporte|ayuda y soporte|contacto)$/]];
+    ['tutorial', /^(?:el |la )?(tutorial|recorrido|guia(?: de uso)?)$/], ['support', /^(?:el )?(soporte|ayuda y soporte|contacto|ayuda)$/],
+    ['empresa', /^(?:la |el |mi )?(empresa|panel de la empresa|panel del dueno|resumen de la empresa|mis consultorios|todos los consultorios)$/]];
   const SUB = [['perio', /^(?:el |la )?(periodontograma|perio|sondaje|ficha periodontal|carta periodontal|registro periodontal|periodoncia|encias)$/], ['odon', /^(?:el |la )?(odontograma|dientes|piezas|dentadura|boca|carta dental)$/], ['datos', /^(?:la |el |los )?(historia(?: clinica)?|anamnesis|antecedentes|datos(?: personales)?|evolucion|ficha|hc)$/],
     ['plan', /^(?:el |la |los )?(plan(?: de tratamiento)?|tratamientos?(?: a realizar)?|a realizar|presupuestos?)$/], ['hecho', /^(?:lo )?(realizado|hecho|lo que se hizo|tratamientos (?:hechos|realizados))$/],
     ['rx', /^(?:las |la )?(recetas?|medicacion|medicamentos)$/], ['img', /^(?:las |la |los )?(imagenes|radiografias?|rx|placas?|fotos?|panoramicas?)$/],
     ['docs', /^(?:los |las |el )?(documentos|consentimientos?|firmas?|papeles)$/], ['cuenta', /^(?:la |el )?(cuenta(?: corriente)?|saldo|deuda|pagos|lo que debe|estado de cuenta)$/],
     ['lab', /^(?:el |la |los |las )?(laboratorios?|trabajos? de laboratorio|protesis|protesista|pedidos? al laboratorio)$/]];
 
+  /* ---------- navegación dicha de muchas formas ----------
+     «me podés llevar al inicio», «quiero que me lleves a la pantalla de inicio», «llevame la agenda»,
+     «¿me mostrás los pacientes?», «necesito ir a la caja», «pasame a la pantalla de pacientes»…
+     Si lo que queda después del verbo es un lugar conocido, se reescribe como «ir a <lugar>». */
+  const NAVLEAD = new RegExp('^(?:(?:me |nos )?(?:podes|puedes|podrias|podria|pudieras|puede|podra|podemos) |(?:yo )?(?:quiero|quisiera|necesito|necesitaria|me gustaria|preciso|deseo) (?:que (?:me |nos )?)?|(?:haceme|hazme|hace) el favor de |te pido que (?:me )?)?' +
+    '(?:me |nos )?(?:llevame|lleveme|llevarme|llevar|lleva|lleves|llevas|llevaras|llevemos|vamos|vayamos|vamo|ir|irme|irnos|anda|andate|anda te|vete|ve|vaya|pasa|pasame|pasar|pasarme|pases|cambia|cambiame|cambiar|cambies|volve|volvamos|volver|vuelve|vuelvas|regresa|regresame|regresar|regreses|dirigite|dirigime|dirigir|mandame|mostra|mostrame|mostrar|mostrarme|muestra|muestrame|muestres|mostras|abri|abrime|abrir|abrirme|abras|abre|pone|poneme|poner|pon|ponme|pongas|ensename|entra|entrar|entremos|quiero ver|ver|veamos|dame|traeme|trae|traer|saltar|salta|cambiar de pantalla)\\b\\s*');
+  const HOME_W = '(?:inicio|inicial|principal|principio|comienzo|arranque|home|casa|casita|portada|escritorio|lo primero|el principio|primera pantalla|menu (?:principal|inicial|de inicio))';
+  const SCREEN = /^(?:la |el |los |las )?(?:pantalla|puerta|pagina|seccion|parte|ventana|pestana|solapa|vista|apartado|modulo|area|lugar|menu|panel|sector)\s+(?:de |del |de la |de los |de las |con |que dice |llamada )?(?:la |el |los |las |mi |mis )?/;
+  function isDest(r) {
+    if (new RegExp('^' + HOME_W + '$').test(r) || /^menu(?: lateral)?$/.test(r)) return true;
+    if (/^(?:agenda|turnos|calendario)\b/.test(r) || /^(?:hoy|manana|pasado manana|el (?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)|(?:la )?semana|(?:el )?mes)\b/.test(r)) return true;
+    if (SECT.some(x => x[1].test(r)) || /^(?:empresa|obras sociales|prepagas|aranceles)\b/.test(r)) return true;
+    if (SUB.some(x => new RegExp(x[1].source.replace(/\$$/, '') + '(?:\\s+(?:de|del|de la|para)\\s+.+)?$').test(r))) return true;
+    return /^(?:la )?ficha\b/.test(r);
+  }
+  function navRewrite(c) {
+    let r = c, m = NAVLEAD.exec(r), hadLead = !!(m && m[0]);
+    if (hadLead) r = r.slice(m[0].length);
+    r = r.replace(/^(?:a |al |a la |a los |a las |hacia |hasta |para |en )?(?:la |el |los |las |mi |mis )?/, '').trim();
+    const sc = SCREEN.exec(r); if (sc) { const rest = r.slice(sc[0].length).trim(); r = rest || 'inicio'; hadLead = true; }
+    if (/^(?:principal|inicial|de inicio)$/.test(r)) r = 'inicio';
+    if (!hadLead || !r || r === c) return c;
+    return isDest(r) ? 'ir a ' + r : c;
+  }
+
   /* ---------- análisis principal ---------- */
   function parse(text, ctx) {
     ctx = ctx || {};
     const today = ctx.today || keyOf(new Date());
-    const raw = N(text), c = clean(text);
+    const raw = N(text), c = navRewrite(clean(text));
     if (!c) return null;
     let m;
 
@@ -254,8 +280,8 @@
     if (/^(?:si|sii|dale|confirmo|confirmar|confirma|confirmado|aceptar|acepto|acepta|guardar|guarda|guardalo|grabar|graba|grabalo|ok|okey|de acuerdo|perfecto|listo|hecho|agendar|agendalo|registrar|registralo|registra|cobrar|cobralo|enviar|mandalo|firmar|esta bien|correcto|va|vamos)$/.test(c)) return { intent: 'confirm' };
     if (/^(?:no|cancelar|cancela|cancelalo|dejalo|deja|deja nomas|mejor no|olvidalo|olvidate|ninguno|ninguna|nada)$/.test(c)) return { intent: 'cancel' };
     if (/^(?:volver|volve|vuelve|atras|para atras|ir para atras|anda para atras|regresar|regresa|anterior|pantalla anterior|cerrar|cerra|cerralo|salir de aca|sali de aca|salir)$/.test(c)) return { intent: 'back' };
-    if (new RegExp('^(?:' + GO + '\\s+)?(?:a(?:l)?\\s+|la\\s+)?(?:inicio|pantalla (?:principal|de inicio)|casa|casita|home|principio|menu principal|escritorio|el principio)$').test(c)) return { intent: 'home' };
-    if (/^(?:abri(?:r|me)?|mostra(?:r|me)?|desplega(?:r)?)?\s*(?:el )?menu(?: lateral)?$/.test(c)) return { intent: 'menu' };
+    if (new RegExp('^(?:' + GO + '\\s+)?(?:a(?:l)?\\s+|la\\s+|el\\s+)?(?:(?:pantalla|puerta|pagina|seccion|parte|ventana|menu) (?:de )?)?' + HOME_W + '$').test(c)) return { intent: 'home' };
+    if (/^(?:abri(?:r|me)?|mostra(?:r|me)?|desplega(?:r)?)?\s*(?:el )?menu(?: lateral)?$/.test(c) || new RegExp('^' + GO + '\\s+(?:el )?menu(?: lateral)?$').test(c)) return { intent: 'menu' };
 
     // modos de uso y apariencia
     if (/\bmodo atencion\b|^(?:pasa(?:r|me)? a |activa(?:r)? (?:el )?)?atencion$/.test(c)) return { intent: 'mode', ui: 'atencion' };

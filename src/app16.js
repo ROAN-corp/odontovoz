@@ -50,7 +50,8 @@
     h += '<details class="tp-sec"' + (p.dx || p.notes ? '' : '') + ' open><summary>Evaluación y observaciones para el paciente <span class="muted">(opcional)</span></summary>' +
       '<div class="field"><label for="tpDx">Diagnóstico / lo que vi en la evaluación</label><textarea id="tpDx" rows="2" data-chg="tpField" data-k="dx" placeholder="Ej.: gingivitis generalizada, caries en 16 y 36, 46 con lesión periapical.">' + esc(p.dx || '') + '</textarea></div>' +
       '<div class="field"><label for="tpNotes">Indicaciones y observaciones</label><textarea id="tpNotes" rows="2" data-chg="tpField" data-k="notes" placeholder="Ej.: cepillado 3 veces por día con técnica de Bass; turnos cada 15 días; la duración estimada es de 3 meses.">' + esc(p.notes || '') + '</textarea></div>' +
-      '<label class="chk"><input type="checkbox" data-chg="tpPrices"' + (p.prices ? ' checked' : '') + '> Mostrar costos al lado de cada tratamiento (y en el PDF)</label></details>';
+      '<label class="chk"><input type="checkbox" data-chg="tpPrices"' + (p.prices ? ' checked' : '') + '> Mostrar costos al lado de cada tratamiento (y en el PDF)</label>' +
+      (p.prices ? '<label class="chk"><input type="checkbox" data-chg="tpFin"' + (p.fin ? ' checked' : '') + '> Ofrecer planes de pago en cuotas (contado, 3, 6, 9 y 12 cuotas, en el PDF y en WhatsApp)</label>' + (p.fin ? tpFinHTML(pid) : '') : '') + '</details>';
     if (p.virgin) h += '<details class="tp-guide"><summary>¿Cómo armar el plan? Guía rápida</summary><ol>' + TEMPLATE.map(f => '<li><b>' + esc(f.name) + ':</b> ' + esc(f.hint) + '</li>').join('') + '</ol><p class="hint">Las fases son una plantilla orientativa: cambiales el nombre, borralas o sumá otras. Lo que marcás como «planificado» en el odontograma entra solo en la fase que corresponde; lo podés pasar a otra.</p></details>';
     const chk = sel[pid] || (sel[pid] = {});
     p.phases.forEach((f, fi) => {
@@ -106,6 +107,17 @@
   const txById = id => (A.pd(pidNow()).tx || []).filter(t => t.id === id)[0];
   const keepScroll = fn => { const y = window.scrollY; fn(); A.refresh(); requestAnimationFrame(() => window.scrollTo(0, y)); };
   A.chg.tpField = el => { const pid = pidNow(), p = tp(pid); p[el.getAttribute('data-k')] = el.value; tpSave(pid, p); };
+  /* planes de pago del plan de tratamiento: sobre lo que falta hacer, con los intereses predeterminados */
+  function tpFinOpts(pid) {
+    const T = totals(items(pid)), left = T.tot - T.done; if (!A.finOptions || left <= 0) return [];
+    const p = tp(pid), f = A.finDefault(); if (p.finCfg) { f.contDisc = p.finCfg.contDisc; [3, 6, 9, 12].forEach(n => { f.on[n] = p.finCfg.on[n] !== false; f.rate[n] = p.finCfg.rate[n] != null ? p.finCfg.rate[n] : f.rate[n]; }); }
+    return A.finOptions(f, left, left);
+  }
+  function tpFinHTML(pid) {
+    const o = tpFinOpts(pid); if (!o.length) return '<p class="hint">No queda nada por pagar en el plan.</p>';
+    return '<div class="tbl-scroll"><table class="tbl"><tbody>' + o.map(x => '<tr><td>' + esc(x.n === 1 ? x.label : x.n + ' cuotas de ' + A.money(x.cuota)) + '</td><td class="num">Total ' + A.money(x.total) + '</td><td class="muted">' + (x.rate ? 'interés ' + String(Math.round(x.rate * 100) / 100).replace('.', ',') + '% mensual' : '') + '</td></tr>').join('') + '</tbody></table></div><p class="hint" style="margin:4px 0 0">Calculado sobre lo que falta (' + A.money(totals(items(pid)).tot - totals(items(pid)).done) + ') con los intereses predeterminados. Para cambiarlos o fijar el plan elegido, armá el presupuesto.</p>';
+  }
+  A.chg.tpFin = el => keepScroll(() => { const pid = pidNow(), p = tp(pid); p.fin = el.checked; tpSave(pid, p); });
   A.chg.tpPrices = el => keepScroll(() => { const pid = pidNow(), p = tp(pid); p.prices = el.checked; tpSave(pid, p); });
   A.chg.tpPhName = el => { const pid = pidNow(), p = tp(pid), f = p.phases.filter(x => x.id === el.getAttribute('data-ph'))[0]; if (!f) return; f.name = el.value.trim() || f.name; tpSave(pid, p); };
   A.chg.tpSel = el => { const pid = pidNow(); (sel[pid] = sel[pid] || {})[el.getAttribute('data-id')] = el.checked; keepScroll(() => {}); };
@@ -210,6 +222,7 @@
     });
     if (!list.length) o.p('Todavía no hay tratamientos cargados en el plan.');
     if (p.prices && T.n) o.rows([['Total del plan', A.money(T.tot)], ['Realizado', A.money(T.done)], ['Falta', A.money(T.tot - T.done)]]);
+    if (p.prices && p.fin) { const fo = tpFinOpts(pid); if (fo.length) { o.h('Planes de pago de lo que falta'); o.table([{ h: 'Plan', w: 70 }, { h: 'Cuota', w: 32, a: 'r' }, { h: 'Total', w: 32, a: 'r' }, { h: 'Interés', w: 40 }], fo.map(x => [x.n === 1 ? x.label : x.n + ' cuotas', A.money(x.cuota), A.money(x.total), x.rate ? 'TEM ' + String(Math.round(x.rate * 100) / 100).replace('.', ',') + '% · TEA ' + String(Math.round(x.tea * 10) / 10).replace('.', ',') + '%' : '—'])); o.p('Cuotas mensuales iguales (sistema francés). TEM: tasa efectiva mensual; TEA: tasa efectiva anual; el costo financiero total es igual a la TEA porque no hay otros gastos. Valores de referencia: el plan de pago definitivo queda en el presupuesto.', 8, [96, 116, 124]); } }
     if (p.notes) { o.h('Indicaciones y observaciones'); o.p(p.notes); }
     o.p('Este plan es una propuesta orientativa: puede ajustarse según la evolución del tratamiento.' + (p.prices ? ' Los costos son de referencia; para el detalle de pago se arma un presupuesto.' : ''), 8.5, [96, 116, 124]);
     o.y += 4; o.sigs([{ role: 'Profesional', name: A.PRO(pat.pro).name, mat: A.PRO(pat.pro).mat }]);
@@ -229,6 +242,7 @@
     p.phases.forEach(f => { const L = list.filter(x => x.ph === f.id); if (!L.length) return; t += '\n*' + f.name + '*\n' + L.map(x => '• ' + x.t.label + (p.prices && x.t.price ? ' — ' + A.money(x.t.price) : '')).join('\n') + '\n'; });
     if (!list.length) t += '\nYa está todo realizado. ¡Gracias!\n';
     if (p.prices && T.tot - T.done > 0) t += '\nTotal estimado de lo que falta: ' + A.money(T.tot - T.done) + '\n';
+    if (p.prices && p.fin) { const fo = tpFinOpts(pid); if (fo.length) t += '\n*Formas de pago*\n' + fo.map(x => '• ' + (x.n === 1 ? x.label + ': ' + A.money(x.total) : x.n + ' cuotas de ' + A.money(x.cuota) + ' (total ' + A.money(x.total) + ')')).join('\n') + '\n'; }
     if (p.notes) t += '\n' + p.notes + '\n';
     return t + '\n' + A.CLINIC;
   }

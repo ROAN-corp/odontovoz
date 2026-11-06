@@ -282,3 +282,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.19.1
 - Precio del plan Empresa: $178.900 por mes (IVA incluido) en la app, la portada y los términos.
+
+## OdontoVoz 1.20 · cuotas y voz más natural
+- **Planes de pago en el presupuesto**: contado (con descuento opcional) y 3, 6, 9 y 12 cuotas con interés mensual sugerido y editable (2,5%, 3%, 3,3% y 3,6%), cuota, total y recargo de cada uno. Se elige qué ofrecer y cuál eligió el paciente; los intereses se pueden guardar como predeterminados.
+- El presupuesto (pantalla, PDF y documento firmado) muestra los planes ofrecidos con su TEM y TEA, y la aclaración sobre la financiación (precio de contado, sistema francés, costo financiero total).
+- El cronograma de pagos usa la cuota con interés. Al aceptar, los intereses (o el descuento por contado) se suman a la cuenta del paciente.
+- **Plan de tratamiento**: opción «Ofrecer planes de pago en cuotas», calculados sobre lo que falta, en la pantalla, el PDF y el mensaje de WhatsApp.
+- **Voz**: entiende muchas más formas de pedir ir a un lugar («llevame al inicio», «¿me podés llevar a la pantalla de inicio?», «quiero que me lleves a…», «pasame a la pantalla de pacientes», «¿me mostrás la caja?», «llevame a la empresa»…) y palabras repetidas («llevame llevame…»).
