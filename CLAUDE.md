@@ -69,7 +69,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.27.1 (novi
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
 ## Pendiente
-- SMTP con la cuenta somosroan@gmail.com (el usuario genera la contraseña de aplicación); después cargar las plantillas `supabase/correos/*.html` en Supabase › Auth › Email templates y subir el límite de envíos.
+- (Hecho 6/11/2026) SMTP con somosroan@gmail.com (smtp.gmail.com:465, remitente «OdontoVoz»), 30 correos/hora y las 5 plantillas en castellano de `supabase/correos/` cargadas en Supabase. Si se cambian las plantillas, volver a pegarlas en Auth › Emails › Templates. Gmail manda ~500 por día: si crece, pasar a un servicio de envío.
 - Página de la empresa: crear el repo `roan-corp.github.io` en ROAN-corp y subir su `index.html` (diseño ya hecho, con la cordillera).
 - Publicar en Play Store y App Store (hoy el APK se instala desde la web).
 - Legal (ver el documento «OdontoVoz · Puesta en regla legal»): revisión del abogado, sociedad y CUIT (publicarlos en `terminos.html`), facturación, AAIP, INPI, DNDA, plan con copias de seguridad en Supabase.
