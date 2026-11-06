@@ -333,3 +333,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Cuando el paciente llega (al marcar Llegó/En atención/Atendido o al abrir su ficha) la app pregunta: «¿Ya tenía ficha?» con los parecidos por nombre o teléfono. «Es …» une los turnos a esa ficha (no queda duplicado); «Es nuevo» lo pasa a la lista para completar los datos.
 - En Pacientes, los que están solo en la agenda van en un recuadro aparte.
 - **Bloquear y Nota desde el mismo toque:** al tocar un hueco de la agenda, arriba están Turno · Sobreturno · 🔒 Bloquear · ✎ Nota. El bloqueo tiene motivos rápidos (Curso, Trámite, Salgo y vuelvo…), duración o «hasta el final», y puede ser para todos los profesionales. La nota es un mensaje amarillo que no ocupa el horario. Ambos muestran quién lo dejó y cuándo; una nota se puede convertir en bloqueo.
+
+## OdontoVoz 1.24.1 · recuperar la contraseña sin trabas
+- Al abrir el enlace del correo en un navegador nuevo (por ejemplo, el que abre la app de Gmail), la bienvenida tapaba la pantalla «Nueva contraseña»: la persona creía que el enlace no andaba, volvía a tocarlo y ahí sí vencía. Ahora la pantalla aparece directo, con la cuenta a la que corresponde.
+- Si el enlace ya se usó o venció, la app lo explica y deja pedir otro en el mismo lugar (antes no decía nada).
+- Si se piden varios correos seguidos (el servidor manda pocos por hora hasta que esté el correo propio), se avisa que hay que usar el último que llegó.

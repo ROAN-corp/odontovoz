@@ -87,7 +87,14 @@
   };
   /* enlaces del correo (confirmar cuenta, nueva contraseña): vuelven a la app con la sesión en la dirección */
   CL.fromLink = async () => {
-    const h = location.hash || ''; if (!/access_token=/.test(h)) return null;
+    const h = location.hash || '';
+    /* enlace vencido o ya usado: Supabase vuelve con #error=…&error_code=otp_expired */
+    if (/(?:^#|&)error(?:_code)?=/.test(h) || /[?&]error_code=/.test(location.search)) {
+      const q0 = new URLSearchParams(h.replace(/^#/, '') + '&' + location.search.replace(/^\?/, ''));
+      try { history.replaceState(null, '', location.pathname); } catch (e) { /* nada */ }
+      return { err: q0.get('error_code') || q0.get('error') || 'error', desc: q0.get('error_description') || '' };
+    }
+    if (!/access_token=/.test(h)) return null;
     const q = new URLSearchParams(h.replace(/^#/, '')), at = q.get('access_token'), rt = q.get('refresh_token'), type = q.get('type');
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* nada */ }
     try { const u = await http('/auth/v1/user', { headers: { Authorization: 'Bearer ' + at }, auth: false }); saveSession({ access_token: at, refresh_token: rt, expires_at: Date.now() + (parseInt(q.get('expires_in') || '3600', 10) - 60) * 1000, user: { id: u.id, email: u.email } }); return type || 'login'; }
@@ -316,7 +323,9 @@
     if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
     if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
-    h += '<div id="lgMsg" class="lg-alert" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
+    h += '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
+    if (np && CL.session && CL.session.user) h += '<p class="hint" style="margin:0">Cuenta: <b>' + esc(CL.session.user.email || '') + '</b>. Elegí la contraseña nueva y guardala.</p>';
+    if (rec) h += '<p class="hint" style="margin:0">Te mandamos un correo con un botón para elegir una contraseña nueva. Abrí <b>solo el último</b> que te llegue y tocá el botón una vez.</p>';
     h += '<button class="btn primary" type="submit" style="min-height:48px">' + (np ? 'Guardar contraseña' : rec ? 'Enviar enlace' : up ? 'Crear cuenta' : 'Ingresar') + '</button>';
     if (!up && !rec && !np) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="rec">Me olvidé la contraseña</button>';
     if (rec) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="in">Volver</button>';
@@ -392,13 +401,14 @@
   A.subs.loginRec = () => {
     const m = $('#lgMail').value.trim(); if (!okMail(m)) return lgErr('Revisá el correo.');
     CL._onErr = null;
-    busy('Enviando…', async () => { await CL.recover(m); lgErr('Si el correo tiene cuenta, te llega un enlace para elegir una contraseña nueva. Revisá también Spam.', 'ok'); });
+    CL._onErr = e => { if (e && (e.status === 429 || /rate limit|too many/i.test(String(e.data && (e.data.msg || e.data.error_code) || '')))) lgErr('Ya te mandamos un correo hace poco. Buscá el último que llegó (revisá también Spam o Promociones) y tocá el botón. Si no llegó ninguno, probá de nuevo en una hora.'); };
+    busy('Enviando…', async () => { await CL.recover(m); lgErr('Listo: si ' + m + ' tiene cuenta, en unos minutos te llega el correo para elegir una contraseña nueva. Revisá también Spam o Promociones.', 'ok'); });
   };
   A.subs.loginNewPass = () => {
     const p = $('#lgPass').value, p2 = $('#lgPass2').value;
     if (!okPass(p)) return lgErr('La contraseña necesita al menos 8 caracteres, con letras y números.'); if (p !== p2) return lgErr('Las contraseñas no coinciden.');
     CL._onErr = null;
-    busy('Guardando…', async () => { await CL.setPassword(p); A.toast('Contraseña cambiada.'); afterLogin(); });
+    busy('Guardando…', async () => { await CL.setPassword(p); A.toast('Listo: contraseña cambiada. Ya podés entrar con la nueva en todos tus equipos.'); afterLogin(); });
   };
   function afterLogin() {
     const uid = CL.session.user.id, prev = LS.get('odontovoz.cloud.uid', '');
@@ -504,6 +514,12 @@
   CL.boot = async () => {
     if (!conf()) { A.afterRefresh(); return; }
     const link = await CL.fromLink();
+    /* si viene de un enlace del correo, la bienvenida no tapa la pantalla */
+    if (link) { try { LS.set('odontovoz.intro', '1'); } catch (e) { /* nada */ } const it = $('#intro'); if (it) it.remove(); }
+    if (link && link.err) {
+      CL.showLogin('rec', /expired|invalid|otp/i.test(link.err + ' ' + link.desc) ? 'Ese enlace ya se usó o venció: cada enlace sirve una sola vez y dura una hora. Pedí uno nuevo acá abajo y abrí solo el último correo que te llegue.' : 'El enlace no funcionó (' + link.err + '). Pedí uno nuevo acá abajo.');
+      return;
+    }
     if (link === 'recovery') { CL.showLogin('newpass'); return; }
     if (link) { afterLogin(); return; }
     if (CL.session) { if (A.DEMO) { /* con sesión iniciada se usan los datos reales */ LS.set('odontovoz.mode', 'real'); A.noSave = true; location.reload(); return; } CL.lock(); startLoop(); return; }
