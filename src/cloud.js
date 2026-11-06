@@ -57,6 +57,9 @@
     saveSession(asSession(d)); return CL.session;
   }
   CL.api = (path, opt) => api(path, opt);
+  CL.http = (path, opt) => http(path, opt);
+  /* de quién son los datos: el dueño de la cuenta (las personas del equipo usan la cuenta del dueño) */
+  A.ownerId = () => (CL.ownerId || (CL.session && CL.session.user.id) || null);
   CL.token = async () => (await fresh()).access_token;
   CL.conf = () => conf();
   async function api(path, opt) {
@@ -78,6 +81,7 @@
   CL.signOut = async wipe => {
     try { if (CL.session) await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
     saveSession(null); stopLoop(); await baseClear();
+    LS.set('odontovoz.member', null); CL.member = null; CL.ownerId = null;
     if (wipe) { A.noSave = true; LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.uid', null); try { indexedDB.deleteDatabase('odontovoz.media'); } catch (e) { /* nada */ } }
     setTimeout(() => location.reload(), 80);
   };
@@ -272,6 +276,7 @@
     }
   }
   CL.devCheck = () => { CL.devOk = false; CL.devFull = null; return devCheck(); };
+  CL.baseClear = () => baseClear();
   function softRefresh() {
     const ae = document.activeElement, typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
     if (typing) { pendingRefresh = true; ae.addEventListener('blur', () => { if (pendingRefresh) { pendingRefresh = false; A._fromSync = true; try { A.refresh(); } finally { A._fromSync = false; } } }, { once: true }); return; }

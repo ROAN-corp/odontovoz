@@ -266,13 +266,13 @@
     if (!force && js === TS.lastJ) return;
     TS.busy = true;
     try {
-      await CL.api('/rest/v1/ov_booking?on_conflict=owner', { method: 'POST', body: { owner: CL.session.user.id, slug: slug(), enabled: true, data: pd.data, updated_at: new Date().toISOString() }, headers: { Prefer: 'resolution=merge-duplicates,return=minimal' } });
+      await CL.api('/rest/v1/ov_booking?on_conflict=owner', { method: 'POST', body: { owner: A.ownerId(), slug: slug(), enabled: true, data: pd.data, updated_at: new Date().toISOString() }, headers: { Prefer: 'resolution=merge-duplicates,return=minimal' } });
       TS.lastJ = js; TS.state = 'ok'; TS.at = new Date(); TS.msg = '';
     } catch (e) {
       TS.state = e && (e.status === 404 || /relation|does not exist|schema cache/i.test(String(e.message))) ? 'notables' : e && e.offline ? 'offline' : 'err'; TS.msg = (e && e.message) || '';
     } finally { TS.busy = false; paintTn(); }
   }
-  async function unpublish() { if (!real()) return; try { await CL.api('/rest/v1/ov_booking?owner=eq.' + CL.session.user.id, { method: 'PATCH', body: { enabled: false } }); } catch (e) { /* nada */ } TS.lastJ = null; TS.state = 'off'; paintTn(); }
+  async function unpublish() { if (!real()) return; try { await CL.api('/rest/v1/ov_booking?owner=eq.' + A.ownerId(), { method: 'PATCH', body: { enabled: false } }); } catch (e) { /* nada */ } TS.lastJ = null; TS.state = 'off'; paintTn(); }
   /* pedidos nuevos → turnos en la agenda */
   async function claim() {
     if (!real() || O().on === false || O().link === false || (CL.readonly)) return;

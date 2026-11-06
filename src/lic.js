@@ -18,8 +18,18 @@
     if (!force && Date.now() - lastCheck < 60000 && CL.lic) return;
     lastCheck = Date.now();
     try {
-      const rows = await CL.api('/rest/v1/ov_accounts?select=*&owner=eq.' + CL.session.user.id);
-      CL.lic = rows && rows[0] ? rows[0] : null;
+      /* 1.23: «quién soy» trae la cuenta del dueño y el puesto si la persona es parte de un equipo */
+      let w = null;
+      try { w = await CL.api('/rest/v1/rpc/ov_whoami', { method: 'POST', body: {} }); } catch (e) { if (!(e.status === 404 || /could not find the function|schema cache/i.test(String(e.message)))) throw e; }
+      if (w) {
+        CL.lic = w.account || null; CL.ownerId = w.owner || CL.session.user.id;
+        const was = JSON.stringify(CL.member || null); CL.member = w.member || null; CL.memberOff = !!w.member_off;
+        try { localStorage.setItem('odontovoz.member', JSON.stringify({ m: CL.member, o: CL.ownerId, off: CL.memberOff })); } catch (e) { /* nada */ }
+        if (was !== JSON.stringify(CL.member) && A.onMember) A.onMember(CL.member);
+      } else {
+        const rows = await CL.api('/rest/v1/ov_accounts?select=*&owner=eq.' + CL.session.user.id);
+        CL.lic = rows && rows[0] ? rows[0] : null; CL.ownerId = CL.session.user.id; CL.member = null;
+      }
       if (!CL.adminChecked) { CL.adminChecked = true; const ad = await CL.api('/rest/v1/ov_admins?select=user_id&user_id=eq.' + CL.session.user.id); CL.isAdmin = !!(ad && ad.length); }
     } catch (e) { if (e.status === 404 || e.status === 400) { CL.lic = null; } else return; } /* sin conexión: queda lo último sabido */
     try { localStorage.setItem('odontovoz.lic', JSON.stringify(CL.lic)); } catch (e) { /* nada */ }
@@ -28,6 +38,7 @@
   CL.onDenied = () => { lastCheck = 0; CL.checkLicense(true); };
   CL.applyLic = () => apply();
   try { CL.lic = JSON.parse(localStorage.getItem('odontovoz.lic') || 'null'); } catch (e) { CL.lic = null; }
+  try { const mb = JSON.parse(localStorage.getItem('odontovoz.member') || 'null'); if (mb && CL.session) { CL.member = mb.m || null; CL.ownerId = mb.o || null; CL.memberOff = !!mb.off; } } catch (e) { /* nada */ }
 
   function apply() {
     const was = CL.readonly;

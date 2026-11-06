@@ -162,7 +162,7 @@
      ===================================================================== */
   const BUCKET = 'ov-media';
   const cloudOn = () => !!(CL && CL.session && CL.token && CL.conf && CL.conf() && !A.DEMO);
-  const objPath = id => CL.session.user.id + '/' + id + '.jpg';
+  const objPath = id => A.ownerId() + '/' + id + '.jpg';
   const sUrl = p => CL.conf().url + '/storage/v1/object/' + p;
   const toBlob = dataUrl => { const [h, b64] = String(dataUrl).split(','), bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: (/data:([^;]+)/.exec(h) || [])[1] || 'image/jpeg' }); };
   const toData = blob => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(blob); });

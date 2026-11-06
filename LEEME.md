@@ -309,3 +309,15 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Cada consultorio tiene su propia agenda: solo sus profesionales y solo los turnos dados en ese consultorio. Un consultorio sin profesionales ya no muestra los de otro: muestra una pantalla para sumar un profesional nuevo o uno que ya trabaja en otro consultorio.
 - Arriba de la agenda, el inicio, la caja y los pacientes aparece el camino «🏢 Empresa › Consultorio › profesionales»: tocando «Empresa» volvés al inicio de la empresa, con la lista cambiás de consultorio y con los nombres ves la agenda de todos o de uno.
 - Empresa › Consultorios muestra el árbol: la empresa, sus consultorios y los profesionales de cada uno. Tocando un consultorio entrás a su agenda; tocando un profesional, a la suya en ese consultorio. «+ Profesional» lo crea directamente en ese consultorio y «Mover» cambia en qué consultorios atiende.
+
+## OdontoVoz 1.23 · usuarios del equipo
+- **Arreglo importante:** desde la 1.18 el registro de cuentas nuevas fallaba en el servidor. Se corrige con `supabase/equipo.sql`.
+- El dueño invita a su secretaria, a los odontólogos y a la administración con un enlace (Cuenta y equipos › Usuarios del equipo, o Empresa › Personal). Cada persona crea su propio usuario con su correo y su contraseña, gratis: usa la cuenta del dueño, que es quien paga. Nadie necesita la contraseña del dueño.
+- Cada persona tiene un puesto y un consultorio, y el servidor decide qué puede bajar y cambiar:
+  - Recepción: agenda, turnos, pacientes (datos y cuenta, sin historia clínica), cobros y la caja de su consultorio.
+  - Profesional y asistente: su agenda, pacientes con historia clínica, prácticas, presupuestos y cobros; no ven la caja, las liquidaciones ni los números de la empresa.
+  - Administración: todo menos sueldos y metas.
+  - Nadie del equipo puede cambiar el plan, el tipo de cuenta, borrar la cuenta ni pedir la baja; solo el dueño y la administración cambian ajustes, profesionales y personal.
+- El dueño cambia el puesto o el consultorio de una persona, o le quita el acceso al instante: se desconectan sus equipos y en ellos se borran los datos del consultorio.
+- El PIN sigue sirviendo para una compu compartida que usa la cuenta del dueño.
+- Pantalla de registro: las casillas de términos se leen bien en el celular.

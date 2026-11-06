@@ -86,12 +86,14 @@
      ===================================================================== */
   const people = () => E.staff.people.filter(p => p.active !== false);
   const personById = id => E.staff.people.filter(p => p.id === id)[0] || null;
-  const pinOn = () => isEmp() && E.staff.cfg.pinReq && people().some(p => p.pin && p.role !== 'otro');
+  const pinOn = () => isEmp() && !(A.memberNow && A.memberNow()) && E.staff.cfg.pinReq && people().some(p => p.pin && p.role !== 'otro');
   let PERSON = null;
   (function () { try { const v = JSON.parse(LS.get('odontovoz.person', 'null')); if (v && v.id) PERSON = v; } catch (e) { /* nada */ } })();
   const curPerson = () => (PERSON && personById(PERSON.id)) || null;
   A.empPerson = curPerson;
   const roleNow = () => {
+    /* persona del equipo con su propio usuario: manda su puesto (lo controla también el servidor) */
+    const mb = A.memberNow ? A.memberNow() : null; if (mb && mb.role) return mb.role;
     const p = pinOn() ? curPerson() : null;
     if (p) return p.role;
     if (devOwner()) return 'dueno';
@@ -355,7 +357,7 @@
      ESTE EQUIPO: ¿del dueño o de un consultorio?
      ===================================================================== */
   let whereAsked = false;
-  const needWhere = () => isEmp() && real() && CL.devOk && CL.devScope === null && !whereAsked;
+  const needWhere = () => isEmp() && real() && !(A.memberNow && A.memberNow()) && CL.devOk && CL.devScope === null && !whereAsked;
   MF.empWhere = m => A.modalShell('¿Dónde se usa este equipo?',
     '<p>Tu cuenta trabaja en modo Empresa. Elegí a qué consultorio pertenece este celular o compu: va a ver solo ese consultorio.</p><div class="setup-grid">' +
     sedes().map(l => '<button class="setup-card" data-act="empWhereGo" data-s="sede:' + esc(l.id) + '"><b><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</b><span>' + esc(l.addr || 'Agenda, pacientes y caja de este consultorio') + '</span></button>').join('') +
