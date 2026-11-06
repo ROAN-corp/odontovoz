@@ -20,7 +20,7 @@ function parse(url) {
 }
 /* devuelve el html con el <link> de Google reemplazado por fonts.css local, copiando los archivos a outDir/fonts */
 module.exports = function localFonts(html, outDir) {
-  const m = html.match(/<link rel="stylesheet" href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)">/);
+  const m = html.match(/<link rel="stylesheet" href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)">/) || html.match(/<link href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)" rel="stylesheet">/);
   if (!m) return html;
   let css = '', ok = true; const fdir = path.join(outDir, 'fonts');
   for (const f of parse(m[1].replace(/&amp;/g, '&'))) {
