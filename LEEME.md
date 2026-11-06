@@ -289,3 +289,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - El cronograma de pagos usa la cuota con interés. Al aceptar, los intereses (o el descuento por contado) se suman a la cuenta del paciente.
 - **Plan de tratamiento**: opción «Ofrecer planes de pago en cuotas», calculados sobre lo que falta, en la pantalla, el PDF y el mensaje de WhatsApp.
 - **Voz**: entiende muchas más formas de pedir ir a un lugar («llevame al inicio», «¿me podés llevar a la pantalla de inicio?», «quiero que me lleves a…», «pasame a la pantalla de pacientes», «¿me mostrás la caja?», «llevame a la empresa»…) y palabras repetidas («llevame llevame…»).
+
+## OdontoVoz 1.20.1 · agenda
+- La agenda se queda donde estabas trabajando: al agendar, mover o cambiar un turno ya no vuelve arriba. Vuelve arriba solo cuando entrás a la agenda desde otra sección.
+- Las horas de la izquierda siguen la duración de turno del profesional: cada 15, 30 o 60 minutos (o 20, 40, 45), con una línea en cada turno.
