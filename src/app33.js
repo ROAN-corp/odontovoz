@@ -22,6 +22,9 @@
     admin: 'Todo, salvo los sueldos y las metas. No puede cambiar el plan ni borrar la cuenta.'
   };
   const sedes = () => (A.locs ? A.locs() : []);
+  /* en modo Empresa cada sede es un centro (adentro tiene sus consultorios) */
+  const LW = pl => ((A.isEmp && A.isEmp()) ? 'centro' : 'consultorio') + (pl ? 's' : '');
+  const LWc = () => { const w = LW(); return w.charAt(0).toUpperCase() + w.slice(1); };
   const sedeName = id => { const l = sedes().filter(x => x.id === id)[0]; return l ? l.name : ''; };
   const proName = id => { const p = A.PROS.filter(x => x.id === id)[0]; return p ? p.name : ''; };
   /* el enlace siempre apunta a la app publicada (desde el APK la dirección propia es «localhost» y no sirve para otros) */
@@ -242,7 +245,7 @@
   A.acts.teamOpen = () => { S.modal = { type: 'team' }; A.renderModal(); loadTeam(); };
   const invLink = code => appUrl() + '?invitacion=' + encodeURIComponent(code);
   const waText = i => 'Hola' + (i.name ? ' ' + i.name.split(' ')[0] : '') + '. Te invito a usar OdontoVoz en ' + (A.CLINIC || 'el consultorio') + ' como ' + (RN[i.role] || i.role).toLowerCase() + (i.sede && sedeName(i.sede) ? ' en ' + sedeName(i.sede) : '') + '. Entrá a este enlace y creá tu usuario con tu correo (para vos es gratis): ' + invLink(i.code) + ' . El enlace vence en 7 días y sirve una sola vez.';
-  const sedeOpts = (sel, any) => (any ? '<option value=""' + (!sel ? ' selected' : '') + '>Todos los consultorios</option>' : '') + sedes().map(l => '<option value="' + esc(l.id) + '"' + (sel === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('');
+  const sedeOpts = (sel, any) => (any ? '<option value=""' + (!sel ? ' selected' : '') + '>Todos los ' + LW(true) + '</option>' : '') + sedes().map(l => '<option value="' + esc(l.id) + '"' + (sel === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('');
   const proOpts = sel => '<option value="">— Elegí —</option>' + A.PROS.map(p => '<option value="' + esc(p.id) + '"' + (sel === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
   const roleOpts = sel => ['recepcion', 'profesional', 'asistente', 'admin'].map(r => '<option value="' + r + '"' + (sel === r ? ' selected' : '') + '>' + RN[r] + '</option>').join('');
   const manyLocs = () => sedes().length > 1 || isEmp();
@@ -257,7 +260,7 @@
       x += '<div class="tm-form"><h3>Invitar a una persona</h3><div class="tm-grid">' +
         '<div class="field"><label for="tmName">Nombre</label><input id="tmName" value="' + esc(f.name) + '" placeholder="Ej.: Marta" data-in="tmF" data-k="name"></div>' +
         '<div class="field"><label for="tmRole">Puesto</label><select id="tmRole" data-chg="tmF" data-k="role">' + roleOpts(f.role) + '</select></div>' +
-        (manyLocs() ? '<div class="field"><label for="tmSede">Consultorio</label><select id="tmSede" data-chg="tmF" data-k="sede">' + sedeOpts(f.sede, f.role === 'admin') + '</select></div>' : '') +
+        (manyLocs() ? '<div class="field"><label for="tmSede">' + LWc() + '</label><select id="tmSede" data-chg="tmF" data-k="sede">' + sedeOpts(f.sede, f.role === 'admin') + '</select></div>' : '') +
         (f.role === 'profesional' || f.role === 'asistente' ? '<div class="field"><label for="tmPro">' + (f.role === 'profesional' ? 'Es el profesional' : 'Trabaja con') + '</label><select id="tmPro" data-chg="tmF" data-k="pro">' + proOpts(f.pro) + '</select></div>' : '') +
         '</div><p class="hint" style="margin:4px 0 8px">' + esc(RDESC[f.role] || '') + (f.role === 'profesional' ? ' Si el odontólogo todavía no está cargado, primero sumalo en Profesionales.' : '') + '</p><div class="row-btns"><button class="btn small primary" data-act="tmNew">Crear invitación</button></div><div class="hint bad" id="tmMsg"></div></div>';
     }
@@ -285,7 +288,7 @@
     const say = t => { if (msg) msg.textContent = t; };
     if (!real()) return say('Para invitar personas, ingresá con tu cuenta en la nube.');
     if (!f.name) return say('Escribí el nombre de la persona.');
-    if (f.role !== 'admin' && isEmp() && !f.sede) return say('Elegí el consultorio donde trabaja.');
+    if (f.role !== 'admin' && isEmp() && !f.sede) return say('Elegí el ' + LW() + ' donde trabaja.');
     if (f.role === 'profesional' && !f.pro) return say('Elegí qué profesional es.');
     el.disabled = true; say('Creando…');
     try {
@@ -314,7 +317,7 @@
     if (k === 'role') { p.p_role = v; if (v !== 'admin' && isEmp() && !z.sede && sedes()[0]) p.p_sede = sedes()[0].id; }
     if (k === 'sede') p.p_sede = v;
     if (k === 'pro') p.p_pro = v;
-    if (A.empAudit) A.empAudit('Cambió ' + (k === 'role' ? 'el puesto' : k === 'sede' ? 'el consultorio' : 'el profesional') + ' de ' + (z.name || z.email) + '.');
+    if (A.empAudit) A.empAudit('Cambió ' + (k === 'role' ? 'el puesto' : k === 'sede' ? 'el ' + LW() : 'el profesional') + ' de ' + (z.name || z.email) + '.');
     setMember(id, p, 'Listo. Se aplica en su equipo en menos de un minuto.');
   };
   A.acts.tmOff = el => { const z = memberOf(el.getAttribute('data-id')); S.modal = { type: 'tmOffAsk', id: z.member, name: z.name || z.email }; A.renderModal(); };

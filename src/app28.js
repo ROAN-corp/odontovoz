@@ -25,10 +25,10 @@
   /* =====================================================================
      DATOS PROPIOS DEL MODO EMPRESA
        staff        personal y personas que entran con PIN (lo ven todos los equipos de la cuenta)
-       empo         del dueño: sueldos, metas (el servidor no se lo deja leer a los equipos de un consultorio)
-       caja:<sede>  egresos y cierres de cada consultorio
-       stock        insumos de cada consultorio
-       audit:<b>    registro de lo que se hace (uno por consultorio y uno del dueño)
+       empo         del dueño: sueldos, metas (el servidor no se lo deja leer a los equipos de un centro)
+       caja:<sede>  egresos y cierres de cada centro
+       stock        insumos de cada centro
+       audit:<b>    registro de lo que se hace (uno por centro y uno del dueño)
      ===================================================================== */
   const EKEY = () => (A.KEY || 'odontovoz') + '.emp';
   const E = { staff: { people: [], cfg: { pinReq: false, idle: 10 } }, empo: { sal: {}, salMoves: [], goals: {} }, caja: {}, stock: {}, audit: {} };
@@ -58,7 +58,7 @@
   A.cloudExtraKeys = () => ['staff', 'empo', 'stock'].concat(Object.keys(E.caja).map(s => 'caja:' + s), Object.keys(E.audit).map(b => 'audit:' + b), prevKeys ? prevKeys() : []);
 
   /* =====================================================================
-     ALCANCE DEL EQUIPO: dueño ('todo') o un consultorio ('sede:<id>')
+     ALCANCE DEL EQUIPO: dueño ('todo') o un centro ('sede:<id>')
      ===================================================================== */
   const localScope = () => LS.get('odontovoz.empScope', 'todo');
   A.empScope = () => {
@@ -70,11 +70,11 @@
   const devOwner = () => A.empScope() === 'todo';
 
   /* =====================================================================
-     CONSULTORIOS (se usan los mismos «consultorios» de la cuenta: A.locs)
+     CONSULTORIOS (se usan los mismos «centros» de la cuenta: A.locs)
      ===================================================================== */
   const sedes = () => (A.locs ? A.locs() : []);
   const sedeById = id => sedes().filter(l => l.id === id)[0] || null;
-  const sedeName = id => { const l = sedeById(id); return l ? l.name : 'Sin consultorio'; };
+  const sedeName = id => { const l = sedeById(id); return l ? l.name : 'Sin centro'; };
   const sedeColor = id => { const l = sedeById(id); return l ? l.color : '#8a9a9b'; };
   const firstSede = () => (sedes()[0] || {}).id || null;
   const proSedes = p => { const v = (p && Array.isArray(p.sedes) ? p.sedes : []).filter(id => sedeById(id)); return v.length ? v : (firstSede() ? [firstSede()] : []); };
@@ -110,12 +110,12 @@
   };
   const perm = () => {
     const r = roleNow(), p = Object.assign({}, PERM[r] || PERM.consultorio);
-    /* en un equipo de consultorio nadie ve los números de la empresa, aunque sea el dueño (el servidor tampoco se los manda) */
+    /* en un equipo de centro nadie ve los números de la empresa, aunque sea el dueño (el servidor tampoco se los manda) */
     if (devSede()) { p.emp = 0; p.all = 0; p.liq = 0; p.sal = 0; }
     return p;
   };
   A.empPerm = () => (isEmp() ? perm() : null);
-  /* consultorio en el que se está trabajando ahora (null = todos) */
+  /* centro en el que se está trabajando ahora (null = todos) */
   const fixedSede = () => { if (devSede()) return devSede(); const p = pinOn() ? curPerson() : null; if (p && !perm().all) return p.sede || firstSede(); return null; };
   const curSede = () => { if (!isEmp()) return null; const f = fixedSede(); if (f) return f; const s = S.sede; return s && sedeById(s) ? s : null; };
   A.empSede = curSede;
@@ -146,14 +146,14 @@
     return mainSede(A.PRO(a.pro));
   };
   const sedeOfAppt = a => A.locOf(a);
-  /* un turno nuevo queda en el consultorio donde se está trabajando (o en el del profesional) */
+  /* un turno nuevo queda en el centro donde se está trabajando (o en el del profesional) */
   const mutPrev = A.mutate;
   A.mutate = (keys, fn, msg) => mutPrev(keys, () => {
     const r = fn();
     if (isEmp()) (keys || []).forEach(k => { const l = A.S.days[k] || []; l.forEach(a => { if (!a.loc && a.type !== 'block') { const sd = curSede(), ps = proSedes(A.PRO(a.pro)); a.loc = sd && ps.indexOf(sd) >= 0 ? sd : ps[0] || sd || firstSede(); } }); });
     return r;
   }, msg);
-  /* profesionales del consultorio actual */
+  /* profesionales del centro actual */
   const vpPrev = A.visPros;
   A.visPros = () => {
     const l = vpPrev(); if (!isEmp()) return l;
@@ -161,7 +161,7 @@
     const f = l.filter(p => proSedes(p).indexOf(sd) >= 0);
     return f.length ? f : l;
   };
-  /* en qué consultorio entró un cobro: el que se anotó, el del turno, el de un turno de ese día o el del profesional */
+  /* en qué centro entró un cobro: el que se anotó, el del turno, el de un turno de ese día o el del profesional */
   const payLoc = (pid, e) => {
     if (e.loc && sedeById(e.loc)) return e.loc;
     if (e.apptId && A.apptById) { const a = A.apptById(e.apptId); if (a) return sedeOfAppt(a); }
@@ -169,12 +169,12 @@
     if (ap) return sedeOfAppt(ap);
     const pt = A.PAT(pid); return mainSede(A.PRO(e.pro || (pt && pt.pro)));
   };
-  /* los cobros nuevos quedan anotados en el consultorio donde se cobraron */
+  /* los cobros nuevos quedan anotados en el centro donde se cobraron */
   const touchPrev = A.touchPd;
   if (touchPrev) A.touchPd = pid => { if (isEmp() && curSede()) { const pd = A.S.pd[pid]; if (pd && pd.ledger) pd.ledger.forEach(e => { if (e.type === 'pago' && !e.loc && e.date === today()) e.loc = curSede(); }); } return touchPrev(pid); };
   A.empPayLoc = (pid, e) => payLoc(pid, e);
   const dayList = d => (A.S.days[d] || []);
-  /* en qué consultorio se hizo una prestación: el turno de ese paciente ese día; si no, el del profesional */
+  /* en qué centro se hizo una prestación: el turno de ese paciente ese día; si no, el del profesional */
   const cargoLoc = (pid, e) => {
     if (e.loc && sedeById(e.loc)) return e.loc;
     const ap = dayList(e.date).filter(a => a.pid === pid && a.type !== 'block' && a.status !== 'cancelado' && (!e.pro || a.pro === e.pro))[0];
@@ -196,7 +196,7 @@
       d = A.add(d, 1);
     }
   }
-  /* números de un día por consultorio */
+  /* números de un día por centro */
   function dayStats(d) {
     const out = {}; sedes().forEach(l => { out[l.id] = { ing: 0, egr: 0, cob: 0, appts: [], pros: {}, atend: 0, wait: 0, aus: 0, pend: 0, unpaid: 0, pm: {} }; });
     const z = out;
@@ -219,7 +219,7 @@
   }
   A.empDayStats = dayStats;
 
-  /* números de varios meses por consultorio (para el resumen, las estadísticas y el reporte) */
+  /* números de varios meses por centro (para el resumen, las estadísticas y el reporte) */
   function monthStats(m0, m1) {
     const from = m0 + '-01', to = m1 + '-' + pad(daysIn(m1)), out = {}, first = {}, t = today();
     const blank = () => ({ fact: 0, cob: 0, ing: 0, egr: 0, sal: 0, egrCat: {}, turnos: 0, atend: 0, aus: 0, canc: 0, nuevos: 0, mins: 0, cap: 0, pros: {}, cats: {}, budP: 0, budA: 0, budPn: 0, budAn: 0 });
@@ -251,7 +251,7 @@
     return out;
   }
   A.empMonthStats = monthStats;
-  /* parte de los profesionales por consultorio en un mes (según porcentajes o módulo) */
+  /* parte de los profesionales por centro en un mes (según porcentajes o módulo) */
   function profShare(m) {
     const out = {}; if (!A.liqCalc) return out;
     A.PROS.forEach(p => {
@@ -273,18 +273,18 @@
     if (A.hideDrawer) A.hideDrawer();
     if (!empAllowed()) { S.modal = { type: 'empPlan' }; A.renderModal(); return; }
     const cur = sedes().map(l => l.name);
-    const names = cur.length ? cur : [(S.setup && S.setup.clinic) || A.CLINIC || 'Consultorio 1'];
+    const names = cur.length ? cur : [(S.setup && S.setup.clinic) || A.CLINIC || 'Centro 1'];
     while (names.length < 2) names.push('');
     S.modal = { type: 'empOn', names }; A.renderModal();
   };
-  MF.empPlan = () => A.modalShell('Modo Empresa', '<p>El modo Empresa es para dueños de <b>2 a 5 consultorios</b>: cada consultorio con su personal, su agenda y su caja, y un inicio con el resumen de todos. Viene con el plan <b>Empresa</b>.</p>', '<button class="btn" data-act="closeModal">Ahora no</button><button class="btn primary" data-act="planOpen">Ver los planes</button>');
+  MF.empPlan = () => A.modalShell('Modo Empresa', '<p>El modo Empresa es para dueños de <b>2 a 5 centros</b>: cada centro con su personal, su agenda y su caja, y un inicio con el resumen de todos. Viene con el plan <b>Empresa</b>.</p>', '<button class="btn" data-act="closeModal">Ahora no</button><button class="btn primary" data-act="planOpen">Ver los planes</button>');
   MF.empOn = m => {
-    const rows = m.names.map((n, i) => '<div class="emp-on-row"><span class="emp-dot" style="background:' + COLORS[i % 5] + '"></span><input class="inp" data-in="empOnName" data-i="' + i + '" value="' + esc(n) + '" placeholder="Nombre del consultorio ' + (i + 1) + '" aria-label="Consultorio ' + (i + 1) + '"></div>').join('');
+    const rows = m.names.map((n, i) => '<div class="emp-on-row"><span class="emp-dot" style="background:' + COLORS[i % 5] + '"></span><input class="inp" data-in="empOnName" data-i="' + i + '" value="' + esc(n) + '" placeholder="Nombre del centro ' + (i + 1) + '" aria-label="Centro ' + (i + 1) + '"></div>').join('');
     return A.modalShell('Activar el modo Empresa',
-      '<p>Vas a manejar <b>varios consultorios</b> desde una sola cuenta. Los pacientes son de la empresa (una sola ficha por paciente) y cada consultorio tiene sus profesionales, su personal, su agenda y su caja.</p>' +
-      '<h3 class="emp-h3">Tus consultorios</h3>' + rows +
-      (m.names.length < maxSedes() ? '<button class="btn small" data-act="empOnAdd">+ Otro consultorio</button>' : '') +
-      '<ul class="plain emp-list"><li>Este equipo queda como <b>equipo del dueño</b>: ve todos los consultorios y los números de la empresa.</li><li>Los demás equipos, la primera vez que se abran, eligen a qué consultorio pertenecen y solo ven ese.</li><li>Tus pacientes, turnos y profesionales se conservan. Después asignás cada profesional a su consultorio.</li></ul>' +
+      '<p>Vas a manejar <b>varios centros</b> desde una sola cuenta. Los pacientes son de la empresa (una sola ficha por paciente) y cada centro tiene sus profesionales, su personal, su agenda y su caja.</p>' +
+      '<h3 class="emp-h3">Tus centros</h3>' + rows +
+      (m.names.length < maxSedes() ? '<button class="btn small" data-act="empOnAdd">+ Otro centro</button>' : '') +
+      '<ul class="plain emp-list"><li>Este equipo queda como <b>equipo del dueño</b>: ve todos los centros y los números de la empresa.</li><li>Los demás equipos, la primera vez que se abran, eligen a qué centro pertenecen y solo ven ese.</li><li>Tus pacientes, turnos y profesionales se conservan. Después asignás cada profesional a su centro.</li></ul>' +
       '<div class="hint bad" id="eoMsg"></div>',
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="empOnGo">Activar</button>');
   };
@@ -292,7 +292,7 @@
   A.acts.empOnAdd = () => { if (S.modal.names.length < maxSedes()) S.modal.names.push(''); A.renderModal(); };
   A.acts.empOnGo = async () => {
     const m = S.modal, names = m.names.map(n => String(n || '').trim()).filter(Boolean), msg = $('#eoMsg');
-    if (names.length < 2) { msg.textContent = 'Cargá al menos dos consultorios.'; return; }
+    if (names.length < 2) { msg.textContent = 'Cargá al menos dos centros.'; return; }
     if (real()) {
       msg.textContent = 'Activando…';
       try {
@@ -301,15 +301,15 @@
         CL.devScope = 'todo'; CL.empresaOn = true; LS.set('odontovoz.scope', JSON.stringify({ s: 'todo', e: true }));
       } catch (e) { msg.textContent = /could not find|schema cache/i.test(String(e.message)) ? 'El servidor todavía no tiene el modo Empresa. Avisale a soporte.' : (e.message || 'Sin conexión.'); return; }
     } else LS.set('odontovoz.empScope', 'todo');
-    /* consultorios: se reusan los que ya existían (con sus códigos) y se suman los nuevos */
+    /* centros: se reusan los que ya existían (con sus códigos) y se suman los nuevos */
     const old = sedes().slice(), list = names.map((n, i) => { const o = old[i]; return Object.assign({}, o || { id: 'l' + A.uid() }, { name: n, color: (o && o.color) || COLORS[i % 5], kind: (o && o.kind) || 'propio' }); });
     A.CFG.locs = list;
     A.PROS.forEach(p => { if (!Array.isArray(p.sedes) || !p.sedes.filter(id => sedeById(id)).length) p.sedes = [list[0].id]; });
     if (A.DEMO) demoSeed();
     S.setup = Object.assign({}, S.setup || {}, { type: 'empresa' }); S.uimode = 'admin'; S.role = 'profesional';
-    A.applySetup(); setSede(null); audit('Activó el modo Empresa con ' + list.length + ' consultorios.');
+    A.applySetup(); setSede(null); audit('Activó el modo Empresa con ' + list.length + ' centros.');
     S.modal = null; A.renderModal(); A.saveNow(); S.tab = 'empresa'; S.empTab = 'sedes'; A.refresh();
-    A.toast('Modo Empresa activado. Ahora asigná cada profesional a su consultorio.');
+    A.toast('Modo Empresa activado. Ahora asigná cada profesional a su centro.');
   };
   /* datos de ejemplo para mirar el modo Empresa sin cuenta */
   function demoSeed() {
@@ -332,14 +332,14 @@
   }
   /* dejar el modo Empresa */
   A.acts.empOff = async () => {
-    if (!confirm('¿Dejar el modo Empresa? La cuenta vuelve a ser un centro odontológico. No se borra nada: consultorios, personal y cajas quedan guardados por si lo volvés a activar.')) return;
+    if (!confirm('¿Dejar el modo Empresa? La cuenta vuelve a ser un centro odontológico. No se borra nada: centros, personal y cajas quedan guardados por si lo volvés a activar.')) return;
     if (real()) { try { const r = await CL.api('/rest/v1/rpc/ov_empresa_off', { method: 'POST', body: {} }); if (!r || !r.ok) { A.toast((r && r.msg) || 'No se pudo.'); return; } CL.empresaOn = false; } catch (e) { A.toast(e.message || 'Sin conexión.'); return; } }
     S.setup = Object.assign({}, S.setup, { type: 'centro' }); A.applySetup(); A.saveNow(); S.tab = 'inicio'; A.refresh(); A.toast('Volviste a centro odontológico.');
   };
   /* el tipo de cuenta suma «Empresa» */
   const acctTypePrev = MF.acctType;
   if (acctTypePrev) MF.acctType = m => {
-    const h = acctTypePrev(m), card = '<button class="setup-card' + (m.t === 'empresa' ? ' on' : '') + '" data-act="acctTypeSel" data-t="empresa" aria-pressed="' + (m.t === 'empresa') + '"><b>Empresa</b><span>De 2 a 5 consultorios</span></button>';
+    const h = acctTypePrev(m), card = '<button class="setup-card' + (m.t === 'empresa' ? ' on' : '') + '" data-act="acctTypeSel" data-t="empresa" aria-pressed="' + (m.t === 'empresa') + '"><b>Empresa</b><span>De 2 a 5 centros</span></button>';
     return h.replace(/(<div class="setup-grid">[\s\S]*?)(<\/div>)/, '$1' + card + '$2');
   };
   const typeGoPrev = A.acts.acctTypeGo;
@@ -354,14 +354,14 @@
   A.applySetup = () => { applyPrev(); if (isEmp()) { S.mode = 'centro'; if (S.setup.clinic) A.CLINIC = S.setup.clinic; } };
 
   /* =====================================================================
-     ESTE EQUIPO: ¿del dueño o de un consultorio?
+     ESTE EQUIPO: ¿del dueño o de un centro?
      ===================================================================== */
   let whereAsked = false;
   const needWhere = () => isEmp() && real() && !(A.memberNow && A.memberNow()) && CL.devOk && CL.devScope === null && !whereAsked;
   MF.empWhere = m => A.modalShell('¿Dónde se usa este equipo?',
-    '<p>Tu cuenta trabaja en modo Empresa. Elegí a qué consultorio pertenece este celular o compu: va a ver solo ese consultorio.</p><div class="setup-grid">' +
-    sedes().map(l => '<button class="setup-card" data-act="empWhereGo" data-s="sede:' + esc(l.id) + '"><b><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</b><span>' + esc(l.addr || 'Agenda, pacientes y caja de este consultorio') + '</span></button>').join('') +
-    '<button class="setup-card" data-act="empWhereGo" data-s="todo"><b>Es del dueño o de la administración</b><span>Ve todos los consultorios. Lo tiene que habilitar el dueño desde su equipo.</span></button></div><div class="hint bad" id="ewMsg">' + esc(m.msg || '') + '</div>',
+    '<p>Tu cuenta trabaja en modo Empresa. Elegí a qué centro pertenece este celular o compu: va a ver solo ese centro.</p><div class="setup-grid">' +
+    sedes().map(l => '<button class="setup-card" data-act="empWhereGo" data-s="sede:' + esc(l.id) + '"><b><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</b><span>' + esc(l.addr || 'Agenda, pacientes y caja de este centro') + '</span></button>').join('') +
+    '<button class="setup-card" data-act="empWhereGo" data-s="todo"><b>Es del dueño o de la administración</b><span>Ve todos los centros. Lo tiene que habilitar el dueño desde su equipo.</span></button></div><div class="hint bad" id="ewMsg">' + esc(m.msg || '') + '</div>',
     '<button class="btn" data-act="empWhereLater">Más tarde</button>');
   A.acts.empWhereGo = async el => {
     const sc = el.getAttribute('data-s'), msg = $('#ewMsg');
@@ -374,7 +374,7 @@
     } catch (e) { msg.textContent = e.message || 'Sin conexión.'; }
   };
   A.acts.empWhereLater = () => { whereAsked = true; S.modal = null; A.renderModal(); A.toast('Hasta que elijas, este equipo no ve los números de la empresa.'); };
-  /* al quedar como equipo de un consultorio se borra la copia local de los datos del dueño */
+  /* al quedar como equipo de un centro se borra la copia local de los datos del dueño */
   function afterScope() {
     const sd = devSede();
     if (sd) {
@@ -388,7 +388,7 @@
     S.tab = 'inicio'; A.refresh();
   }
   A.onScope = () => { if (isEmp()) afterScope(); };
-  /* lo que un equipo de consultorio no sube (el servidor lo rechazaría) */
+  /* lo que un equipo de centro no sube (el servidor lo rechazaría) */
   const recPrev = A.recAllowed;
   A.recAllowed = (k, v) => {
     if (recPrev && !recPrev(k, v)) return false;
@@ -462,7 +462,7 @@
   A.empTabAllowed = tabAllowed;
 
   /* =====================================================================
-     PANTALLA: clases, título, aviso del consultorio y guardas de las secciones
+     PANTALLA: clases, título, aviso del centro y guardas de las secciones
      ===================================================================== */
   let salGenDone = '';
   const arPrev = A.afterRefresh;
@@ -473,7 +473,7 @@
     b.classList.toggle('emp-nocaja', !!(p && !p.caja)); b.classList.toggle('emp-noliq', !!(p && !p.liq)); b.classList.toggle('emp-pinon', on && pinOn());
     if (!on) { const c = $('#empChip'); if (c) c.remove(); return; }
     if (!tabAllowed(S.tab)) { S.tab = 'inicio'; setTimeout(() => A.refresh(), 0); return; }
-    const sub = $('#abSub'), sd = curSede(); if (sub && S.tab !== 'inicio') sub.textContent = sd ? sedeName(sd) : 'Todos los consultorios';
+    const sub = $('#abSub'), sd = curSede(); if (sub && S.tab !== 'inicio') sub.textContent = sd ? sedeName(sd) : 'Todos los centros';
     /* persona actual: un toque para cambiar */
     let chip = $('#empChip'); const per = pinOn() ? curPerson() : null;
     if (pinOn()) {
@@ -503,7 +503,7 @@
   }
 
   /* =====================================================================
-     INICIO DEL DUEÑO: un recuadro por consultorio
+     INICIO DEL DUEÑO: un recuadro por centro
      ===================================================================== */
   const inicioPrev = A.render.inicio;
   A.render.inicio = () => {
@@ -512,7 +512,7 @@
     if (p.emp && !curSede()) return renderEmpHome();
     inicioPrev();
     const host = $('#view-inicio'), sd = curSede(); if (!host || !sd) return;
-    host.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar" style="--sc:' + esc(sedeColor(sd)) + '"><span class="emp-dot"></span><b>' + esc(sedeName(sd)) + '</b>' + (p.all ? '<button class="btn small" data-act="empSede" data-id="">← Todos los consultorios</button>' : '') + (!real() && devSede() ? '<button class="btn small" data-act="empTryScope" data-s="todo">Volver al equipo del dueño</button>' : '') + '</div>');
+    host.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar" style="--sc:' + esc(sedeColor(sd)) + '"><span class="emp-dot"></span><b>' + esc(sedeName(sd)) + '</b>' + (p.all ? '<button class="btn small" data-act="empSede" data-id="">← Todos los centros</button>' : '') + (!real() && devSede() ? '<button class="btn small" data-act="empTryScope" data-s="todo">Volver al equipo del dueño</button>' : '') + '</div>');
   };
   A.acts.empSede = el => { const id = el.getAttribute('data-id') || null; setSede(id); S.proSel = null; const go = el.getAttribute('data-go'); S.tab = go || (id ? S.tab : 'inicio'); A.refresh(); window.scrollTo(0, 0); };
   function warnings(sd, st, d) {
@@ -559,7 +559,7 @@
     x += '</div>';
     /* el mes, en una tabla corta */
     let fT = 0, cT = 0, eT = 0;
-    x += '<section class="card emp-month"><h2>' + esc(monthName(m)) + ' hasta hoy</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Consultorio</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">Egresos</th><th class="num">Turnos</th></tr></thead><tbody>' +
+    x += '<section class="card emp-month"><h2>' + esc(monthName(m)) + ' hasta hoy</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Centro</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">Egresos</th><th class="num">Turnos</th></tr></thead><tbody>' +
       L.map(l => { const o = ms[l.id] || {}; fT += o.fact || 0; cT += o.cob || 0; eT += o.egr || 0; return '<tr><td><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</td><td class="num">' + money(o.fact || 0) + '</td><td class="num">' + money(o.cob || 0) + '</td><td class="num">' + money(o.egr || 0) + '</td><td class="num">' + (o.turnos || 0) + '</td></tr>'; }).join('') +
       '<tr class="tot"><td><b>Total</b></td><td class="num"><b>' + money(fT) + '</b></td><td class="num"><b>' + money(cT) + '</b></td><td class="num"><b>' + money(eT) + '</b></td><td class="num"></td></tr></tbody></table></div>' +
       '<div class="row-btns"><button class="btn small" data-act="empGo" data-t="stats">Estadísticas</button><button class="btn small" data-act="empGo" data-t="liq">Liquidaciones</button><button class="btn small" data-act="empGo" data-t="report">Reporte del mes</button></div></section>';
@@ -584,12 +584,12 @@
   const cdate = () => S.empCd || today();
   function cajaAll() {
     const d = cdate(), st = dayStats(d);
-    let x = '<div class="emp-top"><h2>Caja de los consultorios</h2>' + dateNav() + '</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Consultorio</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo</th><th>Caja</th><th></th></tr></thead><tbody>';
+    let x = '<div class="emp-top"><h2>Caja de los centros</h2>' + dateNav() + '</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Centro</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo</th><th>Caja</th><th></th></tr></thead><tbody>';
     sedes().forEach(l => { const o = st[l.id], cl = cajaOf(l.id).closes.filter(c => c.date === d)[0]; x += '<tr><td><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</td><td class="num">' + money(o.ing) + '</td><td class="num">' + money(o.egr) + '</td><td class="num">' + money(o.ing - o.egr) + '</td><td>' + (cl ? '<span class="chip ok">cerrada' + (cl.diff ? ' · ' + (cl.diff > 0 ? 'sobran ' : 'faltan ') + money(Math.abs(cl.diff)) : '') + '</span>' : d < today() ? '<span class="chip warn">sin cerrar</span>' : '<span class="chip">abierta</span>') + '</td><td><button class="btn small" data-act="empSede" data-id="' + esc(l.id) + '">Abrir</button></td></tr>'; });
-    x += '</tbody></table></div><div class="row-btns"><button class="btn" data-act="empCajaGral">Caja general de la empresa</button></div><p class="hint">La caja general tiene los gastos de la empresa que no son de un consultorio (y los honorarios pagados desde Liquidaciones).</p>';
+    x += '</tbody></table></div><div class="row-btns"><button class="btn" data-act="empCajaGral">Caja general de la empresa</button></div><p class="hint">La caja general tiene los gastos de la empresa que no son de un centro (y los honorarios pagados desde Liquidaciones).</p>';
     return x;
   }
-  A.acts.empCajaGral = () => { S.cajaGral = true; A.refresh(); const h = $('#view-caja'); if (h) h.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar"><b>Caja general de la empresa</b><button class="btn small" data-act="empCajaBack">← Cajas de los consultorios</button></div>'); };
+  A.acts.empCajaGral = () => { S.cajaGral = true; A.refresh(); const h = $('#view-caja'); if (h) h.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar"><b>Caja general de la empresa</b><button class="btn small" data-act="empCajaBack">← Cajas de los centros</button></div>'); };
   A.acts.empCajaBack = () => { S.cajaGral = false; A.refresh(); };
   const tabPrev = A.acts.tab;
   A.acts.tab = el => { S.cajaGral = false; return tabPrev(el); };
@@ -602,7 +602,7 @@
     const cobEf = st.pm.Efectivo || 0, inEf = ing.filter(m => m.method === 'Efectivo').reduce((s, m) => s + m.amount, 0), outEf = egr.filter(m => m.method === 'Efectivo').reduce((s, m) => s + m.amount, 0);
     const open = cl ? cl.open : (S.empOpen != null ? S.empOpen : lastCounted(sd, d)), exp = open + cobEf + inEf - outEf;
     let x = '<div class="emp-top"><h2><span class="emp-dot" style="background:' + esc(sedeColor(sd)) + '"></span> Caja · ' + esc(sedeName(sd)) + '</h2>' + dateNav() + '</div>';
-    if (p.all) x += '<div class="row-btns"><button class="btn small" data-act="empSede" data-id="">← Todos los consultorios</button></div>';
+    if (p.all) x += '<div class="row-btns"><button class="btn small" data-act="empSede" data-id="">← Todos los centros</button></div>';
     if (A.ctlCards) x += A.ctlCards(A.dayControl(d, sd), { closed: !!cl });
     x += '<div class="emp-kpis sm"><div><span>Cobros de pacientes</span><b>' + money(st.cob) + '</b></div><div><span>Otros ingresos</span><b>' + money(st.ing - st.cob) + '</b></div><div><span>Egresos</span><b>' + money(st.egr) + '</b></div><div class="' + (st.ing - st.egr < 0 ? 'neg' : 'pos') + '"><span>Saldo</span><b>' + money(st.ing - st.egr) + '</b></div></div>';
     x += '<div class="cols2"><section class="card"><h2>Cobros por medio de pago</h2>' + (Object.keys(st.pm).length ? '<table class="tbl"><tbody>' + Object.keys(st.pm).sort((a, b) => st.pm[b] - st.pm[a]).map(k => '<tr><td>' + esc(k) + '</td><td class="num">' + money(st.pm[k]) + '</td></tr>').join('') + '</tbody></table>' : '<p class="hint">Sin cobros este día.</p>') + '</section>';
@@ -653,14 +653,14 @@
   /* =====================================================================
      SECCIÓN «EMPRESA» (solo el dueño y la administración)
      ===================================================================== */
-  const ETABS = [['resumen', 'Resumen'], ['sedes', 'Consultorios'], ['personal', 'Personal'], ['liq', 'Liquidaciones'], ['stats', 'Estadísticas'], ['cobrar', 'Por cobrar'], ['metas', 'Metas'], ['stock', 'Stock'], ['equipos', 'Equipos'], ['registro', 'Registro'], ['report', 'Reporte']];
+  const ETABS = [['resumen', 'Resumen'], ['sedes', 'Centros'], ['personal', 'Personal'], ['liq', 'Liquidaciones'], ['stats', 'Estadísticas'], ['cobrar', 'Por cobrar'], ['metas', 'Metas'], ['stock', 'Stock'], ['equipos', 'Equipos'], ['registro', 'Registro'], ['report', 'Reporte']];
   const em = () => S.empM || curMonth();
   const monthNav = () => { const m = em(); return '<div class="emp-dnav"><button class="btn small" data-act="empM" data-n="-1" aria-label="Mes anterior">‹</button><b>' + esc(monthName(m)) + '</b><button class="btn small" data-act="empM" data-n="1" aria-label="Mes siguiente"' + (m >= curMonth() ? ' disabled' : '') + '>›</button></div>'; };
   A.acts.empM = el => { const n = +el.getAttribute('data-n'); S.empM = addMonth(em(), n); if (S.empM > curMonth()) S.empM = curMonth(); A.refresh(); };
   A.acts.empTab = el => { S.empTab = el.getAttribute('data-t'); A.refresh(); window.scrollTo(0, 0); };
   A.render.empresa = () => {
     const host = $('#view-empresa'); if (!host) return;
-    if (!isEmp()) { host.innerHTML = '<section class="card"><h2>Modo Empresa</h2><p>Para manejar de 2 a 5 consultorios desde una sola cuenta.</p><button class="btn primary" data-act="empOn">Activar el modo Empresa</button></section>'; return; }
+    if (!isEmp()) { host.innerHTML = '<section class="card"><h2>Modo Empresa</h2><p>Para manejar de 2 a 5 centros desde una sola cuenta.</p><button class="btn primary" data-act="empOn">Activar el modo Empresa</button></section>'; return; }
     const t = S.empTab || 'resumen', p = perm();
     let x = '<div class="emp-tabs" role="tablist">' + ETABS.filter(z => z[0] !== 'personal' || p.emp).map(z => '<button class="emp-t" role="tab" aria-selected="' + (t === z[0]) + '" data-act="empTab" data-t="' + z[0] + '">' + z[1] + '</button>').join('') + '</div>';
     const R = { resumen: tResumen, sedes: tSedes, personal: tPersonal, liq: tLiq, stats: tStats, cobrar: tCobrar, metas: tMetas, stock: tStock, equipos: tEquipos, registro: tRegistro, report: tReport }[t] || tResumen;
@@ -674,19 +674,19 @@
   function tResumen() {
     const m = em(), ms = monthStats(m, m)[m] || {}, ps = profShare(m), L = sedes(), gral = ms._gral || { egr: 0 };
     let T = { fact: 0, cob: 0, egr: 0, prof: 0, res: 0 };
-    let x = '<div class="emp-top"><h2>Resumen</h2>' + monthNav() + '</div><div class="tbl-wrap"><table class="tbl emp-res"><thead><tr><th>Consultorio</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">A profesionales</th><th class="num">Egresos</th><th class="num">Le queda a la empresa</th></tr></thead><tbody>';
+    let x = '<div class="emp-top"><h2>Resumen</h2>' + monthNav() + '</div><div class="tbl-wrap"><table class="tbl emp-res"><thead><tr><th>Centro</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">A profesionales</th><th class="num">Egresos</th><th class="num">Le queda a la empresa</th></tr></thead><tbody>';
     L.forEach(l => { const o = ms[l.id] || {}, pr = (ps[l.id] || {}).dent || 0, res = (o.fact || 0) - pr - (o.egr || 0); T.fact += o.fact || 0; T.cob += o.cob || 0; T.egr += o.egr || 0; T.prof += pr; T.res += res; x += '<tr><td><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</td><td class="num">' + money(o.fact || 0) + '</td><td class="num">' + money(o.cob || 0) + '</td><td class="num">' + money(pr) + '</td><td class="num">' + money(o.egr || 0) + '</td><td class="num ' + (res < 0 ? 'neg' : 'pos') + '"><b>' + money(res) + '</b></td></tr>'; });
     if (gral.egr) { T.egr += gral.egr; T.res -= gral.egr; x += '<tr><td>Gastos generales de la empresa</td><td></td><td></td><td></td><td class="num">' + money(gral.egr) + '</td><td class="num neg">−' + money(gral.egr) + '</td></tr>'; }
     x += '<tr class="tot"><td><b>Total</b></td><td class="num"><b>' + money(T.fact) + '</b></td><td class="num"><b>' + money(T.cob) + '</b></td><td class="num"><b>' + money(T.prof) + '</b></td><td class="num"><b>' + money(T.egr) + '</b></td><td class="num ' + (T.res < 0 ? 'neg' : 'pos') + '"><b>' + money(T.res) + '</b></td></tr></tbody></table></div>';
-    x += '<p class="hint">«Le queda a la empresa» = lo facturado − la parte de los profesionales (según su porcentaje o el alquiler del módulo) − los egresos del consultorio, incluidos los sueldos pagados.</p>';
+    x += '<p class="hint">«Le queda a la empresa» = lo facturado − la parte de los profesionales (según su porcentaje o el alquiler del módulo) − los egresos del centro, incluidos los sueldos pagados.</p>';
     x += '<div class="emp-mini">' + L.map(l => { const o = ms[l.id] || {}, occ = o.cap ? Math.round(o.mins / o.cap * 100) : 0; return '<div class="emp-mc" style="--sc:' + esc(l.color) + '"><b><span class="emp-dot"></span> ' + esc(l.name) + '</b><span>' + (o.turnos || 0) + ' turnos · ' + (o.atend || 0) + ' atendidos</span><span>Ocupación de la agenda: <b>' + occ + '%</b></span>' + bar(occ, 100, l.color) + '<span>Ausentes: ' + (o.turnos ? Math.round((o.aus || 0) / o.turnos * 100) : 0) + '% · nuevos: ' + (o.nuevos || 0) + '</span></div>'; }).join('') + '</div>';
     return x;
   }
 
-  /* ---------- Consultorios y profesionales ---------- */
+  /* ---------- Centros y profesionales ---------- */
   function tSedes() {
     const L = sedes();
-    let x = '<div class="emp-top"><h2>Consultorios</h2>' + (L.length < maxSedes() ? '<button class="btn small primary" data-act="empSedeEdit" data-id="">+ Consultorio</button>' : '') + '</div>' + (A.empTreeHTML ? A.empTreeHTML() : '') + '<div class="emp-sedes">';
+    let x = '<div class="emp-top"><h2>Centros</h2>' + (L.length < maxSedes() ? '<button class="btn small primary" data-act="empSedeEdit" data-id="">+ Centro</button>' : '') + '</div>' + (A.empTreeHTML ? A.empTreeHTML() : '') + '<div class="emp-sedes">';
     L.forEach(l => {
       const pros = A.PROS.filter(p => proSedes(p).indexOf(l.id) >= 0), staff = people().filter(p => p.sede === l.id);
       x += '<section class="card emp-sc" style="--sc:' + esc(l.color) + '"><div class="ec-h"><span class="emp-dot"></span><div><b>' + esc(l.name) + '</b><span>' + esc([l.addr, l.phone].filter(Boolean).join(' · ') || 'Sin dirección') + '</span></div><button class="btn small" data-act="empSedeEdit" data-id="' + esc(l.id) + '">Editar</button></div>' +
@@ -694,7 +694,7 @@
         '<h3 class="emp-h3">Personal (' + staff.length + ')</h3><div class="ec-pros">' + (staff.length ? staff.map(p => '<span class="ec-pr">' + esc(p.name) + ' · ' + esc(RN[p.role]) + '</span>').join('') : '<span class="hint">Nadie todavía</span>') + '</div>' +
         '<div class="row-btns"><button class="btn small" data-act="empSede" data-id="' + esc(l.id) + '" data-go="agenda">Ver agenda</button><button class="btn small" data-act="empSede" data-id="' + esc(l.id) + '" data-go="caja">Ver caja</button></div></section>';
     });
-    x += '</div><section class="card"><h2>¿En qué consultorio atiende cada profesional?</h2><p class="hint">Tocá para marcar. Un profesional puede atender en más de uno; el primero que marques es su consultorio principal. Los horarios de cada uno se arman como siempre en «Centro, profesionales y horarios».</p><div class="tbl-wrap"><table class="tbl emp-assign"><thead><tr><th>Profesional</th>' + L.map(l => '<th class="c"><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</th>').join('') + '</tr></thead><tbody>' +
+    x += '</div><section class="card"><h2>¿En qué centro atiende cada profesional?</h2><p class="hint">Tocá para marcar. Un profesional puede atender en más de uno; el primero que marques es su centro principal. Los horarios de cada uno se arman como siempre en «Centro, profesionales y horarios».</p><div class="tbl-wrap"><table class="tbl emp-assign"><thead><tr><th>Profesional</th>' + L.map(l => '<th class="c"><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</th>').join('') + '</tr></thead><tbody>' +
       A.PROS.map(p => { const ps = proSedes(p); return '<tr><td>' + esc(p.name) + '</td>' + L.map(l => '<td class="c"><button class="emp-tg" aria-pressed="' + (ps.indexOf(l.id) >= 0) + '" data-act="empProSede" data-p="' + p.id + '" data-s="' + esc(l.id) + '" aria-label="' + esc(p.name + ' en ' + l.name) + '">' + (ps[0] === l.id ? '★' : ps.indexOf(l.id) >= 0 ? '✓' : '') + '</button></td>').join('') + '</tr>'; }).join('') + '</tbody></table></div></section>';
     x += '<section class="card"><h2>Ajustes del modo Empresa</h2><label class="chk"><input type="checkbox" data-chg="empPinReq"' + (E.staff.cfg.pinReq ? ' checked' : '') + '> <span>Pedir quién está usando el equipo (cada persona entra con su PIN)</span></label>' +
       '<div class="field" style="max-width:320px"><label for="empIdle">Volver a pedir el PIN después de</label><select id="empIdle" class="inp" data-chg="empIdle">' + [[5, '5 minutos sin usarlo'], [10, '10 minutos'], [20, '20 minutos'], [60, '1 hora'], [0, 'Nunca (solo al cambiar de persona)']].map(o => '<option value="' + o[0] + '"' + ((E.staff.cfg.idle == null ? 10 : E.staff.cfg.idle) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div>' +
@@ -704,7 +704,7 @@
   A.acts.empProSede = el => {
     const p = A.PROS.filter(z => z.id === el.getAttribute('data-p'))[0], sd = el.getAttribute('data-s'); if (!p) return;
     let ps = Array.isArray(p.sedes) ? p.sedes.filter(id => sedeById(id)) : [];
-    if (ps.indexOf(sd) >= 0) { if (ps.length === 1) { A.toast('Cada profesional tiene que estar en al menos un consultorio.'); return; } ps = ps.filter(x => x !== sd); } else ps.push(sd);
+    if (ps.indexOf(sd) >= 0) { if (ps.length === 1) { A.toast('Cada profesional tiene que estar en al menos un centro.'); return; } ps = ps.filter(x => x !== sd); } else ps.push(sd);
     p.sedes = ps; audit(p.name + ': atiende en ' + ps.map(sedeName).join(', ') + '.'); A.save(); A.refresh();
   };
   A.chg.empPinReq = el => {
@@ -713,7 +713,7 @@
   };
   A.chg.empIdle = el => { E.staff.cfg.idle = +el.value; save(); };
   A.acts.empSedeEdit = el => { const id = el.getAttribute('data-id'), l = id ? sedeById(id) : null; S.modal = { type: 'empSedeEd', id, f: Object.assign({ name: '', addr: '', phone: '', color: COLORS[sedes().length % 5] }, l || {}) }; A.renderModal(); };
-  MF.empSedeEd = m => A.modalShell(m.id ? 'Editar consultorio' : 'Nuevo consultorio',
+  MF.empSedeEd = m => A.modalShell(m.id ? 'Editar centro' : 'Nuevo centro',
     '<div class="field"><label for="esN">Nombre</label><input id="esN" class="inp" value="' + esc(m.f.name) + '" placeholder="Ej.: Sede Centro"></div><div class="field"><label for="esA">Dirección</label><input id="esA" class="inp" value="' + esc(m.f.addr || '') + '"></div><div class="field"><label for="esP">Teléfono</label><input id="esP" class="inp" value="' + esc(m.f.phone || '') + '"></div>' +
     '<div class="field"><span class="lbl">Color</span><div class="row-btns">' + COLORS.concat(['#4d7c0f']).map(c => '<button class="emp-col" style="background:' + c + '" aria-pressed="' + (m.f.color === c) + '" data-act="empSedeCol" data-c="' + c + '" aria-label="Color"></button>').join('') + '</div></div><div class="hint bad" id="esMsg"></div>',
     (m.id && sedes().length > 2 ? '<button class="btn danger" data-act="empSedeDel">Quitar</button>' : '') + '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="empSedeSave">Guardar</button>');
@@ -721,16 +721,16 @@
   A.acts.empSedeSave = () => {
     const m = S.modal, n = $('#esN').value.trim(); if (!n) { $('#esMsg').textContent = 'Escribí el nombre.'; return; }
     const f = { name: n, addr: $('#esA').value.trim(), phone: $('#esP').value.trim(), color: m.f.color };
-    if (m.id) Object.assign(sedeById(m.id), f); else { if (sedes().length >= maxSedes()) { $('#esMsg').textContent = 'Tu plan llega hasta ' + maxSedes() + ' consultorios.'; return; } A.locs().push(Object.assign({ id: 'l' + A.uid(), kind: 'propio' }, f)); }
-    audit((m.id ? 'Editó el consultorio ' : 'Agregó el consultorio ') + n + '.'); S.modal = null; A.renderModal(); A.save(); A.refresh();
+    if (m.id) Object.assign(sedeById(m.id), f); else { if (sedes().length >= maxSedes()) { $('#esMsg').textContent = 'Tu plan llega hasta ' + maxSedes() + ' centros.'; return; } A.locs().push(Object.assign({ id: 'l' + A.uid(), kind: 'propio' }, f)); }
+    audit((m.id ? 'Editó el centro ' : 'Agregó el centro ') + n + '.'); S.modal = null; A.renderModal(); A.save(); A.refresh();
   };
   A.acts.empSedeDel = () => {
     const m = S.modal, l = sedeById(m.id); if (!l) return;
     const used = Object.keys(A.S.days).some(d => (A.S.days[d] || []).some(a => a.loc === l.id && d >= today()));
-    if (used) { $('#esMsg').textContent = 'Tiene turnos de hoy en adelante. Pasalos a otro consultorio antes de quitarlo.'; return; }
+    if (used) { $('#esMsg').textContent = 'Tiene turnos de hoy en adelante. Pasalos a otro centro antes de quitarlo.'; return; }
     if (!confirm('¿Quitar ' + l.name + '? Los turnos y cobros pasados quedan guardados.')) return;
     A.CFG.locs = sedes().filter(x => x.id !== l.id); A.PROS.forEach(p => { if (Array.isArray(p.sedes)) p.sedes = p.sedes.filter(x => x !== l.id); });
-    audit('Quitó el consultorio ' + l.name + '.'); S.modal = null; A.renderModal(); A.save(); A.refresh();
+    audit('Quitó el centro ' + l.name + '.'); S.modal = null; A.renderModal(); A.save(); A.refresh();
   };
 
   /* ---------- Personal ---------- */
@@ -739,14 +739,14 @@
     const list = E.staff.people.slice().sort((a, b) => (a.active === false) - (b.active === false) || (a.sede || '').localeCompare(b.sede || '') || a.name.localeCompare(b.name));
     let tot = 0;
     let x = '<div class="emp-top"><h2>Personal</h2><button class="btn small primary" data-act="empPerEdit" data-id="">+ Persona</button></div>';
-    x += '<p class="hint">Secretarias, asistentes, administración y quien necesites. Cada persona puede tener un PIN para entrar en el equipo de su consultorio; los profesionales ya cargados también pueden tener su PIN.</p>';
-    x += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Puesto</th><th>Consultorio</th><th>Horario</th>' + (p.sal ? '<th class="num">Sueldo</th>' : '') + '<th>PIN</th><th></th></tr></thead><tbody>' +
+    x += '<p class="hint">Secretarias, asistentes, administración y quien necesites. Cada persona puede tener un PIN para entrar en el equipo de su centro; los profesionales ya cargados también pueden tener su PIN.</p>';
+    x += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Puesto</th><th>Centro</th><th>Horario</th>' + (p.sal ? '<th class="num">Sueldo</th>' : '') + '<th>PIN</th><th></th></tr></thead><tbody>' +
       list.map(z => { const s = E.empo.sal[z.id]; if (z.active !== false && s && s.monto) tot += s.monto; return '<tr' + (z.active === false ? ' class="off"' : '') + '><td><b>' + esc(z.name) + '</b>' + (z.phone ? '<div class="hint" style="margin:0">' + esc(z.phone) + '</div>' : '') + '</td><td>' + esc(RN[z.role] || z.role) + (z.role === 'profesional' && z.pro ? ' · ' + esc(A.PRO(z.pro).short || '') : '') + '</td><td>' + (z.sede ? '<span class="emp-dot" style="background:' + esc(sedeColor(z.sede)) + '"></span> ' + esc(sedeName(z.sede)) : 'Todos') + '</td><td>' + esc(z.horario || '') + '</td>' + (p.sal ? '<td class="num">' + (s && s.monto ? money(s.monto) : '—') + '</td>' : '') + '<td>' + (z.pin ? '<span class="chip ok">sí</span>' : '<span class="chip">no</span>') + '</td><td><button class="btn small" data-act="empPerEdit" data-id="' + z.id + '">Editar</button></td></tr>'; }).join('') +
       (p.sal && tot ? '<tr class="tot"><td colspan="4"><b>Sueldos por mes</b></td><td class="num"><b>' + money(tot) + '</b></td><td colspan="2"></td></tr>' : '') + '</tbody></table></div>';
     if (!list.length) x += '<p>Todavía no cargaste personal.</p>';
     if (p.sal) {
       const m = curMonth(), mv = E.empo.salMoves.filter(z => z.date.slice(0, 7) === m);
-      x += '<section class="card"><h2>Sueldos de ' + esc(monthName(m)) + '</h2><p class="hint">Se cargan solos a principio de mes como pagos pendientes. Al marcarlos pagados, entran como egreso del consultorio de cada persona. Esta información la ve solo el dueño.</p>' +
+      x += '<section class="card"><h2>Sueldos de ' + esc(monthName(m)) + '</h2><p class="hint">Se cargan solos a principio de mes como pagos pendientes. Al marcarlos pagados, entran como egreso del centro de cada persona. Esta información la ve solo el dueño.</p>' +
         (mv.length ? '<ul class="emp-mv">' + mv.map(z => '<li><span><b>' + esc(z.desc) + '</b><small>' + esc(sedeName(z.loc)) + ' · ' + (z.status === 'pagado' ? 'pagado el ' + A.fmtDMY(z.paidAt || z.date) : 'vence ' + A.fmtDMY(z.due || z.date)) + '</small></span><span class="num">' + money(z.amount) + '</span>' + (z.status === 'pagado' ? '<button class="btn small" data-act="empSalUnpay" data-id="' + z.id + '">Deshacer</button>' : '<button class="btn small primary" data-act="empSalPay" data-id="' + z.id + '">Pagado</button>') + '</li>').join('') + '</ul>' : '<p class="hint">No hay sueldos cargados para este mes.</p>') + '</section>';
     }
     return x;
@@ -759,7 +759,7 @@
     return A.modalShell(m.id ? 'Editar persona' : 'Nueva persona',
       '<div class="field"><label for="epN">Nombre y apellido</label><input id="epN" class="inp" value="' + esc(f.name) + '"></div>' +
       '<div class="row2"><div class="field"><label for="epR">Puesto</label><select id="epR" class="inp" data-chg="empPerRole">' + ROLES.filter(r => p.sal || r[0] !== 'dueno').map(r => '<option value="' + r[0] + '"' + (f.role === r[0] ? ' selected' : '') + '>' + esc(r[1]) + '</option>').join('') + '</select></div>' +
-      '<div class="field"><label for="epS">Consultorio</label><select id="epS" class="inp"><option value="">Todos</option>' + sedes().map(l => '<option value="' + esc(l.id) + '"' + (f.sede === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + '</select></div></div>' +
+      '<div class="field"><label for="epS">Centro</label><select id="epS" class="inp"><option value="">Todos</option>' + sedes().map(l => '<option value="' + esc(l.id) + '"' + (f.sede === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + '</select></div></div>' +
       (f.role === 'profesional' ? '<div class="field"><label for="epPro">¿Qué profesional es?</label><select id="epPro" class="inp">' + A.PROS.map(z => '<option value="' + z.id + '"' + (f.pro === z.id ? ' selected' : '') + '>' + esc(z.name) + '</option>').join('') + '</select></div>' : '') +
       '<div class="row2"><div class="field"><label for="epT">Teléfono</label><input id="epT" class="inp" value="' + esc(f.phone || '') + '"></div><div class="field"><label for="epH">Horario</label><input id="epH" class="inp" value="' + esc(f.horario || '') + '" placeholder="Ej.: lun a vie · 8 a 14"></div></div>' +
       (p.sal ? '<div class="row2"><div class="field"><label for="epM">Sueldo mensual</label><input id="epM" class="inp" inputmode="numeric" value="' + esc(String(f.monto || '')) + '" placeholder="$ (opcional)"></div><div class="field"><label for="epD">Día de pago</label><input id="epD" class="inp" inputmode="numeric" value="' + esc(String(f.dia || 5)) + '"></div></div>' : '') +
@@ -768,7 +768,7 @@
       (m.id ? '<label class="chk"><input type="checkbox" id="epAct"' + (f.active !== false ? ' checked' : '') + '> <span>Activo (si ya no trabaja, destildalo: queda en el registro)</span></label>' : '') + '<div class="hint bad" id="epMsg"></div>',
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="empPerSave">Guardar</button>');
   };
-  const roleHelp = r => ({ dueno: 'Ve y maneja todo, en todos los consultorios.', admin: 'Ve todo, salvo los sueldos.', recepcion: 'Agenda, pacientes (sin la historia clínica) y caja de su consultorio.', profesional: 'Su agenda y la historia clínica de sus pacientes. No ve la caja.', asistente: 'Agenda e historia clínica. No ve la caja.', otro: 'No entra a la app; queda para el registro y los sueldos.' }[r] || '');
+  const roleHelp = r => ({ dueno: 'Ve y maneja todo, en todos los centros.', admin: 'Ve todo, salvo los sueldos.', recepcion: 'Agenda, pacientes (sin la historia clínica) y caja de su centro.', profesional: 'Su agenda y la historia clínica de sus pacientes. No ve la caja.', asistente: 'Agenda e historia clínica. No ve la caja.', otro: 'No entra a la app; queda para el registro y los sueldos.' }[r] || '');
   A.chg.empPerRole = el => { const f = S.modal.f; f.name = $('#epN').value; f.sede = $('#epS').value; f.phone = $('#epT').value; f.horario = $('#epH').value; if ($('#epM')) { f.monto = $('#epM').value; f.dia = $('#epD').value; } f.role = el.value; if (f.role === 'profesional' && !f.pro) f.pro = (A.PROS[0] || {}).id; A.renderModal(); };
   A.acts.empPerSave = async () => {
     const m = S.modal, n = $('#epN').value.trim(), pin = $('#epPin').value.trim(), msg = $('#epMsg'); if (!n) { msg.textContent = 'Escribí el nombre.'; return; }
@@ -788,7 +788,7 @@
   /* ---------- Liquidaciones de la empresa ---------- */
   function tLiq() {
     const m = em(), ps = profShare(m), L = sedes();
-    let x = '<div class="emp-top"><h2>Liquidaciones</h2>' + monthNav() + '</div><p class="hint">Cuánto facturó cada profesional en cada consultorio, cuánto le corresponde (según su porcentaje o el alquiler del módulo) y cuánto le queda a la empresa. Para el detalle, las deducciones y marcar pagos, usá <button class="linkbtn" data-act="tab" data-tab="liq">Liquidaciones por profesional</button>.</p>';
+    let x = '<div class="emp-top"><h2>Liquidaciones</h2>' + monthNav() + '</div><p class="hint">Cuánto facturó cada profesional en cada centro, cuánto le corresponde (según su porcentaje o el alquiler del módulo) y cuánto le queda a la empresa. Para el detalle, las deducciones y marcar pagos, usá <button class="linkbtn" data-act="tab" data-tab="liq">Liquidaciones por profesional</button>.</p>';
     let G = { prod: 0, dent: 0 };
     L.forEach(l => {
       const o = ps[l.id] || { prod: 0, dent: 0, pros: {} }, ids = Object.keys(o.pros); G.prod += o.prod; G.dent += o.dent;
@@ -802,7 +802,7 @@
 
   /* ---------- Estadísticas ---------- */
   function svgBars(months, series, fmt) {
-    /* barras agrupadas por mes, un color por consultorio */
+    /* barras agrupadas por mes, un color por centro */
     const W = 640, H = 240, pl = 64, pb = 28, pt = 10, n = months.length, g = series.length || 1;
     let max = 0; series.forEach(s => s.v.forEach(v => { if (v > max) max = v; })); if (!max) max = 1;
     const step = (W - pl - 6) / n, bw = Math.max(3, Math.min(18, (step - 6) / g));
@@ -824,7 +824,7 @@
     let x = '<div class="emp-top"><h2>Estadísticas</h2><div class="emp-dnav"><select class="inp" data-chg="empN" aria-label="Período">' + [[6, 'Últimos 6 meses'], [12, 'Últimos 12 meses']].map(o => '<option value="' + o[0] + '"' + (n === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' + monthNav() + '</div></div>' + legend(L);
     const card = (t, sub, svg) => '<section class="card emp-st"><h2>' + t + '</h2>' + (sub ? '<p class="hint">' + sub + '</p>' : '') + svg + '</section>';
     x += '<div class="emp-stg">';
-    x += card('Facturación', 'Prestaciones cargadas en cada consultorio.', svgBars(months, ser(o => o.fact || 0), kmoney));
+    x += card('Facturación', 'Prestaciones cargadas en cada centro.', svgBars(months, ser(o => o.fact || 0), kmoney));
     x += card('Resultado de caja', 'Cobrado más otros ingresos, menos egresos y sueldos.', svgBars(months, ser(o => Math.max(0, (o.ing || 0) - (o.egr || 0))), kmoney));
     x += card('Ocupación de la agenda', 'Horas con turno sobre las horas que atienden los profesionales.', svgBars(months, ser(o => (o.cap ? Math.min(100, o.mins / o.cap * 100) : 0)), pctf));
     x += card('Turnos atendidos', '', svgBars(months, ser(o => o.atend || 0), v => String(Math.round(v))));
@@ -833,7 +833,7 @@
     x += '</div>';
     /* tabla del mes elegido */
     const cur = ms[m1] || {};
-    x += '<section class="card"><h2>' + esc(monthName(m1)) + ' por consultorio</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Consultorio</th><th class="num">Ticket promedio</th><th class="num">Ocupación</th><th class="num">Ausentismo</th><th class="num">Nuevos</th><th class="num">Presupuestos aceptados</th></tr></thead><tbody>' +
+    x += '<section class="card"><h2>' + esc(monthName(m1)) + ' por centro</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Centro</th><th class="num">Ticket promedio</th><th class="num">Ocupación</th><th class="num">Ausentismo</th><th class="num">Nuevos</th><th class="num">Presupuestos aceptados</th></tr></thead><tbody>' +
       L.map(l => { const o = cur[l.id] || {}; return '<tr><td><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</td><td class="num">' + money(o.atend ? (o.fact || 0) / o.atend : 0) + '</td><td class="num">' + (o.cap ? Math.round(o.mins / o.cap * 100) : 0) + '%</td><td class="num">' + (o.turnos ? Math.round((o.aus || 0) / o.turnos * 100) : 0) + '%</td><td class="num">' + (o.nuevos || 0) + '</td><td class="num">' + (o.budPn ? (o.budAn || 0) + ' de ' + o.budPn + ' (' + Math.round((o.budA || 0) / (o.budP || 1) * 100) + '% del monto)' : '—') + '</td></tr>'; }).join('') + '</tbody></table></div></section>';
     /* profesionales y prestaciones del mes */
     const pros = {}, cats = {}, egc = {};
@@ -856,7 +856,7 @@
       const sd = last ? sedeOfAppt(last.a) : mainSede(A.PRO(p.pro)); (by[sd] || (by[sd] = [])).push({ p, s, last: last ? last.d : null });
     });
     let tot = 0;
-    let x = '<div class="emp-top"><h2>Por cobrar</h2></div><p class="hint">Pacientes con saldo a favor del consultorio, según su último turno. Tocá el nombre para abrir la cuenta.</p>';
+    let x = '<div class="emp-top"><h2>Por cobrar</h2></div><p class="hint">Pacientes con saldo a favor del centro, según su último turno. Tocá el nombre para abrir la cuenta.</p>';
     L.forEach(l => {
       const list = (by[l.id] || []).sort((a, b) => b.s - a.s), t = list.reduce((s, z) => s + z.s, 0); tot += t;
       x += '<section class="card"><h2><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + ' <span class="count">' + money(t) + '</span></h2>' + (list.length ? '<ul class="emp-mv">' + list.slice(0, 25).map(z => '<li><span><button class="linkbtn" data-act="empPat" data-id="' + z.p.id + '"><b>' + esc(z.p.name) + '</b></button><small>' + (z.last ? 'Último turno ' + A.fmtDMY(z.last) : '') + (z.p.phone ? ' · ' + esc(z.p.phone) : '') + '</small></span><span class="num">' + money(z.s) + '</span></li>').join('') + '</ul>' + (list.length > 25 ? '<p class="hint">Y ' + (list.length - 25) + ' más.</p>' : '') : '<p class="hint">Nadie debe nada.</p>') + '</section>';
@@ -872,7 +872,7 @@
   /* ---------- Metas ---------- */
   function tMetas() {
     const m = em(), ms = monthStats(m, m)[m] || {}, L = sedes(), dIn = daysIn(m), dNow = m === curMonth() ? parseInt(today().slice(8), 10) : dIn, exp = dNow / dIn;
-    let x = '<div class="emp-top"><h2>Metas del mes</h2>' + monthNav() + '</div><p class="hint">Metas mensuales de cada consultorio. La línea marca dónde deberías estar a esta altura del mes.</p><div class="emp-sedes">';
+    let x = '<div class="emp-top"><h2>Metas del mes</h2>' + monthNav() + '</div><p class="hint">Metas mensuales de cada centro. La línea marca dónde deberías estar a esta altura del mes.</p><div class="emp-sedes">';
     L.forEach(l => {
       const g = E.empo.goals[l.id] || {}, o = ms[l.id] || {};
       const row = (lbl, k, v, fmt) => { const goal = g[k] || 0, pct = goal ? Math.round(v / goal * 100) : 0; return '<div class="emp-goal"><div class="eg-h"><span>' + lbl + '</span><b>' + fmt(v) + (goal ? ' de ' + fmt(goal) + ' · ' + pct + '%' : '') + '</b></div>' + (goal ? '<span class="emp-bar big"><i style="width:' + Math.min(100, pct) + '%;background:' + (v >= goal * exp ? 'var(--ok,#2e7d4f)' : '#c2571a') + '"></i><u style="left:' + Math.round(exp * 100) + '%"></u></span>' : '') + '<input class="inp emp-num" inputmode="numeric" placeholder="Meta" value="' + (goal || '') + '" data-chg="empGoal" data-s="' + esc(l.id) + '" data-k="' + k + '" aria-label="Meta de ' + lbl + '"></div>'; };
@@ -899,7 +899,7 @@
   A.acts.empStQ = el => { const sd = el.getAttribute('data-s'), i = (E.stock[sd] || []).filter(z => z.id === el.getAttribute('data-id'))[0]; if (!i) return; i.qty = Math.max(0, i.qty + (+el.getAttribute('data-n'))); i.at = new Date().toISOString(); save(); A.refresh(); };
   A.acts.empStDel = el => { const sd = el.getAttribute('data-s'), l = E.stock[sd] || [], i = l.filter(z => z.id === el.getAttribute('data-id'))[0]; if (!i) return; E.stock[sd] = l.filter(z => z !== i); audit('Quitó el insumo ' + i.name + ' de ' + sedeName(sd) + '.', sd); save(); A.refresh(); A.toast('Insumo quitado.', () => { E.stock[sd].push(i); save(); A.refresh(); }); };
 
-  /* ---------- Equipos: a qué consultorio pertenece cada celular o compu ---------- */
+  /* ---------- Equipos: a qué centro pertenece cada celular o compu ---------- */
   let DEV = null, devErr = '';
   async function loadDevices() {
     if (!real()) return;
@@ -910,15 +910,15 @@
   function devHTML() {
     if (!real()) {
       const s = localScope();
-      return '<p class="hint">Estás probando sin cuenta. Podés ver cómo se ve la app en el equipo de cada consultorio:</p><div class="row-btns">' + ['todo'].concat(sedes().map(l => 'sede:' + l.id)).map(v => '<button class="btn small' + (s === v ? ' primary' : '') + '" data-act="empTryScope" data-s="' + esc(v) + '">' + esc(scopeTxt(v)) + '</button>').join('') + '</div>';
+      return '<p class="hint">Estás probando sin cuenta. Podés ver cómo se ve la app en el equipo de cada centro:</p><div class="row-btns">' + ['todo'].concat(sedes().map(l => 'sede:' + l.id)).map(v => '<button class="btn small' + (s === v ? ' primary' : '') + '" data-act="empTryScope" data-s="' + esc(v) + '">' + esc(scopeTxt(v)) + '</button>').join('') + '</div>';
     }
     if (devErr) return '<p class="hint bad">' + esc(devErr) + '</p>';
     if (!DEV) return '<p class="hint">Cargando…</p>';
     const opts = cur => '<option value="todo"' + (cur === 'todo' ? ' selected' : '') + '>Dueño / administración (ve todo)</option>' + sedes().map(l => '<option value="sede:' + esc(l.id) + '"' + (cur === 'sede:' + l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + (cur ? '' : '<option value="" selected>Sin asignar</option>');
-    return '<ul class="emp-devs">' + (DEV.devices || []).map(d => '<li class="' + (d.scope ? '' : 'pend') + '"><span><b>' + esc(d.name || 'Equipo') + (d.id === DEV.me ? ' · este equipo' : '') + '</b><small>Último uso ' + (d.last_seen ? new Date(d.last_seen).toLocaleString('es-AR') : '—') + '</small></span>' + (devOwner() ? '<select class="inp" data-chg="empDevScope" data-id="' + esc(d.id) + '" aria-label="Consultorio del equipo">' + opts(d.scope) + '</select>' : '<span class="chip">' + esc(scopeTxt(d.scope)) + '</span>') + '</li>').join('') + '</ul><p class="hint">' + (DEV.devices || []).length + ' de ' + DEV.limit + ' equipos del plan. Para desconectar un equipo, usá Menú › Cuenta y equipos.</p>';
+    return '<ul class="emp-devs">' + (DEV.devices || []).map(d => '<li class="' + (d.scope ? '' : 'pend') + '"><span><b>' + esc(d.name || 'Equipo') + (d.id === DEV.me ? ' · este equipo' : '') + '</b><small>Último uso ' + (d.last_seen ? new Date(d.last_seen).toLocaleString('es-AR') : '—') + '</small></span>' + (devOwner() ? '<select class="inp" data-chg="empDevScope" data-id="' + esc(d.id) + '" aria-label="Centro del equipo">' + opts(d.scope) + '</select>' : '<span class="chip">' + esc(scopeTxt(d.scope)) + '</span>') + '</li>').join('') + '</ul><p class="hint">' + (DEV.devices || []).length + ' de ' + DEV.limit + ' equipos del plan. Para desconectar un equipo, usá Menú › Cuenta y equipos.</p>';
   }
   function tEquipos() {
-    return '<div class="emp-top"><h2>Equipos</h2></div><p class="hint">Cada celular o compu pertenece a un consultorio y solo ve ese. Los equipos del dueño ven todo. Esto lo controla el servidor: un equipo de consultorio no puede leer los sueldos, las liquidaciones, las metas, la caja general ni la caja y el registro de los otros consultorios.</p><div id="empDevs">' + devHTML() + '</div>';
+    return '<div class="emp-top"><h2>Equipos</h2></div><p class="hint">Cada celular o compu pertenece a un centro y solo ve ese. Los equipos del dueño ven todo. Esto lo controla el servidor: un equipo de centro no puede leer los sueldos, las liquidaciones, las metas, la caja general ni la caja y el registro de los otros centros.</p><div id="empDevs">' + devHTML() + '</div>';
   }
   A.chg.empDevScope = async el => {
     const id = el.getAttribute('data-id'), sc = el.value || null; if (!sc) return;
@@ -936,7 +936,7 @@
     all.sort((a, b) => (a.t < b.t ? 1 : -1));
     const f = S.empAuF || '', q = A.norm ? A.norm(S.empAuQ || '') : (S.empAuQ || '').toLowerCase();
     const list = all.filter(e => (!f || e.sede === f) && (!q || (A.norm ? A.norm(e.what + ' ' + e.who) : (e.what + ' ' + e.who).toLowerCase()).indexOf(q) >= 0)).slice(0, 300);
-    let x = '<div class="emp-top"><h2>Registro</h2></div><p class="hint">Quién hizo cada cosa, desde qué equipo y cuándo. No se puede borrar desde la app.</p><div class="row2"><div class="field"><label for="auF">Consultorio</label><select id="auF" class="inp" data-chg="empAuF"><option value="">Todos</option>' + sedes().map(l => '<option value="' + esc(l.id) + '"' + (f === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + '</select></div><div class="field"><label for="auQ">Buscar</label><input id="auQ" class="inp" value="' + esc(S.empAuQ || '') + '" data-chg="empAuQ" placeholder="Nombre, paciente, «caja»…"></div></div>';
+    let x = '<div class="emp-top"><h2>Registro</h2></div><p class="hint">Quién hizo cada cosa, desde qué equipo y cuándo. No se puede borrar desde la app.</p><div class="row2"><div class="field"><label for="auF">Centro</label><select id="auF" class="inp" data-chg="empAuF"><option value="">Todos</option>' + sedes().map(l => '<option value="' + esc(l.id) + '"' + (f === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + '</select></div><div class="field"><label for="auQ">Buscar</label><input id="auQ" class="inp" value="' + esc(S.empAuQ || '') + '" data-chg="empAuQ" placeholder="Nombre, paciente, «caja»…"></div></div>';
     let lastDay = '';
     x += list.length ? '<ul class="emp-log">' + list.map(e => { const d = e.t.slice(0, 10), h = d !== lastDay ? '<li class="day">' + A.fmtDMY(d) + '</li>' : ''; lastDay = d; return h + '<li><span class="mono">' + new Date(e.t).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + '</span><span><b>' + esc(e.who) + '</b> ' + esc(e.what) + '<small>' + esc([e.sede ? sedeName(e.sede) : '', e.dev].filter(Boolean).join(' · ')) + '</small></span></li>'; }).join('') + '</ul>' : '<p class="hint">Todavía no hay movimientos registrados.</p>';
     return x;
@@ -947,7 +947,7 @@
   /* ---------- Reporte mensual para el contador ---------- */
   function tReport() {
     const m = em();
-    return '<div class="emp-top"><h2>Reporte del mes</h2>' + monthNav() + '</div><section class="card"><p>Ingresos, egresos, sueldos y liquidaciones de <b>' + esc(monthName(m)) + '</b>, por consultorio y en total. Sirve para el contador y para guardar.</p><div class="row-btns"><button class="btn primary" data-act="empRepPdf">Descargar PDF</button><button class="btn" data-act="empRepCsv">Descargar Excel</button></div><p class="hint">El Excel se descarga en formato CSV, que se abre con Excel o Google Sheets.</p></section>';
+    return '<div class="emp-top"><h2>Reporte del mes</h2>' + monthNav() + '</div><section class="card"><p>Ingresos, egresos, sueldos y liquidaciones de <b>' + esc(monthName(m)) + '</b>, por centro y en total. Sirve para el contador y para guardar.</p><div class="row-btns"><button class="btn primary" data-act="empRepPdf">Descargar PDF</button><button class="btn" data-act="empRepCsv">Descargar Excel</button></div><p class="hint">El Excel se descarga en formato CSV, que se abre con Excel o Google Sheets.</p></section>';
   }
   function repData(m) {
     const ms = monthStats(m, m)[m] || {}, ps = profShare(m), L = sedes(), rows = [];
@@ -960,30 +960,30 @@
   }
   A.acts.empRepPdf = () => {
     const m = em(), D = repData(m), o = A.pdfDoc_ && A.pdfDoc_('Reporte de ' + monthName(m)); if (!o) return;
-    o.head('Reporte mensual · ' + monthName(m), A.CLINIC + ' · ' + sedes().length + ' consultorios');
-    o.h('Resultado por consultorio');
+    o.head('Reporte mensual · ' + monthName(m), A.CLINIC + ' · ' + sedes().length + ' centros');
+    o.h('Resultado por centro');
     let T = [0, 0, 0, 0, 0];
-    o.table([{ h: 'Consultorio', w: 40 }, { h: 'Facturado', w: 24, a: 'r' }, { h: 'Cobrado', w: 24, a: 'r' }, { h: 'A profesionales', w: 26, a: 'r' }, { h: 'Egresos', w: 24, a: 'r' }, { h: 'Resultado', w: 26, a: 'r' }],
+    o.table([{ h: 'Centro', w: 40 }, { h: 'Facturado', w: 24, a: 'r' }, { h: 'Cobrado', w: 24, a: 'r' }, { h: 'A profesionales', w: 26, a: 'r' }, { h: 'Egresos', w: 24, a: 'r' }, { h: 'Resultado', w: 26, a: 'r' }],
       D.rows.map(r => { T[0] += r.o.fact || 0; T[1] += r.o.cob || 0; T[2] += r.pr; T[3] += r.o.egr || 0; T[4] += r.res; return [r.l.name, money(r.o.fact || 0), money(r.o.cob || 0), money(r.pr), money(r.o.egr || 0), money(r.res)]; })
         .concat(D.gral ? [['Gastos generales', '', '', '', money(D.gral), '−' + money(D.gral)]] : [])
         .concat([{ c: ['Total', money(T[0]), money(T[1]), money(T[2]), money(T[3] + D.gral), money(T[4] - D.gral)], bold: true }]));
     o.h('Liquidaciones de los profesionales');
     const lr = []; sedes().forEach(l => { const q = D.ps[l.id]; if (!q) return; Object.keys(q.pros).forEach(id => lr.push([l.name, A.PRO(id).name, money(q.pros[id].prod), money(q.pros[id].dent), money(q.pros[id].prod - q.pros[id].dent)])); });
-    if (lr.length) o.table([{ h: 'Consultorio', w: 34 }, { h: 'Profesional', w: 44 }, { h: 'Facturado', w: 26, a: 'r' }, { h: 'Al profesional', w: 28, a: 'r' }, { h: 'A la empresa', w: 28, a: 'r' }], lr); else o.p('Sin prestaciones cargadas.');
+    if (lr.length) o.table([{ h: 'Centro', w: 34 }, { h: 'Profesional', w: 44 }, { h: 'Facturado', w: 26, a: 'r' }, { h: 'Al profesional', w: 28, a: 'r' }, { h: 'A la empresa', w: 28, a: 'r' }], lr); else o.p('Sin prestaciones cargadas.');
     o.h('Egresos e ingresos de caja');
-    if (D.moves.length) o.table([{ h: 'Fecha', w: 18 }, { h: 'Consultorio', w: 30 }, { h: 'Categoría', w: 32 }, { h: 'Detalle', w: 56 }, { h: 'Monto', w: 24, a: 'r' }], D.moves.map(z => [A.fmtDMY(z.mv.date), z.sede, catName(z.mv.cat), z.mv.desc || '', (z.mv.type === 'ingreso' ? '+' : '−') + money(z.mv.amount)])); else o.p('Sin movimientos.');
-    o.p('Facturado: prestaciones cargadas en el mes. A profesionales: según su porcentaje o el alquiler del módulo. Egresos: gastos y sueldos pagados de cada consultorio.', 8);
+    if (D.moves.length) o.table([{ h: 'Fecha', w: 18 }, { h: 'Centro', w: 30 }, { h: 'Categoría', w: 32 }, { h: 'Detalle', w: 56 }, { h: 'Monto', w: 24, a: 'r' }], D.moves.map(z => [A.fmtDMY(z.mv.date), z.sede, catName(z.mv.cat), z.mv.desc || '', (z.mv.type === 'ingreso' ? '+' : '−') + money(z.mv.amount)])); else o.p('Sin movimientos.');
+    o.p('Facturado: prestaciones cargadas en el mes. A profesionales: según su porcentaje o el alquiler del módulo. Egresos: gastos y sueldos pagados de cada centro.', 8);
     audit('Descargó el reporte de ' + monthName(m) + ' (PDF).');
     o.finish('reporte-' + m + '.pdf');
   };
   A.acts.empRepCsv = () => {
     const m = em(), D = repData(m), q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"', n = v => String(Math.round(v || 0));
-    const L = [['Reporte mensual', monthName(m), A.CLINIC], [], ['Consultorio', 'Facturado', 'Cobrado', 'A profesionales', 'Egresos', 'Resultado']];
+    const L = [['Reporte mensual', monthName(m), A.CLINIC], [], ['Centro', 'Facturado', 'Cobrado', 'A profesionales', 'Egresos', 'Resultado']];
     D.rows.forEach(r => L.push([r.l.name, n(r.o.fact), n(r.o.cob), n(r.pr), n(r.o.egr), n(r.res)]));
     if (D.gral) L.push(['Gastos generales', '', '', '', n(D.gral), n(-D.gral)]);
-    L.push([], ['Liquidaciones'], ['Consultorio', 'Profesional', 'Facturado', 'Al profesional', 'A la empresa']);
+    L.push([], ['Liquidaciones'], ['Centro', 'Profesional', 'Facturado', 'Al profesional', 'A la empresa']);
     sedes().forEach(l => { const p = D.ps[l.id]; if (!p) return; Object.keys(p.pros).forEach(id => L.push([l.name, A.PRO(id).name, n(p.pros[id].prod), n(p.pros[id].dent), n(p.pros[id].prod - p.pros[id].dent)])); });
-    L.push([], ['Movimientos de caja'], ['Fecha', 'Consultorio', 'Tipo', 'Categoría', 'Detalle', 'Medio', 'Monto']);
+    L.push([], ['Movimientos de caja'], ['Fecha', 'Centro', 'Tipo', 'Categoría', 'Detalle', 'Medio', 'Monto']);
     D.moves.forEach(z => L.push([z.mv.date, z.sede, z.mv.type, catName(z.mv.cat), z.mv.desc || '', z.mv.method || '', n(z.mv.type === 'ingreso' ? z.mv.amount : -z.mv.amount)]));
     const csv = '﻿' + L.map(r => r.map(q).join(';')).join('\r\n'), blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     audit('Descargó el reporte de ' + monthName(m) + ' (Excel).');
@@ -993,19 +993,19 @@
   /* menú: activar el modo Empresa */
   function menuEntry() {
     const sec = document.querySelector('.dr-sec .acct-type'); if (!sec || $('#empMenuBtn')) return;
-    sec.insertAdjacentHTML('afterend', '<button class="dnav only-noemp" id="empMenuBtn" data-act="empOn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg><span class="t">Modo Empresa (varios consultorios)</span></button>');
+    sec.insertAdjacentHTML('afterend', '<button class="dnav only-noemp" id="empMenuBtn" data-act="empOn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg><span class="t">Modo Empresa (varios centros)</span></button>');
   }
   menuEntry();
 
-  /* voz: «abrí la empresa», «consultorio norte» */
+  /* voz: «abrí la empresa», «centro norte» */
   const execPrev = A.cmd && A.cmd.exec;
   if (execPrev) A.cmd.exec = (text, opts) => {
     if (isEmp()) {
       const n = A.norm ? A.norm(String(text || '')) : String(text || '').toLowerCase();
       if (/^(?:abr[ií]|abrir|mostr[aá](?:me)?|ver|ir a)?\s*(?:la )?empresa$/.test(n) && perm().emp) { S.tab = 'empresa'; A.refresh(); return { ok: true, msg: 'Empresa.' }; }
-      const mm = n.match(/^(?:abr[ií]|ver|ir a|cambi[aá] a)?\s*(?:el )?(?:consultorio|sede)\s+(.+)$/);
-      if (mm && perm().all) { const q = mm[1].trim(), l = sedes().filter(z => (A.norm ? A.norm(z.name) : z.name.toLowerCase()).indexOf(q) >= 0)[0]; if (l) { setSede(l.id); A.refresh(); return { ok: true, msg: 'Consultorio ' + l.name + '.' }; } }
-      if (/^(?:todos los consultorios|toda la empresa)$/.test(n) && perm().all) { setSede(null); A.refresh(); return { ok: true, msg: 'Todos los consultorios.' }; }
+      const mm = n.match(/^(?:abr[ií]|ver|ir a|cambi[aá] a)?\s*(?:el )?(?:centro|sede)\s+(.+)$/);
+      if (mm && perm().all) { const q = mm[1].trim(), l = sedes().filter(z => (A.norm ? A.norm(z.name) : z.name.toLowerCase()).indexOf(q) >= 0)[0]; if (l) { setSede(l.id); A.refresh(); return { ok: true, msg: 'Centro ' + l.name + '.' }; } }
+      if (/^(?:todos los centros|toda la empresa)$/.test(n) && perm().all) { setSede(null); A.refresh(); return { ok: true, msg: 'Todos los centros.' }; }
     }
     return execPrev(text, opts);
   };

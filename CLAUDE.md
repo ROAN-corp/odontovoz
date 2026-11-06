@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.28 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.29 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.28 (noviem
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -66,6 +66,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.28 (noviem
 - 1.27 (`src/app37.js`, `src/app10.js`): avisos (`#toastHost .toast` y `#arrHost .arr`) con × (`toastClose`) y deslizar para cerrar; en el celular el aviso va debajo de la barra. Arreglo: `app10` pisaba `A.acts.mvSave` (guardar movimiento de caja) con el del motivo de consulta; ahora el motivo usa `motSave`. Para revisar todo: `crawl.py` (en el borrador de la sesión) toca todos los botones por sección.
 - 1.27.1 (`src/app33.js`): el enlace de invitación usa `PUB_APP` (app publicada) cuando la app corre en el APK o en localhost; antes salía `https://localhost/?invitacion=…`.
 - 1.28 (`src/app38.js` + `block()` de `index.html`): clic en `.nm` del turno → ficha resumida (panel de siempre); clic en el resto → `#tpop` (en el celular, hoja desde abajo) con `tpStatus`, `tpCov`, `apRem`, motivo (`a.motivo`), `a.by`/`a.at` (se graban al crear con `naSave`), `tpSobre`, `tpEdit`, `tpClip` copiar/mover (barra `#clipBar` y siguiente `gbClick`), `tpFree` (→ `apDelAsk`). `A.blkCov`/`A.blkMot` dibujan obra social y motivo en el turno. `#nc_cov` en el paciente nuevo del turno. `#view-agenda .grid-wrap` sin `max-height` también en la PC. `A.CFG.turnClick = 'ficha'` vuelve al comportamiento anterior.
+- 1.29 (`src/app39.js`; textos de `app28`/`app32`/`app33` pasan «consultorio» → «centro» en Empresa, la clave de puesto `consultorio` no cambia): consultorios de cada centro en `A.CFG.locs[i].rooms = [{id, name}]` y rotación en `A.CFG.rot[locId] = [{id, room, pro, dow, h:[desde,hasta]|null, wk:null|'odd'|'even'}]` (h null = horario del profesional ese día). `A.roomOf(a)` (respeta `a.room` si existe), `A.rotClashes(loc, fecha)`. Árbol de 3 niveles (pisa `A.empTreeHTML`) + planilla `#rotPlan` (`rotMake`, `rotRooms`, `rotAdd`/`rotEdit`/`rotESave`, `rotAuto`, `rotCopy`). Agenda: chips `.ec-room` (`agRoom`, `S._roomSel`) en `.emp-crumb`; insignia `.broom` vía `A.blkCov`; `.tp-room` en `#tpop`. Siguen: prácticas desde «Qué hice hoy» y stock.
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 

@@ -372,3 +372,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Cada turno muestra la obra social (o «Particular») al lado del nombre y el motivo después de la práctica.
 - Al cargar un paciente nuevo desde el turno se elige la obra social.
 - En la PC la agenda ya no tiene una caja con su propio scroll: se ve el día entero y se baja con la rueda del mouse.
+
+## OdontoVoz 1.29 · Empresa › Centros › Consultorios › Odontólogos
+- En el modo Empresa, lo que antes se llamaba «consultorio» (cada sede) ahora se llama **centro**, y cada centro tiene sus **consultorios** (sillones): se crean con un toque (1 a 6) y se les cambia el nombre (Consultorio 1, Box A…).
+- **Rotación semanal**: en Empresa › Centros, «Consultorios y rotación» muestra cada día de la semana con sus consultorios y quién atiende en cada uno y en qué horario. «+ Asignar» elige odontólogo, consultorio, día, todo su horario o solo una parte, y todas las semanas o semana por medio. Avisa si dos se pisan en el mismo consultorio o si uno quedó en dos a la vez, y marca quiénes atienden ese día sin consultorio. «Repartir solos» completa la semana y «Copiar lunes a otro día» repite un día. En la PC, resumen de toda la semana.
+- El árbol de Organización queda Empresa › Centro › Consultorio › Odontólogos (con sus días), más «Sin consultorio fijo».
+- En la agenda del centro se elige un consultorio y se ven solo quienes trabajan ahí ese día; cada turno muestra su consultorio (C1, C2…) y la ventanita del turno también.

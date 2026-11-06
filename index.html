@@ -7741,7 +7741,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.28';
+  A.VERSION = '1.29';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -11597,10 +11597,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* =====================================================================
      DATOS PROPIOS DEL MODO EMPRESA
        staff        personal y personas que entran con PIN (lo ven todos los equipos de la cuenta)
-       empo         del dueño: sueldos, metas (el servidor no se lo deja leer a los equipos de un consultorio)
-       caja:<sede>  egresos y cierres de cada consultorio
-       stock        insumos de cada consultorio
-       audit:<b>    registro de lo que se hace (uno por consultorio y uno del dueño)
+       empo         del dueño: sueldos, metas (el servidor no se lo deja leer a los equipos de un centro)
+       caja:<sede>  egresos y cierres de cada centro
+       stock        insumos de cada centro
+       audit:<b>    registro de lo que se hace (uno por centro y uno del dueño)
      ===================================================================== */
   const EKEY = () => (A.KEY || 'odontovoz') + '.emp';
   const E = { staff: { people: [], cfg: { pinReq: false, idle: 10 } }, empo: { sal: {}, salMoves: [], goals: {} }, caja: {}, stock: {}, audit: {} };
@@ -11630,7 +11630,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.cloudExtraKeys = () => ['staff', 'empo', 'stock'].concat(Object.keys(E.caja).map(s => 'caja:' + s), Object.keys(E.audit).map(b => 'audit:' + b), prevKeys ? prevKeys() : []);
 
   /* =====================================================================
-     ALCANCE DEL EQUIPO: dueño ('todo') o un consultorio ('sede:<id>')
+     ALCANCE DEL EQUIPO: dueño ('todo') o un centro ('sede:<id>')
      ===================================================================== */
   const localScope = () => LS.get('odontovoz.empScope', 'todo');
   A.empScope = () => {
@@ -11642,11 +11642,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const devOwner = () => A.empScope() === 'todo';
 
   /* =====================================================================
-     CONSULTORIOS (se usan los mismos «consultorios» de la cuenta: A.locs)
+     CONSULTORIOS (se usan los mismos «centros» de la cuenta: A.locs)
      ===================================================================== */
   const sedes = () => (A.locs ? A.locs() : []);
   const sedeById = id => sedes().filter(l => l.id === id)[0] || null;
-  const sedeName = id => { const l = sedeById(id); return l ? l.name : 'Sin consultorio'; };
+  const sedeName = id => { const l = sedeById(id); return l ? l.name : 'Sin centro'; };
   const sedeColor = id => { const l = sedeById(id); return l ? l.color : '#8a9a9b'; };
   const firstSede = () => (sedes()[0] || {}).id || null;
   const proSedes = p => { const v = (p && Array.isArray(p.sedes) ? p.sedes : []).filter(id => sedeById(id)); return v.length ? v : (firstSede() ? [firstSede()] : []); };
@@ -11682,12 +11682,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   const perm = () => {
     const r = roleNow(), p = Object.assign({}, PERM[r] || PERM.consultorio);
-    /* en un equipo de consultorio nadie ve los números de la empresa, aunque sea el dueño (el servidor tampoco se los manda) */
+    /* en un equipo de centro nadie ve los números de la empresa, aunque sea el dueño (el servidor tampoco se los manda) */
     if (devSede()) { p.emp = 0; p.all = 0; p.liq = 0; p.sal = 0; }
     return p;
   };
   A.empPerm = () => (isEmp() ? perm() : null);
-  /* consultorio en el que se está trabajando ahora (null = todos) */
+  /* centro en el que se está trabajando ahora (null = todos) */
   const fixedSede = () => { if (devSede()) return devSede(); const p = pinOn() ? curPerson() : null; if (p && !perm().all) return p.sede || firstSede(); return null; };
   const curSede = () => { if (!isEmp()) return null; const f = fixedSede(); if (f) return f; const s = S.sede; return s && sedeById(s) ? s : null; };
   A.empSede = curSede;
@@ -11718,14 +11718,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return mainSede(A.PRO(a.pro));
   };
   const sedeOfAppt = a => A.locOf(a);
-  /* un turno nuevo queda en el consultorio donde se está trabajando (o en el del profesional) */
+  /* un turno nuevo queda en el centro donde se está trabajando (o en el del profesional) */
   const mutPrev = A.mutate;
   A.mutate = (keys, fn, msg) => mutPrev(keys, () => {
     const r = fn();
     if (isEmp()) (keys || []).forEach(k => { const l = A.S.days[k] || []; l.forEach(a => { if (!a.loc && a.type !== 'block') { const sd = curSede(), ps = proSedes(A.PRO(a.pro)); a.loc = sd && ps.indexOf(sd) >= 0 ? sd : ps[0] || sd || firstSede(); } }); });
     return r;
   }, msg);
-  /* profesionales del consultorio actual */
+  /* profesionales del centro actual */
   const vpPrev = A.visPros;
   A.visPros = () => {
     const l = vpPrev(); if (!isEmp()) return l;
@@ -11733,7 +11733,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const f = l.filter(p => proSedes(p).indexOf(sd) >= 0);
     return f.length ? f : l;
   };
-  /* en qué consultorio entró un cobro: el que se anotó, el del turno, el de un turno de ese día o el del profesional */
+  /* en qué centro entró un cobro: el que se anotó, el del turno, el de un turno de ese día o el del profesional */
   const payLoc = (pid, e) => {
     if (e.loc && sedeById(e.loc)) return e.loc;
     if (e.apptId && A.apptById) { const a = A.apptById(e.apptId); if (a) return sedeOfAppt(a); }
@@ -11741,12 +11741,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (ap) return sedeOfAppt(ap);
     const pt = A.PAT(pid); return mainSede(A.PRO(e.pro || (pt && pt.pro)));
   };
-  /* los cobros nuevos quedan anotados en el consultorio donde se cobraron */
+  /* los cobros nuevos quedan anotados en el centro donde se cobraron */
   const touchPrev = A.touchPd;
   if (touchPrev) A.touchPd = pid => { if (isEmp() && curSede()) { const pd = A.S.pd[pid]; if (pd && pd.ledger) pd.ledger.forEach(e => { if (e.type === 'pago' && !e.loc && e.date === today()) e.loc = curSede(); }); } return touchPrev(pid); };
   A.empPayLoc = (pid, e) => payLoc(pid, e);
   const dayList = d => (A.S.days[d] || []);
-  /* en qué consultorio se hizo una prestación: el turno de ese paciente ese día; si no, el del profesional */
+  /* en qué centro se hizo una prestación: el turno de ese paciente ese día; si no, el del profesional */
   const cargoLoc = (pid, e) => {
     if (e.loc && sedeById(e.loc)) return e.loc;
     const ap = dayList(e.date).filter(a => a.pid === pid && a.type !== 'block' && a.status !== 'cancelado' && (!e.pro || a.pro === e.pro))[0];
@@ -11768,7 +11768,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       d = A.add(d, 1);
     }
   }
-  /* números de un día por consultorio */
+  /* números de un día por centro */
   function dayStats(d) {
     const out = {}; sedes().forEach(l => { out[l.id] = { ing: 0, egr: 0, cob: 0, appts: [], pros: {}, atend: 0, wait: 0, aus: 0, pend: 0, unpaid: 0, pm: {} }; });
     const z = out;
@@ -11791,7 +11791,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
   A.empDayStats = dayStats;
 
-  /* números de varios meses por consultorio (para el resumen, las estadísticas y el reporte) */
+  /* números de varios meses por centro (para el resumen, las estadísticas y el reporte) */
   function monthStats(m0, m1) {
     const from = m0 + '-01', to = m1 + '-' + pad(daysIn(m1)), out = {}, first = {}, t = today();
     const blank = () => ({ fact: 0, cob: 0, ing: 0, egr: 0, sal: 0, egrCat: {}, turnos: 0, atend: 0, aus: 0, canc: 0, nuevos: 0, mins: 0, cap: 0, pros: {}, cats: {}, budP: 0, budA: 0, budPn: 0, budAn: 0 });
@@ -11823,7 +11823,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return out;
   }
   A.empMonthStats = monthStats;
-  /* parte de los profesionales por consultorio en un mes (según porcentajes o módulo) */
+  /* parte de los profesionales por centro en un mes (según porcentajes o módulo) */
   function profShare(m) {
     const out = {}; if (!A.liqCalc) return out;
     A.PROS.forEach(p => {
@@ -11845,18 +11845,18 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (A.hideDrawer) A.hideDrawer();
     if (!empAllowed()) { S.modal = { type: 'empPlan' }; A.renderModal(); return; }
     const cur = sedes().map(l => l.name);
-    const names = cur.length ? cur : [(S.setup && S.setup.clinic) || A.CLINIC || 'Consultorio 1'];
+    const names = cur.length ? cur : [(S.setup && S.setup.clinic) || A.CLINIC || 'Centro 1'];
     while (names.length < 2) names.push('');
     S.modal = { type: 'empOn', names }; A.renderModal();
   };
-  MF.empPlan = () => A.modalShell('Modo Empresa', '<p>El modo Empresa es para dueños de <b>2 a 5 consultorios</b>: cada consultorio con su personal, su agenda y su caja, y un inicio con el resumen de todos. Viene con el plan <b>Empresa</b>.</p>', '<button class="btn" data-act="closeModal">Ahora no</button><button class="btn primary" data-act="planOpen">Ver los planes</button>');
+  MF.empPlan = () => A.modalShell('Modo Empresa', '<p>El modo Empresa es para dueños de <b>2 a 5 centros</b>: cada centro con su personal, su agenda y su caja, y un inicio con el resumen de todos. Viene con el plan <b>Empresa</b>.</p>', '<button class="btn" data-act="closeModal">Ahora no</button><button class="btn primary" data-act="planOpen">Ver los planes</button>');
   MF.empOn = m => {
-    const rows = m.names.map((n, i) => '<div class="emp-on-row"><span class="emp-dot" style="background:' + COLORS[i % 5] + '"></span><input class="inp" data-in="empOnName" data-i="' + i + '" value="' + esc(n) + '" placeholder="Nombre del consultorio ' + (i + 1) + '" aria-label="Consultorio ' + (i + 1) + '"></div>').join('');
+    const rows = m.names.map((n, i) => '<div class="emp-on-row"><span class="emp-dot" style="background:' + COLORS[i % 5] + '"></span><input class="inp" data-in="empOnName" data-i="' + i + '" value="' + esc(n) + '" placeholder="Nombre del centro ' + (i + 1) + '" aria-label="Centro ' + (i + 1) + '"></div>').join('');
     return A.modalShell('Activar el modo Empresa',
-      '<p>Vas a manejar <b>varios consultorios</b> desde una sola cuenta. Los pacientes son de la empresa (una sola ficha por paciente) y cada consultorio tiene sus profesionales, su personal, su agenda y su caja.</p>' +
-      '<h3 class="emp-h3">Tus consultorios</h3>' + rows +
-      (m.names.length < maxSedes() ? '<button class="btn small" data-act="empOnAdd">+ Otro consultorio</button>' : '') +
-      '<ul class="plain emp-list"><li>Este equipo queda como <b>equipo del dueño</b>: ve todos los consultorios y los números de la empresa.</li><li>Los demás equipos, la primera vez que se abran, eligen a qué consultorio pertenecen y solo ven ese.</li><li>Tus pacientes, turnos y profesionales se conservan. Después asignás cada profesional a su consultorio.</li></ul>' +
+      '<p>Vas a manejar <b>varios centros</b> desde una sola cuenta. Los pacientes son de la empresa (una sola ficha por paciente) y cada centro tiene sus profesionales, su personal, su agenda y su caja.</p>' +
+      '<h3 class="emp-h3">Tus centros</h3>' + rows +
+      (m.names.length < maxSedes() ? '<button class="btn small" data-act="empOnAdd">+ Otro centro</button>' : '') +
+      '<ul class="plain emp-list"><li>Este equipo queda como <b>equipo del dueño</b>: ve todos los centros y los números de la empresa.</li><li>Los demás equipos, la primera vez que se abran, eligen a qué centro pertenecen y solo ven ese.</li><li>Tus pacientes, turnos y profesionales se conservan. Después asignás cada profesional a su centro.</li></ul>' +
       '<div class="hint bad" id="eoMsg"></div>',
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="empOnGo">Activar</button>');
   };
@@ -11864,7 +11864,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.empOnAdd = () => { if (S.modal.names.length < maxSedes()) S.modal.names.push(''); A.renderModal(); };
   A.acts.empOnGo = async () => {
     const m = S.modal, names = m.names.map(n => String(n || '').trim()).filter(Boolean), msg = $('#eoMsg');
-    if (names.length < 2) { msg.textContent = 'Cargá al menos dos consultorios.'; return; }
+    if (names.length < 2) { msg.textContent = 'Cargá al menos dos centros.'; return; }
     if (real()) {
       msg.textContent = 'Activando…';
       try {
@@ -11873,15 +11873,15 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         CL.devScope = 'todo'; CL.empresaOn = true; LS.set('odontovoz.scope', JSON.stringify({ s: 'todo', e: true }));
       } catch (e) { msg.textContent = /could not find|schema cache/i.test(String(e.message)) ? 'El servidor todavía no tiene el modo Empresa. Avisale a soporte.' : (e.message || 'Sin conexión.'); return; }
     } else LS.set('odontovoz.empScope', 'todo');
-    /* consultorios: se reusan los que ya existían (con sus códigos) y se suman los nuevos */
+    /* centros: se reusan los que ya existían (con sus códigos) y se suman los nuevos */
     const old = sedes().slice(), list = names.map((n, i) => { const o = old[i]; return Object.assign({}, o || { id: 'l' + A.uid() }, { name: n, color: (o && o.color) || COLORS[i % 5], kind: (o && o.kind) || 'propio' }); });
     A.CFG.locs = list;
     A.PROS.forEach(p => { if (!Array.isArray(p.sedes) || !p.sedes.filter(id => sedeById(id)).length) p.sedes = [list[0].id]; });
     if (A.DEMO) demoSeed();
     S.setup = Object.assign({}, S.setup || {}, { type: 'empresa' }); S.uimode = 'admin'; S.role = 'profesional';
-    A.applySetup(); setSede(null); audit('Activó el modo Empresa con ' + list.length + ' consultorios.');
+    A.applySetup(); setSede(null); audit('Activó el modo Empresa con ' + list.length + ' centros.');
     S.modal = null; A.renderModal(); A.saveNow(); S.tab = 'empresa'; S.empTab = 'sedes'; A.refresh();
-    A.toast('Modo Empresa activado. Ahora asigná cada profesional a su consultorio.');
+    A.toast('Modo Empresa activado. Ahora asigná cada profesional a su centro.');
   };
   /* datos de ejemplo para mirar el modo Empresa sin cuenta */
   function demoSeed() {
@@ -11904,14 +11904,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
   /* dejar el modo Empresa */
   A.acts.empOff = async () => {
-    if (!confirm('¿Dejar el modo Empresa? La cuenta vuelve a ser un centro odontológico. No se borra nada: consultorios, personal y cajas quedan guardados por si lo volvés a activar.')) return;
+    if (!confirm('¿Dejar el modo Empresa? La cuenta vuelve a ser un centro odontológico. No se borra nada: centros, personal y cajas quedan guardados por si lo volvés a activar.')) return;
     if (real()) { try { const r = await CL.api('/rest/v1/rpc/ov_empresa_off', { method: 'POST', body: {} }); if (!r || !r.ok) { A.toast((r && r.msg) || 'No se pudo.'); return; } CL.empresaOn = false; } catch (e) { A.toast(e.message || 'Sin conexión.'); return; } }
     S.setup = Object.assign({}, S.setup, { type: 'centro' }); A.applySetup(); A.saveNow(); S.tab = 'inicio'; A.refresh(); A.toast('Volviste a centro odontológico.');
   };
   /* el tipo de cuenta suma «Empresa» */
   const acctTypePrev = MF.acctType;
   if (acctTypePrev) MF.acctType = m => {
-    const h = acctTypePrev(m), card = '<button class="setup-card' + (m.t === 'empresa' ? ' on' : '') + '" data-act="acctTypeSel" data-t="empresa" aria-pressed="' + (m.t === 'empresa') + '"><b>Empresa</b><span>De 2 a 5 consultorios</span></button>';
+    const h = acctTypePrev(m), card = '<button class="setup-card' + (m.t === 'empresa' ? ' on' : '') + '" data-act="acctTypeSel" data-t="empresa" aria-pressed="' + (m.t === 'empresa') + '"><b>Empresa</b><span>De 2 a 5 centros</span></button>';
     return h.replace(/(<div class="setup-grid">[\s\S]*?)(<\/div>)/, '$1' + card + '$2');
   };
   const typeGoPrev = A.acts.acctTypeGo;
@@ -11926,14 +11926,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.applySetup = () => { applyPrev(); if (isEmp()) { S.mode = 'centro'; if (S.setup.clinic) A.CLINIC = S.setup.clinic; } };
 
   /* =====================================================================
-     ESTE EQUIPO: ¿del dueño o de un consultorio?
+     ESTE EQUIPO: ¿del dueño o de un centro?
      ===================================================================== */
   let whereAsked = false;
   const needWhere = () => isEmp() && real() && !(A.memberNow && A.memberNow()) && CL.devOk && CL.devScope === null && !whereAsked;
   MF.empWhere = m => A.modalShell('¿Dónde se usa este equipo?',
-    '<p>Tu cuenta trabaja en modo Empresa. Elegí a qué consultorio pertenece este celular o compu: va a ver solo ese consultorio.</p><div class="setup-grid">' +
-    sedes().map(l => '<button class="setup-card" data-act="empWhereGo" data-s="sede:' + esc(l.id) + '"><b><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</b><span>' + esc(l.addr || 'Agenda, pacientes y caja de este consultorio') + '</span></button>').join('') +
-    '<button class="setup-card" data-act="empWhereGo" data-s="todo"><b>Es del dueño o de la administración</b><span>Ve todos los consultorios. Lo tiene que habilitar el dueño desde su equipo.</span></button></div><div class="hint bad" id="ewMsg">' + esc(m.msg || '') + '</div>',
+    '<p>Tu cuenta trabaja en modo Empresa. Elegí a qué centro pertenece este celular o compu: va a ver solo ese centro.</p><div class="setup-grid">' +
+    sedes().map(l => '<button class="setup-card" data-act="empWhereGo" data-s="sede:' + esc(l.id) + '"><b><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</b><span>' + esc(l.addr || 'Agenda, pacientes y caja de este centro') + '</span></button>').join('') +
+    '<button class="setup-card" data-act="empWhereGo" data-s="todo"><b>Es del dueño o de la administración</b><span>Ve todos los centros. Lo tiene que habilitar el dueño desde su equipo.</span></button></div><div class="hint bad" id="ewMsg">' + esc(m.msg || '') + '</div>',
     '<button class="btn" data-act="empWhereLater">Más tarde</button>');
   A.acts.empWhereGo = async el => {
     const sc = el.getAttribute('data-s'), msg = $('#ewMsg');
@@ -11946,7 +11946,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     } catch (e) { msg.textContent = e.message || 'Sin conexión.'; }
   };
   A.acts.empWhereLater = () => { whereAsked = true; S.modal = null; A.renderModal(); A.toast('Hasta que elijas, este equipo no ve los números de la empresa.'); };
-  /* al quedar como equipo de un consultorio se borra la copia local de los datos del dueño */
+  /* al quedar como equipo de un centro se borra la copia local de los datos del dueño */
   function afterScope() {
     const sd = devSede();
     if (sd) {
@@ -11960,7 +11960,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     S.tab = 'inicio'; A.refresh();
   }
   A.onScope = () => { if (isEmp()) afterScope(); };
-  /* lo que un equipo de consultorio no sube (el servidor lo rechazaría) */
+  /* lo que un equipo de centro no sube (el servidor lo rechazaría) */
   const recPrev = A.recAllowed;
   A.recAllowed = (k, v) => {
     if (recPrev && !recPrev(k, v)) return false;
@@ -12034,7 +12034,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.empTabAllowed = tabAllowed;
 
   /* =====================================================================
-     PANTALLA: clases, título, aviso del consultorio y guardas de las secciones
+     PANTALLA: clases, título, aviso del centro y guardas de las secciones
      ===================================================================== */
   let salGenDone = '';
   const arPrev = A.afterRefresh;
@@ -12045,7 +12045,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     b.classList.toggle('emp-nocaja', !!(p && !p.caja)); b.classList.toggle('emp-noliq', !!(p && !p.liq)); b.classList.toggle('emp-pinon', on && pinOn());
     if (!on) { const c = $('#empChip'); if (c) c.remove(); return; }
     if (!tabAllowed(S.tab)) { S.tab = 'inicio'; setTimeout(() => A.refresh(), 0); return; }
-    const sub = $('#abSub'), sd = curSede(); if (sub && S.tab !== 'inicio') sub.textContent = sd ? sedeName(sd) : 'Todos los consultorios';
+    const sub = $('#abSub'), sd = curSede(); if (sub && S.tab !== 'inicio') sub.textContent = sd ? sedeName(sd) : 'Todos los centros';
     /* persona actual: un toque para cambiar */
     let chip = $('#empChip'); const per = pinOn() ? curPerson() : null;
     if (pinOn()) {
@@ -12075,7 +12075,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
 
   /* =====================================================================
-     INICIO DEL DUEÑO: un recuadro por consultorio
+     INICIO DEL DUEÑO: un recuadro por centro
      ===================================================================== */
   const inicioPrev = A.render.inicio;
   A.render.inicio = () => {
@@ -12084,7 +12084,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (p.emp && !curSede()) return renderEmpHome();
     inicioPrev();
     const host = $('#view-inicio'), sd = curSede(); if (!host || !sd) return;
-    host.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar" style="--sc:' + esc(sedeColor(sd)) + '"><span class="emp-dot"></span><b>' + esc(sedeName(sd)) + '</b>' + (p.all ? '<button class="btn small" data-act="empSede" data-id="">← Todos los consultorios</button>' : '') + (!real() && devSede() ? '<button class="btn small" data-act="empTryScope" data-s="todo">Volver al equipo del dueño</button>' : '') + '</div>');
+    host.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar" style="--sc:' + esc(sedeColor(sd)) + '"><span class="emp-dot"></span><b>' + esc(sedeName(sd)) + '</b>' + (p.all ? '<button class="btn small" data-act="empSede" data-id="">← Todos los centros</button>' : '') + (!real() && devSede() ? '<button class="btn small" data-act="empTryScope" data-s="todo">Volver al equipo del dueño</button>' : '') + '</div>');
   };
   A.acts.empSede = el => { const id = el.getAttribute('data-id') || null; setSede(id); S.proSel = null; const go = el.getAttribute('data-go'); S.tab = go || (id ? S.tab : 'inicio'); A.refresh(); window.scrollTo(0, 0); };
   function warnings(sd, st, d) {
@@ -12131,7 +12131,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     x += '</div>';
     /* el mes, en una tabla corta */
     let fT = 0, cT = 0, eT = 0;
-    x += '<section class="card emp-month"><h2>' + esc(monthName(m)) + ' hasta hoy</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Consultorio</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">Egresos</th><th class="num">Turnos</th></tr></thead><tbody>' +
+    x += '<section class="card emp-month"><h2>' + esc(monthName(m)) + ' hasta hoy</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Centro</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">Egresos</th><th class="num">Turnos</th></tr></thead><tbody>' +
       L.map(l => { const o = ms[l.id] || {}; fT += o.fact || 0; cT += o.cob || 0; eT += o.egr || 0; return '<tr><td><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</td><td class="num">' + money(o.fact || 0) + '</td><td class="num">' + money(o.cob || 0) + '</td><td class="num">' + money(o.egr || 0) + '</td><td class="num">' + (o.turnos || 0) + '</td></tr>'; }).join('') +
       '<tr class="tot"><td><b>Total</b></td><td class="num"><b>' + money(fT) + '</b></td><td class="num"><b>' + money(cT) + '</b></td><td class="num"><b>' + money(eT) + '</b></td><td class="num"></td></tr></tbody></table></div>' +
       '<div class="row-btns"><button class="btn small" data-act="empGo" data-t="stats">Estadísticas</button><button class="btn small" data-act="empGo" data-t="liq">Liquidaciones</button><button class="btn small" data-act="empGo" data-t="report">Reporte del mes</button></div></section>';
@@ -12156,12 +12156,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const cdate = () => S.empCd || today();
   function cajaAll() {
     const d = cdate(), st = dayStats(d);
-    let x = '<div class="emp-top"><h2>Caja de los consultorios</h2>' + dateNav() + '</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Consultorio</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo</th><th>Caja</th><th></th></tr></thead><tbody>';
+    let x = '<div class="emp-top"><h2>Caja de los centros</h2>' + dateNav() + '</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Centro</th><th class="num">Ingresos</th><th class="num">Egresos</th><th class="num">Saldo</th><th>Caja</th><th></th></tr></thead><tbody>';
     sedes().forEach(l => { const o = st[l.id], cl = cajaOf(l.id).closes.filter(c => c.date === d)[0]; x += '<tr><td><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</td><td class="num">' + money(o.ing) + '</td><td class="num">' + money(o.egr) + '</td><td class="num">' + money(o.ing - o.egr) + '</td><td>' + (cl ? '<span class="chip ok">cerrada' + (cl.diff ? ' · ' + (cl.diff > 0 ? 'sobran ' : 'faltan ') + money(Math.abs(cl.diff)) : '') + '</span>' : d < today() ? '<span class="chip warn">sin cerrar</span>' : '<span class="chip">abierta</span>') + '</td><td><button class="btn small" data-act="empSede" data-id="' + esc(l.id) + '">Abrir</button></td></tr>'; });
-    x += '</tbody></table></div><div class="row-btns"><button class="btn" data-act="empCajaGral">Caja general de la empresa</button></div><p class="hint">La caja general tiene los gastos de la empresa que no son de un consultorio (y los honorarios pagados desde Liquidaciones).</p>';
+    x += '</tbody></table></div><div class="row-btns"><button class="btn" data-act="empCajaGral">Caja general de la empresa</button></div><p class="hint">La caja general tiene los gastos de la empresa que no son de un centro (y los honorarios pagados desde Liquidaciones).</p>';
     return x;
   }
-  A.acts.empCajaGral = () => { S.cajaGral = true; A.refresh(); const h = $('#view-caja'); if (h) h.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar"><b>Caja general de la empresa</b><button class="btn small" data-act="empCajaBack">← Cajas de los consultorios</button></div>'); };
+  A.acts.empCajaGral = () => { S.cajaGral = true; A.refresh(); const h = $('#view-caja'); if (h) h.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar"><b>Caja general de la empresa</b><button class="btn small" data-act="empCajaBack">← Cajas de los centros</button></div>'); };
   A.acts.empCajaBack = () => { S.cajaGral = false; A.refresh(); };
   const tabPrev = A.acts.tab;
   A.acts.tab = el => { S.cajaGral = false; return tabPrev(el); };
@@ -12174,7 +12174,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const cobEf = st.pm.Efectivo || 0, inEf = ing.filter(m => m.method === 'Efectivo').reduce((s, m) => s + m.amount, 0), outEf = egr.filter(m => m.method === 'Efectivo').reduce((s, m) => s + m.amount, 0);
     const open = cl ? cl.open : (S.empOpen != null ? S.empOpen : lastCounted(sd, d)), exp = open + cobEf + inEf - outEf;
     let x = '<div class="emp-top"><h2><span class="emp-dot" style="background:' + esc(sedeColor(sd)) + '"></span> Caja · ' + esc(sedeName(sd)) + '</h2>' + dateNav() + '</div>';
-    if (p.all) x += '<div class="row-btns"><button class="btn small" data-act="empSede" data-id="">← Todos los consultorios</button></div>';
+    if (p.all) x += '<div class="row-btns"><button class="btn small" data-act="empSede" data-id="">← Todos los centros</button></div>';
     if (A.ctlCards) x += A.ctlCards(A.dayControl(d, sd), { closed: !!cl });
     x += '<div class="emp-kpis sm"><div><span>Cobros de pacientes</span><b>' + money(st.cob) + '</b></div><div><span>Otros ingresos</span><b>' + money(st.ing - st.cob) + '</b></div><div><span>Egresos</span><b>' + money(st.egr) + '</b></div><div class="' + (st.ing - st.egr < 0 ? 'neg' : 'pos') + '"><span>Saldo</span><b>' + money(st.ing - st.egr) + '</b></div></div>';
     x += '<div class="cols2"><section class="card"><h2>Cobros por medio de pago</h2>' + (Object.keys(st.pm).length ? '<table class="tbl"><tbody>' + Object.keys(st.pm).sort((a, b) => st.pm[b] - st.pm[a]).map(k => '<tr><td>' + esc(k) + '</td><td class="num">' + money(st.pm[k]) + '</td></tr>').join('') + '</tbody></table>' : '<p class="hint">Sin cobros este día.</p>') + '</section>';
@@ -12225,14 +12225,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* =====================================================================
      SECCIÓN «EMPRESA» (solo el dueño y la administración)
      ===================================================================== */
-  const ETABS = [['resumen', 'Resumen'], ['sedes', 'Consultorios'], ['personal', 'Personal'], ['liq', 'Liquidaciones'], ['stats', 'Estadísticas'], ['cobrar', 'Por cobrar'], ['metas', 'Metas'], ['stock', 'Stock'], ['equipos', 'Equipos'], ['registro', 'Registro'], ['report', 'Reporte']];
+  const ETABS = [['resumen', 'Resumen'], ['sedes', 'Centros'], ['personal', 'Personal'], ['liq', 'Liquidaciones'], ['stats', 'Estadísticas'], ['cobrar', 'Por cobrar'], ['metas', 'Metas'], ['stock', 'Stock'], ['equipos', 'Equipos'], ['registro', 'Registro'], ['report', 'Reporte']];
   const em = () => S.empM || curMonth();
   const monthNav = () => { const m = em(); return '<div class="emp-dnav"><button class="btn small" data-act="empM" data-n="-1" aria-label="Mes anterior">‹</button><b>' + esc(monthName(m)) + '</b><button class="btn small" data-act="empM" data-n="1" aria-label="Mes siguiente"' + (m >= curMonth() ? ' disabled' : '') + '>›</button></div>'; };
   A.acts.empM = el => { const n = +el.getAttribute('data-n'); S.empM = addMonth(em(), n); if (S.empM > curMonth()) S.empM = curMonth(); A.refresh(); };
   A.acts.empTab = el => { S.empTab = el.getAttribute('data-t'); A.refresh(); window.scrollTo(0, 0); };
   A.render.empresa = () => {
     const host = $('#view-empresa'); if (!host) return;
-    if (!isEmp()) { host.innerHTML = '<section class="card"><h2>Modo Empresa</h2><p>Para manejar de 2 a 5 consultorios desde una sola cuenta.</p><button class="btn primary" data-act="empOn">Activar el modo Empresa</button></section>'; return; }
+    if (!isEmp()) { host.innerHTML = '<section class="card"><h2>Modo Empresa</h2><p>Para manejar de 2 a 5 centros desde una sola cuenta.</p><button class="btn primary" data-act="empOn">Activar el modo Empresa</button></section>'; return; }
     const t = S.empTab || 'resumen', p = perm();
     let x = '<div class="emp-tabs" role="tablist">' + ETABS.filter(z => z[0] !== 'personal' || p.emp).map(z => '<button class="emp-t" role="tab" aria-selected="' + (t === z[0]) + '" data-act="empTab" data-t="' + z[0] + '">' + z[1] + '</button>').join('') + '</div>';
     const R = { resumen: tResumen, sedes: tSedes, personal: tPersonal, liq: tLiq, stats: tStats, cobrar: tCobrar, metas: tMetas, stock: tStock, equipos: tEquipos, registro: tRegistro, report: tReport }[t] || tResumen;
@@ -12246,19 +12246,19 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function tResumen() {
     const m = em(), ms = monthStats(m, m)[m] || {}, ps = profShare(m), L = sedes(), gral = ms._gral || { egr: 0 };
     let T = { fact: 0, cob: 0, egr: 0, prof: 0, res: 0 };
-    let x = '<div class="emp-top"><h2>Resumen</h2>' + monthNav() + '</div><div class="tbl-wrap"><table class="tbl emp-res"><thead><tr><th>Consultorio</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">A profesionales</th><th class="num">Egresos</th><th class="num">Le queda a la empresa</th></tr></thead><tbody>';
+    let x = '<div class="emp-top"><h2>Resumen</h2>' + monthNav() + '</div><div class="tbl-wrap"><table class="tbl emp-res"><thead><tr><th>Centro</th><th class="num">Facturado</th><th class="num">Cobrado</th><th class="num">A profesionales</th><th class="num">Egresos</th><th class="num">Le queda a la empresa</th></tr></thead><tbody>';
     L.forEach(l => { const o = ms[l.id] || {}, pr = (ps[l.id] || {}).dent || 0, res = (o.fact || 0) - pr - (o.egr || 0); T.fact += o.fact || 0; T.cob += o.cob || 0; T.egr += o.egr || 0; T.prof += pr; T.res += res; x += '<tr><td><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</td><td class="num">' + money(o.fact || 0) + '</td><td class="num">' + money(o.cob || 0) + '</td><td class="num">' + money(pr) + '</td><td class="num">' + money(o.egr || 0) + '</td><td class="num ' + (res < 0 ? 'neg' : 'pos') + '"><b>' + money(res) + '</b></td></tr>'; });
     if (gral.egr) { T.egr += gral.egr; T.res -= gral.egr; x += '<tr><td>Gastos generales de la empresa</td><td></td><td></td><td></td><td class="num">' + money(gral.egr) + '</td><td class="num neg">−' + money(gral.egr) + '</td></tr>'; }
     x += '<tr class="tot"><td><b>Total</b></td><td class="num"><b>' + money(T.fact) + '</b></td><td class="num"><b>' + money(T.cob) + '</b></td><td class="num"><b>' + money(T.prof) + '</b></td><td class="num"><b>' + money(T.egr) + '</b></td><td class="num ' + (T.res < 0 ? 'neg' : 'pos') + '"><b>' + money(T.res) + '</b></td></tr></tbody></table></div>';
-    x += '<p class="hint">«Le queda a la empresa» = lo facturado − la parte de los profesionales (según su porcentaje o el alquiler del módulo) − los egresos del consultorio, incluidos los sueldos pagados.</p>';
+    x += '<p class="hint">«Le queda a la empresa» = lo facturado − la parte de los profesionales (según su porcentaje o el alquiler del módulo) − los egresos del centro, incluidos los sueldos pagados.</p>';
     x += '<div class="emp-mini">' + L.map(l => { const o = ms[l.id] || {}, occ = o.cap ? Math.round(o.mins / o.cap * 100) : 0; return '<div class="emp-mc" style="--sc:' + esc(l.color) + '"><b><span class="emp-dot"></span> ' + esc(l.name) + '</b><span>' + (o.turnos || 0) + ' turnos · ' + (o.atend || 0) + ' atendidos</span><span>Ocupación de la agenda: <b>' + occ + '%</b></span>' + bar(occ, 100, l.color) + '<span>Ausentes: ' + (o.turnos ? Math.round((o.aus || 0) / o.turnos * 100) : 0) + '% · nuevos: ' + (o.nuevos || 0) + '</span></div>'; }).join('') + '</div>';
     return x;
   }
 
-  /* ---------- Consultorios y profesionales ---------- */
+  /* ---------- Centros y profesionales ---------- */
   function tSedes() {
     const L = sedes();
-    let x = '<div class="emp-top"><h2>Consultorios</h2>' + (L.length < maxSedes() ? '<button class="btn small primary" data-act="empSedeEdit" data-id="">+ Consultorio</button>' : '') + '</div>' + (A.empTreeHTML ? A.empTreeHTML() : '') + '<div class="emp-sedes">';
+    let x = '<div class="emp-top"><h2>Centros</h2>' + (L.length < maxSedes() ? '<button class="btn small primary" data-act="empSedeEdit" data-id="">+ Centro</button>' : '') + '</div>' + (A.empTreeHTML ? A.empTreeHTML() : '') + '<div class="emp-sedes">';
     L.forEach(l => {
       const pros = A.PROS.filter(p => proSedes(p).indexOf(l.id) >= 0), staff = people().filter(p => p.sede === l.id);
       x += '<section class="card emp-sc" style="--sc:' + esc(l.color) + '"><div class="ec-h"><span class="emp-dot"></span><div><b>' + esc(l.name) + '</b><span>' + esc([l.addr, l.phone].filter(Boolean).join(' · ') || 'Sin dirección') + '</span></div><button class="btn small" data-act="empSedeEdit" data-id="' + esc(l.id) + '">Editar</button></div>' +
@@ -12266,7 +12266,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         '<h3 class="emp-h3">Personal (' + staff.length + ')</h3><div class="ec-pros">' + (staff.length ? staff.map(p => '<span class="ec-pr">' + esc(p.name) + ' · ' + esc(RN[p.role]) + '</span>').join('') : '<span class="hint">Nadie todavía</span>') + '</div>' +
         '<div class="row-btns"><button class="btn small" data-act="empSede" data-id="' + esc(l.id) + '" data-go="agenda">Ver agenda</button><button class="btn small" data-act="empSede" data-id="' + esc(l.id) + '" data-go="caja">Ver caja</button></div></section>';
     });
-    x += '</div><section class="card"><h2>¿En qué consultorio atiende cada profesional?</h2><p class="hint">Tocá para marcar. Un profesional puede atender en más de uno; el primero que marques es su consultorio principal. Los horarios de cada uno se arman como siempre en «Centro, profesionales y horarios».</p><div class="tbl-wrap"><table class="tbl emp-assign"><thead><tr><th>Profesional</th>' + L.map(l => '<th class="c"><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</th>').join('') + '</tr></thead><tbody>' +
+    x += '</div><section class="card"><h2>¿En qué centro atiende cada profesional?</h2><p class="hint">Tocá para marcar. Un profesional puede atender en más de uno; el primero que marques es su centro principal. Los horarios de cada uno se arman como siempre en «Centro, profesionales y horarios».</p><div class="tbl-wrap"><table class="tbl emp-assign"><thead><tr><th>Profesional</th>' + L.map(l => '<th class="c"><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</th>').join('') + '</tr></thead><tbody>' +
       A.PROS.map(p => { const ps = proSedes(p); return '<tr><td>' + esc(p.name) + '</td>' + L.map(l => '<td class="c"><button class="emp-tg" aria-pressed="' + (ps.indexOf(l.id) >= 0) + '" data-act="empProSede" data-p="' + p.id + '" data-s="' + esc(l.id) + '" aria-label="' + esc(p.name + ' en ' + l.name) + '">' + (ps[0] === l.id ? '★' : ps.indexOf(l.id) >= 0 ? '✓' : '') + '</button></td>').join('') + '</tr>'; }).join('') + '</tbody></table></div></section>';
     x += '<section class="card"><h2>Ajustes del modo Empresa</h2><label class="chk"><input type="checkbox" data-chg="empPinReq"' + (E.staff.cfg.pinReq ? ' checked' : '') + '> <span>Pedir quién está usando el equipo (cada persona entra con su PIN)</span></label>' +
       '<div class="field" style="max-width:320px"><label for="empIdle">Volver a pedir el PIN después de</label><select id="empIdle" class="inp" data-chg="empIdle">' + [[5, '5 minutos sin usarlo'], [10, '10 minutos'], [20, '20 minutos'], [60, '1 hora'], [0, 'Nunca (solo al cambiar de persona)']].map(o => '<option value="' + o[0] + '"' + ((E.staff.cfg.idle == null ? 10 : E.staff.cfg.idle) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div>' +
@@ -12276,7 +12276,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.empProSede = el => {
     const p = A.PROS.filter(z => z.id === el.getAttribute('data-p'))[0], sd = el.getAttribute('data-s'); if (!p) return;
     let ps = Array.isArray(p.sedes) ? p.sedes.filter(id => sedeById(id)) : [];
-    if (ps.indexOf(sd) >= 0) { if (ps.length === 1) { A.toast('Cada profesional tiene que estar en al menos un consultorio.'); return; } ps = ps.filter(x => x !== sd); } else ps.push(sd);
+    if (ps.indexOf(sd) >= 0) { if (ps.length === 1) { A.toast('Cada profesional tiene que estar en al menos un centro.'); return; } ps = ps.filter(x => x !== sd); } else ps.push(sd);
     p.sedes = ps; audit(p.name + ': atiende en ' + ps.map(sedeName).join(', ') + '.'); A.save(); A.refresh();
   };
   A.chg.empPinReq = el => {
@@ -12285,7 +12285,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   A.chg.empIdle = el => { E.staff.cfg.idle = +el.value; save(); };
   A.acts.empSedeEdit = el => { const id = el.getAttribute('data-id'), l = id ? sedeById(id) : null; S.modal = { type: 'empSedeEd', id, f: Object.assign({ name: '', addr: '', phone: '', color: COLORS[sedes().length % 5] }, l || {}) }; A.renderModal(); };
-  MF.empSedeEd = m => A.modalShell(m.id ? 'Editar consultorio' : 'Nuevo consultorio',
+  MF.empSedeEd = m => A.modalShell(m.id ? 'Editar centro' : 'Nuevo centro',
     '<div class="field"><label for="esN">Nombre</label><input id="esN" class="inp" value="' + esc(m.f.name) + '" placeholder="Ej.: Sede Centro"></div><div class="field"><label for="esA">Dirección</label><input id="esA" class="inp" value="' + esc(m.f.addr || '') + '"></div><div class="field"><label for="esP">Teléfono</label><input id="esP" class="inp" value="' + esc(m.f.phone || '') + '"></div>' +
     '<div class="field"><span class="lbl">Color</span><div class="row-btns">' + COLORS.concat(['#4d7c0f']).map(c => '<button class="emp-col" style="background:' + c + '" aria-pressed="' + (m.f.color === c) + '" data-act="empSedeCol" data-c="' + c + '" aria-label="Color"></button>').join('') + '</div></div><div class="hint bad" id="esMsg"></div>',
     (m.id && sedes().length > 2 ? '<button class="btn danger" data-act="empSedeDel">Quitar</button>' : '') + '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="empSedeSave">Guardar</button>');
@@ -12293,16 +12293,16 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.empSedeSave = () => {
     const m = S.modal, n = $('#esN').value.trim(); if (!n) { $('#esMsg').textContent = 'Escribí el nombre.'; return; }
     const f = { name: n, addr: $('#esA').value.trim(), phone: $('#esP').value.trim(), color: m.f.color };
-    if (m.id) Object.assign(sedeById(m.id), f); else { if (sedes().length >= maxSedes()) { $('#esMsg').textContent = 'Tu plan llega hasta ' + maxSedes() + ' consultorios.'; return; } A.locs().push(Object.assign({ id: 'l' + A.uid(), kind: 'propio' }, f)); }
-    audit((m.id ? 'Editó el consultorio ' : 'Agregó el consultorio ') + n + '.'); S.modal = null; A.renderModal(); A.save(); A.refresh();
+    if (m.id) Object.assign(sedeById(m.id), f); else { if (sedes().length >= maxSedes()) { $('#esMsg').textContent = 'Tu plan llega hasta ' + maxSedes() + ' centros.'; return; } A.locs().push(Object.assign({ id: 'l' + A.uid(), kind: 'propio' }, f)); }
+    audit((m.id ? 'Editó el centro ' : 'Agregó el centro ') + n + '.'); S.modal = null; A.renderModal(); A.save(); A.refresh();
   };
   A.acts.empSedeDel = () => {
     const m = S.modal, l = sedeById(m.id); if (!l) return;
     const used = Object.keys(A.S.days).some(d => (A.S.days[d] || []).some(a => a.loc === l.id && d >= today()));
-    if (used) { $('#esMsg').textContent = 'Tiene turnos de hoy en adelante. Pasalos a otro consultorio antes de quitarlo.'; return; }
+    if (used) { $('#esMsg').textContent = 'Tiene turnos de hoy en adelante. Pasalos a otro centro antes de quitarlo.'; return; }
     if (!confirm('¿Quitar ' + l.name + '? Los turnos y cobros pasados quedan guardados.')) return;
     A.CFG.locs = sedes().filter(x => x.id !== l.id); A.PROS.forEach(p => { if (Array.isArray(p.sedes)) p.sedes = p.sedes.filter(x => x !== l.id); });
-    audit('Quitó el consultorio ' + l.name + '.'); S.modal = null; A.renderModal(); A.save(); A.refresh();
+    audit('Quitó el centro ' + l.name + '.'); S.modal = null; A.renderModal(); A.save(); A.refresh();
   };
 
   /* ---------- Personal ---------- */
@@ -12311,14 +12311,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const list = E.staff.people.slice().sort((a, b) => (a.active === false) - (b.active === false) || (a.sede || '').localeCompare(b.sede || '') || a.name.localeCompare(b.name));
     let tot = 0;
     let x = '<div class="emp-top"><h2>Personal</h2><button class="btn small primary" data-act="empPerEdit" data-id="">+ Persona</button></div>';
-    x += '<p class="hint">Secretarias, asistentes, administración y quien necesites. Cada persona puede tener un PIN para entrar en el equipo de su consultorio; los profesionales ya cargados también pueden tener su PIN.</p>';
-    x += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Puesto</th><th>Consultorio</th><th>Horario</th>' + (p.sal ? '<th class="num">Sueldo</th>' : '') + '<th>PIN</th><th></th></tr></thead><tbody>' +
+    x += '<p class="hint">Secretarias, asistentes, administración y quien necesites. Cada persona puede tener un PIN para entrar en el equipo de su centro; los profesionales ya cargados también pueden tener su PIN.</p>';
+    x += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Puesto</th><th>Centro</th><th>Horario</th>' + (p.sal ? '<th class="num">Sueldo</th>' : '') + '<th>PIN</th><th></th></tr></thead><tbody>' +
       list.map(z => { const s = E.empo.sal[z.id]; if (z.active !== false && s && s.monto) tot += s.monto; return '<tr' + (z.active === false ? ' class="off"' : '') + '><td><b>' + esc(z.name) + '</b>' + (z.phone ? '<div class="hint" style="margin:0">' + esc(z.phone) + '</div>' : '') + '</td><td>' + esc(RN[z.role] || z.role) + (z.role === 'profesional' && z.pro ? ' · ' + esc(A.PRO(z.pro).short || '') : '') + '</td><td>' + (z.sede ? '<span class="emp-dot" style="background:' + esc(sedeColor(z.sede)) + '"></span> ' + esc(sedeName(z.sede)) : 'Todos') + '</td><td>' + esc(z.horario || '') + '</td>' + (p.sal ? '<td class="num">' + (s && s.monto ? money(s.monto) : '—') + '</td>' : '') + '<td>' + (z.pin ? '<span class="chip ok">sí</span>' : '<span class="chip">no</span>') + '</td><td><button class="btn small" data-act="empPerEdit" data-id="' + z.id + '">Editar</button></td></tr>'; }).join('') +
       (p.sal && tot ? '<tr class="tot"><td colspan="4"><b>Sueldos por mes</b></td><td class="num"><b>' + money(tot) + '</b></td><td colspan="2"></td></tr>' : '') + '</tbody></table></div>';
     if (!list.length) x += '<p>Todavía no cargaste personal.</p>';
     if (p.sal) {
       const m = curMonth(), mv = E.empo.salMoves.filter(z => z.date.slice(0, 7) === m);
-      x += '<section class="card"><h2>Sueldos de ' + esc(monthName(m)) + '</h2><p class="hint">Se cargan solos a principio de mes como pagos pendientes. Al marcarlos pagados, entran como egreso del consultorio de cada persona. Esta información la ve solo el dueño.</p>' +
+      x += '<section class="card"><h2>Sueldos de ' + esc(monthName(m)) + '</h2><p class="hint">Se cargan solos a principio de mes como pagos pendientes. Al marcarlos pagados, entran como egreso del centro de cada persona. Esta información la ve solo el dueño.</p>' +
         (mv.length ? '<ul class="emp-mv">' + mv.map(z => '<li><span><b>' + esc(z.desc) + '</b><small>' + esc(sedeName(z.loc)) + ' · ' + (z.status === 'pagado' ? 'pagado el ' + A.fmtDMY(z.paidAt || z.date) : 'vence ' + A.fmtDMY(z.due || z.date)) + '</small></span><span class="num">' + money(z.amount) + '</span>' + (z.status === 'pagado' ? '<button class="btn small" data-act="empSalUnpay" data-id="' + z.id + '">Deshacer</button>' : '<button class="btn small primary" data-act="empSalPay" data-id="' + z.id + '">Pagado</button>') + '</li>').join('') + '</ul>' : '<p class="hint">No hay sueldos cargados para este mes.</p>') + '</section>';
     }
     return x;
@@ -12331,7 +12331,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return A.modalShell(m.id ? 'Editar persona' : 'Nueva persona',
       '<div class="field"><label for="epN">Nombre y apellido</label><input id="epN" class="inp" value="' + esc(f.name) + '"></div>' +
       '<div class="row2"><div class="field"><label for="epR">Puesto</label><select id="epR" class="inp" data-chg="empPerRole">' + ROLES.filter(r => p.sal || r[0] !== 'dueno').map(r => '<option value="' + r[0] + '"' + (f.role === r[0] ? ' selected' : '') + '>' + esc(r[1]) + '</option>').join('') + '</select></div>' +
-      '<div class="field"><label for="epS">Consultorio</label><select id="epS" class="inp"><option value="">Todos</option>' + sedes().map(l => '<option value="' + esc(l.id) + '"' + (f.sede === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + '</select></div></div>' +
+      '<div class="field"><label for="epS">Centro</label><select id="epS" class="inp"><option value="">Todos</option>' + sedes().map(l => '<option value="' + esc(l.id) + '"' + (f.sede === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + '</select></div></div>' +
       (f.role === 'profesional' ? '<div class="field"><label for="epPro">¿Qué profesional es?</label><select id="epPro" class="inp">' + A.PROS.map(z => '<option value="' + z.id + '"' + (f.pro === z.id ? ' selected' : '') + '>' + esc(z.name) + '</option>').join('') + '</select></div>' : '') +
       '<div class="row2"><div class="field"><label for="epT">Teléfono</label><input id="epT" class="inp" value="' + esc(f.phone || '') + '"></div><div class="field"><label for="epH">Horario</label><input id="epH" class="inp" value="' + esc(f.horario || '') + '" placeholder="Ej.: lun a vie · 8 a 14"></div></div>' +
       (p.sal ? '<div class="row2"><div class="field"><label for="epM">Sueldo mensual</label><input id="epM" class="inp" inputmode="numeric" value="' + esc(String(f.monto || '')) + '" placeholder="$ (opcional)"></div><div class="field"><label for="epD">Día de pago</label><input id="epD" class="inp" inputmode="numeric" value="' + esc(String(f.dia || 5)) + '"></div></div>' : '') +
@@ -12340,7 +12340,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       (m.id ? '<label class="chk"><input type="checkbox" id="epAct"' + (f.active !== false ? ' checked' : '') + '> <span>Activo (si ya no trabaja, destildalo: queda en el registro)</span></label>' : '') + '<div class="hint bad" id="epMsg"></div>',
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="empPerSave">Guardar</button>');
   };
-  const roleHelp = r => ({ dueno: 'Ve y maneja todo, en todos los consultorios.', admin: 'Ve todo, salvo los sueldos.', recepcion: 'Agenda, pacientes (sin la historia clínica) y caja de su consultorio.', profesional: 'Su agenda y la historia clínica de sus pacientes. No ve la caja.', asistente: 'Agenda e historia clínica. No ve la caja.', otro: 'No entra a la app; queda para el registro y los sueldos.' }[r] || '');
+  const roleHelp = r => ({ dueno: 'Ve y maneja todo, en todos los centros.', admin: 'Ve todo, salvo los sueldos.', recepcion: 'Agenda, pacientes (sin la historia clínica) y caja de su centro.', profesional: 'Su agenda y la historia clínica de sus pacientes. No ve la caja.', asistente: 'Agenda e historia clínica. No ve la caja.', otro: 'No entra a la app; queda para el registro y los sueldos.' }[r] || '');
   A.chg.empPerRole = el => { const f = S.modal.f; f.name = $('#epN').value; f.sede = $('#epS').value; f.phone = $('#epT').value; f.horario = $('#epH').value; if ($('#epM')) { f.monto = $('#epM').value; f.dia = $('#epD').value; } f.role = el.value; if (f.role === 'profesional' && !f.pro) f.pro = (A.PROS[0] || {}).id; A.renderModal(); };
   A.acts.empPerSave = async () => {
     const m = S.modal, n = $('#epN').value.trim(), pin = $('#epPin').value.trim(), msg = $('#epMsg'); if (!n) { msg.textContent = 'Escribí el nombre.'; return; }
@@ -12360,7 +12360,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* ---------- Liquidaciones de la empresa ---------- */
   function tLiq() {
     const m = em(), ps = profShare(m), L = sedes();
-    let x = '<div class="emp-top"><h2>Liquidaciones</h2>' + monthNav() + '</div><p class="hint">Cuánto facturó cada profesional en cada consultorio, cuánto le corresponde (según su porcentaje o el alquiler del módulo) y cuánto le queda a la empresa. Para el detalle, las deducciones y marcar pagos, usá <button class="linkbtn" data-act="tab" data-tab="liq">Liquidaciones por profesional</button>.</p>';
+    let x = '<div class="emp-top"><h2>Liquidaciones</h2>' + monthNav() + '</div><p class="hint">Cuánto facturó cada profesional en cada centro, cuánto le corresponde (según su porcentaje o el alquiler del módulo) y cuánto le queda a la empresa. Para el detalle, las deducciones y marcar pagos, usá <button class="linkbtn" data-act="tab" data-tab="liq">Liquidaciones por profesional</button>.</p>';
     let G = { prod: 0, dent: 0 };
     L.forEach(l => {
       const o = ps[l.id] || { prod: 0, dent: 0, pros: {} }, ids = Object.keys(o.pros); G.prod += o.prod; G.dent += o.dent;
@@ -12374,7 +12374,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* ---------- Estadísticas ---------- */
   function svgBars(months, series, fmt) {
-    /* barras agrupadas por mes, un color por consultorio */
+    /* barras agrupadas por mes, un color por centro */
     const W = 640, H = 240, pl = 64, pb = 28, pt = 10, n = months.length, g = series.length || 1;
     let max = 0; series.forEach(s => s.v.forEach(v => { if (v > max) max = v; })); if (!max) max = 1;
     const step = (W - pl - 6) / n, bw = Math.max(3, Math.min(18, (step - 6) / g));
@@ -12396,7 +12396,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let x = '<div class="emp-top"><h2>Estadísticas</h2><div class="emp-dnav"><select class="inp" data-chg="empN" aria-label="Período">' + [[6, 'Últimos 6 meses'], [12, 'Últimos 12 meses']].map(o => '<option value="' + o[0] + '"' + (n === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' + monthNav() + '</div></div>' + legend(L);
     const card = (t, sub, svg) => '<section class="card emp-st"><h2>' + t + '</h2>' + (sub ? '<p class="hint">' + sub + '</p>' : '') + svg + '</section>';
     x += '<div class="emp-stg">';
-    x += card('Facturación', 'Prestaciones cargadas en cada consultorio.', svgBars(months, ser(o => o.fact || 0), kmoney));
+    x += card('Facturación', 'Prestaciones cargadas en cada centro.', svgBars(months, ser(o => o.fact || 0), kmoney));
     x += card('Resultado de caja', 'Cobrado más otros ingresos, menos egresos y sueldos.', svgBars(months, ser(o => Math.max(0, (o.ing || 0) - (o.egr || 0))), kmoney));
     x += card('Ocupación de la agenda', 'Horas con turno sobre las horas que atienden los profesionales.', svgBars(months, ser(o => (o.cap ? Math.min(100, o.mins / o.cap * 100) : 0)), pctf));
     x += card('Turnos atendidos', '', svgBars(months, ser(o => o.atend || 0), v => String(Math.round(v))));
@@ -12405,7 +12405,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     x += '</div>';
     /* tabla del mes elegido */
     const cur = ms[m1] || {};
-    x += '<section class="card"><h2>' + esc(monthName(m1)) + ' por consultorio</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Consultorio</th><th class="num">Ticket promedio</th><th class="num">Ocupación</th><th class="num">Ausentismo</th><th class="num">Nuevos</th><th class="num">Presupuestos aceptados</th></tr></thead><tbody>' +
+    x += '<section class="card"><h2>' + esc(monthName(m1)) + ' por centro</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Centro</th><th class="num">Ticket promedio</th><th class="num">Ocupación</th><th class="num">Ausentismo</th><th class="num">Nuevos</th><th class="num">Presupuestos aceptados</th></tr></thead><tbody>' +
       L.map(l => { const o = cur[l.id] || {}; return '<tr><td><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</td><td class="num">' + money(o.atend ? (o.fact || 0) / o.atend : 0) + '</td><td class="num">' + (o.cap ? Math.round(o.mins / o.cap * 100) : 0) + '%</td><td class="num">' + (o.turnos ? Math.round((o.aus || 0) / o.turnos * 100) : 0) + '%</td><td class="num">' + (o.nuevos || 0) + '</td><td class="num">' + (o.budPn ? (o.budAn || 0) + ' de ' + o.budPn + ' (' + Math.round((o.budA || 0) / (o.budP || 1) * 100) + '% del monto)' : '—') + '</td></tr>'; }).join('') + '</tbody></table></div></section>';
     /* profesionales y prestaciones del mes */
     const pros = {}, cats = {}, egc = {};
@@ -12428,7 +12428,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       const sd = last ? sedeOfAppt(last.a) : mainSede(A.PRO(p.pro)); (by[sd] || (by[sd] = [])).push({ p, s, last: last ? last.d : null });
     });
     let tot = 0;
-    let x = '<div class="emp-top"><h2>Por cobrar</h2></div><p class="hint">Pacientes con saldo a favor del consultorio, según su último turno. Tocá el nombre para abrir la cuenta.</p>';
+    let x = '<div class="emp-top"><h2>Por cobrar</h2></div><p class="hint">Pacientes con saldo a favor del centro, según su último turno. Tocá el nombre para abrir la cuenta.</p>';
     L.forEach(l => {
       const list = (by[l.id] || []).sort((a, b) => b.s - a.s), t = list.reduce((s, z) => s + z.s, 0); tot += t;
       x += '<section class="card"><h2><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + ' <span class="count">' + money(t) + '</span></h2>' + (list.length ? '<ul class="emp-mv">' + list.slice(0, 25).map(z => '<li><span><button class="linkbtn" data-act="empPat" data-id="' + z.p.id + '"><b>' + esc(z.p.name) + '</b></button><small>' + (z.last ? 'Último turno ' + A.fmtDMY(z.last) : '') + (z.p.phone ? ' · ' + esc(z.p.phone) : '') + '</small></span><span class="num">' + money(z.s) + '</span></li>').join('') + '</ul>' + (list.length > 25 ? '<p class="hint">Y ' + (list.length - 25) + ' más.</p>' : '') : '<p class="hint">Nadie debe nada.</p>') + '</section>';
@@ -12444,7 +12444,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* ---------- Metas ---------- */
   function tMetas() {
     const m = em(), ms = monthStats(m, m)[m] || {}, L = sedes(), dIn = daysIn(m), dNow = m === curMonth() ? parseInt(today().slice(8), 10) : dIn, exp = dNow / dIn;
-    let x = '<div class="emp-top"><h2>Metas del mes</h2>' + monthNav() + '</div><p class="hint">Metas mensuales de cada consultorio. La línea marca dónde deberías estar a esta altura del mes.</p><div class="emp-sedes">';
+    let x = '<div class="emp-top"><h2>Metas del mes</h2>' + monthNav() + '</div><p class="hint">Metas mensuales de cada centro. La línea marca dónde deberías estar a esta altura del mes.</p><div class="emp-sedes">';
     L.forEach(l => {
       const g = E.empo.goals[l.id] || {}, o = ms[l.id] || {};
       const row = (lbl, k, v, fmt) => { const goal = g[k] || 0, pct = goal ? Math.round(v / goal * 100) : 0; return '<div class="emp-goal"><div class="eg-h"><span>' + lbl + '</span><b>' + fmt(v) + (goal ? ' de ' + fmt(goal) + ' · ' + pct + '%' : '') + '</b></div>' + (goal ? '<span class="emp-bar big"><i style="width:' + Math.min(100, pct) + '%;background:' + (v >= goal * exp ? 'var(--ok,#2e7d4f)' : '#c2571a') + '"></i><u style="left:' + Math.round(exp * 100) + '%"></u></span>' : '') + '<input class="inp emp-num" inputmode="numeric" placeholder="Meta" value="' + (goal || '') + '" data-chg="empGoal" data-s="' + esc(l.id) + '" data-k="' + k + '" aria-label="Meta de ' + lbl + '"></div>'; };
@@ -12471,7 +12471,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.empStQ = el => { const sd = el.getAttribute('data-s'), i = (E.stock[sd] || []).filter(z => z.id === el.getAttribute('data-id'))[0]; if (!i) return; i.qty = Math.max(0, i.qty + (+el.getAttribute('data-n'))); i.at = new Date().toISOString(); save(); A.refresh(); };
   A.acts.empStDel = el => { const sd = el.getAttribute('data-s'), l = E.stock[sd] || [], i = l.filter(z => z.id === el.getAttribute('data-id'))[0]; if (!i) return; E.stock[sd] = l.filter(z => z !== i); audit('Quitó el insumo ' + i.name + ' de ' + sedeName(sd) + '.', sd); save(); A.refresh(); A.toast('Insumo quitado.', () => { E.stock[sd].push(i); save(); A.refresh(); }); };
 
-  /* ---------- Equipos: a qué consultorio pertenece cada celular o compu ---------- */
+  /* ---------- Equipos: a qué centro pertenece cada celular o compu ---------- */
   let DEV = null, devErr = '';
   async function loadDevices() {
     if (!real()) return;
@@ -12482,15 +12482,15 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function devHTML() {
     if (!real()) {
       const s = localScope();
-      return '<p class="hint">Estás probando sin cuenta. Podés ver cómo se ve la app en el equipo de cada consultorio:</p><div class="row-btns">' + ['todo'].concat(sedes().map(l => 'sede:' + l.id)).map(v => '<button class="btn small' + (s === v ? ' primary' : '') + '" data-act="empTryScope" data-s="' + esc(v) + '">' + esc(scopeTxt(v)) + '</button>').join('') + '</div>';
+      return '<p class="hint">Estás probando sin cuenta. Podés ver cómo se ve la app en el equipo de cada centro:</p><div class="row-btns">' + ['todo'].concat(sedes().map(l => 'sede:' + l.id)).map(v => '<button class="btn small' + (s === v ? ' primary' : '') + '" data-act="empTryScope" data-s="' + esc(v) + '">' + esc(scopeTxt(v)) + '</button>').join('') + '</div>';
     }
     if (devErr) return '<p class="hint bad">' + esc(devErr) + '</p>';
     if (!DEV) return '<p class="hint">Cargando…</p>';
     const opts = cur => '<option value="todo"' + (cur === 'todo' ? ' selected' : '') + '>Dueño / administración (ve todo)</option>' + sedes().map(l => '<option value="sede:' + esc(l.id) + '"' + (cur === 'sede:' + l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + (cur ? '' : '<option value="" selected>Sin asignar</option>');
-    return '<ul class="emp-devs">' + (DEV.devices || []).map(d => '<li class="' + (d.scope ? '' : 'pend') + '"><span><b>' + esc(d.name || 'Equipo') + (d.id === DEV.me ? ' · este equipo' : '') + '</b><small>Último uso ' + (d.last_seen ? new Date(d.last_seen).toLocaleString('es-AR') : '—') + '</small></span>' + (devOwner() ? '<select class="inp" data-chg="empDevScope" data-id="' + esc(d.id) + '" aria-label="Consultorio del equipo">' + opts(d.scope) + '</select>' : '<span class="chip">' + esc(scopeTxt(d.scope)) + '</span>') + '</li>').join('') + '</ul><p class="hint">' + (DEV.devices || []).length + ' de ' + DEV.limit + ' equipos del plan. Para desconectar un equipo, usá Menú › Cuenta y equipos.</p>';
+    return '<ul class="emp-devs">' + (DEV.devices || []).map(d => '<li class="' + (d.scope ? '' : 'pend') + '"><span><b>' + esc(d.name || 'Equipo') + (d.id === DEV.me ? ' · este equipo' : '') + '</b><small>Último uso ' + (d.last_seen ? new Date(d.last_seen).toLocaleString('es-AR') : '—') + '</small></span>' + (devOwner() ? '<select class="inp" data-chg="empDevScope" data-id="' + esc(d.id) + '" aria-label="Centro del equipo">' + opts(d.scope) + '</select>' : '<span class="chip">' + esc(scopeTxt(d.scope)) + '</span>') + '</li>').join('') + '</ul><p class="hint">' + (DEV.devices || []).length + ' de ' + DEV.limit + ' equipos del plan. Para desconectar un equipo, usá Menú › Cuenta y equipos.</p>';
   }
   function tEquipos() {
-    return '<div class="emp-top"><h2>Equipos</h2></div><p class="hint">Cada celular o compu pertenece a un consultorio y solo ve ese. Los equipos del dueño ven todo. Esto lo controla el servidor: un equipo de consultorio no puede leer los sueldos, las liquidaciones, las metas, la caja general ni la caja y el registro de los otros consultorios.</p><div id="empDevs">' + devHTML() + '</div>';
+    return '<div class="emp-top"><h2>Equipos</h2></div><p class="hint">Cada celular o compu pertenece a un centro y solo ve ese. Los equipos del dueño ven todo. Esto lo controla el servidor: un equipo de centro no puede leer los sueldos, las liquidaciones, las metas, la caja general ni la caja y el registro de los otros centros.</p><div id="empDevs">' + devHTML() + '</div>';
   }
   A.chg.empDevScope = async el => {
     const id = el.getAttribute('data-id'), sc = el.value || null; if (!sc) return;
@@ -12508,7 +12508,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     all.sort((a, b) => (a.t < b.t ? 1 : -1));
     const f = S.empAuF || '', q = A.norm ? A.norm(S.empAuQ || '') : (S.empAuQ || '').toLowerCase();
     const list = all.filter(e => (!f || e.sede === f) && (!q || (A.norm ? A.norm(e.what + ' ' + e.who) : (e.what + ' ' + e.who).toLowerCase()).indexOf(q) >= 0)).slice(0, 300);
-    let x = '<div class="emp-top"><h2>Registro</h2></div><p class="hint">Quién hizo cada cosa, desde qué equipo y cuándo. No se puede borrar desde la app.</p><div class="row2"><div class="field"><label for="auF">Consultorio</label><select id="auF" class="inp" data-chg="empAuF"><option value="">Todos</option>' + sedes().map(l => '<option value="' + esc(l.id) + '"' + (f === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + '</select></div><div class="field"><label for="auQ">Buscar</label><input id="auQ" class="inp" value="' + esc(S.empAuQ || '') + '" data-chg="empAuQ" placeholder="Nombre, paciente, «caja»…"></div></div>';
+    let x = '<div class="emp-top"><h2>Registro</h2></div><p class="hint">Quién hizo cada cosa, desde qué equipo y cuándo. No se puede borrar desde la app.</p><div class="row2"><div class="field"><label for="auF">Centro</label><select id="auF" class="inp" data-chg="empAuF"><option value="">Todos</option>' + sedes().map(l => '<option value="' + esc(l.id) + '"' + (f === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('') + '</select></div><div class="field"><label for="auQ">Buscar</label><input id="auQ" class="inp" value="' + esc(S.empAuQ || '') + '" data-chg="empAuQ" placeholder="Nombre, paciente, «caja»…"></div></div>';
     let lastDay = '';
     x += list.length ? '<ul class="emp-log">' + list.map(e => { const d = e.t.slice(0, 10), h = d !== lastDay ? '<li class="day">' + A.fmtDMY(d) + '</li>' : ''; lastDay = d; return h + '<li><span class="mono">' + new Date(e.t).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + '</span><span><b>' + esc(e.who) + '</b> ' + esc(e.what) + '<small>' + esc([e.sede ? sedeName(e.sede) : '', e.dev].filter(Boolean).join(' · ')) + '</small></span></li>'; }).join('') + '</ul>' : '<p class="hint">Todavía no hay movimientos registrados.</p>';
     return x;
@@ -12519,7 +12519,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* ---------- Reporte mensual para el contador ---------- */
   function tReport() {
     const m = em();
-    return '<div class="emp-top"><h2>Reporte del mes</h2>' + monthNav() + '</div><section class="card"><p>Ingresos, egresos, sueldos y liquidaciones de <b>' + esc(monthName(m)) + '</b>, por consultorio y en total. Sirve para el contador y para guardar.</p><div class="row-btns"><button class="btn primary" data-act="empRepPdf">Descargar PDF</button><button class="btn" data-act="empRepCsv">Descargar Excel</button></div><p class="hint">El Excel se descarga en formato CSV, que se abre con Excel o Google Sheets.</p></section>';
+    return '<div class="emp-top"><h2>Reporte del mes</h2>' + monthNav() + '</div><section class="card"><p>Ingresos, egresos, sueldos y liquidaciones de <b>' + esc(monthName(m)) + '</b>, por centro y en total. Sirve para el contador y para guardar.</p><div class="row-btns"><button class="btn primary" data-act="empRepPdf">Descargar PDF</button><button class="btn" data-act="empRepCsv">Descargar Excel</button></div><p class="hint">El Excel se descarga en formato CSV, que se abre con Excel o Google Sheets.</p></section>';
   }
   function repData(m) {
     const ms = monthStats(m, m)[m] || {}, ps = profShare(m), L = sedes(), rows = [];
@@ -12532,30 +12532,30 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
   A.acts.empRepPdf = () => {
     const m = em(), D = repData(m), o = A.pdfDoc_ && A.pdfDoc_('Reporte de ' + monthName(m)); if (!o) return;
-    o.head('Reporte mensual · ' + monthName(m), A.CLINIC + ' · ' + sedes().length + ' consultorios');
-    o.h('Resultado por consultorio');
+    o.head('Reporte mensual · ' + monthName(m), A.CLINIC + ' · ' + sedes().length + ' centros');
+    o.h('Resultado por centro');
     let T = [0, 0, 0, 0, 0];
-    o.table([{ h: 'Consultorio', w: 40 }, { h: 'Facturado', w: 24, a: 'r' }, { h: 'Cobrado', w: 24, a: 'r' }, { h: 'A profesionales', w: 26, a: 'r' }, { h: 'Egresos', w: 24, a: 'r' }, { h: 'Resultado', w: 26, a: 'r' }],
+    o.table([{ h: 'Centro', w: 40 }, { h: 'Facturado', w: 24, a: 'r' }, { h: 'Cobrado', w: 24, a: 'r' }, { h: 'A profesionales', w: 26, a: 'r' }, { h: 'Egresos', w: 24, a: 'r' }, { h: 'Resultado', w: 26, a: 'r' }],
       D.rows.map(r => { T[0] += r.o.fact || 0; T[1] += r.o.cob || 0; T[2] += r.pr; T[3] += r.o.egr || 0; T[4] += r.res; return [r.l.name, money(r.o.fact || 0), money(r.o.cob || 0), money(r.pr), money(r.o.egr || 0), money(r.res)]; })
         .concat(D.gral ? [['Gastos generales', '', '', '', money(D.gral), '−' + money(D.gral)]] : [])
         .concat([{ c: ['Total', money(T[0]), money(T[1]), money(T[2]), money(T[3] + D.gral), money(T[4] - D.gral)], bold: true }]));
     o.h('Liquidaciones de los profesionales');
     const lr = []; sedes().forEach(l => { const q = D.ps[l.id]; if (!q) return; Object.keys(q.pros).forEach(id => lr.push([l.name, A.PRO(id).name, money(q.pros[id].prod), money(q.pros[id].dent), money(q.pros[id].prod - q.pros[id].dent)])); });
-    if (lr.length) o.table([{ h: 'Consultorio', w: 34 }, { h: 'Profesional', w: 44 }, { h: 'Facturado', w: 26, a: 'r' }, { h: 'Al profesional', w: 28, a: 'r' }, { h: 'A la empresa', w: 28, a: 'r' }], lr); else o.p('Sin prestaciones cargadas.');
+    if (lr.length) o.table([{ h: 'Centro', w: 34 }, { h: 'Profesional', w: 44 }, { h: 'Facturado', w: 26, a: 'r' }, { h: 'Al profesional', w: 28, a: 'r' }, { h: 'A la empresa', w: 28, a: 'r' }], lr); else o.p('Sin prestaciones cargadas.');
     o.h('Egresos e ingresos de caja');
-    if (D.moves.length) o.table([{ h: 'Fecha', w: 18 }, { h: 'Consultorio', w: 30 }, { h: 'Categoría', w: 32 }, { h: 'Detalle', w: 56 }, { h: 'Monto', w: 24, a: 'r' }], D.moves.map(z => [A.fmtDMY(z.mv.date), z.sede, catName(z.mv.cat), z.mv.desc || '', (z.mv.type === 'ingreso' ? '+' : '−') + money(z.mv.amount)])); else o.p('Sin movimientos.');
-    o.p('Facturado: prestaciones cargadas en el mes. A profesionales: según su porcentaje o el alquiler del módulo. Egresos: gastos y sueldos pagados de cada consultorio.', 8);
+    if (D.moves.length) o.table([{ h: 'Fecha', w: 18 }, { h: 'Centro', w: 30 }, { h: 'Categoría', w: 32 }, { h: 'Detalle', w: 56 }, { h: 'Monto', w: 24, a: 'r' }], D.moves.map(z => [A.fmtDMY(z.mv.date), z.sede, catName(z.mv.cat), z.mv.desc || '', (z.mv.type === 'ingreso' ? '+' : '−') + money(z.mv.amount)])); else o.p('Sin movimientos.');
+    o.p('Facturado: prestaciones cargadas en el mes. A profesionales: según su porcentaje o el alquiler del módulo. Egresos: gastos y sueldos pagados de cada centro.', 8);
     audit('Descargó el reporte de ' + monthName(m) + ' (PDF).');
     o.finish('reporte-' + m + '.pdf');
   };
   A.acts.empRepCsv = () => {
     const m = em(), D = repData(m), q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"', n = v => String(Math.round(v || 0));
-    const L = [['Reporte mensual', monthName(m), A.CLINIC], [], ['Consultorio', 'Facturado', 'Cobrado', 'A profesionales', 'Egresos', 'Resultado']];
+    const L = [['Reporte mensual', monthName(m), A.CLINIC], [], ['Centro', 'Facturado', 'Cobrado', 'A profesionales', 'Egresos', 'Resultado']];
     D.rows.forEach(r => L.push([r.l.name, n(r.o.fact), n(r.o.cob), n(r.pr), n(r.o.egr), n(r.res)]));
     if (D.gral) L.push(['Gastos generales', '', '', '', n(D.gral), n(-D.gral)]);
-    L.push([], ['Liquidaciones'], ['Consultorio', 'Profesional', 'Facturado', 'Al profesional', 'A la empresa']);
+    L.push([], ['Liquidaciones'], ['Centro', 'Profesional', 'Facturado', 'Al profesional', 'A la empresa']);
     sedes().forEach(l => { const p = D.ps[l.id]; if (!p) return; Object.keys(p.pros).forEach(id => L.push([l.name, A.PRO(id).name, n(p.pros[id].prod), n(p.pros[id].dent), n(p.pros[id].prod - p.pros[id].dent)])); });
-    L.push([], ['Movimientos de caja'], ['Fecha', 'Consultorio', 'Tipo', 'Categoría', 'Detalle', 'Medio', 'Monto']);
+    L.push([], ['Movimientos de caja'], ['Fecha', 'Centro', 'Tipo', 'Categoría', 'Detalle', 'Medio', 'Monto']);
     D.moves.forEach(z => L.push([z.mv.date, z.sede, z.mv.type, catName(z.mv.cat), z.mv.desc || '', z.mv.method || '', n(z.mv.type === 'ingreso' ? z.mv.amount : -z.mv.amount)]));
     const csv = '﻿' + L.map(r => r.map(q).join(';')).join('\r\n'), blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     audit('Descargó el reporte de ' + monthName(m) + ' (Excel).');
@@ -12565,19 +12565,19 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* menú: activar el modo Empresa */
   function menuEntry() {
     const sec = document.querySelector('.dr-sec .acct-type'); if (!sec || $('#empMenuBtn')) return;
-    sec.insertAdjacentHTML('afterend', '<button class="dnav only-noemp" id="empMenuBtn" data-act="empOn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg><span class="t">Modo Empresa (varios consultorios)</span></button>');
+    sec.insertAdjacentHTML('afterend', '<button class="dnav only-noemp" id="empMenuBtn" data-act="empOn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/></svg><span class="t">Modo Empresa (varios centros)</span></button>');
   }
   menuEntry();
 
-  /* voz: «abrí la empresa», «consultorio norte» */
+  /* voz: «abrí la empresa», «centro norte» */
   const execPrev = A.cmd && A.cmd.exec;
   if (execPrev) A.cmd.exec = (text, opts) => {
     if (isEmp()) {
       const n = A.norm ? A.norm(String(text || '')) : String(text || '').toLowerCase();
       if (/^(?:abr[ií]|abrir|mostr[aá](?:me)?|ver|ir a)?\s*(?:la )?empresa$/.test(n) && perm().emp) { S.tab = 'empresa'; A.refresh(); return { ok: true, msg: 'Empresa.' }; }
-      const mm = n.match(/^(?:abr[ií]|ver|ir a|cambi[aá] a)?\s*(?:el )?(?:consultorio|sede)\s+(.+)$/);
-      if (mm && perm().all) { const q = mm[1].trim(), l = sedes().filter(z => (A.norm ? A.norm(z.name) : z.name.toLowerCase()).indexOf(q) >= 0)[0]; if (l) { setSede(l.id); A.refresh(); return { ok: true, msg: 'Consultorio ' + l.name + '.' }; } }
-      if (/^(?:todos los consultorios|toda la empresa)$/.test(n) && perm().all) { setSede(null); A.refresh(); return { ok: true, msg: 'Todos los consultorios.' }; }
+      const mm = n.match(/^(?:abr[ií]|ver|ir a|cambi[aá] a)?\s*(?:el )?(?:centro|sede)\s+(.+)$/);
+      if (mm && perm().all) { const q = mm[1].trim(), l = sedes().filter(z => (A.norm ? A.norm(z.name) : z.name.toLowerCase()).indexOf(q) >= 0)[0]; if (l) { setSede(l.id); A.refresh(); return { ok: true, msg: 'Centro ' + l.name + '.' }; } }
+      if (/^(?:todos los centros|toda la empresa)$/.test(n) && perm().all) { setSede(null); A.refresh(); return { ok: true, msg: 'Todos los centros.' }; }
     }
     return execPrev(text, opts);
   };
@@ -13003,7 +13003,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const canAll = () => (A.empPermAll ? A.empPermAll() : true);
   const go = (sd, tab, pro) => { if (A.empSetSede) A.empSetSede(sd); S.proSel = pro ? [pro] : null; S.view = 'dia'; S.tab = tab || 'agenda'; A.refresh(); window.scrollTo(0, 0); };
 
-  /* ---------- cada consultorio ve solo a sus profesionales (si no tiene, no se muestra ninguno) ---------- */
+  /* ---------- cada centro ve solo a sus profesionales (si no tiene, no se muestra ninguno) ---------- */
   const vpPrev = A.visPros;
   A.visPros = () => {
     if (!isEmp()) return vpPrev();
@@ -13012,7 +13012,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (S.uimode === 'atencion' && S.me) { const me = l.filter(p => p.id === S.me); if (me.length) l = me; }
     return l;
   };
-  /* y solo los turnos de ese consultorio (un profesional que atiende en dos no mezcla sus agendas) */
+  /* y solo los turnos de ese centro (un profesional que atiende en dos no mezcla sus agendas) */
   const keepPrev = A.locKeep;
   A.locKeep = a => {
     if (!isEmp()) return keepPrev ? keepPrev(a) : true;
@@ -13020,12 +13020,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return A.locOf(a) === sd;
   };
 
-  /* ---------- consultorio sin profesionales: pantalla propia, sin mezclar ---------- */
+  /* ---------- centro sin profesionales: pantalla propia, sin mezclar ---------- */
   function emptyHTML(sd) {
     const l = sedeById(sd) || {}, others = A.PROS.filter(p => !(Array.isArray(p.sedes) && p.sedes.indexOf(sd) >= 0));
-    return '<section class="card emp-empty" style="--sc:' + esc(l.color || 'var(--accent)') + '"><h2><span class="emp-dot"></span> ' + esc(l.name || 'Consultorio') + '</h2><p>Este consultorio todavía no tiene profesionales. Su agenda queda vacía hasta que sumes al menos uno.</p>' +
+    return '<section class="card emp-empty" style="--sc:' + esc(l.color || 'var(--accent)') + '"><h2><span class="emp-dot"></span> ' + esc(l.name || 'Centro') + '</h2><p>Este centro todavía no tiene profesionales. Su agenda queda vacía hasta que sumes al menos uno.</p>' +
       '<div class="row-btns"><button class="btn primary" data-act="treeProNew" data-s="' + esc(sd) + '">+ Profesional nuevo</button></div>' +
-      (others.length && canAll() ? '<h3 class="emp-h3">O sumá a alguien que ya trabaja en otro consultorio</h3><ul class="tree-pick">' + others.map(p => '<li><span><i class="stdot" style="background:' + esc(p.color) + '"></i> ' + esc(p.name) + '<small>' + esc((p.sedes || []).map(id => (sedeById(id) || {}).name).filter(Boolean).join(', ')) + '</small></span><button class="btn small" data-act="treeProAdd" data-p="' + p.id + '" data-s="' + esc(sd) + '">Sumar a ' + esc(l.name || 'este consultorio') + '</button></li>').join('') + '</ul>' : '') + '</section>';
+      (others.length && canAll() ? '<h3 class="emp-h3">O sumá a alguien que ya trabaja en otro centro</h3><ul class="tree-pick">' + others.map(p => '<li><span><i class="stdot" style="background:' + esc(p.color) + '"></i> ' + esc(p.name) + '<small>' + esc((p.sedes || []).map(id => (sedeById(id) || {}).name).filter(Boolean).join(', ')) + '</small></span><button class="btn small" data-act="treeProAdd" data-p="' + p.id + '" data-s="' + esc(sd) + '">Sumar a ' + esc(l.name || 'este centro') + '</button></li>').join('') + '</ul>' : '') + '</section>';
   }
   ['agenda', 'inicio'].forEach(tab => {
     const prev = A.render[tab];
@@ -13038,12 +13038,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* sin profesionales no se puede dar un turno ahí */
   ['newAppt', 'newSobre', 'agFreeToday', 'blockNew'].forEach(k => {
     const prev = A.acts[k]; if (!prev) return;
-    A.acts[k] = function () { if (isEmp() && cur() && !A.visPros().length) { A.toast('Este consultorio todavía no tiene profesionales.'); return; } return prev.apply(this, arguments); };
+    A.acts[k] = function () { if (isEmp() && cur() && !A.visPros().length) { A.toast('Este centro todavía no tiene profesionales.'); return; } return prev.apply(this, arguments); };
   });
   const execPrev = A.cmd && A.cmd.exec;
-  if (execPrev) A.cmd.exec = (t, o) => { try { return execPrev(t, o); } catch (e) { if (isEmp() && cur() && !A.visPros().length) return { ok: false, msg: 'Este consultorio todavía no tiene profesionales.' }; throw e; } };
+  if (execPrev) A.cmd.exec = (t, o) => { try { return execPrev(t, o); } catch (e) { if (isEmp() && cur() && !A.visPros().length) return { ok: false, msg: 'Este centro todavía no tiene profesionales.' }; throw e; } };
 
-  /* ---------- profesional nuevo: queda en el consultorio donde estás ---------- */
+  /* ---------- profesional nuevo: queda en el centro donde estás ---------- */
   A.acts.treeProNew = el => { S._treeSede = el.getAttribute('data-s'); if (A.acts.cfgOpen) A.acts.cfgOpen({ getAttribute: k => (k === 'data-t' ? 'pros' : null) }); if (A.acts.cfgProNew) A.acts.cfgProNew(); };
   A.acts.treeProAdd = el => {
     const p = A.PROS.filter(x => x.id === el.getAttribute('data-p'))[0], sd = el.getAttribute('data-s'); if (!p) return;
@@ -13053,17 +13053,17 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.treeProMove = el => { S.modal = { type: 'treeMove', p: el.getAttribute('data-p'), from: el.getAttribute('data-s') }; A.renderModal(); };
   A.modalFns.treeMove = m => {
     const p = A.PRO(m.p), ps = Array.isArray(p.sedes) ? p.sedes : [];
-    return A.modalShell(p.name, '<p>¿En qué consultorios atiende? Tildá todos los que correspondan. El primero que quede marcado es su consultorio principal.</p><div class="tree-chk">' + sedes().map(l => '<label class="chk"><input type="checkbox" data-sd="' + esc(l.id) + '"' + (ps.indexOf(l.id) >= 0 ? ' checked' : '') + '> <span><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</span></label>').join('') + '</div><div class="hint bad" id="tmMsg"></div>',
+    return A.modalShell(p.name, '<p>¿En qué centros atiende? Tildá todos los que correspondan. El primero que quede marcado es su centro principal.</p><div class="tree-chk">' + sedes().map(l => '<label class="chk"><input type="checkbox" data-sd="' + esc(l.id) + '"' + (ps.indexOf(l.id) >= 0 ? ' checked' : '') + '> <span><span class="emp-dot" style="background:' + esc(l.color) + '"></span> ' + esc(l.name) + '</span></label>').join('') + '</div><div class="hint bad" id="tmMsg"></div>',
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="treeMoveGo">Guardar</button>');
   };
   A.acts.treeMoveGo = () => {
     const m = S.modal, p = A.PRO(m.p), sel = A.$$('[data-sd]').filter(c => c.checked).map(c => c.getAttribute('data-sd'));
-    if (!sel.length) { $('#tmMsg').textContent = 'Tiene que quedar en al menos un consultorio.'; return; }
+    if (!sel.length) { $('#tmMsg').textContent = 'Tiene que quedar en al menos un centro.'; return; }
     const old = (p.sedes || [])[0]; p.sedes = sel.sort((a, b) => (a === old ? -1 : b === old ? 1 : 0));
     if (A.empAudit) A.empAudit(p.name + ': atiende en ' + sel.map(id => (sedeById(id) || {}).name).join(', ') + '.');
     S.modal = null; A.renderModal(); A.save(); A.refresh();
   };
-  /* los profesionales que se crean sin consultorio quedan en el consultorio donde se está trabajando */
+  /* los profesionales que se crean sin centro quedan en el centro donde se está trabajando */
   const arPrev = A.afterRefresh;
   A.afterRefresh = () => {
     if (isEmp()) {
@@ -13075,7 +13075,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     crumbs();
   };
 
-  /* ---------- camino arriba de todo: Empresa › Consultorio › Profesional ---------- */
+  /* ---------- camino arriba de todo: Empresa › Centro › Profesional ---------- */
   function crumbs() {
     document.querySelectorAll('.emp-crumb').forEach(e => e.remove());
     if (!isEmp() || ['agenda', 'inicio', 'caja', 'pacientes', 'liq'].indexOf(S.tab) < 0) return;
@@ -13085,9 +13085,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let h = '<nav class="emp-crumb" aria-label="Dónde estás" style="--sc:' + esc(l ? l.color : 'var(--accent)') + '">';
     h += all ? '<button class="ec-node" data-act="treeGo" data-s="">🏢 Empresa</button><span class="ec-sep">›</span>' : '';
     if (l) {
-      h += all && sedes().length > 1 ? '<label class="ec-sel"><span class="emp-dot"></span><select data-chg="treeSede" aria-label="Consultorio">' + sedes().map(x => '<option value="' + esc(x.id) + '"' + (x.id === sd ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></label>' : '<span class="ec-node cur"><span class="emp-dot"></span> ' + esc(l.name) + '</span>';
+      h += all && sedes().length > 1 ? '<label class="ec-sel"><span class="emp-dot"></span><select data-chg="treeSede" aria-label="Centro">' + sedes().map(x => '<option value="' + esc(x.id) + '"' + (x.id === sd ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></label>' : '<span class="ec-node cur"><span class="emp-dot"></span> ' + esc(l.name) + '</span>';
       if (S.tab === 'agenda') { const ps = A.visPros(); if (ps.length > 1) h += '<span class="ec-sep">›</span><span class="ec-pros"><button class="ec-pro' + (!pro ? ' on' : '') + '" data-act="treePro" data-p="">Todos (' + ps.length + ')</button>' + ps.map(p => '<button class="ec-pro' + (pro && pro.id === p.id ? ' on' : '') + '" data-act="treePro" data-p="' + p.id + '" style="--pc:' + esc(p.color) + '">' + esc(p.short || p.name) + '</button>').join('') + '</span>'; else if (ps.length === 1) h += '<span class="ec-sep">›</span><span class="ec-node">' + esc(ps[0].name) + '</span>'; }
-    } else h += '<span class="ec-node cur">Todos los consultorios</span>';
+    } else h += '<span class="ec-node cur">Todos los centros</span>';
     h += '</nav>';
     host.insertAdjacentHTML('afterbegin', h);
   }
@@ -13095,11 +13095,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.chg.treeSede = el => go(el.value, S.tab === 'inicio' ? 'agenda' : S.tab);
   A.acts.treePro = el => { const id = el.getAttribute('data-p'); S.proSel = id ? [id] : null; A.refresh(); };
 
-  /* ---------- Empresa › Consultorios: el árbol completo ---------- */
+  /* ---------- Empresa › Centros: el árbol completo ---------- */
   A.empTreeHTML = () => {
     const L = sedes(), today = A.today();
-    let h = '<section class="card tree"><h2>Organización</h2><p class="hint" style="margin-top:0">Tocá un consultorio para entrar a su agenda, o un profesional para ver solo la suya. Con «Mover» cambiás en qué consultorios atiende.</p>' +
-      '<div class="tree-root"><button class="tree-node root" data-act="treeGo" data-s="">🏢 ' + esc(A.CLINIC) + '<small>Empresa · ' + L.length + ' consultorio' + (L.length === 1 ? '' : 's') + ' · ' + A.PROS.length + ' profesional' + (A.PROS.length === 1 ? '' : 'es') + '</small></button><ul class="tree-l1">';
+    let h = '<section class="card tree"><h2>Organización</h2><p class="hint" style="margin-top:0">Tocá un centro para entrar a su agenda, o un profesional para ver solo la suya. Con «Mover» cambiás en qué centros atiende.</p>' +
+      '<div class="tree-root"><button class="tree-node root" data-act="treeGo" data-s="">🏢 ' + esc(A.CLINIC) + '<small>Empresa · ' + L.length + ' centro' + (L.length === 1 ? '' : 's') + ' · ' + A.PROS.length + ' profesional' + (A.PROS.length === 1 ? '' : 'es') + '</small></button><ul class="tree-l1">';
     L.forEach(l => {
       const ps = prosOf(l.id), hoy = ps.filter(p => A.hoursFor(p, today).length).length;
       h += '<li><div class="tree-row"><button class="tree-node sede" data-act="treeGo" data-s="' + esc(l.id) + '" style="--sc:' + esc(l.color) + '"><span class="emp-dot"></span> ' + esc(l.name) + '<small>' + ps.length + ' profesional' + (ps.length === 1 ? '' : 'es') + (ps.length ? ' · ' + hoy + ' atiende' + (hoy === 1 ? '' : 'n') + ' hoy' : '') + '</small></button><button class="btn small" data-act="treeProNew" data-s="' + esc(l.id) + '">+ Profesional</button></div><ul class="tree-l2">' +
@@ -13146,6 +13146,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     admin: 'Todo, salvo los sueldos y las metas. No puede cambiar el plan ni borrar la cuenta.'
   };
   const sedes = () => (A.locs ? A.locs() : []);
+  /* en modo Empresa cada sede es un centro (adentro tiene sus consultorios) */
+  const LW = pl => ((A.isEmp && A.isEmp()) ? 'centro' : 'consultorio') + (pl ? 's' : '');
+  const LWc = () => { const w = LW(); return w.charAt(0).toUpperCase() + w.slice(1); };
   const sedeName = id => { const l = sedes().filter(x => x.id === id)[0]; return l ? l.name : ''; };
   const proName = id => { const p = A.PROS.filter(x => x.id === id)[0]; return p ? p.name : ''; };
   /* el enlace siempre apunta a la app publicada (desde el APK la dirección propia es «localhost» y no sirve para otros) */
@@ -13366,7 +13369,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.teamOpen = () => { S.modal = { type: 'team' }; A.renderModal(); loadTeam(); };
   const invLink = code => appUrl() + '?invitacion=' + encodeURIComponent(code);
   const waText = i => 'Hola' + (i.name ? ' ' + i.name.split(' ')[0] : '') + '. Te invito a usar OdontoVoz en ' + (A.CLINIC || 'el consultorio') + ' como ' + (RN[i.role] || i.role).toLowerCase() + (i.sede && sedeName(i.sede) ? ' en ' + sedeName(i.sede) : '') + '. Entrá a este enlace y creá tu usuario con tu correo (para vos es gratis): ' + invLink(i.code) + ' . El enlace vence en 7 días y sirve una sola vez.';
-  const sedeOpts = (sel, any) => (any ? '<option value=""' + (!sel ? ' selected' : '') + '>Todos los consultorios</option>' : '') + sedes().map(l => '<option value="' + esc(l.id) + '"' + (sel === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('');
+  const sedeOpts = (sel, any) => (any ? '<option value=""' + (!sel ? ' selected' : '') + '>Todos los ' + LW(true) + '</option>' : '') + sedes().map(l => '<option value="' + esc(l.id) + '"' + (sel === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('');
   const proOpts = sel => '<option value="">— Elegí —</option>' + A.PROS.map(p => '<option value="' + esc(p.id) + '"' + (sel === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
   const roleOpts = sel => ['recepcion', 'profesional', 'asistente', 'admin'].map(r => '<option value="' + r + '"' + (sel === r ? ' selected' : '') + '>' + RN[r] + '</option>').join('');
   const manyLocs = () => sedes().length > 1 || isEmp();
@@ -13381,7 +13384,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       x += '<div class="tm-form"><h3>Invitar a una persona</h3><div class="tm-grid">' +
         '<div class="field"><label for="tmName">Nombre</label><input id="tmName" value="' + esc(f.name) + '" placeholder="Ej.: Marta" data-in="tmF" data-k="name"></div>' +
         '<div class="field"><label for="tmRole">Puesto</label><select id="tmRole" data-chg="tmF" data-k="role">' + roleOpts(f.role) + '</select></div>' +
-        (manyLocs() ? '<div class="field"><label for="tmSede">Consultorio</label><select id="tmSede" data-chg="tmF" data-k="sede">' + sedeOpts(f.sede, f.role === 'admin') + '</select></div>' : '') +
+        (manyLocs() ? '<div class="field"><label for="tmSede">' + LWc() + '</label><select id="tmSede" data-chg="tmF" data-k="sede">' + sedeOpts(f.sede, f.role === 'admin') + '</select></div>' : '') +
         (f.role === 'profesional' || f.role === 'asistente' ? '<div class="field"><label for="tmPro">' + (f.role === 'profesional' ? 'Es el profesional' : 'Trabaja con') + '</label><select id="tmPro" data-chg="tmF" data-k="pro">' + proOpts(f.pro) + '</select></div>' : '') +
         '</div><p class="hint" style="margin:4px 0 8px">' + esc(RDESC[f.role] || '') + (f.role === 'profesional' ? ' Si el odontólogo todavía no está cargado, primero sumalo en Profesionales.' : '') + '</p><div class="row-btns"><button class="btn small primary" data-act="tmNew">Crear invitación</button></div><div class="hint bad" id="tmMsg"></div></div>';
     }
@@ -13409,7 +13412,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const say = t => { if (msg) msg.textContent = t; };
     if (!real()) return say('Para invitar personas, ingresá con tu cuenta en la nube.');
     if (!f.name) return say('Escribí el nombre de la persona.');
-    if (f.role !== 'admin' && isEmp() && !f.sede) return say('Elegí el consultorio donde trabaja.');
+    if (f.role !== 'admin' && isEmp() && !f.sede) return say('Elegí el ' + LW() + ' donde trabaja.');
     if (f.role === 'profesional' && !f.pro) return say('Elegí qué profesional es.');
     el.disabled = true; say('Creando…');
     try {
@@ -13438,7 +13441,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (k === 'role') { p.p_role = v; if (v !== 'admin' && isEmp() && !z.sede && sedes()[0]) p.p_sede = sedes()[0].id; }
     if (k === 'sede') p.p_sede = v;
     if (k === 'pro') p.p_pro = v;
-    if (A.empAudit) A.empAudit('Cambió ' + (k === 'role' ? 'el puesto' : k === 'sede' ? 'el consultorio' : 'el profesional') + ' de ' + (z.name || z.email) + '.');
+    if (A.empAudit) A.empAudit('Cambió ' + (k === 'role' ? 'el puesto' : k === 'sede' ? 'el ' + LW() : 'el profesional') + ' de ' + (z.name || z.email) + '.');
     setMember(id, p, 'Listo. Se aplica en su equipo en menos de un minuto.');
   };
   A.acts.tmOff = el => { const z = memberOf(el.getAttribute('data-id')); S.modal = { type: 'tmOffAsk', id: z.member, name: z.name || z.email }; A.renderModal(); };
@@ -14275,6 +14278,316 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '#clipBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:265;background:#173f7a;color:#fff;border-radius:14px;padding:10px 12px 10px 16px;display:flex;gap:10px;align-items:center;width:max-content;max-width:calc(100vw - 24px);box-shadow:0 12px 30px rgba(0,0,0,.3);font-size:14px}#clipBar .btn{background:#fff;color:#173f7a;border:0}' +
     'body.clip-on #gridWrap .gb{cursor:copy;outline:2px dashed #7fb3ff;outline-offset:-2px}' +
     '</style>');
+})();
+/* ===== 1.29: Empresa › Centros › Consultorios › Odontólogos: consultorios de cada centro y rotación semanal ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
+  const isEmp = () => !!(A.isEmp && A.isEmp());
+  const sedes = () => (A.locs ? A.locs() : []);
+  const sedeById = id => sedes().filter(l => l.id === id)[0] || null;
+  const cur = () => (isEmp() && A.empSede ? A.empSede() : null);
+  const prosOf = sd => A.PROS.filter(p => Array.isArray(p.sedes) && p.sedes.indexOf(sd) >= 0);
+  const canAll = () => (A.empPermAll ? A.empPermAll() : true);
+  const canEdit = () => canAll() && (!(A.memberNow && A.memberNow()) || (A.mbRole && A.mbRole() === 'admin'));
+  const SH = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const ORDER = [1, 2, 3, 4, 5, 6, 0];
+  const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const toMin = s => { const m = /^(\d{1,2}):(\d{2})$/.exec(s || ''); return m ? +m[1] * 60 + +m[2] : null; };
+  const audit = t => { if (A.empAudit) A.empAudit(t); };
+
+  /* ---------- datos (van en la configuración: solo el dueño o un administrador los cambian) ---------- */
+  const rooms = l => (l && Array.isArray(l.rooms) ? l.rooms : []);
+  const roomById = (l, id) => rooms(l).filter(r => r.id === id)[0] || null;
+  const rotAll = () => (A.CFG.rot && typeof A.CFG.rot === 'object' ? A.CFG.rot : (A.CFG.rot = {}));
+  const rotOf = sd => { const R = rotAll(); return Array.isArray(R[sd]) ? R[sd] : (R[sd] = []); };
+  const weekStart = k => { const d = A.dow(k); return A.add(k, d === 0 ? -6 : 1 - d); };
+  const dateIn = (ws, dow) => A.add(ws, dow === 0 ? 6 : dow - 1);
+  const applies = (e, key) => {
+    if (e.dow !== A.dow(key)) return false;
+    if (!e.wk) return true;
+    const odd = A.isoWeek(key) % 2 === 1;
+    return e.wk === 'odd' ? odd : !odd;
+  };
+  /* horario efectivo de una asignación ese día: el que se cargó o el del profesional */
+  const hrsOf = (e, key) => {
+    if (e.h && e.h.length === 2) return [e.h];
+    const p = A.PRO(e.pro); return p ? A.hoursFor(p, key).map(r => [r[0], r[1]]) : [];
+  };
+  const overlap = (a, b) => a.some(x => b.some(y => x[0] < y[1] && y[0] < x[1]));
+  const hrsTxt = h => (h.length ? h.map(r => A.mm(r[0]) + '–' + A.mm(r[1])).join(', ') : 'no atiende ese día');
+  const shortRoom = r => { if (!r) return ''; const m = /^consultorio\s*(\S+)$/i.exec(r.name || ''); return m ? 'C' + m[1] : (r.name || '').slice(0, 10); };
+  /* asignaciones de ese día en el centro, con choques marcados */
+  function dayPlan(sd, key) {
+    const l = sedeById(sd), list = rotOf(sd).filter(e => applies(e, key) && A.PRO(e.pro) && roomById(l, e.room));
+    const bad = {};
+    list.forEach((e, i) => list.forEach((f, j) => { if (j > i && e.room === f.room && overlap(hrsOf(e, key), hrsOf(f, key))) { bad[e.id] = f.pro; bad[f.id] = e.pro; } }));
+    return { list, bad };
+  }
+  A.rotClashes = (sd, key) => Object.keys(dayPlan(sd, key).bad).length;
+
+  /* en qué consultorio cae un turno */
+  A.roomOf = a => {
+    if (!isEmp() || !a || a.type === 'block') return null;
+    const sd = A.locOf(a), l = sedeById(sd); if (!l || !rooms(l).length) return null;
+    if (a.room && roomById(l, a.room)) return roomById(l, a.room);
+    const es = rotOf(sd).filter(e => e.pro === a.pro && applies(e, a.date) && roomById(l, e.room));
+    if (!es.length) return null;
+    const hit = es.filter(e => hrsOf(e, a.date).some(r => r[0] <= a.start && a.start < r[1]))[0] || es[0];
+    return roomById(l, hit.room);
+  };
+  /* profesionales que están en un consultorio ese día */
+  const prosInRoom = (sd, rid, key) => { const out = []; dayPlan(sd, key).list.forEach(e => { if (e.room === rid && out.indexOf(e.pro) < 0) out.push(e.pro); }); return out; };
+
+  /* ---------- el consultorio en cada turno de la agenda y en la ventanita del turno ---------- */
+  const covPrev = A.blkCov;
+  A.blkCov = function (a, p) {
+    const r = A.roomOf(a);
+    return (covPrev ? covPrev.apply(this, arguments) : '') + (r ? ' <span class="broom" title="' + esc(r.name) + '">' + esc(shortRoom(r)) + '</span>' : '');
+  };
+  new MutationObserver(() => {
+    const tp = document.getElementById('tpop'); if (!tp || tp.querySelector('.tp-room')) return;
+    const n = tp.querySelector('[data-act="tpFicha"][data-id]'), a = n && A.apptById(n.getAttribute('data-id')); if (!a) return;
+    const r = A.roomOf(a), l = sedeById(A.locOf(a)); if (!r) return;
+    const hd = tp.querySelector('.tp-head'); if (hd) hd.insertAdjacentHTML('afterend', '<div class="tp-room"><span aria-hidden="true">🚪</span> ' + esc(r.name) + (l ? ' · ' + esc(l.name) : '') + '</div>');
+  }).observe(document.body, { childList: true });
+
+  /* ---------- agenda: elegir un consultorio muestra a quienes trabajan ahí ese día ---------- */
+  const arPrev = A.afterRefresh;
+  A.afterRefresh = () => {
+    if (arPrev) arPrev();
+    if (!isEmp() || S.tab !== 'agenda') return;
+    const sd = cur(), l = sedeById(sd), nav = document.querySelector('#view-agenda .emp-crumb'); if (!l || !nav || !rooms(l).length) return;
+    const key = S.date || A.today();
+    if (S._roomSel && !roomById(l, S._roomSel)) S._roomSel = null;
+    let h = '<span class="ec-sep">›</span><span class="ec-rooms" role="group" aria-label="Consultorio"><button class="ec-room' + (!S._roomSel ? ' on' : '') + '" data-act="agRoom" data-r="">Todos los consultorios</button>';
+    rooms(l).forEach(r => { const n = prosInRoom(sd, r.id, key).length; h += '<button class="ec-room' + (S._roomSel === r.id ? ' on' : '') + '" data-act="agRoom" data-r="' + esc(r.id) + '" title="' + n + ' profesional' + (n === 1 ? '' : 'es') + ' ese día">🚪 ' + esc(r.name) + (n ? ' <small>' + n + '</small>' : '') + '</button>'; });
+    nav.insertAdjacentHTML('beforeend', h + '</span>');
+  };
+  A.acts.agRoom = el => {
+    const r = el.getAttribute('data-r'), sd = cur();
+    if (!r) { S._roomSel = null; S.proSel = null; A.refresh(); return; }
+    const ps = prosInRoom(sd, r, S.date || A.today());
+    if (!ps.length) { A.toast('Nadie tiene asignado ese consultorio ese día. Se arma en Empresa › Centros.'); return; }
+    S._roomSel = r; S.proSel = ps; A.refresh();
+  };
+  /* al cambiar de día con un consultorio elegido, se vuelven a buscar sus profesionales */
+  const agPrev = A.render.agenda;
+  A.render.agenda = function () {
+    if (isEmp() && S._roomSel && cur()) {
+      if (S._roomDate !== S.date) { const ps = prosInRoom(cur(), S._roomSel, S.date); S.proSel = ps.length ? ps : null; if (!ps.length) S._roomSel = null; }
+      S._roomDate = S.date;
+    }
+    return agPrev.apply(this, arguments);
+  };
+  const tpPrev = A.acts.treePro;
+  if (tpPrev) A.acts.treePro = function () { S._roomSel = null; return tpPrev.apply(this, arguments); };
+
+  /* ---------- Empresa › Centros: el árbol de tres niveles ---------- */
+  const treePrev = A.empTreeHTML;
+  A.empTreeHTML = () => {
+    const L = sedes(); if (!isEmp()) return treePrev ? treePrev() : '';
+    const today = A.today(), ws = weekStart(today);
+    const count = L.reduce((n, l) => n + rooms(l).length, 0);
+    let h = '<section class="card tree"><h2>Organización</h2><p class="hint" style="margin-top:0">Empresa › centros › consultorios › odontólogos. Tocá un centro para entrar a su agenda, un consultorio para ver a quienes trabajan hoy en él, o un profesional para ver solo la suya.</p>' +
+      '<div class="tree-root"><button class="tree-node root" data-act="treeGo" data-s="">🏢 ' + esc(A.CLINIC) + '<small>Empresa · ' + L.length + ' centro' + (L.length === 1 ? '' : 's') + (count ? ' · ' + count + ' consultorio' + (count === 1 ? '' : 's') : '') + ' · ' + A.PROS.length + ' profesional' + (A.PROS.length === 1 ? '' : 'es') + '</small></button><ul class="tree-l1">';
+    L.forEach(l => {
+      const ps = prosOf(l.id), hoy = ps.filter(p => A.hoursFor(p, today).length).length, R = rooms(l);
+      h += '<li><div class="tree-row"><button class="tree-node sede" data-act="treeGo" data-s="' + esc(l.id) + '" style="--sc:' + esc(l.color) + '"><span class="emp-dot"></span> ' + esc(l.name) + '<small>' + (R.length ? R.length + ' consultorio' + (R.length === 1 ? '' : 's') + ' · ' : '') + ps.length + ' profesional' + (ps.length === 1 ? '' : 'es') + (ps.length ? ' · ' + hoy + ' atiende' + (hoy === 1 ? '' : 'n') + ' hoy' : '') + '</small></button>' +
+        (canEdit() ? '<button class="btn small" data-act="rotPlan" data-s="' + esc(l.id) + '">' + (R.length ? 'Rotación' : '+ Consultorios') + '</button>' : '') + '<button class="btn small" data-act="treeProNew" data-s="' + esc(l.id) + '">+ Profesional</button></div><ul class="tree-l2">';
+      if (!R.length) {
+        h += ps.length ? ps.map(p => proNode(l, p, today, '')).join('') : '<li class="tree-empty">Sin profesionales todavía</li>';
+      } else {
+        const used = {};
+        R.forEach(r => {
+          const wk = {}; rotOf(l.id).forEach(e => { if (e.room === r.id && A.PRO(e.pro)) { (wk[e.pro] = wk[e.pro] || []).push(e); used[e.pro] = 1; } });
+          const ids = Object.keys(wk), nowIn = prosInRoom(l.id, r.id, today);
+          h += '<li><div class="tree-row"><button class="tree-node room" data-act="treeRoom" data-s="' + esc(l.id) + '" data-r="' + esc(r.id) + '"><span aria-hidden="true">🚪</span> ' + esc(r.name) + '<small>' + ids.length + ' odontólogo' + (ids.length === 1 ? '' : 's') + ' en la semana' + (nowIn.length ? ' · hoy: ' + esc(nowIn.map(id => A.PRO(id).short || A.PRO(id).name).join(', ')) : ' · hoy libre') + '</small></button></div><ul class="tree-l3">' +
+            (ids.length ? ids.map(id => proNode(l, A.PRO(id), today, wk[id].map(e => e.dow).filter((d, i, a) => a.indexOf(d) === i).sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y)).map(d => SH[d]).join(', '))).join('') : '<li class="tree-empty">Nadie asignado todavía</li>') + '</ul></li>';
+        });
+        const free = ps.filter(p => !used[p.id]);
+        if (free.length) h += '<li><div class="tree-row"><span class="tree-node room none">Sin consultorio fijo<small>' + free.length + ' profesional' + (free.length === 1 ? '' : 'es') + ' · asignalos en «Rotación»</small></span></div><ul class="tree-l3">' + free.map(p => proNode(l, p, today, '')).join('') + '</ul></li>';
+      }
+      h += '</ul></li>';
+    });
+    h += '</ul></div></section>';
+    return h + (canEdit() ? planHTML() : '');
+  };
+  function proNode(l, p, today, days) {
+    return '<li><button class="tree-node pro" data-act="treeGoPro" data-s="' + esc(l.id) + '" data-p="' + p.id + '" style="--pc:' + esc(p.color) + '"><i class="stdot" style="background:' + esc(p.color) + '"></i> ' + esc(p.name) + '<small>' + esc([p.spec || '', days, p.sedes && p.sedes[0] === l.id && p.sedes.length > 1 ? 'principal' : '', A.hoursFor(p, today).length ? 'hoy' : ''].filter(Boolean).join(' · ')) + '</small></button><button class="btn small ghost" data-act="treeProMove" data-p="' + p.id + '" data-s="' + esc(l.id) + '">Mover</button></li>';
+  }
+  A.acts.treeRoom = el => {
+    const sd = el.getAttribute('data-s'), r = el.getAttribute('data-r'), ps = prosInRoom(sd, r, A.today());
+    if (A.empSetSede) A.empSetSede(sd);
+    S.date = A.today(); S.view = 'dia'; S.tab = 'agenda'; S._roomSel = ps.length ? r : null; S._roomDate = S.date; S.proSel = ps.length ? ps : null;
+    if (!ps.length) A.toast('Hoy nadie tiene asignado ese consultorio.');
+    A.refresh(); window.scrollTo(0, 0);
+  };
+
+  /* ---------- planilla de rotación ---------- */
+  A.acts.rotPlan = el => { S._rotLoc = el.getAttribute('data-s'); const c = $('#rotPlan'); if (A.refresh) A.refresh(); setTimeout(() => { const x = $('#rotPlan'); if (x) x.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 30); return c; };
+  function planHTML() {
+    const L = sedes(); if (!L.length) return '';
+    if (!sedeById(S._rotLoc)) S._rotLoc = (L.filter(l => rooms(l).length)[0] || L[0]).id;
+    const sd = S._rotLoc, l = sedeById(sd), R = rooms(l);
+    if (!S._rotWs) S._rotWs = weekStart(A.today());
+    const ws = S._rotWs;
+    const days = ORDER.filter(d => A.CFG.days.indexOf(d) >= 0 || prosOf(sd).some(p => A.hoursFor(p, dateIn(ws, d)).length));
+    if (days.indexOf(S._rotDay) < 0) { const td = A.dow(A.today()); S._rotDay = days.indexOf(td) >= 0 ? td : days[0]; }
+    const dsel = S._rotDay, key = dateIn(ws, dsel);
+    let h = '<section class="card rot" id="rotPlan" style="--sc:' + esc(l.color) + '"><div class="rot-top"><h2>Consultorios y rotación</h2>' +
+      (L.length > 1 ? '<label class="ec-sel"><span class="emp-dot"></span><select data-chg="rotLoc" aria-label="Centro">' + L.map(x => '<option value="' + esc(x.id) + '"' + (x.id === sd ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></label>' : '<b>' + esc(l.name) + '</b>') + '</div>';
+    if (!R.length) {
+      return h + '<p>Cargá cuántos consultorios (sillones) tiene <b>' + esc(l.name) + '</b>. Después repartís a los odontólogos en cada uno, día por día.</p><div class="row-btns">' + [1, 2, 3, 4, 5, 6].map(n => '<button class="btn' + (n === 3 ? ' primary' : '') + '" data-act="rotMake" data-n="' + n + '">' + n + ' consultorio' + (n === 1 ? '' : 's') + '</button>').join('') + '</div></section>';
+    }
+    h += '<div class="rot-rooms">' + R.map(r => '<span class="rot-rchip">🚪 ' + esc(r.name) + '</span>').join('') + '<button class="btn small ghost" data-act="rotRooms">Editar consultorios</button></div>';
+    h += '<div class="rot-wk"><button class="btn small" data-act="rotWk" data-d="-7" aria-label="Semana anterior">‹</button><span>Semana del ' + A.fmtDMY(ws) + '</span><button class="btn small" data-act="rotWk" data-d="7" aria-label="Semana siguiente">›</button>' + (ws !== weekStart(A.today()) ? '<button class="btn small ghost" data-act="rotWk" data-d="0">Esta semana</button>' : '') + '</div>';
+    h += '<div class="rot-days" role="tablist">' + days.map(d => { const k = dateIn(ws, d), c = A.rotClashes(sd, k), miss = unassigned(sd, k).length; return '<button class="rot-day' + (d === dsel ? ' on' : '') + (c ? ' bad' : '') + '" data-act="rotDay" data-d="' + d + '" role="tab" aria-selected="' + (d === dsel) + '"><b>' + SH[d] + '</b><small>' + A.fmtDMY(k).slice(0, 5) + '</small>' + (c ? '<i title="Hay choques">!</i>' : miss ? '<i class="miss" title="Profesionales sin consultorio">' + miss + '</i>' : '') + '</button>'; }).join('') + '</div>';
+    const P = dayPlan(sd, key);
+    h += '<div class="rot-grid">' + R.map(r => {
+      const es = P.list.filter(e => e.room === r.id).sort((a, b) => ((hrsOf(a, key)[0] || [0])[0]) - ((hrsOf(b, key)[0] || [0])[0]));
+      return '<div class="rot-room"><div class="rr-h"><b>🚪 ' + esc(r.name) + '</b><button class="btn small" data-act="rotAdd" data-r="' + esc(r.id) + '">+ Asignar</button></div>' +
+        (es.length ? es.map(e => { const p = A.PRO(e.pro), hh = hrsOf(e, key); return '<button class="rot-e' + (P.bad[e.id] ? ' bad' : '') + '" data-act="rotEdit" data-id="' + esc(e.id) + '" style="--pc:' + esc(p.color) + '"><i class="stdot" style="background:' + esc(p.color) + '"></i><span><b>' + esc(p.name) + '</b><small>' + esc(hrsTxt(hh)) + (e.wk ? ' · semana por medio' : '') + (P.bad[e.id] ? ' · se pisa con ' + esc((A.PRO(P.bad[e.id]) || {}).name || '') : '') + '</small></span></button>'; }).join('') : '<div class="rot-free">Libre todo el día</div>') + '</div>';
+    }).join('') + '</div>';
+    const miss = unassigned(sd, key);
+    if (miss.length) h += '<div class="rot-miss"><b>Atienden ese día y no tienen consultorio:</b>' + miss.map(p => '<button class="ec-pro" data-act="rotAdd" data-p="' + p.id + '" style="--pc:' + esc(p.color) + '">' + esc(p.name) + ' <small>' + esc(hrsTxt(A.hoursFor(p, key))) + '</small></button>').join('') + '</div>';
+    h += '<div class="row-btns"><button class="btn" data-act="rotAuto">Repartir solos a los que faltan (toda la semana)</button><button class="btn ghost" data-act="rotCopy">Copiar ' + esc(A.DOW[dsel]) + ' a otro día</button></div>';
+    /* resumen de la semana (en la PC) */
+    h += '<div class="rot-sum"><table class="tbl"><thead><tr><th>Consultorio</th>' + days.map(d => '<th>' + SH[d] + '</th>').join('') + '</tr></thead><tbody>' + R.map(r => '<tr><td><b>' + esc(r.name) + '</b></td>' + days.map(d => { const k = dateIn(ws, d), Q = dayPlan(sd, k); const es = Q.list.filter(e => e.room === r.id); return '<td' + (es.some(e => Q.bad[e.id]) ? ' class="bad"' : '') + '>' + (es.length ? es.map(e => { const p = A.PRO(e.pro); return '<span class="rs-p" style="--pc:' + esc(p.color) + '">' + esc(p.short || p.name.split(' ').slice(-1)[0]) + ' <small>' + esc(hrsOf(e, k).map(x => A.mm(x[0]).replace(':00', '') + '–' + A.mm(x[1]).replace(':00', '')).join(' ')) + '</small></span>'; }).join('') : '<span class="hint">—</span>') + '</td>'; }).join('') + '</tr>').join('') + '</tbody></table></div>';
+    return h + '</section>';
+  }
+  const unassigned = (sd, key) => { const P = dayPlan(sd, key); return prosOf(sd).filter(p => A.hoursFor(p, key).length && !P.list.some(e => e.pro === p.id)); };
+  const saveR = (msg, t) => { A.save(); A.refresh(); if (msg) A.toast(msg); if (t) audit(t); };
+
+  A.chg.rotLoc = el => { S._rotLoc = el.value; A.refresh(); };
+  A.acts.rotDay = el => { S._rotDay = +el.getAttribute('data-d'); A.refresh(); };
+  A.acts.rotWk = el => { const d = +el.getAttribute('data-d'); S._rotWs = d ? A.add(S._rotWs || weekStart(A.today()), d) : weekStart(A.today()); A.refresh(); };
+  A.acts.rotMake = el => {
+    const l = sedeById(S._rotLoc), n = +el.getAttribute('data-n'); if (!l || !canEdit()) return;
+    l.rooms = []; for (let i = 1; i <= n; i++) l.rooms.push({ id: uid('r'), name: 'Consultorio ' + i });
+    saveR(n + ' consultorio' + (n === 1 ? '' : 's') + ' en ' + l.name + '. Ahora asigná a los odontólogos.', l.name + ': ' + n + ' consultorios.');
+  };
+
+  /* editar nombres de consultorios */
+  A.acts.rotRooms = () => { const l = sedeById(S._rotLoc); S.modal = { type: 'rotRooms', s: l.id, list: rooms(l).map(r => ({ id: r.id, name: r.name })) }; A.renderModal(); };
+  MF.rotRooms = m => {
+    const l = sedeById(m.s);
+    return A.modalShell('Consultorios de ' + l.name, '<p class="hint" style="margin-top:0">Ponele el nombre que usen en el centro (Consultorio 1, Box A, Sillón del fondo…).</p><div class="rot-rl">' +
+      m.list.map((r, i) => '<div class="rot-rr"><input class="inp" data-ri="' + i + '" value="' + esc(r.name) + '" aria-label="Nombre del consultorio ' + (i + 1) + '"><button class="btn small ghost" data-act="rotRoomDel" data-i="' + i + '" aria-label="Quitar">✕</button></div>').join('') + '</div>' +
+      '<button class="btn small" data-act="rotRoomAdd">+ Agregar consultorio</button><div class="hint bad" id="rrMsg"></div>',
+      '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="rotRoomsGo">Guardar</button>');
+  };
+  const rrSync = () => { const m = S.modal; A.$$('[data-ri]').forEach(i => { const r = m.list[+i.getAttribute('data-ri')]; if (r) r.name = i.value; }); };
+  A.acts.rotRoomAdd = () => { rrSync(); const m = S.modal; m.list.push({ id: uid('r'), name: 'Consultorio ' + (m.list.length + 1) }); A.renderModal(); };
+  A.acts.rotRoomDel = el => {
+    rrSync(); const m = S.modal, i = +el.getAttribute('data-i'), r = m.list[i];
+    const n = rotOf(m.s).filter(e => e.room === r.id).length;
+    if (n && !m.delOk) { m.delOk = r.id; $('#rrMsg').textContent = r.name + ' tiene ' + n + ' asignaci' + (n === 1 ? 'ón' : 'ones') + '. Tocá ✕ otra vez para quitarlo igual (esas asignaciones se borran).'; return; }
+    m.list.splice(i, 1); m.delOk = null; A.renderModal();
+  };
+  A.acts.rotRoomsGo = () => {
+    rrSync(); const m = S.modal, l = sedeById(m.s);
+    if (m.list.some(r => !r.name.trim())) { $('#rrMsg').textContent = 'Cada consultorio necesita un nombre.'; return; }
+    l.rooms = m.list.map(r => ({ id: r.id, name: r.name.trim() }));
+    const ids = l.rooms.map(r => r.id); rotAll()[m.s] = rotOf(m.s).filter(e => ids.indexOf(e.room) >= 0);
+    S.modal = null; A.renderModal(); saveR('Consultorios guardados.', l.name + ': consultorios ' + l.rooms.map(r => r.name).join(', ') + '.');
+  };
+
+  /* asignar un odontólogo a un consultorio un día */
+  A.acts.rotAdd = el => {
+    const sd = S._rotLoc, l = sedeById(sd), ps = prosOf(sd); if (!ps.length) { A.toast('Primero sumá profesionales a este centro.'); return; }
+    S.modal = { type: 'rotE', s: sd, e: { id: '', room: el.getAttribute('data-r') || rooms(l)[0].id, pro: el.getAttribute('data-p') || (unassigned(sd, dateIn(S._rotWs, S._rotDay))[0] || ps[0]).id, dow: S._rotDay, h: null, wk: null } };
+    A.renderModal();
+  };
+  A.acts.rotEdit = el => { const e = rotOf(S._rotLoc).filter(x => x.id === el.getAttribute('data-id'))[0]; if (!e) return; S.modal = { type: 'rotE', s: S._rotLoc, e: JSON.parse(JSON.stringify(e)) }; A.renderModal(); };
+  MF.rotE = m => {
+    const l = sedeById(m.s), e = m.e, key = dateIn(S._rotWs || weekStart(A.today()), e.dow), p = A.PRO(e.pro) || prosOf(m.s)[0], ph = A.hoursFor(p, key);
+    const opt = (v, t, on) => '<option value="' + esc(v) + '"' + (on ? ' selected' : '') + '>' + esc(t) + '</option>';
+    const thisOdd = A.isoWeek(key) % 2 === 1;
+    return A.modalShell(e.id ? 'Asignación' : 'Asignar consultorio',
+      '<div class="row2"><div class="field"><label for="reP">Odontólogo</label><select id="reP" class="inp" data-chg="reField" data-k="pro">' + prosOf(m.s).map(x => opt(x.id, x.name, x.id === e.pro)).join('') + '</select></div>' +
+      '<div class="field"><label for="reR">Consultorio</label><select id="reR" class="inp" data-chg="reField" data-k="room">' + rooms(l).map(r => opt(r.id, r.name, r.id === e.room)).join('') + '</select></div></div>' +
+      '<div class="row2"><div class="field"><label for="reD">Día</label><select id="reD" class="inp" data-chg="reField" data-k="dow">' + ORDER.map(d => opt(d, A.DOW[d].charAt(0).toUpperCase() + A.DOW[d].slice(1), d === e.dow)).join('') + '</select></div>' +
+      '<div class="field"><label for="reW">Semanas</label><select id="reW" class="inp" data-chg="reField" data-k="wk">' + opt('', 'Todas las semanas', !e.wk) + opt(thisOdd ? 'odd' : 'even', 'Semana por medio (empieza esta)', e.wk === (thisOdd ? 'odd' : 'even')) + opt(thisOdd ? 'even' : 'odd', 'Semana por medio (empieza la próxima)', e.wk === (thisOdd ? 'even' : 'odd')) + '</select></div></div>' +
+      '<div class="field"><span class="lbl">Horario en ese consultorio</span><label class="chk"><input type="radio" name="reH" data-chg="reHmode" value="all"' + (!e.h ? ' checked' : '') + '> <span>Todo su horario de ese día (' + esc(hrsTxt(ph)) + ')</span></label>' +
+      '<label class="chk"><input type="radio" name="reH" data-chg="reHmode" value="part"' + (e.h ? ' checked' : '') + '> <span>Solo una parte</span></label>' +
+      (e.h ? '<div class="row2"><div class="field"><label for="reF">Desde</label><input id="reF" class="inp" type="time" step="900" value="' + A.mm(e.h[0]) + '"></div><div class="field"><label for="reT">Hasta</label><input id="reT" class="inp" type="time" step="900" value="' + A.mm(e.h[1]) + '"></div></div>' : '') + '</div>' +
+      (!ph.length && !e.h ? '<p class="hint">Ojo: ' + esc(p.name) + ' no tiene horario cargado ese día. Elegí «Solo una parte» para poner la hora, o cargale el horario en sus ajustes.</p>' : '') +
+      '<div class="hint bad" id="reMsg">' + (m.warn ? esc(m.warn) : '') + '</div>',
+      (e.id ? '<button class="btn danger" data-act="rotEDel">Quitar</button>' : '') + '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="rotESave">' + (m.warn ? 'Guardar igual' : 'Guardar') + '</button>');
+  };
+  const reRead = () => { const m = S.modal, e = m.e; if (e.h) { const f = toMin(($('#reF') || {}).value), t = toMin(($('#reT') || {}).value); if (f != null && t != null) e.h = [f, t]; } };
+  A.chg.reField = el => { reRead(); const m = S.modal, k = el.getAttribute('data-k'); m.e[k] = k === 'dow' ? +el.value : (el.value || null); m.warn = null; A.renderModal(); };
+  A.chg.reHmode = el => {
+    reRead(); const m = S.modal, e = m.e;
+    if (el.value === 'all') e.h = null;
+    else { const ph = A.hoursFor(A.PRO(e.pro), dateIn(S._rotWs || weekStart(A.today()), e.dow)); e.h = ph.length ? [ph[0][0], ph[0][1]] : [9 * 60, 13 * 60]; }
+    m.warn = null; A.renderModal();
+  };
+  A.acts.rotESave = () => {
+    reRead(); const m = S.modal, e = m.e, l = sedeById(m.s), p = A.PRO(e.pro);
+    if (e.h && e.h[1] <= e.h[0]) { $('#reMsg').textContent = 'La hora de fin tiene que ser después de la de inicio.'; return; }
+    const key = dateIn(S._rotWs || weekStart(A.today()), e.dow);
+    const k2 = [key, A.add(key, 7)]; /* revisa las dos paridades */
+    const clash = rotOf(m.s).filter(f => f.id !== e.id && f.room === e.room && k2.some(k => applies(f, k) && applies(e, k) && overlap(hrsOf(f, k), hrsOf(e, k))))[0];
+    const dup = rotOf(m.s).filter(f => f.id !== e.id && f.pro === e.pro && f.room !== e.room && k2.some(k => applies(f, k) && applies(e, k) && overlap(hrsOf(f, k), hrsOf(e, k))))[0];
+    if ((clash || dup) && !m.warn) {
+      m.warn = clash ? 'En ese horario ' + (roomById(l, e.room) || {}).name + ' ya lo usa ' + A.PRO(clash.pro).name + '.' : p.name + ' ya está en ' + (roomById(l, dup.room) || {}).name + ' a esa hora.';
+      A.renderModal(); return;
+    }
+    const L = rotOf(m.s);
+    if (!e.id) { e.id = uid('a'); L.push(e); } else { const i = L.findIndex(x => x.id === e.id); if (i >= 0) L[i] = e; else L.push(e); }
+    S._rotDay = e.dow; S.modal = null; A.renderModal();
+    saveR(p.name + ' en ' + (roomById(l, e.room) || {}).name + ' los ' + A.DOW[e.dow] + '.', l.name + ': ' + p.name + ' en ' + (roomById(l, e.room) || {}).name + ' los ' + A.DOW[e.dow] + '.');
+  };
+  A.acts.rotEDel = () => {
+    const m = S.modal, L = rotOf(m.s), i = L.findIndex(x => x.id === m.e.id), p = A.PRO(m.e.pro); if (i >= 0) L.splice(i, 1);
+    S.modal = null; A.renderModal(); saveR('Asignación quitada.', (sedeById(m.s) || {}).name + ': se quitó a ' + (p ? p.name : '') + ' de los ' + A.DOW[m.e.dow] + '.');
+  };
+
+  /* repartir solos: a cada uno que atiende y no tiene consultorio, el primero que esté libre en su horario */
+  A.acts.rotAuto = () => {
+    const sd = S._rotLoc, l = sedeById(sd), ws = S._rotWs || weekStart(A.today()); let n = 0, left = 0;
+    ORDER.forEach(d => {
+      const key = dateIn(ws, d);
+      unassigned(sd, key).forEach(p => {
+        const ph = A.hoursFor(p, key).map(r => [r[0], r[1]]);
+        const r = rooms(l).filter(rm => !dayPlan(sd, key).list.some(e => e.room === rm.id && overlap(hrsOf(e, key), ph)))[0];
+        if (r) { rotOf(sd).push({ id: uid('a'), room: r.id, pro: p.id, dow: d, h: null, wk: null }); n++; } else left++;
+      });
+    });
+    saveR(n ? n + ' asignaci' + (n === 1 ? 'ón' : 'ones') + ' nueva' + (n === 1 ? '' : 's') + (left ? '. ' + left + ' no entra' + (left === 1 ? '' : 'n') + ': no queda consultorio libre en su horario.' : '.') : left ? 'No queda consultorio libre para ' + left + '.' : 'Ya están todos asignados.', n ? l.name + ': rotación repartida (' + n + ').' : null);
+  };
+  /* copiar un día a otro */
+  A.acts.rotCopy = () => { S.modal = { type: 'rotCopy', s: S._rotLoc, from: S._rotDay }; A.renderModal(); };
+  MF.rotCopy = m => A.modalShell('Copiar ' + A.DOW[m.from], '<p>Las asignaciones de los ' + esc(A.DOW[m.from]) + ' se copian a los días que marques (reemplazan lo que haya esos días).</p><div class="tree-chk">' + ORDER.filter(d => d !== m.from).map(d => '<label class="chk"><input type="checkbox" data-cd="' + d + '"> <span>' + esc(A.DOW[d].charAt(0).toUpperCase() + A.DOW[d].slice(1)) + '</span></label>').join('') + '</div><div class="hint bad" id="rcMsg"></div>',
+    '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="rotCopyGo">Copiar</button>');
+  A.acts.rotCopyGo = () => {
+    const m = S.modal, ds = A.$$('[data-cd]').filter(c => c.checked).map(c => +c.getAttribute('data-cd'));
+    if (!ds.length) { $('#rcMsg').textContent = 'Marcá al menos un día.'; return; }
+    const R = rotAll(), src = rotOf(m.s).filter(e => e.dow === m.from);
+    R[m.s] = rotOf(m.s).filter(e => ds.indexOf(e.dow) < 0).concat(...ds.map(d => src.map(e => Object.assign({}, e, { id: uid('a'), dow: d }))));
+    S.modal = null; A.renderModal(); saveR('Copiado a ' + ds.length + ' día' + (ds.length === 1 ? '' : 's') + '.', (sedeById(m.s) || {}).name + ': rotación de los ' + A.DOW[m.from] + ' copiada.');
+  };
+
+  const css = document.createElement('style');
+  css.textContent = '.blk .broom{display:inline-block;font-size:10.5px;font-weight:800;padding:0 5px;border-radius:6px;background:rgba(0,0,0,.08);margin-left:3px;letter-spacing:.02em;vertical-align:1px}' +
+    '.tp-room{font-size:13.5px;font-weight:700;padding:4px 8px;border-radius:8px;background:color-mix(in srgb,var(--accent) 10%,var(--surface));align-self:flex-start}' +
+    '.ec-rooms{display:flex;gap:4px;flex-wrap:wrap}.ec-room{border:1px dashed var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;font:600 13px inherit;cursor:pointer}.ec-room.on{border-style:solid;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface))}.ec-room small{opacity:.7}' +
+    '.tree-l3{list-style:none;margin:6px 0 4px 18px;padding:0 0 0 22px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:6px}.tree-l3>li{position:relative;display:flex;align-items:center;gap:8px}.tree-l3>li::before{content:"";position:absolute;left:-22px;top:20px;width:18px;border-top:2px solid var(--line)}' +
+    '.tree-l2>li{flex-wrap:wrap}.tree-l2>li>.tree-row{flex:1 1 100%}.tree-l2>li>.tree-l3{flex:1 1 100%}.tree-node.room{flex:1;display:block;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}.tree-node.room small{display:block}.tree-node.room.none{cursor:default;border-style:dashed}' +
+    '.rot{border-top:5px solid var(--sc)}.rot-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}.rot-top h2{margin:0}' +
+    '.rot-rooms{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0}.rot-rchip{padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-weight:600;font-size:13.5px}' +
+    '.rot-wk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;font-weight:700}' +
+    '.rot-days{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:thin}.rot-day{position:relative;flex:0 0 auto;min-width:58px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:6px 8px;display:flex;flex-direction:column;align-items:center;cursor:pointer;font:inherit}.rot-day small{font-size:11.5px;color:var(--ink-2)}.rot-day.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface))}' +
+    '.rot-day i{position:absolute;top:-6px;right:-6px;font-style:normal;font-size:11px;font-weight:800;background:#c0392b;color:#fff;border-radius:999px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}.rot-day i.miss{background:#d68910}.rot-day.bad{border-color:#c0392b}' +
+    '.rot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:6px 0 10px}.rot-room{border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}.rr-h{display:flex;align-items:center;justify-content:space-between;gap:6px}' +
+    '.rot-e{all:unset;cursor:pointer;display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:10px;border:1px solid var(--line);border-left:4px solid var(--pc);background:var(--surface)}.rot-e span{display:flex;flex-direction:column;min-width:0}.rot-e small{color:var(--ink-2);font-size:12.5px}.rot-e .stdot{margin-top:5px}.rot-e.bad{border-color:#c0392b;background:color-mix(in srgb,#c0392b 8%,var(--surface))}.rot-e.bad small{color:#a93226}' +
+    '.rot-free{color:var(--ink-2);font-size:13.5px;padding:6px 2px}.rot-miss{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:8px;border-radius:10px;background:color-mix(in srgb,#d68910 10%,var(--surface));margin-bottom:8px}.rot-miss b{flex:1 1 100%;font-size:13.5px}' +
+    '.rot-sum{display:none;margin-top:12px;overflow-x:auto}.rot-sum td{vertical-align:top;font-size:12.5px}.rot-sum td.bad{background:color-mix(in srgb,#c0392b 10%,transparent)}.rs-p{display:block;border-left:3px solid var(--pc);padding-left:5px;margin:2px 0;white-space:nowrap}.rs-p small{color:var(--ink-2)}' +
+    '@media (min-width: 1000px){.rot-sum{display:block}}@media (max-width: 600px){.tree-row{flex-wrap:wrap}.tree-row>.tree-node{flex:1 1 100%}.tree-row>.btn{flex:1 1 40%}}' +
+    '.rot-rl{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}.rot-rr{display:flex;gap:6px;align-items:center}.rot-rr .inp{flex:1}';
+  document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {
