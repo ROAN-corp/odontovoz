@@ -279,3 +279,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - **Ingreso con PIN** en los equipos compartidos, con permisos por puesto (dueño, administración, recepción, profesional, asistente) y bloqueo por inactividad.
 - Sección **Empresa**: resumen del mes (lo que le queda a la empresa por consultorio), consultorios y profesionales, personal, liquidaciones por consultorio, estadísticas de 6 o 12 meses (facturación, resultado, ocupación, atendidos, ausentismo, nuevos, ticket promedio, presupuestos, por profesional, por prestación y gastos), por cobrar, metas, stock de insumos, equipos, registro de quién hizo qué y reporte mensual en PDF y Excel.
 - SQL: `supabase/empresa.sql` (correr una vez en Supabase › SQL Editor).
+
+## OdontoVoz 1.19.1
+- Precio del plan Empresa: $178.900 por mes (IVA incluido) en la app, la portada y los términos.

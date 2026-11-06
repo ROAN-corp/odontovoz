@@ -6,7 +6,7 @@
   /* ---------------------------------------------------------------
      MI PLAN Y MEJORAR PLAN
      --------------------------------------------------------------- */
-  const PRICE = { basico: 26900, consultorio: 51900, centro: 89900, empresa: 161900, red: 161900 };
+  const PRICE = { basico: 26900, consultorio: 51900, centro: 89900, empresa: 178900, red: 178900 };
   const DESC = {
     basico: '1 profesional, en uno o varios consultorios',
     consultorio: 'Hasta 3 profesionales con recepción',
