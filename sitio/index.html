@@ -207,6 +207,9 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .aside h3 { font-size: 19px; }
 .aside p, .aside li { font-size: 16px; color: var(--ink-2); }
 .aside ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.ios-col { display: grid; gap: 28px; align-content: start; }
+#p-ios .reel { align-self: start; position: sticky; top: 90px; }
+@media (max-width: 860px) { #p-ios .reel { position: static; order: -1; } }
 .brands { display: grid; gap: 18px; }
 .brands div { border-top: 1px solid var(--line); padding-top: 16px; }
 .brands h3 { margin-bottom: 6px; }
@@ -507,17 +510,26 @@ footer .brand { margin-right: auto; }
     </div>
 
     <div class="panel" role="tabpanel" id="p-ios" aria-labelledby="tb-ios" hidden>
-      <ol class="steps">
-        <li><div><b>Abrí la app en Safari</b><p>Entrá a <a href="app/">roan-corp.github.io/odontovoz/app</a> desde Safari.</p></div></li>
-        <li><div><b>Tocá Compartir</b><p>Es el cuadrado con la flecha hacia arriba, abajo en el iPhone o arriba en el iPad.</p></div></li>
-        <li><div><b>Elegí «Agregar a inicio»</b><p>Bajá en la lista hasta encontrarlo, tocalo y después Agregar.</p></div></li>
-        <li><div><b>Abrila desde el ícono y permití el micrófono</b><p>Ingresá con tu cuenta y vas a ver los mismos datos que en el resto de tus equipos.</p></div></li>
-      </ol>
-      <div class="aside">
-        <h3>¿Y la App Store?</h3>
-        <p>La versión para App Store está en los planes. Mientras tanto, la versión web en iPhone tiene la agenda, las historias clínicas y el odontograma completos.</p>
-        <p>Si el dictado del asistente no responde en tu modelo, podés usar el micrófono del teclado del iPhone en cualquier campo.</p>
+      <div class="ios-col">
+        <ol class="steps">
+          <li><div><b>Abrí la app en Safari</b><p>Entrá a <a href="app/">roan-corp.github.io/odontovoz/app</a> desde Safari. También funciona con Chrome en un iPhone actualizado.</p></div></li>
+          <li><div><b>Tocá los tres puntos y después «Compartir»</b><p>Los tres puntos <span class="screen-msg">···</span> están al lado de la barra de direcciones. En iPhone con un sistema más viejo, el botón Compartir (el cuadrado con la flecha hacia arriba) está directamente abajo, en el medio; en el iPad, arriba.</p></div></li>
+          <li><div><b>Elegí «Agregar a pantalla de inicio»</b><p>Bajá en la lista hasta encontrarlo. Si no aparece, tocá <span class="screen-msg">Ver más</span> o <span class="screen-msg">Editar acciones</span>.</p></div></li>
+          <li><div><b>Dejá activado «Abrir como app web» y tocá «Agregar»</b><p>Está arriba a la derecha. El ícono del diente queda en tu pantalla de inicio.</p></div></li>
+          <li><div><b>Abrila desde el ícono y permití el micrófono</b><p>Se abre a pantalla completa, sin la barra del navegador. Ingresá con tu cuenta: vas a ver los mismos datos que en tus otros equipos. La primera vez que dictes, tocá <span class="screen-msg">Permitir</span>.</p></div></li>
+        </ol>
+        <div class="aside">
+          <h3>Si algo no aparece</h3>
+          <ul>
+            <li>Si no ves «Agregar a pantalla de inicio», actualizá el iPhone en Ajustes › General › Actualización de software.</li>
+            <li>Si tocaste «No permitir» el micrófono: Ajustes › Safari › Micrófono, y elegí Preguntar o Permitir.</li>
+            <li>Si el dictado del asistente no responde en tu modelo, podés usar el micrófono del teclado del iPhone en cualquier campo.</li>
+          </ul>
+          <h3>¿Y la App Store?</h3>
+          <p>La versión para App Store está en los planes. Mientras tanto, la versión web en iPhone tiene la agenda, las historias clínicas y el odontograma completos.</p>
+        </div>
       </div>
+      <figure class="reel"><video id="vidIos" src="video/instalar-iphone.mp4" poster="video/poster-iphone.jpg" muted loop playsinline controls preload="none" aria-label="Video de 24 segundos: en Safari se tocan los tres puntos, Compartir, Agregar a pantalla de inicio y Agregar; aparece el ícono de OdontoVoz en la pantalla de inicio, se abre y se permite el micrófono."></video><figcaption>Cómo agregarla en el iPhone, en 24 segundos</figcaption></figure>
     </div>
 
     <div class="panel" role="tabpanel" id="p-pc" aria-labelledby="tb-pc" hidden>
@@ -611,7 +623,7 @@ const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, s
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.reel video').forEach(v => { v.removeAttribute('autoplay'); v.pause(); v.controls = true; });
   /* pestañas de instalación */
   const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
-  const sel = t => { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; }); };
+  const sel = t => { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; }); const v = document.getElementById('vidIos'); if (v) { if (!document.getElementById('p-ios').hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches) { v.play().catch(() => {}); } else v.pause(); } };
   tabs.forEach((t, i) => {
     t.addEventListener('click', () => sel(t));
     t.addEventListener('keydown', e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return; const n = tabs[(i + d + tabs.length) % tabs.length]; sel(n); n.focus(); });
