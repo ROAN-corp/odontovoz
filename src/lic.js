@@ -22,7 +22,7 @@
       let w = null;
       try { w = await CL.api('/rest/v1/rpc/ov_whoami', { method: 'POST', body: {} }); } catch (e) { if (!(e.status === 404 || /could not find the function|schema cache/i.test(String(e.message)))) throw e; }
       if (w) {
-        CL.lic = w.account || null; CL.ownerId = w.owner || CL.session.user.id;
+        CL.lic = w.account || null; CL.ownerId = w.owner || CL.session.user.id; CL.code = w.code || (w.account && w.account.code) || null;
         const was = JSON.stringify(CL.member || null); CL.member = w.member || null; CL.memberOff = !!w.member_off;
         try { localStorage.setItem('odontovoz.member', JSON.stringify({ m: CL.member, o: CL.ownerId, off: CL.memberOff })); } catch (e) { /* nada */ }
         if (was !== JSON.stringify(CL.member) && A.onMember) A.onMember(CL.member);

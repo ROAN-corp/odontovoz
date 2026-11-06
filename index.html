@@ -6437,6 +6437,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   CL.resend = async email => http('/auth/v1/resend' + BACK, { method: 'POST', auth: false, body: { type: 'signup', email } });
   CL.recover = async email => http('/auth/v1/recover' + BACK, { method: 'POST', auth: false, body: { email } });
   CL.setPassword = async pass => api('/auth/v1/user', { method: 'PUT', body: { password: pass } });
+  /* los usuarios del equipo sin correo tienen un correo interno: usuario@codigo.equipo.odontovoz.app */
+  CL.who = em => { const m = /^([^@]+)@([a-z0-9]+)\.equipo\.odontovoz\.app$/.exec(em || ''); return m ? m[1] + ' (cuenta ' + m[2] + ')' : (em || ''); };
   CL.signOut = async wipe => {
     try { if (CL.session) await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
     saveSession(null); stopLoop(); await baseClear();
@@ -6665,7 +6667,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let h;
     if (!conf()) h = '<div class="acct-box"><b>Sin cuenta en la nube</b><span>Los datos quedan solo en este dispositivo. Hacé copias de seguridad desde Ajustes.</span><button class="btn small" data-act="cloudAdmin">Conectar servidor…</button></div>';
     else if (!CL.session) h = '<div class="acct-box"><b>No ingresaste</b><span>Ingresá con tu correo y contraseña para tener los mismos datos en la PC, la recepción y el teléfono.</span><button class="btn small primary" data-act="loginOpen">Ingresar o crear cuenta</button></div>';
-    else h = '<div class="acct-box"><b>' + esc(CL.session.user.email || '') + '</b><span><i class="sync-dot ' + dot + '"></i>' + (CL.state === 'busy' ? 'Sincronizando…' : CL.state === 'err' ? esc(CL.msg || 'Error al sincronizar') : CL.state === 'offline' ? 'Sin conexión: se sube al volver' : 'Sincronizado ' + ago(CL.last)) + '</span><button class="btn small" data-act="acctOpen">Cuenta y equipos</button></div>';
+    else h = '<div class="acct-box"><b>' + esc(CL.who(CL.session.user.email)) + '</b><span><i class="sync-dot ' + dot + '"></i>' + (CL.state === 'busy' ? 'Sincronizando…' : CL.state === 'err' ? esc(CL.msg || 'Error al sincronizar') : CL.state === 'offline' ? 'Sin conexión: se sube al volver' : 'Sincronizado ' + ago(CL.last)) + '</span><button class="btn small" data-act="acctOpen">Cuenta y equipos</button></div>';
     if (host) host.innerHTML = h;
     if (foot) foot.textContent = CL.session ? (CL.state === 'ok' ? '☁ al día' : CL.state === 'busy' ? '☁ …' : '☁ pendiente') : '';
   };
@@ -6683,7 +6685,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
     h += '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
-    if (np && CL.session && CL.session.user) h += '<p class="hint" style="margin:0">Cuenta: <b>' + esc(CL.session.user.email || '') + '</b>. Elegí la contraseña nueva y guardala.</p>';
+    if (np && CL.session && CL.session.user) h += '<p class="hint" style="margin:0">Cuenta: <b>' + esc(CL.who(CL.session.user.email)) + '</b>. Elegí la contraseña nueva y guardala.</p>';
     if (rec) h += '<p class="hint" style="margin:0">Te mandamos un correo con un botón para elegir una contraseña nueva. Abrí <b>solo el último</b> que te llegue y tocá el botón una vez.</p>';
     h += '<button class="btn primary" type="submit" style="min-height:48px">' + (np ? 'Guardar contraseña' : rec ? 'Enviar enlace' : up ? 'Crear cuenta' : 'Ingresar') + '</button>';
     if (!up && !rec && !np) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="rec">Me olvidé la contraseña</button>';
@@ -6775,8 +6777,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     LS.set('odontovoz.cloud.uid', uid); LS.set('odontovoz.localOnly', null);
     CL.hideLogin();
     if (A.DEMO || (prev && prev !== uid)) { LS.set('odontovoz.mode', 'real'); A.noSave = true; setTimeout(() => location.reload(), 60); return; }
-    A.toast('Ingresaste como ' + CL.session.user.email + '. Sincronizando…'); startLoop(); A.afterRefresh();
+    A.toast('Ingresaste como ' + CL.who(CL.session.user.email) + '. Sincronizando…'); startLoop(); A.afterRefresh();
   }
+  CL.afterLogin = afterLogin;
 
   /* ---------- cuenta y equipos ---------- */
   A.acts.acctOpen = () => { A.hideDrawer(); S.modal = { type: 'acct' }; A.renderModal(); };
@@ -6792,7 +6795,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   A.chg.devName = el => { LS.set('odontovoz.devname', el.value.trim().slice(0, 30)); };
   A.acts.cloudSyncNow = async () => { await CL.sync(); A.toast(CL.state === 'ok' ? 'Todo sincronizado.' : CL.msg || 'No se pudo sincronizar.'); if (S.modal && S.modal.type === 'acct') A.renderModal(); };
-  A.acts.acctPass = async () => { try { await CL.recover(CL.session.user.email); A.toast('Te enviamos un correo con el enlace para elegir la contraseña nueva.'); } catch (e) { A.toast(e.message); } };
+  A.acts.acctPass = async () => { if (/\.equipo\.odontovoz\.app$/.test(CL.session.user.email || '')) { S.modal = null; A.renderModal(); CL.showLogin('newpass'); return; } try { await CL.recover(CL.session.user.email); A.toast('Te enviamos un correo con el enlace para elegir la contraseña nueva.'); } catch (e) { A.toast(e.message); } };
   A.acts.acctOut = () => { S.modal = { type: 'acctOut' }; A.renderModal(); };
   MF.acctOut = () => A.modalShell('Cerrar sesión', '<p>Lo que ya está en la nube queda guardado. ¿Querés también borrar los datos de este equipo? Conviene si el equipo es compartido.</p>',
     '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn" data-act="acctOutKeep">Cerrar y conservar</button><button class="btn danger" data-act="acctOutWipe">Cerrar y borrar de este equipo</button>');
@@ -6832,7 +6835,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   CL.lock = () => {
     if (!CL.pinOn() || !CL.session || $('#pinWrap')) return;
     const w = document.createElement('div'); w.id = 'pinWrap'; w.className = 'login-wrap';
-    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>OdontoVoz</h1><p class="hint" style="margin:0">' + esc(CL.session.user.email) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
+    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>OdontoVoz</h1><p class="hint" style="margin:0">' + esc(CL.who(CL.session.user.email)) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
     document.body.appendChild(w); const i = $('#pinIn'); if (i) i.focus();
   };
   A.subs.pinGo = async () => {
@@ -7743,7 +7746,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.30';
+  A.VERSION = '1.31';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -7873,7 +7876,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       let w = null;
       try { w = await CL.api('/rest/v1/rpc/ov_whoami', { method: 'POST', body: {} }); } catch (e) { if (!(e.status === 404 || /could not find the function|schema cache/i.test(String(e.message)))) throw e; }
       if (w) {
-        CL.lic = w.account || null; CL.ownerId = w.owner || CL.session.user.id;
+        CL.lic = w.account || null; CL.ownerId = w.owner || CL.session.user.id; CL.code = w.code || (w.account && w.account.code) || null;
         const was = JSON.stringify(CL.member || null); CL.member = w.member || null; CL.memberOff = !!w.member_off;
         try { localStorage.setItem('odontovoz.member', JSON.stringify({ m: CL.member, o: CL.ownerId, off: CL.memberOff })); } catch (e) { /* nada */ }
         if (was !== JSON.stringify(CL.member) && A.onMember) A.onMember(CL.member);
@@ -13345,19 +13348,40 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let h = acctPrev(m);
     const mm = mb();
     if (mm) {
-      const box = '<div class="block mb-block"><h3>Tu puesto</h3><div class="acct-box"><b>' + esc(RN[mm.role] || mm.role) + (mm.sede && sedeName(mm.sede) ? ' · ' + esc(sedeName(mm.sede)) : '') + '</b><span>Usás la cuenta de <b>' + esc(A.CLINIC || 'el consultorio') + '</b>. La paga el dueño: para vos es gratis.</span><span>' + esc(RDESC[mm.role] || '') + '</span></div><div class="hint" style="margin:6px 0 0">Tu correo y tu contraseña son tuyos. Si dejás de trabajar ahí, el dueño te quita el acceso y los datos se borran de tus equipos.</div></div>';
+      const box = '<div class="block mb-block"><h3>Tu puesto</h3><div class="acct-box"><b>' + esc(RN[mm.role] || mm.role) + (mm.sede && sedeName(mm.sede) ? ' · ' + esc(sedeName(mm.sede)) : '') + '</b><span>Usás la cuenta de <b>' + esc(A.CLINIC || 'el consultorio') + '</b>. La paga el dueño: para vos es gratis.</span><span>' + esc(RDESC[mm.role] || '') + '</span></div><div class="hint" style="margin:6px 0 0">' + (mm.sub ? 'Entrás con la cuenta <b>' + esc((CL.code || '')) + '</b> y el usuario <b>' + esc(mm.username || '') + '</b>. Si te olvidás la contraseña, pedile al dueño que te la cambie desde Equipo. Para entrar en otro lugar donde trabajes, tocá «Entrar en otro lugar».' : 'Tu correo y tu contraseña son tuyos.') + ' Si dejás de trabajar ahí, el dueño te quita el acceso y los datos se borran de tus equipos.</div><div class="row-btns" style="margin-top:8px"><button class="btn small" data-act="lgOtherPlace">Entrar en otro lugar</button></div></div>';
       return h.replace('<div class="field" style="margin-top:10px">', box + '<div class="field" style="margin-top:10px">');
     }
     if (isOwner()) {
       const n = TEAM && TEAM.ok ? TEAM.members.filter(x => x.active).length : null;
-      const block = '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Invitá a tu secretaria o a los odontólogos que trabajan con vos: cada uno entra con su propio correo, gratis, y ve solo lo de su puesto.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">' + (n ? 'Ver el equipo (' + n + ')' : 'Invitar a alguien') + '</button></div></div>';
+      const block = '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Creale un usuario a tu secretaria y a los odontólogos que trabajan con vos: entran con el código de tu cuenta, su usuario y su contraseña (no necesitan correo), gratis, y ven solo lo de su puesto.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">' + (n ? 'Ver el equipo (' + n + ')' : 'Crear usuarios') + '</button></div></div>';
       h = h.replace('<div class="block"><h3>Tus datos</h3>', block + '<div class="block"><h3>Tus datos</h3>');
       if (h.indexOf('data-act="teamOpen"') < 0) h = h.replace('<div class="block"><h3>Bloqueo con PIN</h3>', block + '<div class="block"><h3>Bloqueo con PIN</h3>');
     }
     return h;
   };
 
-  let TEAM = null, teamErr = '', NEWINV = null, teamBusy = false;
+  let TEAM = null, teamErr = '', NEWINV = null, NEWSUB = null, teamBusy = false;
+  const noAcc = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const sugUser = n => { const w = noAcc(n).replace(/[^a-z0-9 ]/g, ' ').trim().split(/\s+/).filter(Boolean); return w.length ? (w.length > 1 ? w[0] + '.' + w[w.length - 1] : w[0]).slice(0, 30) : ''; };
+  const sugPass = () => { const al = 'abcdefghjkmnpqrstuvwxyz', d = '23456789'; let p = ''; for (let i = 0; i < 5; i++) p += al[Math.floor(Math.random() * al.length)]; for (let i = 0; i < 3; i++) p += d[Math.floor(Math.random() * d.length)]; return p; };
+  const subText = n => 'Hola ' + (n.name || '').split(' ')[0] + '. Ya tenés tu usuario de OdontoVoz en ' + (A.CLINIC || 'el consultorio') + '.\nEntrá a ' + PUB_APP + ' (o a la app) y tocá «Entrar con usuario del equipo».\nCuenta: ' + n.code + '\nUsuario: ' + n.user + '\nContraseña: ' + n.pass + '\nDespués podés cambiar la contraseña desde Menú › Cuenta.';
+  A.acts.tmMode = el => { S.tmMode = el.getAttribute('data-m'); paintTeam(); };
+  A.acts.tmSubCopy = async () => { const t = subText(NEWSUB); try { await navigator.clipboard.writeText(t); A.toast('Datos copiados.'); } catch (e) { A.toast(t); } };
+  A.acts.tmCodeEdit = () => { S.modal = { type: 'tmCode', v: TEAM.code || '' }; A.renderModal(); };
+  MF.tmCode = m => A.modalShell('Código de la cuenta', '<p>Es lo que escribe tu equipo en «Cuenta» para entrar. Que sea corto y fácil, por ejemplo el nombre del consultorio.</p><div class="field"><label for="tcV">Código</label><input id="tcV" value="' + esc(m.v) + '" autocapitalize="none" spellcheck="false" maxlength="20"></div><p class="hint">De 4 a 20 letras o números, sin espacios ni acentos. Después de crear el primer usuario ya no se puede cambiar.</p><div class="hint bad" id="tcMsg"></div>', '<button class="btn" data-act="teamOpen">Cancelar</button><button class="btn primary" data-act="tmCodeSave">Guardar</button>');
+  A.acts.tmCodeSave = async () => {
+    const v = noAcc(($('#tcV') || {}).value).replace(/[^a-z0-9]/g, ''), o = $('#tcMsg');
+    try { const r = await rpc('ov_code_set', { p_code: v }); if (!r || !r.ok) { if (o) o.textContent = (r && r.msg) || 'No se pudo.'; return; } A.toast('Código guardado: ' + r.code); A.acts.teamOpen(); }
+    catch (e) { if (o) o.textContent = noServer(e) ? 'Falta actualizar el servidor (subusuarios.sql).' : e.message || 'Sin conexión.'; }
+  };
+  A.acts.tmPass = el => { const z = memberOf(el.getAttribute('data-id')); S.modal = { type: 'tmPassM', id: z.member, name: z.name || z.username, user: z.username, v: sugPass() }; A.renderModal(); };
+  MF.tmPassM = m => A.modalShell('Nueva contraseña', '<p>Contraseña nueva para <b>' + esc(m.name) + '</b> (usuario ' + esc(m.user || '') + '). Se le cierra la sesión en sus equipos y entra con la nueva.</p><div class="field"><label for="tpV">Contraseña</label><input id="tpV" value="' + esc(m.v) + '" autocomplete="off" spellcheck="false"></div><div class="hint bad" id="tpMsg"></div>', '<button class="btn" data-act="teamOpen">Cancelar</button><button class="btn primary" data-act="tmPassGo">Guardar</button>');
+  A.acts.tmPassGo = async () => {
+    const m = S.modal, v = (($('#tpV') || {}).value || '').trim(), o = $('#tpMsg');
+    if (v.length < 6) { if (o) o.textContent = 'Al menos 6 caracteres.'; return; }
+    try { const r = await rpc('ov_sub_password', { p_member: m.id, p_pass: v }); if (!r || !r.ok) { if (o) o.textContent = (r && r.msg) || 'No se pudo.'; return; } NEWSUB = { name: m.name, code: TEAM.code, user: m.user, pass: v }; if (A.empAudit) A.empAudit('Cambió la contraseña de ' + m.name + '.'); A.acts.teamOpen(); }
+    catch (e) { if (o) o.textContent = e.message || 'Sin conexión.'; }
+  };
   async function loadTeam() {
     if (!isOwner() || teamBusy) return; teamBusy = true;
     try { TEAM = await rpc('ov_team'); teamErr = ''; }
@@ -13378,37 +13402,50 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function teamHTML() {
     let x = '';
     if (teamErr) x += '<div class="hint bad">' + esc(teamErr) + '</div>';
+    if (TEAM && TEAM.ok && TEAM.code !== undefined) {
+      const locked = TEAM.members.some(z => z.sub);
+      x += '<div class="tm-code"><span>Código de tu cuenta</span><b>' + esc(TEAM.code || '…') + '</b>' + (!locked && TEAM.code ? '<button class="btn small ghost" data-act="tmCodeEdit">Cambiar</button>' : '') + '<small>Tu equipo entra con este código, su usuario y su contraseña.' + (!locked ? ' Elegilo antes de crear el primer usuario: después no se puede cambiar.' : '') + '</small></div>';
+    }
+    if (NEWSUB) {
+      x += '<div class="tm-new"><b>Usuario listo para ' + esc(NEWSUB.name) + '</b><p class="hint" style="margin:4px 0">Pasale estos datos. En OdontoVoz toca «Entrar con usuario del equipo». Puede cambiar la contraseña después desde Menú › Cuenta.</p><dl class="tm-cred"><dt>Cuenta</dt><dd>' + esc(NEWSUB.code) + '</dd><dt>Usuario</dt><dd>' + esc(NEWSUB.user) + '</dd><dt>Contraseña</dt><dd>' + esc(NEWSUB.pass) + '</dd></dl><div class="row-btns"><a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(subText(NEWSUB)) + '">Mandar por WhatsApp</a><button class="btn small" data-act="tmSubCopy">Copiar datos</button><button class="btn small ghost" data-act="tmAnother">Crear otro usuario</button></div></div>';
+    }
     /* nueva invitación */
     const f = S.tmForm || (S.tmForm = { role: 'recepcion', sede: (A.empSede && A.empSede()) || (sedes()[0] || {}).id || '', pro: '', name: '' });
-    if (NEWINV) {
+    if (NEWSUB) { /* ya se mostró arriba */ } else if (NEWINV) {
       x += '<div class="tm-new"><b>Invitación lista para ' + esc(NEWINV.name || RN[NEWINV.role]) + '</b><p class="hint" style="margin:4px 0">Mandale este enlace. Entra, crea su usuario con su correo y ya queda en tu equipo. Vence en 7 días y sirve una sola vez.</p><input class="tm-link" readonly value="' + esc(invLink(NEWINV.code)) + '" aria-label="Enlace de invitación"><div class="row-btns"><a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(NEWINV)) + '">Mandar por WhatsApp</a><button class="btn small" data-act="tmCopy" data-code="' + esc(NEWINV.code) + '">Copiar enlace</button><button class="btn small ghost" data-act="tmAnother">Invitar a otra persona</button></div></div>';
     } else {
-      x += '<div class="tm-form"><h3>Invitar a una persona</h3><div class="tm-grid">' +
+      const byMail = S.tmMode === 'mail';
+      x += '<div class="tm-form"><div class="seg tm-mode" role="group"><button type="button" data-act="tmMode" data-m="user" aria-pressed="' + !byMail + '">Crear usuario (sin correo)</button><button type="button" data-act="tmMode" data-m="mail" aria-pressed="' + byMail + '">Invitar por correo</button></div><div class="tm-grid">' +
         '<div class="field"><label for="tmName">Nombre</label><input id="tmName" value="' + esc(f.name) + '" placeholder="Ej.: Marta" data-in="tmF" data-k="name"></div>' +
         '<div class="field"><label for="tmRole">Puesto</label><select id="tmRole" data-chg="tmF" data-k="role">' + roleOpts(f.role) + '</select></div>' +
         (manyLocs() ? '<div class="field"><label for="tmSede">' + LWc() + '</label><select id="tmSede" data-chg="tmF" data-k="sede">' + sedeOpts(f.sede, f.role === 'admin') + '</select></div>' : '') +
         (f.role === 'profesional' || f.role === 'asistente' ? '<div class="field"><label for="tmPro">' + (f.role === 'profesional' ? 'Es el profesional' : 'Trabaja con') + '</label><select id="tmPro" data-chg="tmF" data-k="pro">' + proOpts(f.pro) + '</select></div>' : '') +
-        '</div><p class="hint" style="margin:4px 0 8px">' + esc(RDESC[f.role] || '') + (f.role === 'profesional' ? ' Si el odontólogo todavía no está cargado, primero sumalo en Profesionales.' : '') + '</p><div class="row-btns"><button class="btn small primary" data-act="tmNew">Crear invitación</button></div><div class="hint bad" id="tmMsg"></div></div>';
+        (!byMail ? '<div class="field"><label for="tmUser">Usuario</label><input id="tmUser" value="' + esc(f.user || '') + '" placeholder="Ej.: marta.gomez" autocapitalize="none" autocomplete="off" spellcheck="false" data-in="tmF" data-k="user"></div><div class="field"><label for="tmPass">Contraseña</label><input id="tmPass" value="' + esc(f.pass || (f.pass = sugPass())) + '" autocomplete="off" spellcheck="false" data-in="tmF" data-k="pass"></div>' : '') +
+        '</div><p class="hint" style="margin:4px 0 8px">' + esc(RDESC[f.role] || '') + (f.role === 'profesional' ? ' Si el odontólogo todavía no está cargado, primero sumalo en Profesionales.' : '') + '</p><div class="row-btns"><button class="btn small primary" data-act="tmNew">' + (byMail ? 'Crear invitación' : 'Crear usuario') + '</button></div><div class="hint bad" id="tmMsg"></div></div>';
     }
     if (!TEAM) return x + '<div class="hint">Cargando el equipo…</div>';
     if (!TEAM.ok) return x;
     /* personas */
     x += '<h3 style="margin-top:14px">Personas con usuario <span class="count">' + TEAM.members.filter(z => z.active).length + '</span></h3>';
-    x += TEAM.members.length ? '<div class="tm-list">' + TEAM.members.map(z => '<div class="tm-row' + (z.active ? '' : ' off') + '"><div class="tm-who"><b>' + esc(z.name || z.email || 'Sin nombre') + '</b><span>' + esc(z.email || '') + '</span><span>' + (z.active ? 'Último uso: ' + esc(fmtWhen(z.last_seen)) + ' · ' + z.devices + ' equipo' + (z.devices === 1 ? '' : 's') : 'Sin acceso') + '</span></div>' +
-      (z.active ? '<div class="tm-ctl"><select aria-label="Puesto" data-chg="tmSet" data-k="role" data-id="' + esc(z.member) + '">' + roleOpts(z.role) + '</select>' + (manyLocs() ? '<select aria-label="Consultorio" data-chg="tmSet" data-k="sede" data-id="' + esc(z.member) + '">' + sedeOpts(z.sede, z.role === 'admin') + '</select>' : '') + (z.role === 'profesional' || z.role === 'asistente' ? '<select aria-label="Profesional" data-chg="tmSet" data-k="pro" data-id="' + esc(z.member) + '">' + proOpts(z.pro) + '</select>' : '') + '<button class="btn small danger" data-act="tmOff" data-id="' + esc(z.member) + '">Quitar acceso</button></div>' : '<div class="tm-ctl"><button class="btn small" data-act="tmOn" data-id="' + esc(z.member) + '">Devolver acceso</button></div>') + '</div>').join('') + '</div>' : '<div class="empty">Todavía no invitaste a nadie.</div>';
+    x += TEAM.members.length ? '<div class="tm-list">' + TEAM.members.map(z => '<div class="tm-row' + (z.active ? '' : ' off') + '"><div class="tm-who"><b>' + esc(z.name || z.username || z.email || 'Sin nombre') + '</b><span>' + (z.sub ? 'Usuario: <b>' + esc(z.username || '') + '</b>' : esc(z.email || '')) + '</span><span>' + (z.active ? 'Último uso: ' + esc(fmtWhen(z.last_seen)) + ' · ' + z.devices + ' equipo' + (z.devices === 1 ? '' : 's') : 'Sin acceso') + '</span></div>' +
+      (z.active ? '<div class="tm-ctl"><select aria-label="Puesto" data-chg="tmSet" data-k="role" data-id="' + esc(z.member) + '">' + roleOpts(z.role) + '</select>' + (manyLocs() ? '<select aria-label="Consultorio" data-chg="tmSet" data-k="sede" data-id="' + esc(z.member) + '">' + sedeOpts(z.sede, z.role === 'admin') + '</select>' : '') + (z.role === 'profesional' || z.role === 'asistente' ? '<select aria-label="Profesional" data-chg="tmSet" data-k="pro" data-id="' + esc(z.member) + '">' + proOpts(z.pro) + '</select>' : '') + (z.sub ? '<button class="btn small" data-act="tmPass" data-id="' + esc(z.member) + '">Cambiar contraseña</button>' : '') + '<button class="btn small danger" data-act="tmOff" data-id="' + esc(z.member) + '">Quitar acceso</button></div>' : '<div class="tm-ctl"><button class="btn small" data-act="tmOn" data-id="' + esc(z.member) + '">Devolver acceso</button></div>') + '</div>').join('') + '</div>' : '<div class="empty">Todavía no creaste usuarios.</div>';
     if (TEAM.invites.length) x += '<h3 style="margin-top:14px">Invitaciones sin usar</h3><div class="tm-list">' + TEAM.invites.map(i => '<div class="tm-row"><div class="tm-who"><b>' + esc(i.name || RN[i.role]) + '</b><span>' + esc(RN[i.role] || i.role) + (i.sede && sedeName(i.sede) ? ' · ' + esc(sedeName(i.sede)) : '') + ' · vence el ' + A.fmtDMY(String(i.expires_at).slice(0, 10)) + '</span></div><div class="tm-ctl"><a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(i)) + '">WhatsApp</a><button class="btn small" data-act="tmCopy" data-code="' + esc(i.code) + '">Copiar</button><button class="btn small ghost" data-act="tmRevoke" data-code="' + esc(i.code) + '">Cancelar</button></div></div>').join('') + '</div>';
     x += '<p class="hint" style="margin-top:12px">Cada persona usa uno de los equipos de tu plan. El servidor controla lo que puede ver: la recepción y los profesionales no pueden bajar las liquidaciones, los sueldos, la caja general ni los datos de otros consultorios. Los pacientes y la agenda del consultorio son compartidos (es lo que necesitan para trabajar).</p>';
     return x;
   }
   MF.team = () => A.modalShell('Usuarios del equipo', teamHTML(), '<button class="btn" data-act="closeModal">Cerrar</button>', true);
-  A.ins.tmF = el => { (S.tmForm || (S.tmForm = {}))[el.getAttribute('data-k')] = el.value; };
+  A.ins.tmF = el => {
+    const f = S.tmForm || (S.tmForm = {}), k = el.getAttribute('data-k'); f[k] = el.value;
+    if (k === 'name' && !f.userTouched) { f.user = sugUser(el.value); const u = $('#tmUser'); if (u) u.value = f.user; }
+    if (k === 'user') f.userTouched = true;
+  };
   A.chg.tmF = el => {
     const f = S.tmForm || (S.tmForm = {}), k = el.getAttribute('data-k'); f[k] = el.value;
     const nm = $('#tmName'); if (nm) f.name = nm.value;
     if (k === 'role') { if (f.role === 'admin') f.sede = isEmp() ? '' : f.sede; else if (!f.sede) f.sede = (sedes()[0] || {}).id || ''; }
     paintTeam();
   };
-  A.acts.tmAnother = () => { NEWINV = null; S.tmForm = null; paintTeam(); };
+  A.acts.tmAnother = () => { NEWINV = null; NEWSUB = null; S.tmForm = null; paintTeam(); };
   A.acts.tmNew = async el => {
     const f = S.tmForm || {}, msg = $('#tmMsg'), nm = $('#tmName'); if (nm) f.name = nm.value.trim();
     const say = t => { if (msg) msg.textContent = t; };
@@ -13416,6 +13453,20 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (!f.name) return say('Escribí el nombre de la persona.');
     if (f.role !== 'admin' && isEmp() && !f.sede) return say('Elegí el ' + LW() + ' donde trabaja.');
     if (f.role === 'profesional' && !f.pro) return say('Elegí qué profesional es.');
+    if (S.tmMode !== 'mail') {
+      const ui = $('#tmUser'), pi = $('#tmPass'); if (ui) f.user = noAcc(ui.value).trim(); if (pi) f.pass = pi.value.trim();
+      if (!/^[a-z0-9]([a-z0-9._-]{1,28}[a-z0-9])$/.test(f.user || '') || /\.\./.test(f.user)) return say('El usuario lleva de 3 a 30 letras minúsculas, números, punto o guion, sin espacios (ej.: marta.gomez).');
+      if ((f.pass || '').length < 6) return say('La contraseña necesita al menos 6 caracteres.');
+      el.disabled = true; say('Creando…');
+      try {
+        const r = await rpc('ov_sub_create', { p_name: f.name, p_user: f.user, p_pass: f.pass, p_role: f.role, p_sede: manyLocs() ? (f.sede || null) : null, p_pro: f.pro || null });
+        if (!r || !r.ok) { el.disabled = false; return say((r && r.msg) || 'No se pudo.'); }
+        NEWSUB = { name: f.name, code: r.code, user: r.user, pass: f.pass };
+        if (A.empAudit) A.empAudit('Creó el usuario ' + r.user + ' para ' + f.name + ' (' + RN[f.role] + ').');
+        S.tmForm = null; loadTeam(); paintTeam();
+      } catch (e) { el.disabled = false; say(noServer(e) ? 'Falta actualizar el servidor: corré subusuarios.sql en Supabase.' : e.message || 'Sin conexión.'); }
+      return;
+    }
     el.disabled = true; say('Creando…');
     try {
       const r = await rpc('ov_invite_create', { p_role: f.role, p_sede: manyLocs() ? (f.sede || null) : null, p_pro: f.pro || null, p_name: f.name });
@@ -14937,6 +14988,88 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.pd-k{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}.pd-k>div{border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column}.pd-k span{font-size:12.5px;color:var(--ink-2)}.pd-k b{font-size:20px}.pd-k small{color:var(--ink-2)}.pd-k .warn{background:var(--warn-soft,#fbf0d9)}' +
     '.pd-h{margin:12px 0 4px;font-size:14px}.pd-det{margin-top:10px}.pd-det summary{cursor:pointer;font-weight:700}' +
     '.tp-pc{all:unset;cursor:pointer;display:block;text-align:center;font-weight:800;padding:10px;border-radius:10px;background:#1e8449;color:#fff}.tp-pc small{font-weight:600;opacity:.9}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.31: entrar con usuario del equipo, sin correo (Cuenta + Usuario + Contraseña) y lugares recordados ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, esc = A.esc, CL = A.cloud;
+  if (!CL || !CL.showLogin) return;
+  const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
+  const DOM = '.equipo.odontovoz.app';
+  const clean = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const subEmail = (code, user) => clean(user) + '@' + clean(code).replace(/[^a-z0-9]/g, '') + DOM;
+  /* lugares donde se entró desde este equipo (sin contraseñas) */
+  const places = () => { try { const l = JSON.parse(LS.get('odontovoz.places', '[]')); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
+  const savePlace = p => { const l = places().filter(x => !(x.code === p.code && x.user === p.user)); l.unshift(p); LS.set('odontovoz.places', JSON.stringify(l.slice(0, 8))); };
+  A.placesList = places;
+
+  const LOGO = '<svg viewBox="0 0 32 32" width="44" height="44" fill="none" aria-hidden="true"><path d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/></svg>';
+  const prev = CL.showLogin;
+  CL.showLogin = (tab, msg) => {
+    /* si la última vez se entró con usuario del equipo, se abre directo esa forma */
+    if (tab === 'in' && LS.get('odontovoz.lgKind', '') === 'team' && !CL._forceMail) tab = 'team';
+    CL._forceMail = false;
+    if (tab !== 'team') {
+      prev(tab, msg);
+      if (tab === 'in' || !tab) {
+        const seg = document.querySelector('#loginWrap .seg');
+        if (seg && !document.querySelector('#loginWrap .lg-team')) seg.insertAdjacentHTML('afterend', '<button type="button" class="btn lg-team" data-act="lgTeam"><span aria-hidden="true">👥</span> Entrar con usuario del equipo <small>(sin correo: cuenta, usuario y contraseña)</small></button>');
+      }
+      return;
+    }
+    let w = $('#loginWrap'); if (!w) { w = document.createElement('div'); w.id = 'loginWrap'; w.className = 'login-wrap'; document.body.appendChild(w); }
+    const pl = places(), last = pl[0] || {};
+    let h = '<form class="login-card" data-sub="loginTeam" novalidate>' + LOGO + '<h1>Usuario del equipo</h1><p class="hint" style="margin:0">Los datos te los da el dueño del consultorio o del centro.</p>';
+    if (pl.length) h += '<div class="lg-places"><span>Lugares donde entraste:</span>' + pl.map((p, i) => '<button type="button" class="lg-place" data-act="lgPlace" data-i="' + i + '"><b>' + esc(p.clinic || p.code) + '</b><small>' + esc(p.user) + ' · ' + esc(p.code) + '</small></button>').join('') + '</div>';
+    h += '<div class="field"><label for="lgCode">Cuenta</label><input id="lgCode" autocapitalize="none" autocomplete="organization" spellcheck="false" placeholder="Ej.: castelli" value="' + esc(last.code || '') + '"></div>' +
+      '<div class="field"><label for="lgUser">Usuario</label><input id="lgUser" autocapitalize="none" autocomplete="username" spellcheck="false" placeholder="Ej.: marta.gomez" value="' + esc(last.user || '') + '"></div>' +
+      '<div class="field"><label for="lgPass">Contraseña</label><input id="lgPass" type="password" autocomplete="current-password"></div>' +
+      '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>' +
+      '<button class="btn primary" type="submit" style="min-height:48px">Ingresar</button>' +
+      '<p class="hint" style="margin:0">¿Te olvidaste la contraseña? Pedile al dueño que te ponga una nueva desde Menú › Cuenta › Usuarios del equipo.</p>' +
+      '<button type="button" class="btn ghost" data-act="lgMail">Ingresar con correo (dueño de la cuenta)</button>' +
+      '<div class="row-btns" style="justify-content:center"><button type="button" class="btn small ghost" data-act="loginDemo">Probar con pacientes de ejemplo</button></div></form>';
+    w.innerHTML = h;
+    const f = (last.code ? $('#lgPass') : $('#lgCode')); if (f && !A.isNarrow()) f.focus();
+  };
+  const msg = (t, ok) => { const e = $('#lgMsg'); if (!e) { A.toast(t); return; } e.hidden = false; e.className = 'lg-alert ' + (ok ? 'ok' : 'bad'); e.innerHTML = '<b>' + (ok ? '✓ ' : '⚠ ') + '</b>' + esc(t); try { if (!ok && navigator.vibrate) navigator.vibrate(120); } catch (x) { /* nada */ } };
+  A.acts.lgTeam = () => CL.showLogin('team');
+  A.acts.lgMail = () => { LS.set('odontovoz.lgKind', 'mail'); CL._forceMail = true; CL.showLogin('in'); };
+  A.acts.lgPlace = el => { const p = places()[+el.getAttribute('data-i')]; if (!p) return; $('#lgCode').value = p.code; $('#lgUser').value = p.user; const ps = $('#lgPass'); ps.value = ''; ps.focus(); };
+  A.subs.loginTeam = async () => {
+    const code = clean(($('#lgCode') || {}).value).replace(/[^a-z0-9]/g, ''), user = clean(($('#lgUser') || {}).value), pass = ($('#lgPass') || {}).value || '';
+    if (code.length < 3) return msg('Escribí la cuenta (te la da el dueño, por ejemplo «castelli»).');
+    if (!/^[a-z0-9._-]{3,30}$/.test(user)) return msg('Revisá el usuario: va sin espacios, por ejemplo «marta.gomez».');
+    if (!pass) return msg('Escribí la contraseña.');
+    const b = $('#loginWrap button[type="submit"]'); if (b) { b.disabled = true; b.textContent = 'Ingresando…'; }
+    try {
+      await CL.signIn(subEmail(code, user), pass);
+      savePlace({ code, user, clinic: '' }); LS.set('odontovoz.lgKind', 'team'); LS.set('odontovoz.placeNow', code + '|' + user);
+      CL.afterLogin();
+    } catch (e) {
+      const m = String(e && e.data && (e.data.msg || e.data.error_description || e.data.message) || e.message || '');
+      if (/invalid login credentials|invalid_credentials/i.test(m) || (e && e.status === 400)) msg('Cuenta, usuario o contraseña incorrectos. Revisá que estén bien escritos (la contraseña respeta mayúsculas).');
+      else msg(e && e.offline ? 'Sin conexión a internet.' : (m || 'No se pudo ingresar.'));
+      const ps = $('#lgPass'); if (ps) ps.value = '';
+    } finally { if (b && document.body.contains(b)) { b.disabled = false; b.textContent = 'Ingresar'; } }
+  };
+  /* cuando ya se sabe el nombre del consultorio, queda guardado en el lugar (para los botones del ingreso) */
+  const arPrev = A.afterRefresh;
+  A.afterRefresh = () => {
+    if (arPrev) arPrev();
+    const now = LS.get('odontovoz.placeNow', ''); if (!now || !CL.session || !A.CLINIC) return;
+    const [code, user] = now.split('|'), l = places(), p = l.filter(x => x.code === code && x.user === user)[0];
+    if (p && p.clinic !== A.CLINIC) { p.clinic = A.CLINIC; LS.set('odontovoz.places', JSON.stringify(l)); }
+  };
+  /* entrar en otro lugar: se cierra esta sesión (y se borran sus datos de este equipo) y se abre el ingreso con los lugares */
+  A.acts.lgOtherPlace = () => { LS.set('odontovoz.lgKind', 'team'); CL.signOut(true); };
+
+  const css = document.createElement('style');
+  css.textContent = '.lg-team{display:flex;flex-direction:column;align-items:center;gap:1px;min-height:52px;border:1.5px solid var(--accent)!important;font-weight:700}.lg-team small{font-weight:500;font-size:12px;color:var(--ink-2)}' +
+    '.lg-places{display:flex;flex-direction:column;gap:6px}.lg-places>span{font-size:13px;color:var(--ink-2)}.lg-place{all:unset;cursor:pointer;display:flex;flex-direction:column;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}.lg-place:hover{border-color:var(--accent)}.lg-place small{color:var(--ink-2);font-size:12.5px}' +
+    '.tm-code{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:10px 12px;border-radius:12px;border:1px dashed var(--accent);margin-bottom:10px}.tm-code span{font-size:13px;color:var(--ink-2)}.tm-code b{font-size:20px;letter-spacing:.03em;font-family:var(--mono,monospace)}.tm-code small{flex:1 1 100%;color:var(--ink-2);font-size:12.5px}' +
+    '.tm-mode{margin-bottom:8px}.tm-cred{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}.tm-cred dt{color:var(--ink-2)}.tm-cred dd{margin:0;font-weight:800;font-family:var(--mono,monospace)}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

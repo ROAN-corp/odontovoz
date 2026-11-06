@@ -80,6 +80,8 @@
   CL.resend = async email => http('/auth/v1/resend' + BACK, { method: 'POST', auth: false, body: { type: 'signup', email } });
   CL.recover = async email => http('/auth/v1/recover' + BACK, { method: 'POST', auth: false, body: { email } });
   CL.setPassword = async pass => api('/auth/v1/user', { method: 'PUT', body: { password: pass } });
+  /* los usuarios del equipo sin correo tienen un correo interno: usuario@codigo.equipo.odontovoz.app */
+  CL.who = em => { const m = /^([^@]+)@([a-z0-9]+)\.equipo\.odontovoz\.app$/.exec(em || ''); return m ? m[1] + ' (cuenta ' + m[2] + ')' : (em || ''); };
   CL.signOut = async wipe => {
     try { if (CL.session) await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
     saveSession(null); stopLoop(); await baseClear();
@@ -308,7 +310,7 @@
     let h;
     if (!conf()) h = '<div class="acct-box"><b>Sin cuenta en la nube</b><span>Los datos quedan solo en este dispositivo. Hacé copias de seguridad desde Ajustes.</span><button class="btn small" data-act="cloudAdmin">Conectar servidor…</button></div>';
     else if (!CL.session) h = '<div class="acct-box"><b>No ingresaste</b><span>Ingresá con tu correo y contraseña para tener los mismos datos en la PC, la recepción y el teléfono.</span><button class="btn small primary" data-act="loginOpen">Ingresar o crear cuenta</button></div>';
-    else h = '<div class="acct-box"><b>' + esc(CL.session.user.email || '') + '</b><span><i class="sync-dot ' + dot + '"></i>' + (CL.state === 'busy' ? 'Sincronizando…' : CL.state === 'err' ? esc(CL.msg || 'Error al sincronizar') : CL.state === 'offline' ? 'Sin conexión: se sube al volver' : 'Sincronizado ' + ago(CL.last)) + '</span><button class="btn small" data-act="acctOpen">Cuenta y equipos</button></div>';
+    else h = '<div class="acct-box"><b>' + esc(CL.who(CL.session.user.email)) + '</b><span><i class="sync-dot ' + dot + '"></i>' + (CL.state === 'busy' ? 'Sincronizando…' : CL.state === 'err' ? esc(CL.msg || 'Error al sincronizar') : CL.state === 'offline' ? 'Sin conexión: se sube al volver' : 'Sincronizado ' + ago(CL.last)) + '</span><button class="btn small" data-act="acctOpen">Cuenta y equipos</button></div>';
     if (host) host.innerHTML = h;
     if (foot) foot.textContent = CL.session ? (CL.state === 'ok' ? '☁ al día' : CL.state === 'busy' ? '☁ …' : '☁ pendiente') : '';
   };
@@ -326,7 +328,7 @@
     if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
     h += '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
-    if (np && CL.session && CL.session.user) h += '<p class="hint" style="margin:0">Cuenta: <b>' + esc(CL.session.user.email || '') + '</b>. Elegí la contraseña nueva y guardala.</p>';
+    if (np && CL.session && CL.session.user) h += '<p class="hint" style="margin:0">Cuenta: <b>' + esc(CL.who(CL.session.user.email)) + '</b>. Elegí la contraseña nueva y guardala.</p>';
     if (rec) h += '<p class="hint" style="margin:0">Te mandamos un correo con un botón para elegir una contraseña nueva. Abrí <b>solo el último</b> que te llegue y tocá el botón una vez.</p>';
     h += '<button class="btn primary" type="submit" style="min-height:48px">' + (np ? 'Guardar contraseña' : rec ? 'Enviar enlace' : up ? 'Crear cuenta' : 'Ingresar') + '</button>';
     if (!up && !rec && !np) h += '<button type="button" class="btn ghost" data-act="loginTab" data-t="rec">Me olvidé la contraseña</button>';
@@ -418,8 +420,9 @@
     LS.set('odontovoz.cloud.uid', uid); LS.set('odontovoz.localOnly', null);
     CL.hideLogin();
     if (A.DEMO || (prev && prev !== uid)) { LS.set('odontovoz.mode', 'real'); A.noSave = true; setTimeout(() => location.reload(), 60); return; }
-    A.toast('Ingresaste como ' + CL.session.user.email + '. Sincronizando…'); startLoop(); A.afterRefresh();
+    A.toast('Ingresaste como ' + CL.who(CL.session.user.email) + '. Sincronizando…'); startLoop(); A.afterRefresh();
   }
+  CL.afterLogin = afterLogin;
 
   /* ---------- cuenta y equipos ---------- */
   A.acts.acctOpen = () => { A.hideDrawer(); S.modal = { type: 'acct' }; A.renderModal(); };
@@ -435,7 +438,7 @@
   };
   A.chg.devName = el => { LS.set('odontovoz.devname', el.value.trim().slice(0, 30)); };
   A.acts.cloudSyncNow = async () => { await CL.sync(); A.toast(CL.state === 'ok' ? 'Todo sincronizado.' : CL.msg || 'No se pudo sincronizar.'); if (S.modal && S.modal.type === 'acct') A.renderModal(); };
-  A.acts.acctPass = async () => { try { await CL.recover(CL.session.user.email); A.toast('Te enviamos un correo con el enlace para elegir la contraseña nueva.'); } catch (e) { A.toast(e.message); } };
+  A.acts.acctPass = async () => { if (/\.equipo\.odontovoz\.app$/.test(CL.session.user.email || '')) { S.modal = null; A.renderModal(); CL.showLogin('newpass'); return; } try { await CL.recover(CL.session.user.email); A.toast('Te enviamos un correo con el enlace para elegir la contraseña nueva.'); } catch (e) { A.toast(e.message); } };
   A.acts.acctOut = () => { S.modal = { type: 'acctOut' }; A.renderModal(); };
   MF.acctOut = () => A.modalShell('Cerrar sesión', '<p>Lo que ya está en la nube queda guardado. ¿Querés también borrar los datos de este equipo? Conviene si el equipo es compartido.</p>',
     '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn" data-act="acctOutKeep">Cerrar y conservar</button><button class="btn danger" data-act="acctOutWipe">Cerrar y borrar de este equipo</button>');
@@ -475,7 +478,7 @@
   CL.lock = () => {
     if (!CL.pinOn() || !CL.session || $('#pinWrap')) return;
     const w = document.createElement('div'); w.id = 'pinWrap'; w.className = 'login-wrap';
-    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>OdontoVoz</h1><p class="hint" style="margin:0">' + esc(CL.session.user.email) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
+    w.innerHTML = '<form class="login-card" data-sub="pinGo">' + LOGO + '<h1>OdontoVoz</h1><p class="hint" style="margin:0">' + esc(CL.who(CL.session.user.email)) + '</p><div class="field"><label for="pinIn">PIN</label><input id="pinIn" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div><div id="pinMsg" class="hint bad"></div><button class="btn primary" type="submit" style="min-height:48px">Entrar</button><button type="button" class="btn ghost" data-act="pinForgot">Me olvidé el PIN</button></form>';
     document.body.appendChild(w); const i = $('#pinIn'); if (i) i.focus();
   };
   A.subs.pinGo = async () => {

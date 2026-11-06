@@ -388,3 +388,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - **Para cobrar**: en el inicio y en la caja aparece cada paciente que mandaron, con el consultorio, el odontólogo, el detalle y el total (avisa también en la casilla de notificaciones). «Cobrar» acepta uno o dos medios de pago, suma lo que debía de antes si se quiere, y «Queda debiendo» lo deja en su cuenta. En la ventanita del turno aparece «Cobrar».
 - **Cobrado hoy** abre el resumen del día del centro: total, lo que falta cobrar, por forma de pago, por consultorio y por odontólogo, y «Ir a cerrar la caja».
 - El odontólogo con usuario del equipo ve solo sus pacientes por cobrar; la recepción ve todo el día de su centro.
+
+## OdontoVoz 1.31 · usuarios del equipo sin correo
+- Cada cuenta tiene un **código** (Menú › Cuenta › Usuarios del equipo; el dueño lo puede elegir antes de crear el primer usuario).
+- El dueño **crea usuarios** para su equipo con nombre, usuario, contraseña, puesto, centro y profesional, sin pedir correo. Le aparecen los datos para mandar por WhatsApp o copiar. Puede cambiarles la contraseña (se les cierra la sesión) y quitarles el acceso.
+- En el ingreso: **«Entrar con usuario del equipo»** con Cuenta, Usuario y Contraseña. La app recuerda los lugares donde se entró en ese equipo para elegirlos con un toque, y «Entrar en otro lugar» (Menú › Cuenta) cambia de lugar.
+- Una persona puede tener usuarios en varias cuentas (uno por cada lugar donde trabaja) sin necesitar más correos. La invitación por correo sigue como opción.
+- Servidor: `supabase/subusuarios.sql`.

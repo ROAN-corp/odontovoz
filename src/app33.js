@@ -219,19 +219,40 @@
     let h = acctPrev(m);
     const mm = mb();
     if (mm) {
-      const box = '<div class="block mb-block"><h3>Tu puesto</h3><div class="acct-box"><b>' + esc(RN[mm.role] || mm.role) + (mm.sede && sedeName(mm.sede) ? ' · ' + esc(sedeName(mm.sede)) : '') + '</b><span>Usás la cuenta de <b>' + esc(A.CLINIC || 'el consultorio') + '</b>. La paga el dueño: para vos es gratis.</span><span>' + esc(RDESC[mm.role] || '') + '</span></div><div class="hint" style="margin:6px 0 0">Tu correo y tu contraseña son tuyos. Si dejás de trabajar ahí, el dueño te quita el acceso y los datos se borran de tus equipos.</div></div>';
+      const box = '<div class="block mb-block"><h3>Tu puesto</h3><div class="acct-box"><b>' + esc(RN[mm.role] || mm.role) + (mm.sede && sedeName(mm.sede) ? ' · ' + esc(sedeName(mm.sede)) : '') + '</b><span>Usás la cuenta de <b>' + esc(A.CLINIC || 'el consultorio') + '</b>. La paga el dueño: para vos es gratis.</span><span>' + esc(RDESC[mm.role] || '') + '</span></div><div class="hint" style="margin:6px 0 0">' + (mm.sub ? 'Entrás con la cuenta <b>' + esc((CL.code || '')) + '</b> y el usuario <b>' + esc(mm.username || '') + '</b>. Si te olvidás la contraseña, pedile al dueño que te la cambie desde Equipo. Para entrar en otro lugar donde trabajes, tocá «Entrar en otro lugar».' : 'Tu correo y tu contraseña son tuyos.') + ' Si dejás de trabajar ahí, el dueño te quita el acceso y los datos se borran de tus equipos.</div><div class="row-btns" style="margin-top:8px"><button class="btn small" data-act="lgOtherPlace">Entrar en otro lugar</button></div></div>';
       return h.replace('<div class="field" style="margin-top:10px">', box + '<div class="field" style="margin-top:10px">');
     }
     if (isOwner()) {
       const n = TEAM && TEAM.ok ? TEAM.members.filter(x => x.active).length : null;
-      const block = '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Invitá a tu secretaria o a los odontólogos que trabajan con vos: cada uno entra con su propio correo, gratis, y ve solo lo de su puesto.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">' + (n ? 'Ver el equipo (' + n + ')' : 'Invitar a alguien') + '</button></div></div>';
+      const block = '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Creale un usuario a tu secretaria y a los odontólogos que trabajan con vos: entran con el código de tu cuenta, su usuario y su contraseña (no necesitan correo), gratis, y ven solo lo de su puesto.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">' + (n ? 'Ver el equipo (' + n + ')' : 'Crear usuarios') + '</button></div></div>';
       h = h.replace('<div class="block"><h3>Tus datos</h3>', block + '<div class="block"><h3>Tus datos</h3>');
       if (h.indexOf('data-act="teamOpen"') < 0) h = h.replace('<div class="block"><h3>Bloqueo con PIN</h3>', block + '<div class="block"><h3>Bloqueo con PIN</h3>');
     }
     return h;
   };
 
-  let TEAM = null, teamErr = '', NEWINV = null, teamBusy = false;
+  let TEAM = null, teamErr = '', NEWINV = null, NEWSUB = null, teamBusy = false;
+  const noAcc = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const sugUser = n => { const w = noAcc(n).replace(/[^a-z0-9 ]/g, ' ').trim().split(/\s+/).filter(Boolean); return w.length ? (w.length > 1 ? w[0] + '.' + w[w.length - 1] : w[0]).slice(0, 30) : ''; };
+  const sugPass = () => { const al = 'abcdefghjkmnpqrstuvwxyz', d = '23456789'; let p = ''; for (let i = 0; i < 5; i++) p += al[Math.floor(Math.random() * al.length)]; for (let i = 0; i < 3; i++) p += d[Math.floor(Math.random() * d.length)]; return p; };
+  const subText = n => 'Hola ' + (n.name || '').split(' ')[0] + '. Ya tenés tu usuario de OdontoVoz en ' + (A.CLINIC || 'el consultorio') + '.\nEntrá a ' + PUB_APP + ' (o a la app) y tocá «Entrar con usuario del equipo».\nCuenta: ' + n.code + '\nUsuario: ' + n.user + '\nContraseña: ' + n.pass + '\nDespués podés cambiar la contraseña desde Menú › Cuenta.';
+  A.acts.tmMode = el => { S.tmMode = el.getAttribute('data-m'); paintTeam(); };
+  A.acts.tmSubCopy = async () => { const t = subText(NEWSUB); try { await navigator.clipboard.writeText(t); A.toast('Datos copiados.'); } catch (e) { A.toast(t); } };
+  A.acts.tmCodeEdit = () => { S.modal = { type: 'tmCode', v: TEAM.code || '' }; A.renderModal(); };
+  MF.tmCode = m => A.modalShell('Código de la cuenta', '<p>Es lo que escribe tu equipo en «Cuenta» para entrar. Que sea corto y fácil, por ejemplo el nombre del consultorio.</p><div class="field"><label for="tcV">Código</label><input id="tcV" value="' + esc(m.v) + '" autocapitalize="none" spellcheck="false" maxlength="20"></div><p class="hint">De 4 a 20 letras o números, sin espacios ni acentos. Después de crear el primer usuario ya no se puede cambiar.</p><div class="hint bad" id="tcMsg"></div>', '<button class="btn" data-act="teamOpen">Cancelar</button><button class="btn primary" data-act="tmCodeSave">Guardar</button>');
+  A.acts.tmCodeSave = async () => {
+    const v = noAcc(($('#tcV') || {}).value).replace(/[^a-z0-9]/g, ''), o = $('#tcMsg');
+    try { const r = await rpc('ov_code_set', { p_code: v }); if (!r || !r.ok) { if (o) o.textContent = (r && r.msg) || 'No se pudo.'; return; } A.toast('Código guardado: ' + r.code); A.acts.teamOpen(); }
+    catch (e) { if (o) o.textContent = noServer(e) ? 'Falta actualizar el servidor (subusuarios.sql).' : e.message || 'Sin conexión.'; }
+  };
+  A.acts.tmPass = el => { const z = memberOf(el.getAttribute('data-id')); S.modal = { type: 'tmPassM', id: z.member, name: z.name || z.username, user: z.username, v: sugPass() }; A.renderModal(); };
+  MF.tmPassM = m => A.modalShell('Nueva contraseña', '<p>Contraseña nueva para <b>' + esc(m.name) + '</b> (usuario ' + esc(m.user || '') + '). Se le cierra la sesión en sus equipos y entra con la nueva.</p><div class="field"><label for="tpV">Contraseña</label><input id="tpV" value="' + esc(m.v) + '" autocomplete="off" spellcheck="false"></div><div class="hint bad" id="tpMsg"></div>', '<button class="btn" data-act="teamOpen">Cancelar</button><button class="btn primary" data-act="tmPassGo">Guardar</button>');
+  A.acts.tmPassGo = async () => {
+    const m = S.modal, v = (($('#tpV') || {}).value || '').trim(), o = $('#tpMsg');
+    if (v.length < 6) { if (o) o.textContent = 'Al menos 6 caracteres.'; return; }
+    try { const r = await rpc('ov_sub_password', { p_member: m.id, p_pass: v }); if (!r || !r.ok) { if (o) o.textContent = (r && r.msg) || 'No se pudo.'; return; } NEWSUB = { name: m.name, code: TEAM.code, user: m.user, pass: v }; if (A.empAudit) A.empAudit('Cambió la contraseña de ' + m.name + '.'); A.acts.teamOpen(); }
+    catch (e) { if (o) o.textContent = e.message || 'Sin conexión.'; }
+  };
   async function loadTeam() {
     if (!isOwner() || teamBusy) return; teamBusy = true;
     try { TEAM = await rpc('ov_team'); teamErr = ''; }
@@ -252,37 +273,50 @@
   function teamHTML() {
     let x = '';
     if (teamErr) x += '<div class="hint bad">' + esc(teamErr) + '</div>';
+    if (TEAM && TEAM.ok && TEAM.code !== undefined) {
+      const locked = TEAM.members.some(z => z.sub);
+      x += '<div class="tm-code"><span>Código de tu cuenta</span><b>' + esc(TEAM.code || '…') + '</b>' + (!locked && TEAM.code ? '<button class="btn small ghost" data-act="tmCodeEdit">Cambiar</button>' : '') + '<small>Tu equipo entra con este código, su usuario y su contraseña.' + (!locked ? ' Elegilo antes de crear el primer usuario: después no se puede cambiar.' : '') + '</small></div>';
+    }
+    if (NEWSUB) {
+      x += '<div class="tm-new"><b>Usuario listo para ' + esc(NEWSUB.name) + '</b><p class="hint" style="margin:4px 0">Pasale estos datos. En OdontoVoz toca «Entrar con usuario del equipo». Puede cambiar la contraseña después desde Menú › Cuenta.</p><dl class="tm-cred"><dt>Cuenta</dt><dd>' + esc(NEWSUB.code) + '</dd><dt>Usuario</dt><dd>' + esc(NEWSUB.user) + '</dd><dt>Contraseña</dt><dd>' + esc(NEWSUB.pass) + '</dd></dl><div class="row-btns"><a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(subText(NEWSUB)) + '">Mandar por WhatsApp</a><button class="btn small" data-act="tmSubCopy">Copiar datos</button><button class="btn small ghost" data-act="tmAnother">Crear otro usuario</button></div></div>';
+    }
     /* nueva invitación */
     const f = S.tmForm || (S.tmForm = { role: 'recepcion', sede: (A.empSede && A.empSede()) || (sedes()[0] || {}).id || '', pro: '', name: '' });
-    if (NEWINV) {
+    if (NEWSUB) { /* ya se mostró arriba */ } else if (NEWINV) {
       x += '<div class="tm-new"><b>Invitación lista para ' + esc(NEWINV.name || RN[NEWINV.role]) + '</b><p class="hint" style="margin:4px 0">Mandale este enlace. Entra, crea su usuario con su correo y ya queda en tu equipo. Vence en 7 días y sirve una sola vez.</p><input class="tm-link" readonly value="' + esc(invLink(NEWINV.code)) + '" aria-label="Enlace de invitación"><div class="row-btns"><a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(NEWINV)) + '">Mandar por WhatsApp</a><button class="btn small" data-act="tmCopy" data-code="' + esc(NEWINV.code) + '">Copiar enlace</button><button class="btn small ghost" data-act="tmAnother">Invitar a otra persona</button></div></div>';
     } else {
-      x += '<div class="tm-form"><h3>Invitar a una persona</h3><div class="tm-grid">' +
+      const byMail = S.tmMode === 'mail';
+      x += '<div class="tm-form"><div class="seg tm-mode" role="group"><button type="button" data-act="tmMode" data-m="user" aria-pressed="' + !byMail + '">Crear usuario (sin correo)</button><button type="button" data-act="tmMode" data-m="mail" aria-pressed="' + byMail + '">Invitar por correo</button></div><div class="tm-grid">' +
         '<div class="field"><label for="tmName">Nombre</label><input id="tmName" value="' + esc(f.name) + '" placeholder="Ej.: Marta" data-in="tmF" data-k="name"></div>' +
         '<div class="field"><label for="tmRole">Puesto</label><select id="tmRole" data-chg="tmF" data-k="role">' + roleOpts(f.role) + '</select></div>' +
         (manyLocs() ? '<div class="field"><label for="tmSede">' + LWc() + '</label><select id="tmSede" data-chg="tmF" data-k="sede">' + sedeOpts(f.sede, f.role === 'admin') + '</select></div>' : '') +
         (f.role === 'profesional' || f.role === 'asistente' ? '<div class="field"><label for="tmPro">' + (f.role === 'profesional' ? 'Es el profesional' : 'Trabaja con') + '</label><select id="tmPro" data-chg="tmF" data-k="pro">' + proOpts(f.pro) + '</select></div>' : '') +
-        '</div><p class="hint" style="margin:4px 0 8px">' + esc(RDESC[f.role] || '') + (f.role === 'profesional' ? ' Si el odontólogo todavía no está cargado, primero sumalo en Profesionales.' : '') + '</p><div class="row-btns"><button class="btn small primary" data-act="tmNew">Crear invitación</button></div><div class="hint bad" id="tmMsg"></div></div>';
+        (!byMail ? '<div class="field"><label for="tmUser">Usuario</label><input id="tmUser" value="' + esc(f.user || '') + '" placeholder="Ej.: marta.gomez" autocapitalize="none" autocomplete="off" spellcheck="false" data-in="tmF" data-k="user"></div><div class="field"><label for="tmPass">Contraseña</label><input id="tmPass" value="' + esc(f.pass || (f.pass = sugPass())) + '" autocomplete="off" spellcheck="false" data-in="tmF" data-k="pass"></div>' : '') +
+        '</div><p class="hint" style="margin:4px 0 8px">' + esc(RDESC[f.role] || '') + (f.role === 'profesional' ? ' Si el odontólogo todavía no está cargado, primero sumalo en Profesionales.' : '') + '</p><div class="row-btns"><button class="btn small primary" data-act="tmNew">' + (byMail ? 'Crear invitación' : 'Crear usuario') + '</button></div><div class="hint bad" id="tmMsg"></div></div>';
     }
     if (!TEAM) return x + '<div class="hint">Cargando el equipo…</div>';
     if (!TEAM.ok) return x;
     /* personas */
     x += '<h3 style="margin-top:14px">Personas con usuario <span class="count">' + TEAM.members.filter(z => z.active).length + '</span></h3>';
-    x += TEAM.members.length ? '<div class="tm-list">' + TEAM.members.map(z => '<div class="tm-row' + (z.active ? '' : ' off') + '"><div class="tm-who"><b>' + esc(z.name || z.email || 'Sin nombre') + '</b><span>' + esc(z.email || '') + '</span><span>' + (z.active ? 'Último uso: ' + esc(fmtWhen(z.last_seen)) + ' · ' + z.devices + ' equipo' + (z.devices === 1 ? '' : 's') : 'Sin acceso') + '</span></div>' +
-      (z.active ? '<div class="tm-ctl"><select aria-label="Puesto" data-chg="tmSet" data-k="role" data-id="' + esc(z.member) + '">' + roleOpts(z.role) + '</select>' + (manyLocs() ? '<select aria-label="Consultorio" data-chg="tmSet" data-k="sede" data-id="' + esc(z.member) + '">' + sedeOpts(z.sede, z.role === 'admin') + '</select>' : '') + (z.role === 'profesional' || z.role === 'asistente' ? '<select aria-label="Profesional" data-chg="tmSet" data-k="pro" data-id="' + esc(z.member) + '">' + proOpts(z.pro) + '</select>' : '') + '<button class="btn small danger" data-act="tmOff" data-id="' + esc(z.member) + '">Quitar acceso</button></div>' : '<div class="tm-ctl"><button class="btn small" data-act="tmOn" data-id="' + esc(z.member) + '">Devolver acceso</button></div>') + '</div>').join('') + '</div>' : '<div class="empty">Todavía no invitaste a nadie.</div>';
+    x += TEAM.members.length ? '<div class="tm-list">' + TEAM.members.map(z => '<div class="tm-row' + (z.active ? '' : ' off') + '"><div class="tm-who"><b>' + esc(z.name || z.username || z.email || 'Sin nombre') + '</b><span>' + (z.sub ? 'Usuario: <b>' + esc(z.username || '') + '</b>' : esc(z.email || '')) + '</span><span>' + (z.active ? 'Último uso: ' + esc(fmtWhen(z.last_seen)) + ' · ' + z.devices + ' equipo' + (z.devices === 1 ? '' : 's') : 'Sin acceso') + '</span></div>' +
+      (z.active ? '<div class="tm-ctl"><select aria-label="Puesto" data-chg="tmSet" data-k="role" data-id="' + esc(z.member) + '">' + roleOpts(z.role) + '</select>' + (manyLocs() ? '<select aria-label="Consultorio" data-chg="tmSet" data-k="sede" data-id="' + esc(z.member) + '">' + sedeOpts(z.sede, z.role === 'admin') + '</select>' : '') + (z.role === 'profesional' || z.role === 'asistente' ? '<select aria-label="Profesional" data-chg="tmSet" data-k="pro" data-id="' + esc(z.member) + '">' + proOpts(z.pro) + '</select>' : '') + (z.sub ? '<button class="btn small" data-act="tmPass" data-id="' + esc(z.member) + '">Cambiar contraseña</button>' : '') + '<button class="btn small danger" data-act="tmOff" data-id="' + esc(z.member) + '">Quitar acceso</button></div>' : '<div class="tm-ctl"><button class="btn small" data-act="tmOn" data-id="' + esc(z.member) + '">Devolver acceso</button></div>') + '</div>').join('') + '</div>' : '<div class="empty">Todavía no creaste usuarios.</div>';
     if (TEAM.invites.length) x += '<h3 style="margin-top:14px">Invitaciones sin usar</h3><div class="tm-list">' + TEAM.invites.map(i => '<div class="tm-row"><div class="tm-who"><b>' + esc(i.name || RN[i.role]) + '</b><span>' + esc(RN[i.role] || i.role) + (i.sede && sedeName(i.sede) ? ' · ' + esc(sedeName(i.sede)) : '') + ' · vence el ' + A.fmtDMY(String(i.expires_at).slice(0, 10)) + '</span></div><div class="tm-ctl"><a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(i)) + '">WhatsApp</a><button class="btn small" data-act="tmCopy" data-code="' + esc(i.code) + '">Copiar</button><button class="btn small ghost" data-act="tmRevoke" data-code="' + esc(i.code) + '">Cancelar</button></div></div>').join('') + '</div>';
     x += '<p class="hint" style="margin-top:12px">Cada persona usa uno de los equipos de tu plan. El servidor controla lo que puede ver: la recepción y los profesionales no pueden bajar las liquidaciones, los sueldos, la caja general ni los datos de otros consultorios. Los pacientes y la agenda del consultorio son compartidos (es lo que necesitan para trabajar).</p>';
     return x;
   }
   MF.team = () => A.modalShell('Usuarios del equipo', teamHTML(), '<button class="btn" data-act="closeModal">Cerrar</button>', true);
-  A.ins.tmF = el => { (S.tmForm || (S.tmForm = {}))[el.getAttribute('data-k')] = el.value; };
+  A.ins.tmF = el => {
+    const f = S.tmForm || (S.tmForm = {}), k = el.getAttribute('data-k'); f[k] = el.value;
+    if (k === 'name' && !f.userTouched) { f.user = sugUser(el.value); const u = $('#tmUser'); if (u) u.value = f.user; }
+    if (k === 'user') f.userTouched = true;
+  };
   A.chg.tmF = el => {
     const f = S.tmForm || (S.tmForm = {}), k = el.getAttribute('data-k'); f[k] = el.value;
     const nm = $('#tmName'); if (nm) f.name = nm.value;
     if (k === 'role') { if (f.role === 'admin') f.sede = isEmp() ? '' : f.sede; else if (!f.sede) f.sede = (sedes()[0] || {}).id || ''; }
     paintTeam();
   };
-  A.acts.tmAnother = () => { NEWINV = null; S.tmForm = null; paintTeam(); };
+  A.acts.tmAnother = () => { NEWINV = null; NEWSUB = null; S.tmForm = null; paintTeam(); };
   A.acts.tmNew = async el => {
     const f = S.tmForm || {}, msg = $('#tmMsg'), nm = $('#tmName'); if (nm) f.name = nm.value.trim();
     const say = t => { if (msg) msg.textContent = t; };
@@ -290,6 +324,20 @@
     if (!f.name) return say('Escribí el nombre de la persona.');
     if (f.role !== 'admin' && isEmp() && !f.sede) return say('Elegí el ' + LW() + ' donde trabaja.');
     if (f.role === 'profesional' && !f.pro) return say('Elegí qué profesional es.');
+    if (S.tmMode !== 'mail') {
+      const ui = $('#tmUser'), pi = $('#tmPass'); if (ui) f.user = noAcc(ui.value).trim(); if (pi) f.pass = pi.value.trim();
+      if (!/^[a-z0-9]([a-z0-9._-]{1,28}[a-z0-9])$/.test(f.user || '') || /\.\./.test(f.user)) return say('El usuario lleva de 3 a 30 letras minúsculas, números, punto o guion, sin espacios (ej.: marta.gomez).');
+      if ((f.pass || '').length < 6) return say('La contraseña necesita al menos 6 caracteres.');
+      el.disabled = true; say('Creando…');
+      try {
+        const r = await rpc('ov_sub_create', { p_name: f.name, p_user: f.user, p_pass: f.pass, p_role: f.role, p_sede: manyLocs() ? (f.sede || null) : null, p_pro: f.pro || null });
+        if (!r || !r.ok) { el.disabled = false; return say((r && r.msg) || 'No se pudo.'); }
+        NEWSUB = { name: f.name, code: r.code, user: r.user, pass: f.pass };
+        if (A.empAudit) A.empAudit('Creó el usuario ' + r.user + ' para ' + f.name + ' (' + RN[f.role] + ').');
+        S.tmForm = null; loadTeam(); paintTeam();
+      } catch (e) { el.disabled = false; say(noServer(e) ? 'Falta actualizar el servidor: corré subusuarios.sql en Supabase.' : e.message || 'Sin conexión.'); }
+      return;
+    }
     el.disabled = true; say('Creando…');
     try {
       const r = await rpc('ov_invite_create', { p_role: f.role, p_sede: manyLocs() ? (f.sede || null) : null, p_pro: f.pro || null, p_name: f.name });
