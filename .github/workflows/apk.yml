@@ -37,6 +37,9 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund --legacy-peer-deps
 
+      - name: Tipografías locales (sin Google Fonts)
+        run: npm install --no-save --no-audit --no-fund --legacy-peer-deps @fontsource/bricolage-grotesque@5 @fontsource/ibm-plex-mono@5 @fontsource/instrument-sans@5 @fontsource/atkinson-hyperlegible@5 @fontsource/schibsted-grotesk@5 || echo 'sin tipografías locales'
+
       - name: Armar la app web (www)
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
