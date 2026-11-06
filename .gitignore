@@ -4,3 +4,7 @@ android/
 *.apk
 keystore/
 site/
+
+# capturas de prueba
+/*-390.png
+/*-1366.png
