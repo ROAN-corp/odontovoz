@@ -296,3 +296,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.20.2
 - Nuevo turno o sobreturno: los casilleros de la hora y los minutos son más anchos y muestran la hora elegida (en la PC quedaban tan angostos que no se veía el número).
+
+## OdontoVoz 1.21 · control del día
+- Caja: la barra de secciones queda fija arriba y en el mismo lugar en todas las secciones.
+- Caja › **Control del día**: prácticas realizadas (producción), cobrado, lo que quedó en cuenta corriente, turnos; controles en verde o amarillo (atenciones sin práctica cargada, prácticas sin cobrar, turnos sin marcar, caja sin cerrar); tabla por profesional; lista de atenciones sin práctica con «Cargar práctica» o «Sin cargo»; lo realizado sin cobrar con «Cobrar»; detalle de prácticas; movimientos de caja del día. Se puede ir a días anteriores.
+- **Libro diario del mes** en Excel (prácticas, cobros, ajustes, ingresos y gastos) para el contador.
+- Nueva categoría de gasto: «Retiro del dueño».
+- Agenda: los turnos atendidos sin práctica cargada muestran la marca «sin práctica».
+- Modo Empresa: el inicio del dueño muestra las prácticas del día (total, por consultorio y por profesional, y lo que quedó sin cobrar) y avisa las atenciones sin práctica. La caja de cada consultorio empieza con su control del día. Las prácticas cargadas desde un equipo de consultorio quedan en ese consultorio.
