@@ -345,3 +345,16 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - En el inicio, «Turnos pedidos online» junta los que todavía no marcaste como vistos.
 - Cada profesional del equipo recibe solo los suyos; en Empresa, cada consultorio los suyos. Interruptor propio en Avisos y sonidos.
 - Arreglo: el cartel de «Llegó un paciente» se veía con letra y colores equivocados.
+
+## OdontoVoz 1.26 · casilla de notificaciones
+- Sobrecito arriba a la derecha (web y APK) con un numerito rojo de las no leídas. Al tocarlo baja una solapa con las notificaciones; tocar una lleva a su lugar y la marca como leída. «Marcar todas como leídas» y × para borrar.
+- Qué avisa:
+  - turnos pedidos online;
+  - pacientes que llegaron (marcados desde otro equipo);
+  - versión nueva (en la web, lista para actualizar; en el APK, cuando hay uno nuevo para bajar);
+  - trabajos de laboratorio atrasados, que vuelven hoy o mañana, o que llegaron y el paciente no tiene turno;
+  - recordatorios de mañana sin mandar (desde el mediodía);
+  - notas y bloqueos que otra persona dejó en la agenda;
+  - plan o prueba que vence en 5 días o menos (solo al dueño);
+  - equipo que hace más de un día no guarda en la nube.
+- Cada persona ve lo suyo: el odontólogo, sus pacientes y trabajos; la recepción, recordatorios y turnos; el dueño, todo.

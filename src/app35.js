@@ -42,6 +42,7 @@
     show.forEach(a => { if (s.inbox.indexOf(a.id) < 0) s.inbox.unshift(a.id); });
     s.seen = s.seen.slice(-500); s.inbox = s.inbox.slice(0, 30);
     save(s);
+    if (show.length && A.onOnlineNew) { try { A.onOnlineNew(show); } catch (e) { /* nada */ } }
     if (show.length && pref().online) notify(show);
     if (show.length && S.tab === 'inicio' && A.render.inicio) { try { A.render.inicio(); } catch (e) { /* nada */ } }
   }
