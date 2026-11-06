@@ -293,3 +293,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.20.1 · agenda
 - La agenda se queda donde estabas trabajando: al agendar, mover o cambiar un turno ya no vuelve arriba. Vuelve arriba solo cuando entrás a la agenda desde otra sección.
 - Las horas de la izquierda siguen la duración de turno del profesional: cada 15, 30 o 60 minutos (o 20, 40, 45), con una línea en cada turno.
+
+## OdontoVoz 1.20.2
+- Nuevo turno o sobreturno: los casilleros de la hora y los minutos son más anchos y muestran la hora elegida (en la PC quedaban tan angostos que no se veía el número).
