@@ -398,3 +398,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.31.1
 - Arreglo: en «Usuarios del equipo», una persona sin acceso se dibujaba encima de la ventana (rayada y fuera de lugar). Ahora queda en la lista, atenuada.
+
+## OdontoVoz 1.32 · agenda más arriba
+- En la PC la parte de arriba de la agenda es más compacta: título más chico con el año al lado, botones más bajos, tira de días más baja, sin el texto de ayuda y con «Colores de los turnos» dentro de «Más». La grilla empieza unos 130 píxeles más arriba.
+- En el celular, un poco más compacta también (tarjetas de profesionales más bajas), sin achicar los botones.
