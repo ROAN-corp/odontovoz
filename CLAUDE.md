@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.29 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.29.1 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -67,6 +67,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.29 (noviem
 - 1.27.1 (`src/app33.js`): el enlace de invitación usa `PUB_APP` (app publicada) cuando la app corre en el APK o en localhost; antes salía `https://localhost/?invitacion=…`.
 - 1.28 (`src/app38.js` + `block()` de `index.html`): clic en `.nm` del turno → ficha resumida (panel de siempre); clic en el resto → `#tpop` (en el celular, hoja desde abajo) con `tpStatus`, `tpCov`, `apRem`, motivo (`a.motivo`), `a.by`/`a.at` (se graban al crear con `naSave`), `tpSobre`, `tpEdit`, `tpClip` copiar/mover (barra `#clipBar` y siguiente `gbClick`), `tpFree` (→ `apDelAsk`). `A.blkCov`/`A.blkMot` dibujan obra social y motivo en el turno. `#nc_cov` en el paciente nuevo del turno. `#view-agenda .grid-wrap` sin `max-height` también en la PC. `A.CFG.turnClick = 'ficha'` vuelve al comportamiento anterior.
 - 1.29 (`src/app39.js`; textos de `app28`/`app32`/`app33` pasan «consultorio» → «centro» en Empresa, la clave de puesto `consultorio` no cambia): consultorios de cada centro en `A.CFG.locs[i].rooms = [{id, name}]` y rotación en `A.CFG.rot[locId] = [{id, room, pro, dow, h:[desde,hasta]|null, wk:null|'odd'|'even'}]` (h null = horario del profesional ese día). `A.roomOf(a)` (respeta `a.room` si existe), `A.rotClashes(loc, fecha)`. Árbol de 3 niveles (pisa `A.empTreeHTML`) + planilla `#rotPlan` (`rotMake`, `rotRooms`, `rotAdd`/`rotEdit`/`rotESave`, `rotAuto`, `rotCopy`). Agenda: chips `.ec-room` (`agRoom`, `S._roomSel`) en `.emp-crumb`; insignia `.broom` vía `A.blkCov`; `.tp-room` en `#tpop`. Siguen: prácticas desde «Qué hice hoy» y stock.
+- 1.29.1 (`src/cloud.js`): signup, resend y recover mandan `?redirect_to=` con la app publicada (`BACK`); sin eso GoTrue usaba el Referer (`https://roan-corp.github.io/`) y el enlace del correo daba 404. El correo llega desde somosroan@gmail.com (a veces a spam).
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 

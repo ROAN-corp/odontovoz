@@ -378,3 +378,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - **Rotación semanal**: en Empresa › Centros, «Consultorios y rotación» muestra cada día de la semana con sus consultorios y quién atiende en cada uno y en qué horario. «+ Asignar» elige odontólogo, consultorio, día, todo su horario o solo una parte, y todas las semanas o semana por medio. Avisa si dos se pisan en el mismo consultorio o si uno quedó en dos a la vez, y marca quiénes atienden ese día sin consultorio. «Repartir solos» completa la semana y «Copiar lunes a otro día» repite un día. En la PC, resumen de toda la semana.
 - El árbol de Organización queda Empresa › Centro › Consultorio › Odontólogos (con sus días), más «Sin consultorio fijo».
 - En la agenda del centro se elige un consultorio y se ven solo quienes trabajan ahí ese día; cada turno muestra su consultorio (C1, C2…) y la ventanita del turno también.
+
+## OdontoVoz 1.29.1
+- Arreglo: el botón del correo de confirmación de cuenta (y el de recuperar contraseña) a veces llevaba a una página con error 404. Ahora siempre vuelve a la app.
