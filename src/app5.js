@@ -416,7 +416,7 @@
   document.addEventListener('toggle', e => { const d = e.target; if (d && d.matches && d.matches('details.pro-filter')) { if (d.getAttribute('data-key') === 'pros') S.proOpen = d.open; else S.legOpen = d.open; } }, true);
 
   /* barra superior, menú lateral y estado general después de cada cambio */
-  const TITLES = { inicio: 'Inicio', agenda: 'Agenda', pacientes: 'Pacientes', caja: 'Caja', liq: 'Liquidaciones' };
+  const TITLES = { inicio: 'Inicio', agenda: 'Agenda', pacientes: 'Pacientes', caja: 'Caja', liq: 'Liquidaciones', empresa: 'Empresa' };
   const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Indicaciones', img: 'Fotos y radiografías', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
   A.afterRefresh = () => {
     const mh = $('#modalHost'); if (!S.modal && mh && mh.innerHTML) A.renderModal(); /* algunas acciones cerraban la ventana sin quitarla de la pantalla */

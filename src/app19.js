@@ -9,9 +9,10 @@
     basico: { name: 'Profesional', pros: 1, devices: 2, locs: 1 },
     consultorio: { name: 'Consultorio', pros: 3, devices: 5, locs: 1 },
     centro: { name: 'Centro', pros: 8, devices: 12, locs: 5 },
-    red: { name: 'Red', pros: 40, devices: 60, locs: 5, centros: 5 }
+    empresa: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 },
+    red: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */
   };
-  const NEXT = { prueba: null, basico: 'consultorio', consultorio: 'centro', centro: 'red', red: null };
+  const NEXT = { prueba: null, basico: 'consultorio', consultorio: 'centro', centro: 'empresa', empresa: null, red: null };
   A.PLAN_INFO = PLAN;
   const lic = () => (CL && CL.lic) || null;
   const real = () => !!(CL && CL.session && !A.DEMO);

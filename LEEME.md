@@ -269,3 +269,13 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Las fuentes de letra se sirven desde la propia app (no se pide nada a Google Fonts).
 - Panel de licencias: pedidos de baja/arrepentimiento/eliminación, versión de términos aceptada y botón para eliminar una cuenta.
 - SQL: `supabase/legal.sql` (correr una vez en Supabase › SQL Editor).
+
+## OdontoVoz 1.19 · modo Empresa
+- Nuevo plan **Empresa** (antes «Red»): un dueño con 2 a 5 consultorios en una sola cuenta. Se activa desde Menú › «Modo Empresa» o en el tipo de cuenta.
+- **Inicio del dueño**: totales del día (cobrado, gastado, saldo, turnos, profesionales) y un recuadro por consultorio con ingresos, egresos, saldo, turnos (atendidos, por venir, ausentes), próximos pacientes, profesionales del día, avance de la meta del mes y avisos (caja sin cerrar, atendidos sin cobrar, stock bajo, pagos vencidos).
+- **Cada equipo pertenece a un consultorio** y solo ve ese; los equipos del dueño ven todo. Lo controla el servidor: un equipo de consultorio no puede leer sueldos, liquidaciones, metas, la caja general ni la caja y el registro de otros consultorios.
+- **Caja por consultorio**: cobros por medio de pago, egresos y otros ingresos, pagos pendientes y cierre diario con arqueo (quién cerró y si faltó o sobró).
+- **Personal**: recepción, asistentes, administración y otros, con consultorio, horario, sueldo (solo lo ve el dueño) y PIN. Los sueldos se cargan solos cada mes como pendientes.
+- **Ingreso con PIN** en los equipos compartidos, con permisos por puesto (dueño, administración, recepción, profesional, asistente) y bloqueo por inactividad.
+- Sección **Empresa**: resumen del mes (lo que le queda a la empresa por consultorio), consultorios y profesionales, personal, liquidaciones por consultorio, estadísticas de 6 o 12 meses (facturación, resultado, ocupación, atendidos, ausentismo, nuevos, ticket promedio, presupuestos, por profesional, por prestación y gastos), por cobrar, metas, stock de insumos, equipos, registro de quién hizo qué y reporte mensual en PDF y Excel.
+- SQL: `supabase/empresa.sql` (correr una vez en Supabase › SQL Editor).

@@ -110,13 +110,17 @@
   function getLocal(k) {
     if (k.indexOf('day:') === 0) return A.S.days[k.slice(4)];
     if (k.indexOf('pd:') === 0) return A.S.pd[k.slice(3)];
-    return SIMPLE[k] ? (SIMPLE[k]() == null ? undefined : SIMPLE[k]()) : undefined;
+    if (SIMPLE[k]) return SIMPLE[k]() == null ? undefined : SIMPLE[k]();
+    const X = A.cloudExtra && A.cloudExtra(k); if (X) { const v = X.get(); return v == null ? undefined : v; }
+    return undefined;
   }
   function collect() {
     const out = {};
     Object.keys(A.S.days).forEach(d => { const l = A.S.days[d]; if ((l && l.length) || BASE['day:' + d]) out['day:' + d] = l || []; });
     Object.keys(A.S.pd).forEach(p => { if (A.S.pd[p]) out['pd:' + p] = A.S.pd[p]; });
     Object.keys(SIMPLE).forEach(k => { const v = SIMPLE[k](); if (v != null) out[k] = v; });
+    /* datos que suman otros módulos (por ejemplo, el modo Empresa) */
+    if (A.cloudExtraKeys) A.cloudExtraKeys().forEach(k => { const X = A.cloudExtra(k), v = X && X.get(); if (v != null) out[k] = v; });
     return out;
   }
   const J = x => JSON.stringify(x === undefined ? null : x);
@@ -173,6 +177,7 @@
     else if (k === 'cash') A.S.cash = v;
     else if (k === 'liq') A.S.liq = v;
     else if (k === 'setup') { A.S.setup = v; A.applySetup(); }
+    else if (A.cloudExtra && A.cloudExtra(k)) A.cloudExtra(k).set(v);
     if (A.journalSeen) A.journalSeen(k); /* lo que llega de otro equipo no se anota como cambio propio */
   }
   /* avisos de lo que hizo otro equipo (por ejemplo, la recepción) */
@@ -257,7 +262,7 @@
     if (!CL.devOk && CL.devFull && Date.now() - (CL.devFullAt || 0) < 60000) return false;
     try {
       const r = await api('/rest/v1/rpc/ov_device_register', { method: 'POST', body: { p_id: A.devId(), p_name: A.deviceLabel() } });
-      if (r && r.ok) { CL.devOk = true; CL.devAt = Date.now(); CL.devFull = null; return true; }
+      if (r && r.ok) { CL.devOk = true; CL.devAt = Date.now(); CL.devFull = null; const sc = 'scope' in r ? (r.scope || null) : undefined; if (sc !== undefined) { const ch = sc !== CL.devScope || !!r.empresa !== !!CL.empresaOn; CL.devScope = sc; CL.empresaOn = !!r.empresa; LS.set('odontovoz.scope', JSON.stringify({ s: sc, e: !!r.empresa })); if (ch && A.onScope) A.onScope(sc); } return true; }
       if (r && r.revoked) { CL.devOk = false; if (A.onDeviceRevoked) A.onDeviceRevoked(r); return false; }
       CL.devOk = false; CL.devFull = r || { full: true }; CL.devFullAt = Date.now(); if (A.onDeviceFull) A.onDeviceFull(CL.devFull); return false;
     } catch (e) {

@@ -76,7 +76,7 @@
       last[k] = cur;
       const prevE = JR.list[JR.list.length - 1];
       if (prevE && prevE.key === k && !prevE.undone && now - prevE.t < 20000 && !pendingLabel[k]) { prevE.after = cur; prevE.t = now; prevE.at = hhmm(); prevE.label = labelOf(k, prevE.before, cur); }
-      else JR.list.push({ id: A.uid(), t: now, at: hhmm(), key: k, before: was, after: cur, label: pendingLabel[k] || labelOf(k, was, cur) });
+      else { JR.list.push({ id: A.uid(), t: now, at: hhmm(), key: k, before: was, after: cur, label: pendingLabel[k] || labelOf(k, was, cur) }); if (A.onJournal) { try { A.onJournal(JR.list[JR.list.length - 1]); } catch (e) { /* nada */ } } }
       delete pendingLabel[k];
     });
     if (JR.list.length > 250) JR.list = JR.list.slice(-250);

@@ -6,14 +6,15 @@
   /* ---------------------------------------------------------------
      MI PLAN Y MEJORAR PLAN
      --------------------------------------------------------------- */
-  const PRICE = { basico: 26900, consultorio: 51900, centro: 89900, red: 161900 };
+  const PRICE = { basico: 26900, consultorio: 51900, centro: 89900, empresa: 161900, red: 161900 };
   const DESC = {
     basico: '1 profesional, en uno o varios consultorios',
     consultorio: 'Hasta 3 profesionales con recepción',
     centro: 'Hasta 8 profesionales, liquidaciones y caja',
-    red: 'Hasta 5 centros, con el panel del dueño'
+    empresa: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño',
+    red: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño'
   };
-  const ORDER = ['basico', 'consultorio', 'centro', 'red'];
+  const ORDER = ['basico', 'consultorio', 'centro', 'empresa'];
   const pesos = n => '$' + Math.round(n).toLocaleString('es-AR');
   const myPlan = () => { const l = CL && CL.lic; return l && CL.session ? (l.plan || 'prueba') : null; };
   const planName = k => ((A.PLAN_INFO || {})[k] || {}).name || k;
@@ -44,7 +45,7 @@
   A.afterRefresh = () => {
     if (prevAfter) prevAfter();
     const t = $('#drPlanTxt'); if (!t) return; const cur = myPlan(), left = trialLeft();
-    t.textContent = !cur ? 'Ver planes' : cur === 'prueba' ? 'Prueba gratis' + (left != null ? ' · ' + left + ' días' : '') + ' · elegir plan' : planName(cur) + (cur !== 'red' ? ' · mejorar plan' : '');
+    t.textContent = !cur ? 'Ver planes' : cur === 'prueba' ? 'Prueba gratis' + (left != null ? ' · ' + left + ' días' : '') + ' · elegir plan' : planName(cur) + (cur !== 'red' && cur !== 'empresa' ? ' · mejorar plan' : '');
   };
 
   /* ---------------------------------------------------------------

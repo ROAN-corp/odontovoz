@@ -41,7 +41,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
 (function () {
   'use strict';
   const URL0 = 'https://hcppfvioiaaejayzzhpa.supabase.co', KEY = 'sb_publishable_N-Qc-l7kJc4A7rvX68ko7Q_CiTI2HtU';
-  const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio', centro: 'Centro', red: 'Red' };
+  const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio', centro: 'Centro', empresa: 'Empresa', red: 'Empresa (nombre viejo)' };
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let ses = null, rows = [], fb = null, rq = null, q = '', filt = 'todas';
@@ -130,10 +130,10 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     if (x === 'ed') edit(r);
     if (x === 'del') delAcct(id);
   }
-  const DEF = { prueba: [40, 5, 5], basico: [1, 2, 1], consultorio: [3, 5, 1], centro: [8, 12, 5], red: [40, 60, 5] };
+  const DEF = { prueba: [40, 5, 5], basico: [1, 2, 1], consultorio: [3, 5, 1], centro: [8, 12, 5], empresa: [40, 60, 5], red: [40, 60, 5] };
   function edit(r, payTo) {
     const d = document.createElement('div'); d.className = 'drawer';
-    d.innerHTML = '<div class="card"><h2 style="margin:0">' + esc(r.email) + '</h2><div class="row2"><div><label>Plan</label><select id="ePl">' + Object.keys(PLANES).map(k => '<option value="' + k + '"' + (k === r.plan ? ' selected' : '') + '>' + PLANES[k] + '</option>').join('') + '</select></div><div><label>Estado</label><select id="eSt"><option value="activa"' + (r.status === 'activa' ? ' selected' : '') + '>activa</option><option value="suspendida"' + (r.status === 'suspendida' ? ' selected' : '') + '>suspendida</option></select></div></div>' +
+    d.innerHTML = '<div class="card"><h2 style="margin:0">' + esc(r.email) + '</h2><div class="row2"><div><label>Plan</label><select id="ePl">' + Object.keys(PLANES).filter(k => k !== 'red' || r.plan === 'red').map(k => '<option value="' + k + '"' + (k === r.plan ? ' selected' : '') + '>' + PLANES[k] + '</option>').join('') + '</select></div><div><label>Estado</label><select id="eSt"><option value="activa"' + (r.status === 'activa' ? ' selected' : '') + '>activa</option><option value="suspendida"' + (r.status === 'suspendida' ? ' selected' : '') + '>suspendida</option></select></div></div>' +
       '<div class="row2"><div><label>Prueba hasta</label><input type="date" id="eTr" value="' + esc(r.trial_until || '') + '"></div><div><label>Pagado hasta</label><input type="date" id="ePa" value="' + esc(r.paid_until || '') + '"></div></div>' +
       '<p class="muted" id="eDef" style="margin:0"></p><div class="row2"><div><label>Profesionales (vacío = según el plan)</label><input type="number" min="1" max="50" id="ePr" value="' + (r.lim_pros || '') + '"></div><div><label>Equipos (vacío = según el plan)</label><input type="number" min="1" max="50" id="eDv" value="' + (r.lim_devices || '') + '"></div></div><div><label>Consultorios del modo profesional (1 a 5, vacío = según el plan)</label><input type="number" min="1" max="5" id="eLc" value="' + (r.max_locs || '') + '"></div>' + (r.flags ? '<div class="err" style="color:inherit"><b>Aviso:</b> ' + esc(r.flags) + ' <button class="small" id="eFl">Quitar aviso</button></div>' : '') + '<div><label>Notas (pagos, teléfono, acuerdos)</label><textarea id="eNo" rows="3">' + esc(r.notes || '') + '</textarea></div><div class="err" id="eEr"></div>' +
       '<div class="acts" style="justify-content:flex-end"><button id="eCa">Cancelar</button><button class="primary" id="eOk">Guardar</button></div></div>';
