@@ -395,3 +395,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - En el ingreso: **«Entrar con usuario del equipo»** con Cuenta, Usuario y Contraseña. La app recuerda los lugares donde se entró en ese equipo para elegirlos con un toque, y «Entrar en otro lugar» (Menú › Cuenta) cambia de lugar.
 - Una persona puede tener usuarios en varias cuentas (uno por cada lugar donde trabaja) sin necesitar más correos. La invitación por correo sigue como opción.
 - Servidor: `supabase/subusuarios.sql`.
+
+## OdontoVoz 1.31.1
+- Arreglo: en «Usuarios del equipo», una persona sin acceso se dibujaba encima de la ventana (rayada y fuera de lugar). Ahora queda en la lista, atenuada.

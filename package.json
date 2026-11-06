@@ -1,6 +1,6 @@
 {
   "name": "odontovoz",
-  "version": "1.31.0",
+  "version": "1.31.1",
   "private": true,
   "description": "Odonto Voz: gestión odontológica con odontograma por voz",
   "scripts": {
