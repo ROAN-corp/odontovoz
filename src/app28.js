@@ -119,6 +119,7 @@
   A.empSede = curSede;
   (function () { const v = LS.get('odontovoz.sedeSel', ''); if (v) S.sede = v; })();
   const setSede = id => { S.sede = id || null; LS.set('odontovoz.sedeSel', id || null); };
+  A.empSetSede = setSede; A.empDevSede = () => devSede(); A.empPermAll = () => !!perm().all;
 
   /* registro (auditoría) */
   const whoName = () => { const p = pinOn() ? curPerson() : null; return p ? p.name : (A.deviceLabel ? A.deviceLabel() : 'Este equipo'); };
@@ -511,7 +512,7 @@
     const host = $('#view-inicio'), sd = curSede(); if (!host || !sd) return;
     host.insertAdjacentHTML('afterbegin', '<div class="emp-sedebar" style="--sc:' + esc(sedeColor(sd)) + '"><span class="emp-dot"></span><b>' + esc(sedeName(sd)) + '</b>' + (p.all ? '<button class="btn small" data-act="empSede" data-id="">← Todos los consultorios</button>' : '') + (!real() && devSede() ? '<button class="btn small" data-act="empTryScope" data-s="todo">Volver al equipo del dueño</button>' : '') + '</div>');
   };
-  A.acts.empSede = el => { const id = el.getAttribute('data-id') || null; setSede(id); const go = el.getAttribute('data-go'); if (go) S.tab = go; A.refresh(); window.scrollTo(0, 0); };
+  A.acts.empSede = el => { const id = el.getAttribute('data-id') || null; setSede(id); S.proSel = null; const go = el.getAttribute('data-go'); S.tab = go || (id ? S.tab : 'inicio'); A.refresh(); window.scrollTo(0, 0); };
   function warnings(sd, st, d) {
     const w = [], prev = prevWorkday(sd, d), c = cajaOf(sd);
     if (prev && !c.closes.some(x => x.date === prev)) w.push(['La caja del ' + A.fmtDMY(prev).slice(0, 5) + ' no se cerró.', 'caja']);
@@ -683,7 +684,7 @@
   /* ---------- Consultorios y profesionales ---------- */
   function tSedes() {
     const L = sedes();
-    let x = '<div class="emp-top"><h2>Consultorios</h2>' + (L.length < maxSedes() ? '<button class="btn small primary" data-act="empSedeEdit" data-id="">+ Consultorio</button>' : '') + '</div><div class="emp-sedes">';
+    let x = '<div class="emp-top"><h2>Consultorios</h2>' + (L.length < maxSedes() ? '<button class="btn small primary" data-act="empSedeEdit" data-id="">+ Consultorio</button>' : '') + '</div>' + (A.empTreeHTML ? A.empTreeHTML() : '') + '<div class="emp-sedes">';
     L.forEach(l => {
       const pros = A.PROS.filter(p => proSedes(p).indexOf(l.id) >= 0), staff = people().filter(p => p.sede === l.id);
       x += '<section class="card emp-sc" style="--sc:' + esc(l.color) + '"><div class="ec-h"><span class="emp-dot"></span><div><b>' + esc(l.name) + '</b><span>' + esc([l.addr, l.phone].filter(Boolean).join(' · ') || 'Sin dirección') + '</span></div><button class="btn small" data-act="empSedeEdit" data-id="' + esc(l.id) + '">Editar</button></div>' +

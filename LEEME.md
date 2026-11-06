@@ -304,3 +304,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nueva categoría de gasto: «Retiro del dueño».
 - Agenda: los turnos atendidos sin práctica cargada muestran la marca «sin práctica».
 - Modo Empresa: el inicio del dueño muestra las prácticas del día (total, por consultorio y por profesional, y lo que quedó sin cobrar) y avisa las atenciones sin práctica. La caja de cada consultorio empieza con su control del día. Las prácticas cargadas desde un equipo de consultorio quedan en ese consultorio.
+
+## OdontoVoz 1.22 · la empresa como árbol
+- Cada consultorio tiene su propia agenda: solo sus profesionales y solo los turnos dados en ese consultorio. Un consultorio sin profesionales ya no muestra los de otro: muestra una pantalla para sumar un profesional nuevo o uno que ya trabaja en otro consultorio.
+- Arriba de la agenda, el inicio, la caja y los pacientes aparece el camino «🏢 Empresa › Consultorio › profesionales»: tocando «Empresa» volvés al inicio de la empresa, con la lista cambiás de consultorio y con los nombres ves la agenda de todos o de uno.
+- Empresa › Consultorios muestra el árbol: la empresa, sus consultorios y los profesionales de cada uno. Tocando un consultorio entrás a su agenda; tocando un profesional, a la suya en ese consultorio. «+ Profesional» lo crea directamente en ese consultorio y «Mover» cambia en qué consultorios atiende.
