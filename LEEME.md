@@ -321,3 +321,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - El dueño cambia el puesto o el consultorio de una persona, o le quita el acceso al instante: se desconectan sus equipos y en ellos se borran los datos del consultorio.
 - El PIN sigue sirviendo para una compu compartida que usa la cuenta del dueño.
 - Pantalla de registro: las casillas de términos se leen bien en el celular.
+
+## OdontoVoz 1.23.1 · el asistente entiende más formas de pedir
+- El asistente reconoce el mismo pedido dicho de distintas maneras: «abrime», «¿me abrís…?», «quiero que abras…», «¿podés abrirme…?», «necesito ver…», «me dejás ver…», «quiero que me pongas…».
+- «El inicio de la aplicación» o «de la app» se entiende como el inicio.
+- «¿Qué turnos tengo hoy?» o «¿qué pacientes hay mañana?» abre la agenda de ese día; «¿cuánto cobramos hoy?» abre la caja.
+- «Quiero hacerle un presupuesto a Juan Pérez» abre su plan y arma el presupuesto; «quiero cobrarle 20 mil a Juan Pérez» registra el cobro.

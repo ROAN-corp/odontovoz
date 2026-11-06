@@ -122,6 +122,19 @@ t('agrega una caries oclusal del 45 en el odontograma', { intent: 'odon', text: 
 t('marcá ausente el 18 en el odontograma de Quiroga', { intent: 'odon', text: 'ausente el 18', name: 'quiroga' });
 t('agrega caries en el 36', { intent: 'unknown' });
 t('odontograma de Lucía Benítez', { intent: 'ficha', sub: 'odon' });
+// 1.24: el mismo pedido dicho de muchas formas (con el nombre del asistente adelante)
+function tw(phrase, exp) { const w = C.stripWake(phrase); n++; if (!w.woke) { fail++; console.log('FALLA (no despertó):', phrase); return; } n--; t(w.rest, exp); }
+C.setWake('navi');
+['Navi, abrime el inicio de la aplicación', 'Navi, llevame al inicio', 'Navi, ¿podés llevarme al inicio?', 'Navi, quiero ir al inicio', 'Navi, llévame al inicio', 'Navi, abrí el inicio de la app', 'Navi, ¿me llevás al inicio?', 'Navi, mandame al inicio'].forEach(p => tw(p, { intent: 'home' }));
+['Navi, quiero que abras la historia clínica de Julián Sosa', 'Navi, abrime la historia clínica de Julián Sosa', 'Navi, ¿podés abrirme la historia clínica de Julián Sosa?', 'Navi, llevame a la historia clínica de Julián Sosa', 'Navi, ¿podés abrirme la historia clínica de Julián Sosa, por favor?', 'Navi, quiero que me pongas la historia clínica de Julián Sosa', 'Navi, ¿me abrís la historia clínica de Julián Sosa?', 'Navi, quiero que me muestres la historia clínica de Julián Sosa', 'Navi, necesito ver la historia clínica de Julián Sosa'].forEach(p => tw(p, { intent: 'ficha', sub: 'datos', name: 'julian sosa' }));
+['Navi, ¿me abrís la cuenta de Julián Sosa?', 'Navi, quiero ver la cuenta corriente de Julián Sosa'].forEach(p => tw(p, { intent: 'ficha', sub: 'cuenta', name: 'julian sosa' }));
+['Navi, ¿me mostrás el odontograma de Julián Sosa?', 'Navi, quiero ver el odontograma de Julián Sosa'].forEach(p => tw(p, { intent: 'ficha', sub: 'odon', name: 'julian sosa' }));
+['Navi, quiero hacerle un presupuesto a Julián Sosa', 'Navi, armame un presupuesto para Julián Sosa'].forEach(p => tw(p, { intent: 'ficha', sub: 'plan', name: 'julian sosa', budget: true }));
+['Navi, ¿qué turnos tengo hoy?', 'Navi, ¿qué pacientes hay hoy?'].forEach(p => tw(p, { intent: 'nav', tab: 'agenda', date: '2026-11-04' }));
+tw('Navi, ¿qué pacientes tengo mañana?', { intent: 'nav', tab: 'agenda', date: '2026-11-05' });
+['Navi, ¿cuánto cobramos hoy?', 'Navi, ¿cuánta plata entró hoy?'].forEach(p => tw(p, { intent: 'nav', tab: 'caja' }));
+['Navi, me dejás ver la agenda de Roldán', 'Navi, ¿me mostrás la agenda de la doctora Vega?'].forEach((p, i) => tw(p, { intent: 'nav', tab: 'agenda', pro: i ? 'pr1' : 'pr2' }));
+tw('Navi, quiero cobrarle 20 mil a Julián Sosa', { intent: 'pay', amount: 20000, name: 'julian sosa' });
 // nombres del asistente
 C.setWake('nexus');
 [['Nexus, agregá a Pedro Juárez mañana a las 10', true, 'agrega a pedro juarez manana a las 10'], ['nexos quién sigue', true, 'quien sigue'], ['odontovoz quién sigue', true, 'quien sigue'], ['el nexus de la historia', false, 'el nexus de la historia']].forEach(([p, woke, rest]) => { n++; const r = C.stripWake(p); if (r.woke !== woke || r.rest !== rest) { fail++; console.log('FALLA wake nexus', p, JSON.stringify(r)); } });

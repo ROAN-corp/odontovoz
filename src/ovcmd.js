@@ -264,11 +264,47 @@
     return isDest(r) ? 'ir a ' + r : c;
   }
 
+  /* ---------- formas de pedir lo mismo: «me abrís», «que me pongas», «quiero ver», «podés llevarme»… ---------- */
+  const VOS = {
+    abris: 'abrime', abres: 'abrime', abras: 'abrime', abrirme: 'abrime', abrinos: 'abrime', abrime: 'abrime',
+    mostras: 'mostrame', muestras: 'mostrame', muestres: 'mostrame', mostres: 'mostrame', mostrarme: 'mostrame', ensenas: 'mostrame', ensenes: 'mostrame', ensename: 'mostrame', ensenarme: 'mostrame',
+    llevas: 'llevame', lleves: 'llevame', llevarme: 'llevame', mandas: 'llevame', mandes: 'llevame', mandarme: 'llevame',
+    pones: 'poneme', pongas: 'poneme', ponerme: 'poneme',
+    traes: 'traeme', traigas: 'traeme', traerme: 'traeme',
+    buscas: 'buscame', busques: 'buscame', buscarme: 'buscame',
+    pasas: 'pasame', pases: 'pasame', pasarme: 'pasame',
+    das: 'dame', des: 'dame', darme: 'dame',
+    haces: 'haceme', hagas: 'haceme', hacerme: 'haceme',
+    cargas: 'cargame', cargues: 'cargame', cargarme: 'cargame',
+    anotas: 'anotame', anotes: 'anotame', anotarme: 'anotame',
+    agendas: 'agendame', agendes: 'agendame', agendarme: 'agendame'
+  };
+  const VOS_RE = new RegExp('^(?:me |nos )?(' + Object.keys(VOS).join('|') + ')\\b');
+  const WANT = /^(?:yo )?(?:quiero|quisiera|queria|necesito|necesitaria|me gustaria|vamos a|voy a|tengo que|hay que|tendria que|deberia|podes|podrias|puedes|podria|me podes|me podrias|me puedes|me podria|nos podes|me dejas|dejame)\s+(?=[a-z]+(?:ar|er|ir)(?:me|le|les|lo|la|nos|selo|sela)?\b)/;
+  function rephrase(c) {
+    let s = c, prev;
+    do {
+      prev = s;
+      s = s.replace(WANT, '');
+      s = s.replace(VOS_RE, (x, v) => VOS[v]);
+      /* infinitivo con pronombre al principio: «hacerle» → «hacele», «cobrarle» → «cobrale», «anotarlo» → «anotalo» */
+      s = s.replace(/^([a-z]{2,}?)(a|e|i)r(le|les|lo|la|los|las|me|nos)\b/, (x, st, v, cl) => (st + v === 'd' + 'a' ? x : st + v + cl));
+    } while (s !== prev);
+    /* «el inicio de la aplicación», «la agenda del sistema» */
+    s = s.replace(/\s+(?:de la (?:app|aplicacion|aplicación)|del (?:programa|sistema)|de odontovoz|en la (?:app|aplicacion)|en el (?:programa|sistema))\b/g, '');
+    /* «qué turnos tengo hoy», «cuáles pacientes hay mañana» → la agenda de ese día */
+    let m;
+    if ((m = /^(?:que|cuales|cuantos|cuantas) (?:turnos|pacientes|citas|consultas)(?: me)? (?:tengo|hay|tenemos|quedan|tiene|vienen|estan)(?: agendados| agendadas| anotados)?(?: para| el| la)?\s*(.*)$/.exec(s))) s = 'agenda' + (m[1] ? ' de ' + m[1] : ' de hoy');
+    /* «cuánto cobramos hoy», «cuánta plata entró» → la caja */
+    if (/^(?:cuanto|cuanta plata|que plata|cuanta guita|cuanto dinero|cuanto se) (?:cobramos|cobre|cobraste|cobro|se cobro|entro|ingreso|hicimos|facturamos|recaudamos|llevamos|hay en (?:la )?caja)\b/.test(s)) s = 'ir a la caja';
+    return s.trim();
+  }
+
   /* ---------- análisis principal ---------- */
   function parse(text, ctx) {
     ctx = ctx || {};
     const today = ctx.today || keyOf(new Date());
-    const raw = N(text), c = navRewrite(clean(text));
+    const raw = N(text), c = navRewrite(rephrase(clean(text)));
     if (!c) return null;
     let m;
 
@@ -349,7 +385,7 @@
 
     // historia clínica y notas
     if ((m = /^(?:agrega(?:r|me|le)?|anota(?:r|me|le)?|suma(?:r|me|le)?|escribi(?:r|me|le)?|pone(?:r|me|le)?|carga(?:r|me|le)?|registra(?:r|me|le)?|deja(?:r|me)?)\s+(?:en|a)\s+(?:la\s+)?(?:historia(?:\s+clinica)?|hc|ficha|evolucion)\b[\s,:.-]*(.*)$/.exec(c)) ||
-      (m = /^(?:en (?:la )?historia(?: clinica)?|historia clinica)\s*(?:pone|anota|agrega|escribi)?\s*(.+)$/.exec(c))) return { intent: 'hc', text: m[1] || '' };
+      (m = /^(?:en (?:la )?historia(?: clinica)?|historia clinica)\s*(?:pone|anota|agrega|escribi)?\s*(.+)$/.exec(c))) return { intent: 'hc', text: (m[1] || '').replace(/^que /, '') };
     if ((m = /^(?:hoy\s+)?(?:hice|realice|hicimos|se hizo|se realizo|le hice|le hicimos|le realice|termine|terminamos|nota|anota que)\s+(.+)$/.exec(c))) return { intent: 'note', text: m[1] };
 
     // documentos y plan
@@ -357,6 +393,8 @@
       const k = m[1] || ''; const tpl = /extrac|exodon|sacar/.test(k) ? 'extraccion' : /endodon|conducto/.test(k) ? 'endodoncia' : /implant/.test(k) ? 'implante' : /blanque/.test(k) ? 'blanq' : /ortodon|bracket/.test(k) ? 'orto' : /anestes/.test(k) ? 'anestesia' : null;
       return { intent: 'consent', tpl };
     }
+    /* «hacele un presupuesto a Juan Pérez», «armame el presupuesto de Juan» */
+    if ((m = /^(?:arma(?:r|me|le)?|hace(?:r|me|le)?|nuevo|genera(?:r|me|le)?|prepara(?:r|me|le)?|crea(?:r|le)?|pasa(?:r|me|le)?)\s+(?:un |el |una )?(?:nuevo )?presupuesto\s+(?:a|al|para|de|del|a la|para la|para el)\s+(?:paciente\s+)?(.+)$/.exec(c))) { const nm = cleanName(m[1]); if (nm) return { intent: 'ficha', sub: 'plan', name: nm, budget: true }; }
     if (/^(?:arma(?:r|me|le)?|hace(?:r|me|le)?|nuevo|genera(?:r|me)?|prepara(?:r|me)?|crea(?:r)?|calcula(?:r|me)?|pasa(?:r|me)?)\s+(?:un |el |una )?presupuesto/.test(c)) return { intent: 'budget' };
     if ((m = /^(?:receta(?:r|le)?|hace(?:r|me|le)? una receta|nueva receta|indica(?:r|le)?|recetale|prescribi(?:r|le)?)(?:\s+(?:de|con|para|el|la))?\s*(.*)$/.exec(c))) return { intent: 'rx', med: m[1] || '' };
 
