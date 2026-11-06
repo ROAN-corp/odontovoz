@@ -366,3 +366,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.27.1
 - Arreglo: las invitaciones creadas desde el APK armaban el enlace con «localhost» (la dirección interna del celular) y al abrirlo daba «no se puede acceder». Ahora el enlace siempre es el de la app publicada.
+
+## OdontoVoz 1.28 · turno con ventanita rápida
+- En la agenda, tocar el **nombre** del paciente abre su ficha resumida (como antes); tocar **el resto del turno** abre una ventanita rápida (en el celular, desde abajo) con: obra social para cambiar, teléfono con WhatsApp, asistencia, motivo u observación, quién dio el turno y cuándo, y botones Nuevo sobreturno, Modificar turno, Copiar, Mover a otro horario (se elige tocando la agenda) y Liberar turno. Abajo, «Abrir la ficha completa».
+- Cada turno muestra la obra social (o «Particular») al lado del nombre y el motivo después de la práctica.
+- Al cargar un paciente nuevo desde el turno se elige la obra social.
+- En la PC la agenda ya no tiene una caja con su propio scroll: se ve el día entero y se baja con la rueda del mouse.
