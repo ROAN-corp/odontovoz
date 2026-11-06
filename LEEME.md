@@ -381,3 +381,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.29.1
 - Arreglo: el botón del correo de confirmación de cuenta (y el de recuperar contraseña) a veces llevaba a una página con error 404. Ahora siempre vuelve a la app.
+
+## OdontoVoz 1.30 · de «Qué hice hoy» a la caja
+- El odontólogo escribe o dicta lo que hizo en «Qué hice hoy» («composite oclusal 25 y 26, limpieza», «le saqué la 18», «raspaje 2 cuadrantes»). La app arma las prácticas con su precio (lo que paga el paciente según su obra social, o el arancel particular), se confirman con un toque y se puede cambiar el importe o agregar otra del catálogo. Quedan en la historia clínica, en el odontograma y en la cuenta del paciente.
+- Botones: **Mandar a recepción**, **Cobrar yo** o **Solo nota**. En los modos profesional y consultorio: **Cobrar ahora** o **Cobrar después**. El dueño elige quién le cobra a cada profesional (recepción o él mismo).
+- **Para cobrar**: en el inicio y en la caja aparece cada paciente que mandaron, con el consultorio, el odontólogo, el detalle y el total (avisa también en la casilla de notificaciones). «Cobrar» acepta uno o dos medios de pago, suma lo que debía de antes si se quiere, y «Queda debiendo» lo deja en su cuenta. En la ventanita del turno aparece «Cobrar».
+- **Cobrado hoy** abre el resumen del día del centro: total, lo que falta cobrar, por forma de pago, por consultorio y por odontólogo, y «Ir a cerrar la caja».
+- El odontólogo con usuario del equipo ve solo sus pacientes por cobrar; la recepción ve todo el día de su centro.
