@@ -327,3 +327,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - «El inicio de la aplicación» o «de la app» se entiende como el inicio.
 - «¿Qué turnos tengo hoy?» o «¿qué pacientes hay mañana?» abre la agenda de ese día; «¿cuánto cobramos hoy?» abre la caja.
 - «Quiero hacerle un presupuesto a Juan Pérez» abre su plan y arma el presupuesto; «quiero cobrarle 20 mil a Juan Pérez» registra el cobro.
+
+## OdontoVoz 1.24 · turnos sin ficha, bloquear y notas en la agenda
+- **Turno sin ficha:** al escribir un nombre en el turno aparece «Agendar a … solo en la agenda». Queda con nombre y teléfono (para el recordatorio), sin entrar a la lista de pacientes. La casilla «Guardarlo ya en la lista de pacientes» elige lo contrario (y el equipo recuerda la elección).
+- Cuando el paciente llega (al marcar Llegó/En atención/Atendido o al abrir su ficha) la app pregunta: «¿Ya tenía ficha?» con los parecidos por nombre o teléfono. «Es …» une los turnos a esa ficha (no queda duplicado); «Es nuevo» lo pasa a la lista para completar los datos.
+- En Pacientes, los que están solo en la agenda van en un recuadro aparte.
+- **Bloquear y Nota desde el mismo toque:** al tocar un hueco de la agenda, arriba están Turno · Sobreturno · 🔒 Bloquear · ✎ Nota. El bloqueo tiene motivos rápidos (Curso, Trámite, Salgo y vuelvo…), duración o «hasta el final», y puede ser para todos los profesionales. La nota es un mensaje amarillo que no ocupa el horario. Ambos muestran quién lo dejó y cuándo; una nota se puede convertir en bloqueo.
