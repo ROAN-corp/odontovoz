@@ -358,3 +358,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
   - plan o prueba que vence en 5 días o menos (solo al dueño);
   - equipo que hace más de un día no guarda en la nube.
 - Cada persona ve lo suyo: el odontólogo, sus pacientes y trabajos; la recepción, recordatorios y turnos; el dueño, todo.
+
+## OdontoVoz 1.27 · avisos que se corren y revisión general
+- Los avisos de confirmación (arriba en el celular) ya no tapan la barra: aparecen debajo, tienen una × y se cierran deslizándolos hacia un costado (o hacia arriba). Lo mismo los carteles de «Llegó» y «Turno online». Duran lo mismo que antes.
+- Arreglo importante: en la Caja, «Guardar» un movimiento nuevo (ingreso o egreso) daba error porque otra ventana usaba el mismo nombre de botón. Ya guarda bien.
+- Revisión general: se recorrieron todas las secciones y botones en celular y PC (cuenta común, Empresa, recepción y profesional), las páginas del sitio y el servidor.

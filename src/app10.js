@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.26';
+  A.VERSION = '1.27';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -54,11 +54,11 @@
       '<div class="field"><label for="mvTxt">¿Qué lo trae a la consulta? (con sus palabras)</label><textarea id="mvTxt" rows="3" placeholder="Ej.: Dolor en la muela de abajo a la izquierda desde hace 3 días, peor con el frío">' + esc(cur) + '</textarea></div>' +
       '<div class="row-btns"><button class="btn small" data-act="dictate" data-target="#mvTxt">' + A.MIC + ' Dictar</button></div>' +
       '<div class="chips-ex" style="margin:0">' + ex.map(x => '<button class="chip-ex" data-act="mvChip" data-v="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>',
-      '<button class="btn" data-act="mvCancel">Cancelar</button><button class="btn primary" data-act="mvSave">Guardar motivo</button>');
+      '<button class="btn" data-act="mvCancel">Cancelar</button><button class="btn primary" data-act="motSave">Guardar motivo</button>');
   };
   A.acts.mvChip = el => { const t = $('#mvTxt'); if (t) { t.value = el.getAttribute('data-v'); t.focus(); } };
   A.acts.mvCancel = () => { const b = S.modal.back; S.modal = b || null; A.renderModal(); };
-  A.acts.mvSave = () => { const m = S.modal, v = A.setMotivo(m.pid, $('#mvTxt').value); S.modal = m.back || null; A.renderModal(); A.refresh(); if (S.panel) A.renderPanel(); A.toast(v ? 'Motivo guardado: ' + v : 'Motivo borrado.'); };
+  A.acts.motSave = () => { const m = S.modal, v = A.setMotivo(m.pid, $('#mvTxt').value); S.modal = m.back || null; A.renderModal(); A.refresh(); if (S.panel) A.renderPanel(); A.toast(v ? 'Motivo guardado: ' + v : 'Motivo borrado.'); };
 
   /* paciente nuevo: campo de motivo */
   const origPat = MF.patient;

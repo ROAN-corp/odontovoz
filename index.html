@@ -7741,7 +7741,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.26';
+  A.VERSION = '1.27';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -7793,11 +7793,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       '<div class="field"><label for="mvTxt">¿Qué lo trae a la consulta? (con sus palabras)</label><textarea id="mvTxt" rows="3" placeholder="Ej.: Dolor en la muela de abajo a la izquierda desde hace 3 días, peor con el frío">' + esc(cur) + '</textarea></div>' +
       '<div class="row-btns"><button class="btn small" data-act="dictate" data-target="#mvTxt">' + A.MIC + ' Dictar</button></div>' +
       '<div class="chips-ex" style="margin:0">' + ex.map(x => '<button class="chip-ex" data-act="mvChip" data-v="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>',
-      '<button class="btn" data-act="mvCancel">Cancelar</button><button class="btn primary" data-act="mvSave">Guardar motivo</button>');
+      '<button class="btn" data-act="mvCancel">Cancelar</button><button class="btn primary" data-act="motSave">Guardar motivo</button>');
   };
   A.acts.mvChip = el => { const t = $('#mvTxt'); if (t) { t.value = el.getAttribute('data-v'); t.focus(); } };
   A.acts.mvCancel = () => { const b = S.modal.back; S.modal = b || null; A.renderModal(); };
-  A.acts.mvSave = () => { const m = S.modal, v = A.setMotivo(m.pid, $('#mvTxt').value); S.modal = m.back || null; A.renderModal(); A.refresh(); if (S.panel) A.renderPanel(); A.toast(v ? 'Motivo guardado: ' + v : 'Motivo borrado.'); };
+  A.acts.motSave = () => { const m = S.modal, v = A.setMotivo(m.pid, $('#mvTxt').value); S.modal = m.back || null; A.renderModal(); A.refresh(); if (S.panel) A.renderPanel(); A.toast(v ? 'Motivo guardado: ' + v : 'Motivo borrado.'); };
 
   /* paciente nuevo: campo de motivo */
   const origPat = MF.patient;
@@ -14053,6 +14053,64 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.nf-del{background:none;border:0;color:var(--ink-2);font-size:20px;width:38px;cursor:pointer;opacity:.6}.nf-del:hover{opacity:1}' +
     '.nf-empty{padding:26px 18px;text-align:center;font-weight:600;display:flex;flex-direction:column;gap:8px}.nf-empty small{font-weight:400;color:var(--ink-2);font-size:13px;line-height:1.4}' +
     '.nf-foot{padding:8px 14px;border-top:1px solid var(--line);text-align:right;font-size:13.5px}' +
+    '</style>');
+})();
+/* ===== 1.27: los avisos de arriba se corren con el dedo (o con la ×) y arreglos de la revisión general ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$;
+
+  /* ---------- avisos: deslizar hacia un costado para cerrarlos ---------- */
+  const host = $('#toastHost');
+  const closeToast = () => { const h = $('#toastHost'); if (h) h.innerHTML = ''; A.toastUndo = null; };
+  /* la × en cada aviso */
+  const tPrev = A.toast;
+  A.toast = function () {
+    const r = tPrev.apply(this, arguments);
+    const t = document.querySelector('#toastHost .toast');
+    if (t && !t.querySelector('.toast-x')) t.insertAdjacentHTML('beforeend', '<button class="toast-x" data-act="toastClose" aria-label="Cerrar aviso" title="Cerrar">×</button>');
+    return r;
+  };
+  A.acts.toastClose = () => closeToast();
+
+  /* arrastre: sirve para el aviso común y para los carteles de «llegó» y «turno online» */
+  let drag = null;
+  const pick = e => e.target.closest && (e.target.closest('#toastHost .toast') || e.target.closest('#arrHost .arr'));
+  const base = el => (el.classList.contains('toast') ? (getComputedStyle(el).position === 'fixed' ? 'translateX(-50%) ' : '') : '');
+  document.addEventListener('pointerdown', e => {
+    const el = pick(e); if (!el || (e.target.closest('button') && !e.target.closest('.toast-x'))) return;
+    drag = { el, x: e.clientX, y: e.clientY, dx: 0, b: base(el), id: e.pointerId, moved: false };
+    el.style.transition = 'none';
+  }, true);
+  document.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) { /* hacia arriba también lo cierra */ if (dy < -24) { drag.up = true; } }
+    if (Math.abs(dx) > 4 || drag.up) drag.moved = true;
+    drag.dx = dx;
+    drag.el.style.transform = drag.b + 'translate(' + dx + 'px,' + (drag.up ? Math.min(0, dy) : 0) + 'px)';
+    drag.el.style.opacity = String(Math.max(0.15, 1 - Math.abs(dx) / 220));
+    if (drag.moved) e.preventDefault();
+  }, { capture: true, passive: false });
+  const end = e => {
+    if (!drag || (e.pointerId != null && e.pointerId !== drag.id)) return;
+    const d = drag; drag = null;
+    const gone = Math.abs(d.dx) > 70 || d.up;
+    d.el.style.transition = 'transform .18s ease-out, opacity .18s ease-out';
+    if (gone) {
+      d.el.style.transform = d.b + 'translate(' + (d.up ? 0 : (d.dx > 0 ? 1 : -1) * 480) + 'px,' + (d.up ? -120 : 0) + 'px)'; d.el.style.opacity = '0';
+      setTimeout(() => { if (d.el.classList.contains('toast')) closeToast(); else d.el.remove(); }, 180);
+    } else { d.el.style.transform = d.b; d.el.style.opacity = ''; }
+  };
+  document.addEventListener('pointerup', end, true);
+  document.addEventListener('pointercancel', end, true);
+
+  document.head.insertAdjacentHTML('beforeend', '<style>' +
+    '.toast{display:flex;align-items:center;gap:10px;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}' +
+    '.toast .toast-x{border:0!important;background:transparent!important;color:inherit;font-size:22px;line-height:1;padding:0 2px 2px!important;margin-left:2px;opacity:.75;cursor:pointer;min-width:30px;min-height:30px}' +
+    '#arrHost .arr{touch-action:pan-y;cursor:grab}' +
+    /* en el celular, debajo de la barra de arriba: ya no tapa la casita ni el sobre */
+    '@media (max-width: 760px){.toast{max-width:calc(100vw - 24px);padding:8px 8px 8px 14px;top:calc(60px + env(safe-area-inset-top, 0px))!important}}' +
     '</style>');
 })();
 /* ===== arranque, navegación y eventos ===== */
