@@ -338,3 +338,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Al abrir el enlace del correo en un navegador nuevo (por ejemplo, el que abre la app de Gmail), la bienvenida tapaba la pantalla «Nueva contraseña»: la persona creía que el enlace no andaba, volvía a tocarlo y ahí sí vencía. Ahora la pantalla aparece directo, con la cuenta a la que corresponde.
 - Si el enlace ya se usó o venció, la app lo explica y deja pedir otro en el mismo lugar (antes no decía nada).
 - Si se piden varios correos seguidos (el servidor manda pocos por hora hasta que esté el correo propio), se avisa que hay que usar el último que llegó.
+
+## OdontoVoz 1.25 · aviso de turnos pedidos online
+- Cuando un paciente se agenda solo por el turnero online, **todos los equipos** de la cuenta avisan (no solo el que bajó el pedido): cartel arriba con el nombre, el día, la hora, el profesional, el consultorio y el motivo, que queda hasta cerrarlo, con «Ver» que abre el turno en la agenda. Suena y vibra según Avisos y sonidos.
+- Con «Notificación del sistema» activada (Menú › Avisos y sonidos), también llega como notificación del celular o de la compu mientras OdontoVoz esté abierta o en segundo plano.
+- En el inicio, «Turnos pedidos online» junta los que todavía no marcaste como vistos.
+- Cada profesional del equipo recibe solo los suyos; en Empresa, cada consultorio los suyos. Interruptor propio en Avisos y sonidos.
+- Arreglo: el cartel de «Llegó un paciente» se veía con letra y colores equivocados.

@@ -340,6 +340,7 @@
     if (document.hidden || !document.hasFocus()) mine.forEach(x => { const pt = A.PAT(x.pid); sysNotify('Llegó ' + (pt ? pt.name : 'un paciente'), 'Turno de las ' + A.mm(x.start) + '. Está en la sala de espera.'); });
   };
   A.notifBg = () => { const p = PREF(); return !!(p.system || p.sound); };
+  A.sysNotify = sysNotify; A.notifPref = PREF; A.notifPrefSave = savePref;
 
   /* ajustes de avisos y sonidos (cada equipo decide lo suyo) */
   A.acts.notifOpen = () => { if (A.hideDrawer) A.hideDrawer(); const g = $('#gearMenu'); if (g) g.hidden = true; S.modal = { type: 'notif' }; A.renderModal(); };
