@@ -363,3 +363,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Los avisos de confirmación (arriba en el celular) ya no tapan la barra: aparecen debajo, tienen una × y se cierran deslizándolos hacia un costado (o hacia arriba). Lo mismo los carteles de «Llegó» y «Turno online». Duran lo mismo que antes.
 - Arreglo importante: en la Caja, «Guardar» un movimiento nuevo (ingreso o egreso) daba error porque otra ventana usaba el mismo nombre de botón. Ya guarda bien.
 - Revisión general: se recorrieron todas las secciones y botones en celular y PC (cuenta común, Empresa, recepción y profesional), las páginas del sitio y el servidor.
+
+## OdontoVoz 1.27.1
+- Arreglo: las invitaciones creadas desde el APK armaban el enlace con «localhost» (la dirección interna del celular) y al abrirlo daba «no se puede acceder». Ahora el enlace siempre es el de la app publicada.

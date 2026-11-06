@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.27 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.27.1 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -64,6 +64,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.27 (noviem
 - 1.25 (`src/app35.js`, `app12.js` expone `A.sysNotify`, `A.notifPref`, `A.notifPrefSave`): aviso de turnos online en todos los equipos. Cada equipo guarda en `odontovoz.online.<dueño>` los turnos `a.online` ya vistos y una bandeja; después de cada sincronización (`afterRefresh`) avisa los nuevos pedidos en los últimos 2 días (cartel `#arrHost .arr.arr-online`, sonido, vibración, `A.sysNotify` si está en segundo plano) y los muestra en el inicio (`.onl-card`) hasta «Visto». Filtra por profesional del puesto y por consultorio. Preferencia `online` en Avisos y sonidos. Con la app cerrada del todo no llega: para eso falta push real (FCM) o un correo al dueño (Edge Function con el SMTP).
 - 1.26 (`src/app36.js`): **casilla de notificaciones**. Botón `#nfBtn` (sobre) al final de `header.appbar .top-in`, globito `#nfBadge`, solapa `#nfPanel`. Se guardan por equipo y dueño en `odontovoz.nf.<dueño>` (máx. 80, 30 días). API: `A.nfAdd({id, k, t, b, act, args, at})` (el `id` evita duplicados), `A.nfRead(id)`, `A.nfDrop(id)`; al tocar se corre `A.acts[act]` con `args` como atributos (`nfTab`, `nfAppt`, `nfUrl`, `nfUpdWeb`, `nfLab`, `onlOpen`, `planOpen`, `acctOpen`). Fuentes: `A.onOnlineNew` (desde `app35`), `A.onArrivals`, `.upd-bar` (web) y `sw.js` publicado comparado con `A.VERSION` cada 6 h (APK), laboratorio, recordatorios de mañana, notas/bloqueos con `by` de otra persona (el dueño marca `byOwner`), vencimiento del plan y nube sin guardar hace más de un día.
 - 1.27 (`src/app37.js`, `src/app10.js`): avisos (`#toastHost .toast` y `#arrHost .arr`) con × (`toastClose`) y deslizar para cerrar; en el celular el aviso va debajo de la barra. Arreglo: `app10` pisaba `A.acts.mvSave` (guardar movimiento de caja) con el del motivo de consulta; ahora el motivo usa `motSave`. Para revisar todo: `crawl.py` (en el borrador de la sesión) toca todos los botones por sección.
+- 1.27.1 (`src/app33.js`): el enlace de invitación usa `PUB_APP` (app publicada) cuando la app corre en el APK o en localhost; antes salía `https://localhost/?invitacion=…`.
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 

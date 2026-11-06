@@ -7741,7 +7741,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.27';
+  A.VERSION = '1.27.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -13148,7 +13148,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const sedes = () => (A.locs ? A.locs() : []);
   const sedeName = id => { const l = sedes().filter(x => x.id === id)[0]; return l ? l.name : ''; };
   const proName = id => { const p = A.PROS.filter(x => x.id === id)[0]; return p ? p.name : ''; };
-  const appUrl = () => location.origin + location.pathname.replace(/index\.html$/, '');
+  /* el enlace siempre apunta a la app publicada (desde el APK la dirección propia es «localhost» y no sirve para otros) */
+  const PUB_APP = 'https://roan-corp.github.io/odontovoz/app/';
+  const appUrl = () => (/^https?:$/.test(location.protocol) && !/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname) && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? location.origin + location.pathname.replace(/index\.html$/, '') : PUB_APP);
   const fmtWhen = t => { if (!t) return 'nunca'; const d = new Date(t), s = (Date.now() - d) / 1000; return s < 120 ? 'recién' : s < 3600 ? 'hace ' + Math.round(s / 60) + ' min' : s < 86400 ? 'hace ' + Math.round(s / 3600) + ' h' : A.fmtDMY(d.toISOString().slice(0, 10)); };
 
   /* =====================================================================
