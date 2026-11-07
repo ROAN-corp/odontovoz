@@ -7746,7 +7746,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.33';
+  A.VERSION = '1.33.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -15357,7 +15357,18 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
   MF.stk = () => A.modalShell('Stock de insumos', '<div id="stkHost">' + A.stkHTML() + '</div>', '<button class="btn" data-act="closeModal">Cerrar</button>', true);
   const paint = () => { if (S.modal && S.modal.type === 'stk') { const h = $('#stkHost'); if (h) h.innerHTML = A.stkHTML(); else A.renderModal(); } else if (S.tab === 'empresa' && S.empTab === 'stock') A.refresh(); };
-  const back = () => { if (S._stkInline) { S.modal = null; A.renderModal(); A.refresh(); } else { S.modal = { type: 'stk' }; A.renderModal(); } };
+  /* al volver de un insumo, la lista queda donde estaba y marca el que se tocó */
+  const keepPos = id => { const b = document.querySelector('#modalHost .m-body'); S.stkPos = { y: S._stkInline ? window.scrollY : (b ? b.scrollTop : 0), id: id || null }; };
+  const restorePos = () => {
+    const p = S.stkPos; if (!p) return; S.stkPos = null;
+    requestAnimationFrame(() => {
+      const b = document.querySelector('#modalHost .m-body');
+      if (S._stkInline) window.scrollTo(0, p.y); else if (b) b.scrollTop = p.y;
+      const row = p.id && document.querySelector('.stk-row[data-id="' + p.id + '"]');
+      if (row) { const r = row.getBoundingClientRect(); if (r.top < 60 || r.bottom > window.innerHeight - 80) row.scrollIntoView({ block: 'center' }); row.classList.add('stk-flash'); setTimeout(() => row.classList.remove('stk-flash'), 1600); }
+    });
+  };
+  const back = () => { if (S._stkInline) { S.modal = null; A.renderModal(); A.refresh(); } else { S.modal = { type: 'stk' }; A.renderModal(); } restorePos(); };
   A.acts.stkTab = el => { S.stk.tab = el.getAttribute('data-t'); paint(); };
   A.chg.stkSede = el => { S.stkSede = el.value; paint(); };
   A.ins.stkQ = el => { S.stk.q = el.value; const L = list(place()).map(norm1), st = S.stk, q = A.norm ? A.norm(st.q) : st.q.toLowerCase(); const u = $('#stkList'); if (u) u.innerHTML = listRows(L.filter(i => (!st.cat || i.cat === st.cat) && (!st.low || status(i) !== 'ok' || expSoon(i)) && (!q || (A.norm ? A.norm(i.name) : i.name.toLowerCase()).indexOf(q) >= 0))); };
@@ -15378,7 +15389,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* ---------- un insumo: llegó, usé, contar, editar, borrar ---------- */
   const itemById = id => list(place()).filter(i => i.id === id)[0];
-  A.acts.stkItem = el => { const i = itemById(el.getAttribute('data-id')); if (!i) return; S.modal = { type: 'stkI', id: i.id, mode: 'in' }; A.renderModal(); };
+  A.acts.stkItem = el => { const i = itemById(el.getAttribute('data-id')); if (!i) return; keepPos(i.id); S.modal = { type: 'stkI', id: i.id, mode: S.stkLastMode || 'in' }; A.renderModal(); const f = $('#siQ'); if (f && !A.isNarrow()) f.focus(); };
   MF.stkI = m => {
     const i = norm1(itemById(m.id) || {}); if (!i.id) return A.modalShell('Insumo', '<p>No está.</p>', '<button class="btn" data-act="stkBack">Volver</button>');
     const mode = m.mode;
@@ -15386,14 +15397,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     b += '<div class="seg stk-tabs" role="tablist">' + [['in', 'Llegó'], ['use', 'Usé'], ['count', 'Contar'], ['edit', 'Datos'], ['hist', 'Historial']].map(t => '<button type="button" data-act="stkIMode" data-m="' + t[0] + '" aria-pressed="' + (mode === t[0]) + '">' + t[1] + '</button>').join('') + '</div>';
     if (mode === 'in') b += '<div class="row2"><div class="field"><label for="siQ">Cantidad que llegó (' + esc(i.unit || 'unidades') + ')</label><input id="siQ" inputmode="decimal" placeholder="Ej.: 2"></div><div class="field"><label for="siE">Vence (opcional)</label><input id="siE" type="date"></div></div><div class="field"><label for="siN">Nota (opcional)</label><input id="siN" placeholder="Ej.: proveedor, número de factura, precio"></div>';
     if (mode === 'use') b += '<div class="row2"><div class="field"><label for="siQ">Cuánto se usó</label><input id="siQ" inputmode="decimal" placeholder="Ej.: 1"></div><div class="field"><label for="siU">En</label><select id="siU"><option value="u">' + esc(i.unit || 'unidades') + '</option>' + (i.uses > 1 ? '<option value="x">usos (1/' + i.uses + ' de unidad)</option>' : '') + '<option value="v">se venció o se rompió (' + esc(i.unit || 'unidades') + ')</option></select></div></div><div class="field"><label for="siN">Nota (opcional)</label><input id="siN" placeholder="Ej.: paciente, motivo"></div>';
-    if (mode === 'count') b += '<div class="field"><label for="siQ">Cuánto hay de verdad ahora (' + esc(i.unit || 'unidades') + ')</label><input id="siQ" inputmode="decimal" value="' + fq(i.qty) + '"></div><p class="hint">Se guarda la diferencia como ajuste, para que se vea en el historial.</p>';
+    if (mode === 'count') b += '<div class="field"><label for="siQ">Cuánto hay de verdad ahora (' + esc(i.unit || 'unidades') + ')</label><input id="siQ" inputmode="decimal" value="' + fq(i.qty) + '" onfocus="this.select()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();App.acts.stkISave();}"></div><p class="hint">Se guarda la diferencia como ajuste, para que se vea en el historial.</p>';
     if (mode === 'edit') b += '<div class="field"><label for="seN">Nombre</label><input id="seN" value="' + esc(i.name) + '"></div><div class="row2"><div class="field"><label for="seU">Unidad</label><input id="seU" value="' + esc(i.unit || '') + '" placeholder="cajas, jeringas…"></div><div class="field"><label for="seX">Usos que rinde cada unidad</label><input id="seX" inputmode="numeric" value="' + i.uses + '"></div></div><div class="row2"><div class="field"><label for="seM">Avisar cuando queden</label><input id="seM" inputmode="decimal" value="' + fq(i.min || 0) + '"></div><div class="field"><label for="seC">Categoría</label><input id="seC" value="' + esc(i.cat) + '" list="stkCats"><datalist id="stkCats">' + CATS.map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div></div><div class="field"><label for="seE">Próximo vencimiento</label><input id="seE" type="date" value="' + esc(i.exp || '') + '"></div>';
     if (mode === 'hist') b += i.mv.length ? '<ul class="stk-mov">' + i.mv.slice(0, 40).map(x => '<li><span class="stk-mw ' + x.why + '">' + esc(x.why) + '</span><span class="stk-ml"><small>' + new Date(x.at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + (x.by ? ' · ' + esc(x.by) : '') + (x.note ? ' · ' + esc(x.note) : '') + '</small></span><b class="' + (x.d < 0 ? 'neg' : 'pos') + '">' + (x.d > 0 ? '+' : '') + fq(x.d) + '</b></li>').join('') + '</ul>' : '<p class="hint">Sin movimientos.</p>';
     b += '<div class="hint bad" id="siMsg"></div>';
     const foot = '<button class="btn" data-act="stkBack">Volver</button>' + (mode === 'edit' && canCfg() ? '<button class="btn danger" data-act="stkDel">Borrar</button>' : '') + (mode !== 'hist' ? '<button class="btn primary" data-act="stkISave">Guardar</button>' : '');
     return A.modalShell('Insumo', b, foot);
   };
-  A.acts.stkIMode = el => { S.modal.mode = el.getAttribute('data-m'); A.renderModal(); };
+  A.acts.stkIMode = el => { S.modal.mode = S.stkLastMode = el.getAttribute('data-m'); A.renderModal(); };
   A.acts.stkBack = () => back();
   A.acts.stkISave = () => {
     const m = S.modal, i = norm1(itemById(m.id)), say = t => { $('#siMsg').textContent = t; };
@@ -15428,6 +15439,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return A.modalShell('Contar el stock', '<p class="hint" style="margin-top:0">Escribí lo que hay de cada cosa. Lo que no toques queda como está.</p>' + cats.map(c => '<h3 class="stk-ch">' + esc(c) + '</h3><div class="stk-cgrid">' + L.filter(i => i.cat === c).map(i => '<label><span>' + esc(i.name) + '<small>' + esc(i.unit || '') + '</small></span><input inputmode="decimal" data-cid="' + i.id + '" placeholder="' + fq(i.qty) + '"></label>').join('') + '</div>').join(''),
       '<button class="btn" data-act="stkBack">Volver</button><button class="btn primary" data-act="stkCountGo">Guardar el conteo</button>', true);
   };
+  document.addEventListener('keydown', e => { const t = e.target; if (e.key !== 'Enter' || !t.matches || !t.matches('[data-cid]')) return; e.preventDefault(); const all = A.$$('[data-cid]'), k = all.indexOf(t); if (all[k + 1]) all[k + 1].focus(); });
   A.acts.stkCountGo = () => {
     let n = 0; const L = list(place());
     A.$$('[data-cid]').forEach(inp => { if (inp.value.trim() === '') return; const i = L.filter(x => x.id === inp.getAttribute('data-cid'))[0]; if (!i) return; norm1(i); const v = Math.max(0, dec(inp.value)), d = v - i.qty; if (Math.abs(d) < 1e-9) return; i.qty = v; mvAdd(i, d, 'conteo'); n++; });
@@ -15475,7 +15487,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.stk-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.stk-bar input[type=search]{flex:1 1 180px;min-height:38px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--surface);color:var(--ink);font:inherit}.stk-bar select{min-height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;padding:0 8px}' +
     '.stk-acts{margin-bottom:10px}.stk-list,.stk-buy,.stk-mov,.stk-pick{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}' +
     '.stk-row{all:unset;cursor:pointer;display:flex;gap:10px;align-items:center;width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.stk-row:hover{border-color:var(--accent)}' +
-    '.stk-it.low .stk-row{border-left:4px solid #d68910}.stk-it.out .stk-row{border-left:4px solid #c0392b}.stk-it.ok .stk-row{border-left:4px solid #27ae60}' +
+    '.stk-row.stk-flash{box-shadow:0 0 0 3px var(--accent);transition:box-shadow .3s}.stk-it.low .stk-row{border-left:4px solid #d68910}.stk-it.out .stk-row{border-left:4px solid #c0392b}.stk-it.ok .stk-row{border-left:4px solid #27ae60}' +
     '.stk-l{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.stk-l small{color:var(--ink-2);font-size:12px}.stk-meter{display:block;height:4px;border-radius:4px;background:var(--line);overflow:hidden;max-width:220px}.stk-meter i{display:block;height:100%;background:#27ae60}.stk-it.low .stk-meter i{background:#d68910}.stk-it.out .stk-meter i{background:#c0392b}' +
     '.stk-r{display:flex;flex-direction:column;align-items:flex-end;min-width:64px}.stk-r b{font-size:18px}.stk-r small{font-size:11.5px;color:var(--ink-2)}.stk-r .stk-ex{color:#b9770e;font-weight:700}.stk-none{color:var(--ink-2);padding:8px}' +
     '.stk-buy li,.stk-mov li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px}.stk-buy li>span,.stk-ml{flex:1;min-width:0;display:flex;flex-direction:column}.stk-buy small,.stk-ml small{color:var(--ink-2);font-size:12px}.stk-need{white-space:nowrap;color:var(--accent)}' +

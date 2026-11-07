@@ -415,3 +415,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - **Para comprar**: lo que está bajo el mínimo o no llega a 30 días según lo que se viene usando, con el pedido para mandar por WhatsApp o copiar.
 - En Empresa: **Pasar a otro centro**.
 - Avisos en el sobre: insumos con poco o nada y vencimientos cercanos (uno por día).
+
+## OdontoVoz 1.33.1
+- Stock: al volver de un insumo, la lista queda donde estaba y marca el que tocaste (antes volvía arriba de todo).
+- El siguiente insumo se abre en la misma pestaña que usaste (por ejemplo «Contar»), con el número listo para escribir; Enter guarda.
+- En «Contar el stock», Enter pasa al siguiente casillero.
