@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>OdontoVoz · Gestión odontológica con dictado por voz</title>
-<meta name="description" content="Software de gestión odontológica: agenda, pacientes, historias clínicas y varios consultorios en una sola app, con dictado por voz. Android, web y PC.">
+<meta name="description" content="OdontoVoz: el sistema odontológico que se maneja con la voz. Agenda, historia clínica, odontograma, cobros por recepción, stock automático y varios consultorios. Android, iPhone (app web), PC y Mac. Probalo gratis.">
 <meta name="theme-color" content="#08484b">
 <link rel="icon" href="img/icono.png">
 <link rel="apple-touch-icon" href="img/icono.png">
@@ -75,7 +75,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 /* ---------- portada ---------- */
 .hero { background: var(--deep); color: #fff; padding: clamp(40px, 7vw, 88px) 0 clamp(56px, 8vw, 96px); overflow: hidden; }
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 64px); align-items: center; }
-.hero h1 { font-size: clamp(40px, 5vw, 64px); font-weight: 800; letter-spacing: -.025em; text-wrap: balance; }
+.hero h1 { font-size: clamp(38px, 4.4vw, 58px); font-weight: 800; letter-spacing: -.025em; text-wrap: balance; }
 .hero .lede { color: #cfe7e3; margin-top: 20px; }
 .hero .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
 .pillars { list-style: none; margin: 26px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
@@ -170,16 +170,16 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 @media (max-width: 560px) { .plans { grid-template-columns: 1fr; } }
 
 /* ---------- descargas ---------- */
-.dls { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; }
+.dls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .dl { border: 1px solid var(--line); border-radius: 18px; padding: 24px; background: var(--white); display: flex; flex-direction: column; gap: 12px; }
 .dl.main { border: 2px solid var(--teal); }
 .dl .meta { font-size: 15px; color: var(--ink-2); }
 .dl .meta b { color: var(--ink); }
-.dl .btn { align-self: flex-start; }
+.dl .btn { align-self: stretch; text-align: center; line-height: 1.2; }
 .dl p { color: var(--ink-2); font-size: 16px; }
 .sig { font-size: 13px; color: var(--ink-2); word-break: break-all; }
 .sig summary { cursor: pointer; font-size: 15px; }
-@media (max-width: 900px) { .dls { grid-template-columns: 1fr; } }
+@media (max-width: 1080px) { .dls { grid-template-columns: repeat(2, minmax(0, 1fr)); } } @media (max-width: 640px) { .dls { grid-template-columns: 1fr; } }
 
 .road { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 48px; list-style: none; padding: 0; counter-reset: r; }
 .road li { padding: 20px 22px 0 0; border-top: 4px solid var(--line); position: relative; }
@@ -244,6 +244,58 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 @media (max-width: 860px) { .dyn-grid, .firma-grid { grid-template-columns: 1fr; } .firma-grid .doc-mock { order: 2; } }
 @media (prefers-reduced-motion: reduce) { .reel video { animation: none; } }
 
+/* ---------- 1.34: marketing ---------- */
+.plat { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.plat span { display: inline-flex; align-items: center; gap: 7px; font: 700 14px/1 var(--display); color: #e6f6f3; padding: 7px 12px; border-radius: 10px; background: rgba(255,255,255,.08); border: 1px solid rgba(191,232,223,.25); }
+.plat svg { width: 17px; height: 17px; fill: none; stroke: #bfe8df; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.uniq { background: var(--white); border-block: 1px solid var(--line); }
+.ucards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.uc { border: 1px solid var(--line); border-radius: 18px; padding: 22px; background: var(--paper); display: grid; gap: 8px; align-content: start; position: relative; }
+.uc .ic { width: 46px; height: 46px; border-radius: 14px; background: var(--deep); display: grid; place-items: center; }
+.uc .ic svg { width: 24px; height: 24px; fill: none; stroke: #bfe8df; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.uc h3 { font-size: 20px; }
+.uc p { color: var(--ink-2); font-size: 16px; }
+.uc .tag { position: absolute; top: 16px; right: 16px; font: 800 12px/1 var(--display); background: var(--sun); color: #2b2100; border-radius: 999px; padding: 5px 9px; }
+.uc.big { grid-column: span 2; background: var(--deep); color: #fff; border-color: var(--deep); }
+.uc.big2 { grid-column: span 2; }
+.uc.big p { color: #cfe7e3; } .uc.big .ic { background: var(--sun); } .uc.big .ic svg { stroke: #2b2100; }
+.flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.flow b { font: 700 13px/1 var(--display); background: rgba(255,255,255,.1); border: 1px solid rgba(191,232,223,.3); border-radius: 999px; padding: 6px 10px; }
+.flow i { font-style: normal; color: var(--sun); font-weight: 800; }
+@media (max-width: 980px) { .ucards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 980px) { .uc.big2 { grid-column: auto; } }
+@media (max-width: 640px) { .ucards { grid-template-columns: 1fr; } .uc.big { grid-column: auto; } }
+.vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.vs > div { border-radius: 18px; padding: 24px; border: 1px solid var(--line); }
+.vs .before { background: var(--white); } .vs .after { background: var(--deep); color: #fff; border-color: var(--deep); }
+.vs h3 { margin-bottom: 12px; } .vs ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.vs li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; font-size: 16px; }
+.vs .before li { color: var(--ink-2); } .vs .after li { color: #e6f6f3; }
+.vs .before li::before { content: "✕"; color: var(--red); font-weight: 800; } .vs .after li::before { content: "✓"; color: var(--sun); font-weight: 800; }
+@media (max-width: 760px) { .vs { grid-template-columns: 1fr; } }
+.modes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.mode { border: 1px solid var(--line); border-radius: 18px; padding: 20px; background: var(--white); display: grid; gap: 8px; align-content: start; }
+.mode b { font: 800 19px/1.2 var(--display); } .mode small { color: var(--teal); font-weight: 700; font-size: 14px; }
+.mode p { color: var(--ink-2); font-size: 15.5px; }
+@media (max-width: 980px) { .modes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .modes { grid-template-columns: 1fr; } }
+.faq { display: grid; gap: 10px; max-width: 860px; }
+.faq details { border: 1px solid var(--line); border-radius: 14px; background: var(--white); padding: 0 18px; }
+.faq summary { cursor: pointer; font: 700 18px/1.35 var(--display); padding: 16px 0; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.faq summary::after { content: "+"; font-size: 24px; line-height: 1; color: var(--teal); } .faq details[open] summary::after { content: "–"; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq p { color: var(--ink-2); font-size: 16.5px; padding: 0 0 16px; }
+.final { background: var(--deep); color: #fff; text-align: center; }
+.final h2 { max-width: 20ch; margin: 0 auto; } .final .lede { color: #cfe7e3; margin: 16px auto 0; }
+.final .cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 28px; }
+.dl.apple { border: 2px solid var(--ink); }
+.dl .badge { align-self: flex-start; font: 800 12px/1 var(--display); background: var(--mint); color: var(--deep); border-radius: 999px; padding: 5px 10px; }
+.sticky-cta { display: none; }
+@media (max-width: 760px) {
+  .sticky-cta { display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 30; gap: 8px; }
+  .sticky-cta .btn { flex: 1; min-height: 50px; box-shadow: 0 10px 30px -10px rgba(0,0,0,.5); }
+  body { padding-bottom: 80px; }
+}
 footer { background: var(--deep); color: #cfe7e3; padding: 40px 0 calc(40px + env(safe-area-inset-bottom, 0px)); font-size: 15px; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
 footer a { color: #fff; }
@@ -260,13 +312,13 @@ footer .brand { margin-right: auto; }
       OdontoVoz
     </a>
     <nav aria-label="Secciones">
+      <a href="#unico">Lo que solo tiene</a>
       <a href="#como">Cómo funciona</a>
-      <a href="#firma">Firma</a>
       <a href="#planes">Planes</a>
       <a href="#descargas">Descargas</a>
-      <a href="#instalar">Instalación</a>
+      <a href="#preguntas">Preguntas</a>
     </nav>
-    <a class="btn solid" href="app/">Abrir la app</a>
+    <a class="btn solid" href="app/">Probar gratis</a>
   </div>
 </header>
 
@@ -274,20 +326,28 @@ footer .brand { margin-right: auto; }
 <section class="hero" aria-labelledby="t-hero">
   <div class="wrap">
     <div>
-      <h1 id="t-hero">Gestión odontológica que se maneja con la voz.</h1>
-      <p class="lede">Agenda, pacientes, historias clínicas y todos tus consultorios en una sola app. Lo que nos distingue: le dictás con los guantes puestos y queda anotado.</p>
+      <h1 id="t-hero">Dictás lo que hiciste. OdontoVoz hace el resto.</h1>
+      <p class="lede">Decís «restauración oclusal en el 25 y el 26» con los guantes puestos y queda en el odontograma, en la historia clínica, en lo que la recepción tiene que cobrar y en el stock. Agenda, pacientes, caja y todos tus consultorios en una sola app.</p>
       <ul class="pillars" aria-label="Qué incluye">
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Agenda</li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg>Pacientes</li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5.5-7 11-7 11s-7-5.5-7-11a7 7 0 0 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Consultorios</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.5"/></svg>Cobros y caja</li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg>Stock</li>
         <li class="star"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg>Dictado por voz</li>
       </ul>
       <div class="cta">
-        <a class="btn solid" href="#descargas">
+        <a class="btn solid" href="app/">Probala gratis</a>
+        <a class="btn line" href="#descargas">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Descargar para Android
+          Descargar
         </a>
-        <a class="btn line" href="app/">Usarla en la web</a>
+      </div>
+      <div class="plat" aria-label="Funciona en">
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>Android</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8-.7 0-1.8-.8-3-.8-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.1 2.8-2.3.9-1.3 1.3-2.6 1.3-2.6s-2.5-1-2.5-3.7zM14.3 5.6c.6-.8 1.1-1.8 1-2.9-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.7-1.3z"/></svg>iPhone y iPad</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>PC y Mac</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/></svg>Sigue andando sin internet</span>
       </div>
       <p class="fine">7 días de prueba gratis (14 para los primeros 50), sin tarjeta. Tus datos siempre son tuyos.</p>
     </div>
@@ -304,6 +364,90 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
+<section class="uniq" id="unico" aria-labelledby="t-unico">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-unico">Lo que solo tiene OdontoVoz</h2>
+      <p class="lede">No es otra agenda con historia clínica. Está pensada para que el consultorio funcione solo: el odontólogo atiende, la recepción cobra y el dueño ve todo, sin cargar dos veces lo mismo.</p>
+    </div>
+    <div class="ucards">
+      <article class="uc big"><span class="tag">Nuevo</span><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg></div>
+        <h3>Escribís o dictás «qué hice hoy» y se carga todo solo</h3>
+        <p>«Restauración con resina por oclusal del 25 y el 26, limpieza». OdontoVoz entiende la práctica, la pieza y las caras, le pone el precio de su obra social o el particular, y lo confirmás con un toque.</p>
+        <div class="flow" aria-label="Lo que pasa"><b>Odontograma</b><i>›</i><b>Historia clínica</b><i>›</i><b>Para cobrar</b><i>›</i><b>Caja</b><i>›</i><b>Stock</b><i>›</i><b>Estadísticas</b></div></article>
+      <article class="uc"><span class="tag">Nuevo</span><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3z"/><circle cx="12" cy="12" r="2.5"/><path d="M6 7V5M18 7V5"/></svg></div>
+        <h3>La recepción sabe exactamente qué cobrar</h3>
+        <p>El paciente sale del sillón y a la secretaria le aparece en «Para cobrar», con el detalle, lo que cubre la obra social y lo que paga el paciente. Cobra en efectivo, tarjeta, transferencia o Mercado Pago, y cierra la caja del día con un botón.</p></article>
+      <article class="uc"><span class="tag">Nuevo</span><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
+        <h3>Stock que se descuenta solo</h3>
+        <p>Cada práctica descuenta lo que usa: anestesia, composite, guantes, limas. Te avisa lo que se está terminando o vence y te arma el pedido para mandar por WhatsApp. Catálogo de 48 insumos ya cargado.</p></article>
+      <article class="uc"><span class="tag">Nuevo</span><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+        <h3>Una sola cuenta para todos los lugares donde atendés</h3>
+        <p>Tu consultorio y los centros donde trabajás, aunque sean de otros dueños. Pasás de uno a otro con un toque y ves todos tus turnos de la semana en tu agenda, sin choques de horario.</p></article>
+      <article class="uc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><path d="M16 4.5a3 3 0 0 1 0 6M18 15c1.8.6 2.8 2.2 3 5"/></svg></div>
+        <h3>Tu equipo entra sin correo</h3>
+        <p>Le creás a la secretaria y a cada odontólogo su usuario y contraseña, como en los sistemas de siempre. Cada uno ve solo lo de su puesto: la recepción no ve liquidaciones ni ganancias.</p></article>
+      <article class="uc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="8.5" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v2h11v-2M12 12v2"/></svg></div>
+        <h3>Empresa: centros, consultorios y odontólogos</h3>
+        <p>Para dueños de varios centros: cada centro con sus consultorios (sillones) y una rotación semanal de quién atiende en cada uno, con avisos de choques. Caja, stock y estadísticas por centro y de toda la empresa.</p></article>
+      <article class="uc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19c3-1 4-6 6-6s1 4 3 4 2-3 4-3 2 2 3 2"/><path d="M4 5h16v8"/></svg></div>
+        <h3>El paciente firma en la pantalla</h3>
+        <p>Consentimientos, anamnesis y presupuestos firmados con el dedo y sellados contra cambios. Firma electrónica con respaldo legal (Ley 25.506) y en PDF cuando lo necesites.</p></article>
+      <article class="uc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></div>
+        <h3>Turnos online con aviso en todos los equipos</h3>
+        <p>Compartís un link y tus pacientes piden turno solos. Suena en la recepción y en tu celular, y queda en la casilla de notificaciones.</p></article>
+      <article class="uc"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h2M8 8v8M12 5v14M16 8v8M20 11v2"/></svg></div>
+        <h3>Un asistente que habla como vos</h3>
+        <p>«Agendá a Pedro mañana a las 10», «abrime la ficha de Laura», «qué turnos tengo el jueves». Entiende el castellano rioplatense y no hace falta aprender comandos.</p></article>
+      <article class="uc big2"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6"/></svg></div>
+        <h3>Presupuestos en cuotas con interés bien calculado</h3>
+        <p>Ofrecés 3, 6, 9 o 12 cuotas con el interés que elijas (sistema francés) o descuento por pago contado. El paciente ve cada opción clara y firma.</p></article>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="t-vs">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-vs">Menos papeles, menos planillas, menos «¿cuánto le cobro?»</h2>
+      <p class="lede">Lo que cambia el primer día que la usás.</p>
+    </div>
+    <div class="vs">
+      <div class="before"><h3>Sin OdontoVoz</h3><ul>
+        <li>Anotás la práctica en la ficha, después en el odontograma, después en la planilla de cobros.</li>
+        <li>La secretaria pregunta en el pasillo cuánto cobrarle al paciente.</li>
+        <li>Te enterás de que no queda anestesia cuando abrís el cajón.</li>
+        <li>Una cuenta y una contraseña distinta para cada lugar donde trabajás.</li>
+        <li>El cierre de caja es una planilla aparte que nadie quiere hacer.</li>
+        <li>En el iPhone no hay app, o hay que pagar otra licencia.</li>
+      </ul></div>
+      <div class="after"><h3>Con OdontoVoz</h3><ul>
+        <li>Lo dictás o lo escribís una vez y queda en todos lados.</li>
+        <li>La recepción ve el monto exacto, con obra social y coseguro.</li>
+        <li>El stock se descuenta solo y te avisa antes de que se termine.</li>
+        <li>Una sola cuenta: tu consultorio y los centros donde atendés.</li>
+        <li>Cierre del día con un botón, por consultorio y por odontólogo.</li>
+        <li>Android, iPhone, iPad, PC y Mac con la misma cuenta y los mismos datos.</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="dyn" aria-labelledby="t-modos">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-modos">Para cada forma de trabajar</h2>
+      <p class="lede">Elegís el modo cuando empezás y lo cambiás cuando crecés, sin perder nada. Todas las funciones (voz, cobros, stock, firma) están en todos los modos.</p>
+    </div>
+    <div class="modes">
+      <div class="mode"><small>Modo profesional</small><b>Odontólogo solo</b><p>Tu agenda en uno o varios consultorios, tus pacientes, tu caja y tu stock. Cobrás vos, en el momento.</p></div>
+      <div class="mode"><small>Modo consultorio</small><b>Con recepción</b><p>Varios profesionales y una secretaria que agenda, recibe y cobra lo que cada uno le manda.</p></div>
+      <div class="mode"><small>Modo centro</small><b>Clínicas</b><p>Agenda de todos los profesionales, liquidaciones por porcentaje o alquiler de módulo y control del día.</p></div>
+      <div class="mode"><small>Modo empresa</small><b>Varios centros</b><p>Centros › consultorios › odontólogos con rotación semanal, permisos por puesto y reportes para el contador.</p></div>
+    </div>
+  </div>
+</section>
+
 <section id="como" aria-labelledby="t-dia">
   <div class="wrap">
     <div class="sec-head">
@@ -314,9 +458,10 @@ footer .brand { margin-right: auto; }
       <li><time>8:40</time><div><b>Recepción confirma los turnos</b><p>Desde la PC, cada turno tiene su botón de WhatsApp que abre el chat del paciente con el recordatorio escrito. Al confirmar, el turno cambia de color.</p></div></li>
       <li><time>9:02</time><div><b>Llega la paciente</b><p>La secretaria la marca como «llegó» y en el celular del odontólogo aparece el aviso a los pocos segundos. Sin gritos de pasillo.</p></div></li>
       <li><time>9:05</time><div><b>En el sillón, con las manos ocupadas</b><p><q>Navi, abrí la ficha de Laura Sánchez… caries en el 36 por oclusal… tiene una resina hecha en el 16 por vestibular.</q> El odontograma se pinta solo y la historia clínica queda al día.</p></div></li>
-      <li><time>9:40</time><div><b>Se cobra lo que corresponde</b><p>Lo realizado se carga con el código del nomenclador. Si tiene obra social, el sistema calcula qué paga la obra social y cuánto es el coseguro.</p></div></li>
+      <li><time>9:40</time><div><b>«Qué hice hoy» y a recepción</b><p><q>Restauración con resina por oclusal del 25.</q> Se marca en el odontograma, se le pone el precio (con lo que cubre la obra social y el coseguro) y tocás «Mandar a recepción». El stock descuenta la anestesia y el composite.</p></div></li>
+      <li><time>9:42</time><div><b>La secretaria cobra sin preguntar</b><p>Le aparece en «Para cobrar»: paciente, consultorio, odontólogo y monto. Cobra con uno o dos medios de pago, o lo deja en la cuenta del paciente.</p></div></li>
       <li><time>9:45</time><div><b>Pedido al laboratorio</b><p>La corona queda registrada con el laboratorio, la etapa, la fecha de entrega y el precio. Si se atrasa, te avisa.</p></div></li>
-      <li><time>19:00</time><div><b>Cierre del día</b><p>Ves quién se atendió, quién faltó, qué se cobró y quién quedó debiendo. Mañana, la agenda arranca con los turnos sin confirmar arriba.</p></div></li>
+      <li><time>19:00</time><div><b>Cierre del día con un botón</b><p>Lo cobrado por forma de pago, por consultorio y por odontólogo; quién faltó y quién quedó debiendo. Si trabajan a porcentaje, la parte de cada uno ya está calculada. Y la lista de compras de insumos, lista para mandar.</p></div></li>
     </ol>
   </div>
 </section>
@@ -346,6 +491,9 @@ footer .brand { margin-right: auto; }
       <div><h3>Obras sociales y aranceles</h3><p>Nomenclador cargado, con las obras sociales de Neuquén y Río Negro (ISSN, IPROSS) y las nacionales. Vos ajustás los valores y el coseguro sale solo.</p></div>
       <div><h3>Laboratorios</h3><p>Tus laboratorios con sus trabajos y precios; cada pedido con etapa, fecha de entrega y aviso si se atrasa.</p></div>
       <div><h3>Recordatorios por WhatsApp</h3><p>Un toque y se abre el chat del paciente con el recordatorio del turno escrito.</p></div>
+      <div><h3>Usuarios por puesto</h3><p>Dueño, administración, recepción, profesional y asistente. El servidor controla qué ve cada uno; podés quitar el acceso a alguien en un segundo.</p></div>
+      <div><h3>Casilla de notificaciones</h3><p>Turnos online, llegadas, pacientes para cobrar, insumos por terminarse, laboratorio y actualizaciones, todo en un sobre arriba a la derecha.</p></div>
+      <div><h3>Liquidaciones a los profesionales</h3><p>Por porcentaje, por alquiler de módulo (hora, turno o día) o las dos cosas. Se calcula con la agenda y lo cobrado.</p></div>
       <div><h3>Pasá tus pacientes de otro sistema</h3><p>Importás el listado desde Excel o CSV (por ejemplo, la exportación de Bilog) y no empezás de cero.</p></div>
     </div>
   </div>
@@ -428,7 +576,7 @@ footer .brand { margin-right: auto; }
   <div class="wrap">
     <div class="sec-head">
       <h2 id="t-desc">Descargas</h2>
-      <p class="lede">Hoy OdontoVoz se instala en Android con el archivo de instalación (APK) y se usa en cualquier equipo desde el navegador. Es la misma cuenta y los mismos datos en todos lados.</p>
+      <p class="lede">Una sola cuenta en todos tus equipos: Android, iPhone, iPad, PC y Mac. Lo que carga la recepción en la PC aparece en tu celular en segundos, y si se corta internet sigue andando.</p>
     </div>
     <div class="dls">
       <div class="dl main">
@@ -442,13 +590,19 @@ footer .brand { margin-right: auto; }
         <p>Antes de instalar, mirá la <a href="#instalar">guía de instalación</a>: Android va a mostrar un aviso porque la app no viene de Play Store.</p>
         <details class="sig"><summary>Firma digital de la app</summary><p>Todas las versiones están firmadas con la misma clave de OdontoVoz. Huella SHA-256 del certificado:<br><code>8E:24:52:9C:F9:0F:C2:67:C2:FF:95:F6:7D:09:5E:4D:E4:B9:2C:AF:66:1C:27:5B:2E:59:5C:BA:2D:C5:1A:BE</code></p></details>
       </div>
+      <div class="dl apple">
+        <span class="badge">Compatible con Apple</span>
+        <h3>iPhone y iPad</h3>
+        <p>Desde Safari la agregás a la pantalla de inicio y queda como una app más: ícono propio, pantalla completa, micrófono y los mismos datos que en tus otros equipos. Sin App Store y sin pagar aparte.</p>
+        <a class="btn teal" href="#instalar" data-tab="tb-ios">Ver cómo (video de 24 s)</a>
+      </div>
       <div class="dl">
-        <h3>Versión web</h3>
-        <p>Funciona en Chrome, Edge o Safari, en la PC de recepción, en una notebook, en un iPhone o en un Android que no deje instalar el APK. Se puede agregar a la pantalla de inicio como una app más.</p>
+        <h3>PC y Mac</h3>
+        <p>En Chrome, Edge o Safari, en la PC de recepción o en una notebook. Con un clic se instala como programa, en su propia ventana.</p>
         <a class="btn line" href="app/">Abrir OdontoVoz web</a>
       </div>
       <div class="dl">
-        <h3>Archivo para la PC</h3>
+        <h3>Archivo para la PC (sin conexión)</h3>
         <p>Una copia de la app en un solo archivo, para abrir con doble clic en Chrome o Edge. Útil si en el consultorio la conexión es inestable.</p>
         <a class="btn line" href="https://github.com/ROAN-corp/odontovoz/releases/latest/download/OdontoVoz-web.html" download>Descargar archivo</a>
       </div>
@@ -556,7 +710,33 @@ footer .brand { margin-right: auto; }
     </div>
   </div>
 </section>
+
+<section id="preguntas" aria-labelledby="t-faq">
+  <div class="wrap">
+    <div class="sec-head"><h2 id="t-faq">Preguntas frecuentes</h2></div>
+    <div class="faq">
+      <details><summary>¿Funciona en iPhone y en Mac?</summary><p>Sí. En iPhone y iPad se usa la app web: desde Safari la agregás a la pantalla de inicio y queda con su ícono, a pantalla completa y con micrófono (en <a href="#instalar" data-tab="tb-ios">Cómo instalarla</a> hay un video de 24 segundos). En Mac funciona en Safari o Chrome, y se puede instalar como programa.</p></details>
+      <details><summary>¿Necesito tarjeta para probarla?</summary><p>No. Creás tu cuenta con tu correo y tenés 7 días con todas las funciones (14 días para los primeros 50). Si te gusta, elegís un plan y nos escribís por WhatsApp.</p></details>
+      <details><summary>Trabajo en varios consultorios. ¿Necesito varias cuentas?</summary><p>No. Con tu misma cuenta podés tener tu consultorio y sumarte a los centros donde atendés, aunque sean de otros dueños que también usan OdontoVoz. Pasás de uno a otro con un toque y ves todos tus turnos en tu agenda.</p></details>
+      <details><summary>¿Mi secretaria necesita un correo?</summary><p>No. Le creás un usuario y una contraseña desde la app y entra con el código de tu cuenta. Ve solo lo que corresponde a la recepción.</p></details>
+      <details><summary>¿Tengo que hablarle a la app sí o sí?</summary><p>No. Todo se puede hacer tocando la pantalla. La voz es para cuando tenés las manos ocupadas: le hablás como hablás en el consultorio y entiende el castellano rioplatense.</p></details>
+      <details><summary>¿Qué pasa si se corta internet?</summary><p>Sigue andando: podés ver la agenda, cargar turnos y atender. Cuando vuelve la conexión, se sincroniza sola con tus otros equipos.</p></details>
+      <details><summary>Uso otro sistema. ¿Pierdo mis pacientes?</summary><p>No. Importás el listado de pacientes desde Excel o CSV (por ejemplo, la exportación de Bilog). En el plan Centro te ayudamos a migrar.</p></details>
+      <details><summary>¿Dónde quedan mis datos? ¿Y si dejo de pagar?</summary><p>Viajan cifrados y se guardan en servidores de la Unión Europea. Son tuyos: si dejás de pagar, la cuenta queda en solo lectura y podés descargar todo cuando quieras.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="final" aria-labelledby="t-final">
+  <div class="wrap">
+    <h2 id="t-final">Probala esta semana con tus pacientes reales</h2>
+    <p class="lede">7 días gratis, sin tarjeta y con todas las funciones. Si tenés dudas, te respondemos nosotros, que también somos odontólogos.</p>
+    <div class="cta"><a class="btn solid" href="app/">Empezar gratis</a><a class="btn line" id="waFinal" href="#planes">Hablar por WhatsApp</a></div>
+  </div>
+</section>
 </main>
+
+<div class="sticky-cta"><a class="btn solid" href="app/">Probar gratis</a><a class="btn teal" href="#planes">Ver planes</a></div>
 
 <footer>
   <div class="wrap">
@@ -610,6 +790,7 @@ const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, s
   document.getElementById('plansNote').textContent = NOTA_PLANES + ' Todos empiezan con la prueba gratis.';
   if (WA.length || CONTACTO.email) document.getElementById('contactFoot').innerHTML = '<a href="' + esc(contactLink('')) + '">Contacto</a>' + WA.map((n, i) => ' · <a href="https://wa.me/' + esc(n.replace(/\D/g, '')) + '">WhatsApp ' + esc((CONTACTO.nombres || [])[i] || '') + ' ' + esc(n.replace(/^549/, '').replace(/^(\d{4})(\d{6})$/, '$1 $2')) + '</a>').join('');
 
+  const wf = document.getElementById('waFinal'); if (wf && (WA.length || CONTACTO.email)) wf.href = contactLink('');
   /* versión del APK desde GitHub */
   fetch('https://api.github.com/repos/ROAN-corp/odontovoz/releases/latest').then(r => r.ok ? r.json() : null).then(d => {
     if (!d) return;
@@ -630,6 +811,9 @@ const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, s
   });
   if (/android/i.test(navigator.userAgent) && /samsung|sm-/i.test(navigator.userAgent)) { /* Samsung: se avisa del Bloqueador automático */ document.querySelector('#p-and .aside').insertAdjacentHTML('beforeend', '<p><b>Tenés un Samsung:</b> si no te deja instalar, mirá la pestaña «Si tu celular la bloquea».</p>'); }
   if (/iphone|ipad/i.test(navigator.userAgent)) sel(document.getElementById('tb-ios'));
+  document.querySelectorAll('a[data-tab]').forEach(a => a.addEventListener('click', () => { const t = document.getElementById(a.getAttribute('data-tab')); if (t) sel(t); }));
+  /* en iPhone, el botón de la portada lleva directo a cómo agregarla */
+  if (/iphone|ipad/i.test(navigator.userAgent)) { const d = document.querySelector('.hero .cta .btn.line'); if (d) { d.href = '#instalar'; d.lastChild.textContent = ' Instalar en el iPhone'; d.addEventListener('click', () => sel(document.getElementById('tb-ios'))); } }
 
   /* ====== demostración: lo que se dice se pinta en el odontograma ====== */
   const svg = document.getElementById('dOdo'), NS = 'http://www.w3.org/2000/svg';

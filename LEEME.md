@@ -427,3 +427,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - En tu agenda se ven también **tus turnos de los otros lugares** donde sos profesional, rayados y en otro color (solo se ven; tocándolos se puede entrar a ese lugar), con un aviso arriba del día. Si das un turno a una hora en la que estás en otro lugar, avisa.
 - Se puede dejar un lugar desde la misma pantalla. El dueño sigue pudiendo cambiarte el puesto o quitarte el acceso.
 - Servidor: `supabase/vinculos.sql`.
+
+## Web pública (7/11/2026)
+- La página de inicio se rediseñó para vender: portada «Dictás lo que hiciste. OdontoVoz hace el resto.», sección «Lo que solo tiene OdontoVoz» (Qué hice hoy → odontograma, cobro, stock; Para cobrar; stock automático; una cuenta en varios consultorios; equipo sin correo; Empresa con rotación; firma; turnero; cuotas; asistente), «Sin / Con OdontoVoz», los cuatro modos, un día con el flujo nuevo, descargas con tarjeta «iPhone y iPad · Compatible con Apple», preguntas frecuentes, cierre con prueba gratis y WhatsApp, y botones fijos «Probar gratis / Ver planes» en el celular.
