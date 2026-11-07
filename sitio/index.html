@@ -296,6 +296,17 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
   .sticky-cta .btn { flex: 1; min-height: 50px; box-shadow: 0 10px 30px -10px rgba(0,0,0,.5); }
   body { padding-bottom: 80px; }
 }
+.watch { background: var(--paper); }
+#vidQhh { aspect-ratio: 390 / 844; object-fit: cover; }
+.watch-grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.2fr); gap: clamp(32px, 6vw, 72px); align-items: center; margin-bottom: clamp(40px, 6vw, 64px); }
+@media (max-width: 860px) { .watch-grid { grid-template-columns: 1fr; } }
+.gal3 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.ph { margin: 0; } .frame2 { border-radius: 24px; overflow: hidden; border: 7px solid #10282a; background: #10282a; aspect-ratio: 390 / 844; }
+.frame2 img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.ph figcaption, .gal-pc figcaption { margin-top: 10px; } .ph figcaption b, .gal-pc figcaption b { display: block; font: 700 17px/1.3 var(--display); } .ph figcaption span, .gal-pc figcaption span { color: var(--ink-2); font-size: 15px; }
+.gal-pc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 32px; } .gal-pc figure { margin: 0; }
+@media (max-width: 980px) { .gal3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .gal-pc { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .gal3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 footer { background: var(--deep); color: #cfe7e3; padding: 40px 0 calc(40px + env(safe-area-inset-bottom, 0px)); font-size: 15px; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
 footer a { color: #fff; }
@@ -313,7 +324,7 @@ footer .brand { margin-right: auto; }
     </a>
     <nav aria-label="Secciones">
       <a href="#unico">Lo que solo tiene</a>
-      <a href="#como">Cómo funciona</a>
+      <a href="#ver">Miralo funcionar</a>
       <a href="#planes">Planes</a>
       <a href="#descargas">Descargas</a>
       <a href="#preguntas">Preguntas</a>
@@ -402,6 +413,39 @@ footer .brand { margin-right: auto; }
       <article class="uc big2"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6"/></svg></div>
         <h3>Presupuestos en cuotas con interés bien calculado</h3>
         <p>Ofrecés 3, 6, 9 o 12 cuotas con el interés que elijas (sistema francés) o descuento por pago contado. El paciente ve cada opción clara y firma.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="watch" id="ver" aria-labelledby="t-ver">
+  <div class="wrap watch-grid">
+    <figure class="reel"><video id="vidQhh" src="video/que-hice-hoy.mp4" poster="video/poster-que-hice-hoy.jpg" muted loop playsinline controls preload="none" aria-label="Video de 29 segundos: el odontólogo escribe «Restauración con resina por oclusal del 25 y del 26, limpieza», confirma las prácticas con su precio y las manda a recepción; se ven marcadas en rojo en el odontograma; la recepción las cobra con un toque y aparece el resumen del día."></video><figcaption>Del sillón a la caja, en 30 segundos</figcaption></figure>
+    <div>
+      <div class="sec-head">
+        <h2 id="t-ver">Miralo funcionar</h2>
+        <p class="lede">Así es un paciente de punta a punta: lo que escribe el odontólogo llega solo al odontograma, a la recepción y a la caja.</p>
+      </div>
+      <ol class="steps">
+        <li><div><b>El odontólogo escribe o dicta lo que hizo</b><p>«Restauración con resina por oclusal del 25 y del 26, limpieza».</p></div></li>
+        <li><div><b>OdontoVoz arma las prácticas con su precio</b><p>Pieza, caras, obra social o particular. Se confirma con un toque.</p></div></li>
+        <li><div><b>Se pinta el odontograma y se descuenta el stock</b><p>En rojo, realizado, y con la nota en la historia clínica.</p></div></li>
+        <li><div><b>La recepción cobra y cierra el día</b><p>Ve el monto exacto, cobra con el medio que sea y el resumen sale solo.</p></div></li>
+      </ol>
+      <div class="cta" style="margin-top:24px"><a class="btn teal" href="app/">Probalo con tus pacientes</a></div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="gal3">
+      <figure class="ph"><div class="frame2"><img src="img/celu-practicas.webp" width="780" height="1688" alt="Ventana «Prácticas de hoy»: composite en la pieza 25 y en la 26 por oclusal y limpieza, cada una con su precio, y el total a cobrar, con los botones Cobrar yo y Mandar a recepción." loading="lazy"></div><figcaption><b>Prácticas de hoy</b><span>Lo que escribiste, convertido en prácticas con precio.</span></figcaption></figure>
+      <figure class="ph"><div class="frame2"><img src="img/celu-cobrar.webp" width="780" height="1688" alt="Inicio de la recepción con la tarjeta «Para cobrar»: paciente, odontólogo, detalle de las prácticas, total y botón Cobrar." loading="lazy"></div><figcaption><b>Para cobrar</b><span>La secretaria ve quién sale y cuánto pagar.</span></figcaption></figure>
+      <figure class="ph"><div class="frame2"><img src="img/celu-cobro.webp" width="780" height="1688" alt="Ventana Cobrar con el detalle, el total, el medio de pago y los botones Queda debiendo y Cobrar." loading="lazy"></div><figcaption><b>Cobrar</b><span>Uno o dos medios de pago, o queda en la cuenta.</span></figcaption></figure>
+      <figure class="ph"><div class="frame2"><img src="img/celu-stock.webp" width="780" height="1688" alt="Stock de insumos: guantes, barbijos, baberos y eyectores con su cantidad, cuántos usos rinde cada uno y una barra de nivel." loading="lazy"></div><figcaption><b>Stock de insumos</b><span>Se descuenta solo con cada práctica.</span></figcaption></figure>
+      <figure class="ph"><div class="frame2"><img src="img/celu-lugares.webp" width="780" height="1688" alt="Ventana «Dónde trabajás»: Consultorio Allen (tu consultorio), Centro Castelli y Clínica Roca como profesional, con el botón Entrar en cada uno." loading="lazy"></div><figcaption><b>Dónde trabajás</b><span>Tu consultorio y los centros donde atendés.</span></figcaption></figure>
+    </div>
+    <div class="gal-pc">
+      <figure><div class="pc"><img src="img/pc-resumen.webp" width="1800" height="1133" alt="Resumen del día en la PC: cobrado, lo que falta cobrar, totales por forma de pago y por odontólogo, y el botón Ir a cerrar la caja." loading="lazy"></div><figcaption><b>Resumen y cierre del día</b><span>Por forma de pago, por consultorio y por odontólogo.</span></figcaption></figure>
+      <figure><div class="pc"><img src="img/pc-stock.webp" width="1800" height="1133" alt="Lista «Para comprar» del stock: cada insumo con lo que hay, por qué conviene pedir y cuánto, y el botón para mandar el pedido por WhatsApp." loading="lazy"></div><figcaption><b>Qué hay que comprar</b><span>El pedido armado, listo para mandar por WhatsApp.</span></figcaption></figure>
+      <figure><div class="pc"><img src="img/pc-lugares.webp" width="1800" height="1133" alt="Agenda del día en la PC con los turnos del consultorio y, rayados en violeta, los turnos del mismo odontólogo en el Centro Castelli, con el aviso «Hoy también en Centro Castelli»." loading="lazy"></div><figcaption><b>Todos tus turnos, de todos lados</b><span>Tus turnos de otros centros, rayados en tu agenda.</span></figcaption></figure>
     </div>
   </div>
 </section>
@@ -791,6 +835,9 @@ const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, s
   if (WA.length || CONTACTO.email) document.getElementById('contactFoot').innerHTML = '<a href="' + esc(contactLink('')) + '">Contacto</a>' + WA.map((n, i) => ' · <a href="https://wa.me/' + esc(n.replace(/\D/g, '')) + '">WhatsApp ' + esc((CONTACTO.nombres || [])[i] || '') + ' ' + esc(n.replace(/^549/, '').replace(/^(\d{4})(\d{6})$/, '$1 $2')) + '</a>').join('');
 
   const wf = document.getElementById('waFinal'); if (wf && (WA.length || CONTACTO.email)) wf.href = contactLink('');
+  /* el video del recorrido arranca solo cuando aparece en pantalla */
+  const vq = document.getElementById('vidQhh');
+  if (vq && 'IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) vq.play().catch(() => {}); else vq.pause(); }), { threshold: .5 }).observe(vq);
   /* versión del APK desde GitHub */
   fetch('https://api.github.com/repos/ROAN-corp/odontovoz/releases/latest').then(r => r.ok ? r.json() : null).then(d => {
     if (!d) return;

@@ -75,7 +75,7 @@
         return;
       }
       /* solo números («26», «la 27»): repite la práctica anterior */
-      if (nums.length && last && /^(?:(?:la|el|en|pieza|piezas|y|e|tambien)\s*|\d{2}\s*)+$/.test(seg)) { nums.forEach(n => odonItem(last, n)); return; }
+      if (nums.length && last && /^(?:(?:la|las|el|los|en|de|del|pieza|piezas|y|e|tambien)\s*|\d{2}\s*)+$/.test(seg)) { nums.forEach(n => odonItem(last, n)); return; }
       const kw = CATKW.filter(x => x[0].test(seg))[0];
       if (kw && A.CAT.some(c => c.label === kw[1])) {
         const price = A.catPrice(kw[1], 0), t = { label: kw[1] }, os = osCalc(pid, t);
