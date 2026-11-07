@@ -406,3 +406,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.32.1
 - La **Evolución clínica** de la ficha también reconoce las prácticas («hoy hice una restauración con resina por oclusal del 25»): las marca en el odontograma en rojo (realizado), las carga con su precio y las manda a cobrar, igual que «Qué hice hoy».
 - Se entienden mejor las caras juntas: «mesial y oclusal», «mesial, oclusal y distal».
+
+## OdontoVoz 1.33 · stock de insumos
+- Menú › **Stock de insumos** en todos los modos (en Empresa, también en Empresa › Stock, separado por centro).
+- **Catálogo sugerido** de 48 insumos odontológicos con cuántos usos rinde cada uno (guantes, anestesia, composite, limas, gutapercha, suturas, alginato, bolsas de esterilización…). Todo editable.
+- **Descuento automático**: cada vez que se cargan prácticas en «Prácticas de hoy» se descuenta lo que usa cada práctica (por ejemplo, una restauración usa 1 cartucho de anestesia, 1 aguja, 1 uso de composite, grabador, adhesivo…), más lo de toda atención (guantes, barbijo, babero, eyector, vaso, bolsa de esterilización) una vez por paciente por día. Las cantidades se cambian en «Qué usa cada práctica».
+- **Llegó mercadería** (con vencimiento y nota), **Usé algo** (en unidades o usos, o vencido/roto), **Contar el stock** (todo de una vez), historial por insumo y **Movimientos**.
+- **Para comprar**: lo que está bajo el mínimo o no llega a 30 días según lo que se viene usando, con el pedido para mandar por WhatsApp o copiar.
+- En Empresa: **Pasar a otro centro**.
+- Avisos en el sobre: insumos con poco o nada y vencimientos cercanos (uno por día).

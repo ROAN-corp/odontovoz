@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.32.1 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.33 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.32.1 (novi
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39, app40, app41, app42). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39, app40, app41, app42, app43). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -73,6 +73,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.32.1 (novi
 - 1.31.1 (`src/app33.js`): la fila de una persona sin acceso usaba la clase `off`, que en la agenda es la franja rayada con `position:absolute`; ahora es `tm-off`. Ojo con nombres de clase genéricos (`off`, `on`, `bad`).
 - 1.32 (`src/app42.js`): agenda compacta arriba. «Colores de los turnos» dentro de «Más» en todos los tamaños; CSS para `min-width:641px` (encabezado, `.ag-tools`, `.daystrip`, `.stats`, `.gh`, `.ag-left`) y un poco para el celular (`.ap-list.h`). Medido: la grilla pasó de y=359 a y=230 en la PC y de 370 a 339 en el celular.
 - 1.32.1 (`src/app40.js`): `A.acts.addNote` (Evolución clínica dentro de la pestaña `datos` de la ficha) también abre `MF.pracOk` si hay prácticas; caras unidas por coma o «y» no se separan en frases.
+- 1.33 (`src/app43.js`): stock en todos los modos sobre `A.EMP.stock` (clave de nube `stock`, ya registrada por `app28`): `{ <sede o 'main'>: [ {id, ck, name, cat, unit, uses, min, qty, exp, mv:[{at,d,why,note,by}]} ], _cfg: {rec, done} }`. Catálogo `CAT` (48), recetas `REC0` + `BASE` (toda atención, una vez por paciente y día con `_cfg.done`), `recKey(item)`; `A.stockConsume(items, pid)` se llama envolviendo `A.acts.poGo`. Pantalla `MF.stk` / `A.stkHTML()` (pestañas lista, comprar, mov, rec), `MF.stkI` (llegó/usé/contar/datos/historial), `stkCountM`, `stkMoveM` (Empresa), `stkPick`. En Empresa › Stock reemplaza `.emp-sedes` (`S._stkInline`). Días que alcanza solo con 7+ días de datos. Avisos agrupados por día (`stk:<sede>:<fecha>`). Menú: `.dnav[data-act=stkOpen]` después de Prácticas y aranceles.
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
