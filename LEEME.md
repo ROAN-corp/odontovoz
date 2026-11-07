@@ -436,3 +436,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Planes en dólares con su equivalente en pesos (USD 1 = $1.570): Profesional USD 17 ($26.690) + USD 3 ($4.710) por consultorio adicional; Consultorio USD 33 ($51.810); Centro USD 57 ($89.490); Empresa USD 114 ($178.980). IVA incluido.
 - En la app (Menú › Mi plan), en la portada y en los términos (nueva versión 2026-11-07: los precios se fijan en dólares; en Argentina se cobran en pesos al dólar de referencia). Los usuarios vuelven a aceptar los términos al entrar.
 - Para cambiar el dólar o los precios: `DOLAR`/`USD` en `src/app25.js`, `DOLAR`/`PLANES` en `sitio/index.html` y la tabla de `sitio/terminos.html`.
+
+## OdontoVoz 1.36 · modo LITE y plan Profesional LITE
+- **Modo LITE**: versión simple para quien no se lleva bien con la tecnología. Inicio con cuatro botones grandes (Agenda, Dar un turno, Pacientes, Recordatorios), turnos de hoy con «Llegó», «Atendido» y WhatsApp a un toque, y «Cobrado hoy».
+- Agenda en lista, día por día (‹ día ›, tocar la fecha para elegir otro). Dar un turno en tres pasos: paciente (o paciente nuevo con nombre y celular), día y hora; si choca, ofrece darlo como sobreturno.
+- Pacientes: buscador grande y ficha simple con Llamar, WhatsApp, Dar turno, Editar datos, próximos turnos, notas de cada visita (escritas o dictadas, van a la historia clínica) y cobros.
+- Recordatorios: hoy, mañana o pasado; «Mandar» abre WhatsApp con el mensaje listo y después se marca «Confirmó».
+- Plan **Profesional LITE**: USD 8 ($12.560) por mes, 1 profesional, 1 consultorio, 2 equipos. Esa cuenta usa solo LITE: lo demás muestra «OdontoVoz PRO» con el botón para pedir el cambio.
+- Los planes pagos pasan a llamarse **Profesional PRO, Consultorio PRO, Centro PRO y Empresa PRO**. Con PRO (y en la prueba) se pasa de una versión a la otra con un toque: Menú › Modo LITE / Pasar a PRO, o el botón del inicio. Se recuerda en cada equipo (`odontovoz.lite`).
+- El servidor no necesitó cambios: un plan `lite` ya queda con los límites de un profesional. En el panel de licencias aparece «Profesional LITE» para elegir.

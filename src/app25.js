@@ -7,17 +7,18 @@
      MI PLAN Y MEJORAR PLAN
      --------------------------------------------------------------- */
   /* precios en dólares; en pesos se calculan con el dólar de referencia (mantener igual que en sitio/index.html y sitio/terminos.html) */
-  const DOLAR = 1570, USD = { basico: 17, consultorio: 33, centro: 57, empresa: 114, red: 114 }, USD_EXTRA = 3;
+  const DOLAR = 1570, USD = { lite: 8, basico: 17, consultorio: 33, centro: 57, empresa: 114, red: 114 }, USD_EXTRA = 3;
   const PRICE = {}; Object.keys(USD).forEach(k => { PRICE[k] = USD[k] * DOLAR; });
   A.PRICE_USD = USD; A.DOLAR = DOLAR;
   const DESC = {
+    lite: 'Versión simple: pacientes, agenda y recordatorios. 1 profesional',
     basico: '1 profesional, en uno o varios consultorios',
     consultorio: 'Hasta 3 profesionales con recepción',
     centro: 'Hasta 8 profesionales, liquidaciones y caja',
     empresa: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño',
     red: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño'
   };
-  const ORDER = ['basico', 'consultorio', 'centro', 'empresa'];
+  const ORDER = ['lite', 'basico', 'consultorio', 'centro', 'empresa'];
   const pesos = n => '$' + Math.round(n).toLocaleString('es-AR');
   const myPlan = () => { const l = CL && CL.lic; return l && CL.session ? (l.plan || 'prueba') : null; };
   const planName = k => ((A.PLAN_INFO || {})[k] || {}).name || k;

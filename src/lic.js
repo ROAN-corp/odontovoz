@@ -3,7 +3,7 @@
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, CL = A.cloud;
   if (!CL) return;
-  const PLANES = { prueba: 'Prueba gratis', basico: 'Profesional', consultorio: 'Consultorio', centro: 'Centro' };
+  const PLANES = { prueba: 'Prueba gratis', lite: 'Profesional LITE', basico: 'Profesional PRO', consultorio: 'Consultorio PRO', centro: 'Centro PRO', empresa: 'Empresa PRO', red: 'Empresa PRO' };
   const ADMIN_URL = 'https://roan-corp.github.io/odontovoz/admin.html';
   CL.lic = null; CL.readonly = false; CL.isAdmin = false;
   const today = () => A.today();

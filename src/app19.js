@@ -6,13 +6,14 @@
   /* lo mismo que controla el servidor (supabase/limites.sql) */
   const PLAN = {
     prueba: { name: 'Prueba gratis', pros: 40, devices: 5, locs: 5, centros: 5 }, /* 1.17: la prueba trae todo, para conocer cualquier plan */
-    basico: { name: 'Profesional', pros: 1, devices: 2, locs: 1 },
-    consultorio: { name: 'Consultorio', pros: 3, devices: 5, locs: 1 },
-    centro: { name: 'Centro', pros: 8, devices: 12, locs: 5 },
-    empresa: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 },
-    red: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */
+    lite: { name: 'Profesional LITE', pros: 1, devices: 2, locs: 1 }, /* 1.36: versión simple, solo un profesional */
+    basico: { name: 'Profesional PRO', pros: 1, devices: 2, locs: 1 },
+    consultorio: { name: 'Consultorio PRO', pros: 3, devices: 5, locs: 1 },
+    centro: { name: 'Centro PRO', pros: 8, devices: 12, locs: 5 },
+    empresa: { name: 'Empresa PRO', pros: 40, devices: 60, locs: 5, centros: 5 },
+    red: { name: 'Empresa PRO', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */
   };
-  const NEXT = { prueba: null, basico: 'consultorio', consultorio: 'centro', centro: 'empresa', empresa: null, red: null };
+  const NEXT = { prueba: null, lite: 'basico', basico: 'consultorio', consultorio: 'centro', centro: 'empresa', empresa: null, red: null };
   A.PLAN_INFO = PLAN;
   const lic = () => (CL && CL.lic) || null;
   const real = () => !!(CL && CL.session && !A.DEMO);
