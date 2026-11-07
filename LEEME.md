@@ -402,3 +402,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.32 · agenda más arriba
 - En la PC la parte de arriba de la agenda es más compacta: título más chico con el año al lado, botones más bajos, tira de días más baja, sin el texto de ayuda y con «Colores de los turnos» dentro de «Más». La grilla empieza unos 130 píxeles más arriba.
 - En el celular, un poco más compacta también (tarjetas de profesionales más bajas), sin achicar los botones.
+
+## OdontoVoz 1.32.1
+- La **Evolución clínica** de la ficha también reconoce las prácticas («hoy hice una restauración con resina por oclusal del 25»): las marca en el odontograma en rojo (realizado), las carga con su precio y las manda a cobrar, igual que «Qué hice hoy».
+- Se entienden mejor las caras juntas: «mesial y oclusal», «mesial, oclusal y distal».

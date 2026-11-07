@@ -51,7 +51,9 @@
   A.pracParse = (text, pid) => {
     if (!P) return [];
     let s = N(text); SYN.forEach(x => { s = s.replace(x[0], x[1]); });
-    const segs = s.split(/[.;\n]|,|\s+y\s+(?=[a-z])/).map(x => x.trim()).filter(Boolean);
+    /* «mesial, oclusal y distal»: las caras van juntas */
+    s = s.replace(/\b(oclusal|mesial|distal|vestibular|lingual|palatin[oa]|incisal|bucal)\s*,\s*(?=(?:oclusal|mesial|distal|vestibular|lingual|palatin[oa]|incisal|bucal)\b)/g, '$1 y ');
+    const segs = s.split(/[.;\n]|,(?!\s*(?:oclusal|mesial|distal|vestibular|lingual|palatin[oa]|incisal|bucal)\b)|\s+y\s+(?=[a-z])(?!(?:por\s+)?(?:oclusal|mesial|distal|vestibular|lingual|palatin[oa]|incisal|bucal)\b)/).map(x => x.trim()).filter(Boolean);
     const out = [], seen = {}; let last = null;
     const push = it => { const k = it.key; if (seen[k]) return; seen[k] = 1; out.push(it); };
     const odonItem = (a, n) => {
@@ -102,6 +104,19 @@
     const id = el.getAttribute('data-id'), a = id ? A.apptById(id) : null, m = mb();
     const pro = (m && m.pro) || (a && a.pro) || (S.uimode === 'atencion' && S.me) || (A.PAT(pid) || {}).pro || (A.PROS[0] || {}).id;
     S.modal = { type: 'pracOk', pid, txt, items, apptId: id || null, pro, done: !!($('#qnDone') && $('#qnDone').checked) };
+    A.renderModal();
+  };
+  /* lo mismo en Ficha › Evolución clínica: si la nota trae prácticas, se marcan en el odontograma y pasan a cobrar */
+  const addNotePrev = A.acts.addNote;
+  if (addNotePrev) A.acts.addNote = function (el) {
+    const ta = $('#noteTxt'), txt = ((ta || {}).value || '').trim(), pid = S.fichaPid;
+    if (!txt || !pid || role() === 'recepcion' || role() === 'asistente') return addNotePrev.apply(this, arguments);
+    const items = A.pracParse(txt, pid);
+    if (!items.length) return addNotePrev.apply(this, arguments);
+    const m = mb(), ap = (A.S.days[today()] || []).filter(x => x.pid === pid && x.type !== 'block' && x.status !== 'cancelado')[0];
+    const pro = (m && m.pro) || (ap && ap.pro) || (S.uimode === 'atencion' && S.me) || (A.PAT(pid) || {}).pro || (A.PROS[0] || {}).id;
+    if (ta) ta.value = '';
+    S.modal = { type: 'pracOk', pid, txt, items, apptId: ap ? ap.id : null, pro, done: true };
     A.renderModal();
   };
   /* también desde la evolución con prácticas escritas a mano: un botón directo */

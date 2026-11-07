@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.32 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.32.1 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -72,6 +72,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.32 (noviem
 - 1.31 (`supabase/subusuarios.sql`, `src/app41.js`, `src/app33.js`, `src/cloud.js`, `src/lic.js`): usuarios del equipo sin correo, estilo Bilog. `ov_accounts.code` (único; `ov_code_ensure`, `ov_code_get`, `ov_code_set` solo mientras no haya subusuarios). `ov_sub_create` (dueño o admin; inserta en `auth.users` + `auth.identities` con correo interno `usuario@codigo.equipo.odontovoz.app`, `email_confirmed_at` y `raw_user_meta_data.ov_sub`; `ov_new_account` lo saltea) y `ov_sub_password` (borra `auth.sessions`). `ov_members.username`/`sub`; `ov_team` y `ov_whoami` devuelven `code`. Cliente: formulario «Crear usuario (sin correo)» / «Invitar por correo» (`S.tmMode`), `NEWSUB` con datos para WhatsApp, `tmPass`, `tmCodeEdit`. Ingreso `CL.showLogin('team')` (`loginTeam`, lugares en `odontovoz.places`, `odontovoz.lgKind`), `CL.who(email)` muestra «usuario (cuenta X)», `CL.afterLogin` expuesto, `acctPass` de un subusuario abre «Nueva contraseña» (nunca se manda correo al dominio interno). `lgOtherPlace` cierra sesión y vuelve al ingreso con lugares.
 - 1.31.1 (`src/app33.js`): la fila de una persona sin acceso usaba la clase `off`, que en la agenda es la franja rayada con `position:absolute`; ahora es `tm-off`. Ojo con nombres de clase genéricos (`off`, `on`, `bad`).
 - 1.32 (`src/app42.js`): agenda compacta arriba. «Colores de los turnos» dentro de «Más» en todos los tamaños; CSS para `min-width:641px` (encabezado, `.ag-tools`, `.daystrip`, `.stats`, `.gh`, `.ag-left`) y un poco para el celular (`.ap-list.h`). Medido: la grilla pasó de y=359 a y=230 en la PC y de 370 a 339 en el celular.
+- 1.32.1 (`src/app40.js`): `A.acts.addNote` (Evolución clínica dentro de la pestaña `datos` de la ficha) también abre `MF.pracOk` si hay prácticas; caras unidas por coma o «y» no se separan en frases.
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
