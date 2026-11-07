@@ -420,3 +420,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Stock: al volver de un insumo, la lista queda donde estaba y marca el que tocaste (antes volvía arriba de todo).
 - El siguiente insumo se abre en la misma pestaña que usaste (por ejemplo «Contar»), con el número listo para escribir; Enter guarda.
 - En «Contar el stock», Enter pasa al siguiente casillero.
+
+## OdontoVoz 1.34 · una cuenta en varios consultorios
+- Con la misma cuenta se puede trabajar en el consultorio propio y en los de otros dueños que te invitan (los que quieras). El enlace de invitación se abre con la cuenta de siempre y el lugar se suma; también se puede escribir el código en Menú › **Dónde trabajás**.
+- Para cambiar de lugar: tocá el nombre del consultorio arriba (debajo del título) o Menú › Dónde trabajás. Cada lugar tiene sus pacientes, su agenda y lo que su dueño te permite ver; al cambiar se guarda lo de acá y se bajan los datos del otro lugar.
+- En tu agenda se ven también **tus turnos de los otros lugares** donde sos profesional, rayados y en otro color (solo se ven; tocándolos se puede entrar a ese lugar), con un aviso arriba del día. Si das un turno a una hora en la que estás en otro lugar, avisa.
+- Se puede dejar un lugar desde la misma pantalla. El dueño sigue pudiendo cambiarte el puesto o quitarte el acceso.
+- Servidor: `supabase/vinculos.sql`.

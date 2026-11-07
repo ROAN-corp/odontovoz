@@ -32,6 +32,8 @@
     const h = Object.assign({ apikey: c.key, 'Content-Type': 'application/json' }, opt.headers || {});
     if (opt.auth !== false && CL.session) h.Authorization = 'Bearer ' + CL.session.access_token;
     h['x-ov-device'] = A.devId();
+    /* 1.34: en qué lugar se trabaja (si la persona está en varios consultorios) */
+    { const pl = LS.get('odontovoz.place', ''); if (/^[0-9a-f-]{36}$/i.test(pl || '')) h['x-ov-owner'] = pl; }
     let r;
     try { r = await fetch(c.url + path, { method: opt.method || 'GET', headers: h, body: opt.body ? JSON.stringify(opt.body) : undefined }); }
     catch (e) { const er = new Error('Sin conexión con el servidor.'); er.offline = true; throw er; }

@@ -89,11 +89,12 @@
     accepting = true;
     try {
       const r = await rpc('ov_invite_accept', { p_code: c });
-      if (r && r.ok) { LS.set('odontovoz.invite', null); }
+      if (r && r.ok) { LS.set('odontovoz.invite', null); if (r.owner) LS.set('odontovoz.linkedNew', r.owner); }
       else if (r) { LS.set('odontovoz.invite', null); if (!(CL.member)) setTimeout(() => A.toast(r.msg || 'No se pudo usar la invitación.'), 600); }
     } catch (e) { if (noServer(e)) LS.set('odontovoz.invite', null); }
     finally { accepting = false; }
   }
+  A.wipeLocal = () => wipeLocal();
   function wipeLocal() {
     A.noSave = true;
     try { Object.keys(localStorage).forEach(k => { if (k.indexOf('odontovoz.real.v1') === 0) localStorage.removeItem(k); }); } catch (e) { /* nada */ }
@@ -106,7 +107,9 @@
     const bM = CL.member || null, bO = CL.ownerId || null;
     await clPrev(force || !!pendingInv());
     const aM = CL.member || null, aO = CL.ownerId || null;
-    const flip = !bM !== !aM || (bM && aM && bO && aO && bO !== aO);
+    let flip = !bM !== !aM || (bM && aM && bO && aO && bO !== aO);
+    /* 1.34: si se acaba de cambiar de lugar a propósito, los datos ya se borraron */
+    if (LS.get('odontovoz.placeJust', '')) { LS.set('odontovoz.placeJust', null); flip = false; }
     if (flip && CL.session) {
       /* entró a un equipo o lo sacaron: los datos de este equipo eran de otra cuenta */
       wipeLocal(); try { await CL.baseClear(); } catch (e) { /* nada */ }
@@ -265,7 +268,7 @@
   }
   A.acts.teamOpen = () => { S.modal = { type: 'team' }; A.renderModal(); loadTeam(); };
   const invLink = code => appUrl() + '?invitacion=' + encodeURIComponent(code);
-  const waText = i => 'Hola' + (i.name ? ' ' + i.name.split(' ')[0] : '') + '. Te invito a usar OdontoVoz en ' + (A.CLINIC || 'el consultorio') + ' como ' + (RN[i.role] || i.role).toLowerCase() + (i.sede && sedeName(i.sede) ? ' en ' + sedeName(i.sede) : '') + '. Entrá a este enlace y creá tu usuario con tu correo (para vos es gratis): ' + invLink(i.code) + ' . El enlace vence en 7 días y sirve una sola vez.';
+  const waText = i => 'Hola' + (i.name ? ' ' + i.name.split(' ')[0] : '') + '. Te invito a usar OdontoVoz en ' + (A.CLINIC || 'el consultorio') + ' como ' + (RN[i.role] || i.role).toLowerCase() + (i.sede && sedeName(i.sede) ? ' en ' + sedeName(i.sede) : '') + '. Entrá a este enlace y creá tu usuario con tu correo (para vos es gratis): ' + invLink(i.code) + ' . Si ya usás OdontoVoz en tu propio consultorio, abrí el enlace e ingresá con tu cuenta de siempre: este lugar se te suma y pasás de uno a otro con un toque. El enlace vence en 7 días y sirve una sola vez.';
   const sedeOpts = (sel, any) => (any ? '<option value=""' + (!sel ? ' selected' : '') + '>Todos los ' + LW(true) + '</option>' : '') + sedes().map(l => '<option value="' + esc(l.id) + '"' + (sel === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('');
   const proOpts = sel => '<option value="">— Elegí —</option>' + A.PROS.map(p => '<option value="' + esc(p.id) + '"' + (sel === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
   const roleOpts = sel => ['recepcion', 'profesional', 'asistente', 'admin'].map(r => '<option value="' + r + '"' + (sel === r ? ' selected' : '') + '>' + RN[r] + '</option>').join('');
