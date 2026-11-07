@@ -431,3 +431,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## Web pública (7/11/2026)
 - La página de inicio se rediseñó para vender: portada «Dictás lo que hiciste. OdontoVoz hace el resto.», sección «Lo que solo tiene OdontoVoz» (Qué hice hoy → odontograma, cobro, stock; Para cobrar; stock automático; una cuenta en varios consultorios; equipo sin correo; Empresa con rotación; firma; turnero; cuotas; asistente), «Sin / Con OdontoVoz», los cuatro modos, un día con el flujo nuevo, descargas con tarjeta «iPhone y iPad · Compatible con Apple», preguntas frecuentes, cierre con prueba gratis y WhatsApp, y botones fijos «Probar gratis / Ver planes» en el celular.
 - Web: sección «Miralo funcionar» con video de 29 s del recorrido «Qué hice hoy → recepción → cobro → cierre» (`sitio/video/que-hice-hoy.mp4`) y capturas nuevas (Prácticas de hoy, Para cobrar, Cobrar, Stock, Dónde trabajás, Resumen del día, Para comprar, turnos de otros lugares). App: «del 25 y del 26» ahora toma las dos piezas.
+
+## OdontoVoz 1.35 · precios en dólares
+- Planes en dólares con su equivalente en pesos (USD 1 = $1.570): Profesional USD 17 ($26.690) + USD 3 ($4.710) por consultorio adicional; Consultorio USD 33 ($51.810); Centro USD 57 ($89.490); Empresa USD 114 ($178.980). IVA incluido.
+- En la app (Menú › Mi plan), en la portada y en los términos (nueva versión 2026-11-07: los precios se fijan en dólares; en Argentina se cobran en pesos al dólar de referencia). Los usuarios vuelven a aceptar los términos al entrar.
+- Para cambiar el dólar o los precios: `DOLAR`/`USD` en `src/app25.js`, `DOLAR`/`PLANES` en `sitio/index.html` y la tabla de `sitio/terminos.html`.

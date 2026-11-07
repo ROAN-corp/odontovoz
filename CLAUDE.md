@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.34.1 (noviembre 2026).
+Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.35 (noviembre 2026).
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -37,7 +37,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.34.1 (novi
 - No repetir credenciales en el chat.
 
 ## Planes (hechos en 1.7.1/1.8)
-- Prueba 7 días (14 para las primeras 50 cuentas, `promo = 'lanzamiento50'`, ya cargado en Supabase). Profesional $26.900 + $4.900 por consultorio adicional; Consultorio $51.900; Centro $89.900; IVA incluido, abono mensual. Noviembre 2026: 35% solo el primer mes (`PROMO` en `sitio/index.html`, se apaga solo).
+- Prueba 7 días (14 para las primeras 50 cuentas, `promo = 'lanzamiento50'`, ya cargado en Supabase). Desde 1.35 los precios están en dólares (USD 1 = $1.570): Profesional USD 17 + USD 3 por consultorio adicional; Consultorio USD 33; Centro USD 57; Empresa USD 114; IVA incluido, abono mensual, se muestran también en pesos. Noviembre 2026: 35% solo el primer mes (`PROMO` en `sitio/index.html`, se apaga solo).
 - Soporte por WhatsApp: Rodrigo 5492984513279 y Angel 5492984764428 (`A.SUPPORT` en `src/app5.js`, `CONTACTO` en `sitio/index.html`).
 - La evolución clínica (`src/app15.js`) borra notas del día y automáticas; las manuales viejas se anulan (Ley 26.529). El plan de tratamiento está en `src/app16.js`.
 - 1.9 (`src/app17.js`): turnero online con link (`sitio/turnos.html`, tablas `ov_booking` y `ov_booking_req`, SQL `supabase/turnero.sql`), recordatorios en el inicio y «Cambios de hoy» para deshacer en el día.
@@ -77,6 +77,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.34.1 (novi
 - 1.33.1 (`src/app43.js`): `keepPos`/`restorePos` guardan el scroll de `.m-body` (o de la página en Empresa) y marcan el insumo con `.stk-flash` al volver; `S.stkLastMode` recuerda la pestaña del insumo; Enter guarda en «Contar» y avanza en `stkCountM`.
 - 1.34 (`supabase/vinculos.sql`, `src/app44.js`, `src/app33.js`, `src/cloud.js`, `src/lic.js`): una cuenta en varios lugares. `ov_members` con clave (member, owner). `ov_owner()` usa el encabezado `x-ov-owner` (`ov_place_hdr`) si la persona es ese dueño o miembro activo; si no, su propia cuenta; si no tiene, su primer equipo. `ov_role`/`ov_member_sede` por lugar. `ov_join_invite` ya no rechaza cuentas con datos propios. `ov_leave`, `ov_whoami.places` (`{owner, mine, role, clinic, pro, sede, sub}`), `ov_ext_agenda(desde, hasta)` (turnos de mis otros lugares donde soy profesional). Cliente: `cloud.js` manda `x-ov-owner` desde `odontovoz.place`; `lic.js` guarda `CL.places`; cambiar de lugar = `CL.sync` + `odontovoz.place` + `odontovoz.placeJust` (evita el doble borrado del flip de `app33`) + `A.wipeLocal` + `CL.baseClear` + recargar. `MF.places`, `plLink` (código), `plLeave`, `plNew` (después de vincularse, `odontovoz.linkedNew`). `.ab-title.pl-many` abre el selector. Turnos externos: `.ext-blk` dentro de `.gb[data-pro=extPro]` (mitad derecha, rayados), `.ext-band` en el día, `MF.extM`; aviso al dar turno o tocar un hueco ocupado afuera. Columna elegible (`odontovoz.extPro`).
 - 1.34.1 (`src/app40.js`): «del 25 y del 26» toma las dos piezas (las palabras de/del/las/los cuentan como relleno al repetir la práctica). Web: sección `#ver` con `video/que-hice-hoy.mp4` (grabado con Playwright en modo prueba) y capturas nuevas en `sitio/img/` (celu-practicas, celu-cobrar, celu-cobro, celu-stock, celu-lugares, pc-resumen, pc-stock, pc-lugares).
+- 1.35 (`src/app25.js`, `sitio/index.html`, `sitio/terminos.html`, `privacidad.html`, `src/cloud.js`): precios en dólares con equivalente en pesos. `DOLAR = 1570` y `USD` en `app25.js` (`A.PRICE_USD`, `A.DOLAR`; `PRICE` en pesos se calcula); en la portada `DOLAR` y `PLANES[].usd` (`{3}` = USD por consultorio extra); términos y privacidad versión 2026-11-07 (`PRIV_VER`/`A.TERMS_VER`), con la cláusula «se fijan en dólares; en Argentina se cobran en pesos al dólar de referencia».
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 

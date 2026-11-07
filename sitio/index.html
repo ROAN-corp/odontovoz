@@ -800,17 +800,18 @@ footer .brand { margin-right: auto; }
 /* ====== DATOS EDITABLES: planes y contacto ======
    Para cambiar precios o textos de los planes, se edita solo esta parte. */
 const CONTACTO = { whatsapp: ['5492984513279', '5492984764428'], nombres: ['Rodrigo', 'Angel'], email: 'somosroan@gmail.com' }; // números con código de país (549 + área + número)
-/* precio: en pesos por mes (número); los textos se arman solos */
+/* usd: precio en dólares por mes; en pesos se calcula con DOLAR (mantener igual que src/app25.js y terminos.html) */
+const DOLAR = 1570; /* pesos por dólar de referencia */
 const PLANES = [
-  { nombre: 'Prueba', quien: 'Para conocerla con tus pacientes reales.', precio: 0, por: '7 días', items: ['Todas las funciones de todos los planes', 'Profesionales y consultorios sin límite de prueba', 'Hasta 5 equipos', 'Sin tarjeta de crédito', 'Lanzamiento: los primeros 50 tienen 14 días'], boton: 'Empezar gratis', link: 'app/' },
-  { nombre: 'Profesional', quien: 'Un odontólogo, en uno o varios consultorios.', precio: 26900, items: ['1 profesional', '1 consultorio incluido', 'Consultorio adicional (hasta 5 en total): {4900}', 'Hasta 2 equipos (celular y PC)', 'Asistente por voz y respaldo en la nube'], boton: 'Contratar' },
-  { nombre: 'Consultorio', quien: 'Varios profesionales con recepción.', precio: 51900, items: ['Hasta 3 profesionales', 'Recepción incluida', 'Hasta 5 equipos', 'Agenda compartida en vivo'], boton: 'Contratar', destacado: true },
-  { nombre: 'Centro', quien: 'Clínicas y centros odontológicos.', precio: 89900, items: ['Hasta 8 profesionales', 'Hasta 12 equipos', 'Liquidación por obra social', 'Ayuda para migrar los datos'], boton: 'Consultar' },
-  { nombre: 'Empresa', quien: 'Dueños de 2 a 5 consultorios.', precio: 178900, items: ['De 2 a 5 consultorios, cada uno con su agenda, su personal y su caja', 'Hasta 40 profesionales y 60 equipos', 'Inicio del dueño con el resumen de cada consultorio', 'Estadísticas, metas, liquidaciones y reporte para el contador', 'Personal con PIN y registro de quién hizo qué'], boton: 'Consultar' }
+  { nombre: 'Prueba', quien: 'Para conocerla con tus pacientes reales.', usd: 0, por: '7 días', items: ['Todas las funciones de todos los planes', 'Profesionales y consultorios sin límite de prueba', 'Hasta 5 equipos', 'Sin tarjeta de crédito', 'Lanzamiento: los primeros 50 tienen 14 días'], boton: 'Empezar gratis', link: 'app/' },
+  { nombre: 'Profesional', quien: 'Un odontólogo, en uno o varios consultorios.', usd: 17, items: ['1 profesional', '1 consultorio incluido', 'Consultorio adicional (hasta 5 en total): {3}', 'Hasta 2 equipos (celular y PC)', 'Asistente por voz y respaldo en la nube'], boton: 'Contratar' },
+  { nombre: 'Consultorio', quien: 'Varios profesionales con recepción.', usd: 33, items: ['Hasta 3 profesionales', 'Recepción incluida', 'Hasta 5 equipos', 'Agenda compartida en vivo'], boton: 'Contratar', destacado: true },
+  { nombre: 'Centro', quien: 'Clínicas y centros odontológicos.', usd: 57, items: ['Hasta 8 profesionales', 'Hasta 12 equipos', 'Liquidación por obra social', 'Ayuda para migrar los datos'], boton: 'Consultar' },
+  { nombre: 'Empresa', quien: 'Dueños de 2 a 5 consultorios.', usd: 114, items: ['De 2 a 5 consultorios, cada uno con su agenda, su personal y su caja', 'Hasta 40 profesionales y 60 equipos', 'Inicio del dueño con el resumen de cada consultorio', 'Estadísticas, metas, liquidaciones y reporte para el contador', 'Personal con PIN y registro de quién hizo qué'], boton: 'Consultar' }
 ];
 /* promoción: se muestra sola entre estas fechas (hora de Argentina) y desaparece después */
 const PROMO = { desde: '2026-11-01T00:00:00-03:00', hasta: '2026-12-01T00:00:00-03:00', descuento: 35, titulo: 'Noviembre: 35% de descuento en tu primer mes', texto: 'Si te sumás en noviembre, el primer mes de cualquier plan te sale 35% menos. Es por única vez: desde el segundo mes pagás el precio normal.' };
-const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, sin permanencia: podés cambiar de plan o sumar y quitar consultorios mes a mes. Ver términos y bases de las promociones.';
+const NOTA_PLANES = 'Precios en dólares estadounidenses con su equivalente en pesos argentinos (USD 1 = $' + DOLAR.toLocaleString('es-AR') + '), IVA incluido. En Argentina se cobra en pesos. Abono mensual, sin permanencia: podés cambiar de plan o sumar y quitar consultorios mes a mes. Ver términos y bases de las promociones.';
 
 (function () {
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -822,12 +823,13 @@ const NOTA_PLANES = 'Precios en pesos argentinos, IVA incluido. Abono mensual, s
   };
   const now = Date.now(), promo = now >= Date.parse(PROMO.desde) && now < Date.parse(PROMO.hasta) ? PROMO : null;
   const pesos = n => '$' + Math.round(n).toLocaleString('es-AR');
-  const conDesc = n => promo ? Math.round(n * (100 - promo.descuento) / 100) : n;
-  const item = t => esc(t).replace(/\{(\d+)\}/g, (m, n) => pesos(+n) + ' por mes cada uno' + (promo ? '; el primer mes, ' + pesos(conDesc(+n)) : ''));
+  const usd = n => 'USD ' + (Math.round(n * 100) / 100).toLocaleString('es-AR', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  const conDesc = n => promo ? Math.round(n * (100 - promo.descuento)) / 100 : n;
+  const item = t => esc(t).replace(/\{(\d+)\}/g, (m, n) => usd(+n) + ' (≈ ' + pesos(+n * DOLAR) + ') por mes cada uno' + (promo ? '; el primer mes, ' + usd(conDesc(+n)) : ''));
   const precio = p => {
-    if (!p.precio) return '<p class="price">Gratis <small>' + esc(p.por || '') + '</small></p>';
-    if (!promo) return '<p class="price">' + pesos(p.precio) + ' <small>por mes</small></p>';
-    return '<p class="price"><span class="was"><s>' + pesos(p.precio) + '</s> <em>−' + promo.descuento + '%</em></span>' + pesos(conDesc(p.precio)) + ' <small>el primer mes · después ' + pesos(p.precio) + ' por mes</small></p>';
+    if (!p.usd) return '<p class="price">Gratis <small>' + esc(p.por || '') + '</small></p>';
+    if (!promo) return '<p class="price">' + usd(p.usd) + ' <small>por mes · ≈ ' + pesos(p.usd * DOLAR) + '</small></p>';
+    return '<p class="price"><span class="was"><s>' + usd(p.usd) + '</s> <em>−' + promo.descuento + '%</em></span>' + usd(conDesc(p.usd)) + ' <small>el primer mes (≈ ' + pesos(p.usd * DOLAR * (100 - promo.descuento) / 100) + ') · después ' + usd(p.usd) + ' (≈ ' + pesos(p.usd * DOLAR) + ') por mes</small></p>';
   };
   if (promo) document.getElementById('plans').insertAdjacentHTML('beforebegin', '<div class="promo" role="note"><b>' + esc(promo.titulo) + '</b><span>' + esc(promo.texto) + '</span></div>');
   document.getElementById('plans').innerHTML = PLANES.map(p => '<article class="plan' + (p.destacado ? ' star' : '') + '"><h3>' + esc(p.nombre) + '</h3><p class="who">' + esc(p.quien) + '</p>' + precio(p) + '<ul>' + p.items.map(i => '<li>' + item(i) + '</li>').join('') + '</ul><a class="btn ' + (p.destacado ? '' : 'teal') + '" href="' + esc(p.link || contactLink(p.nombre)) + '">' + esc(p.link || WA.length || CONTACTO.email ? p.boton : 'Probar gratis') + '</a></article>').join('');
