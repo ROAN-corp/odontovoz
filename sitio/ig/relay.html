@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>OdontoVoz · imágenes</title>
+<p>Pasando imágenes a Instagram… podés cerrar esta ventana.</p>
+<script>
+(async () => {
+  const q = new URLSearchParams(location.search), files = (q.get('f') || '').split(',').filter(Boolean);
+  const to = 'https://www.instagram.com';
+  const out = [];
+  for (const f of files) { if (!/^[\w.-]+\.jpg$/.test(f)) continue; const r = await fetch(f); out.push({ name: f, type: 'image/jpeg', buf: await r.arrayBuffer() }); }
+  if (window.opener) window.opener.postMessage({ ovImgs: out }, to);
+  document.body.insertAdjacentHTML('beforeend', '<p>Listo (' + out.length + ').</p>');
+  setTimeout(() => window.close(), 1500);
+})();
+</script>
