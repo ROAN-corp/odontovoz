@@ -1,13 +1,16 @@
 <!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>OdontoVoz · imágenes</title>
-<p>Pasando imágenes a Instagram… podés cerrar esta ventana.</p>
+<p>Preparando las imágenes…</p>
 <script>
 (async () => {
-  const q = new URLSearchParams(location.search), files = (q.get('f') || '').split(',').filter(Boolean);
-  const to = 'https://www.instagram.com';
+  const q = new URLSearchParams(location.search), files = (q.get('f') || '').split(',').filter(f => /^[\w.-]+\.jpg$/.test(f));
   const out = [];
-  for (const f of files) { if (!/^[\w.-]+\.jpg$/.test(f)) continue; const r = await fetch(f); out.push({ name: f, type: 'image/jpeg', buf: await r.arrayBuffer() }); }
-  if (window.opener) window.opener.postMessage({ ovImgs: out }, to);
-  document.body.insertAdjacentHTML('beforeend', '<p>Listo (' + out.length + ').</p>');
-  setTimeout(() => window.close(), 1500);
+  for (const f of files) {
+    const b = await (await fetch(f)).blob();
+    const d = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(b); });
+    out.push({ n: f, d });
+  }
+  const go = q.get('go') || 'https://www.instagram.com/';
+  if (!/^https:\/\/www\.instagram\.com\//.test(go)) return;
+  location.replace(go + '#ov=' + encodeURIComponent(JSON.stringify(out)));
 })();
 </script>
