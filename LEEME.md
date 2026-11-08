@@ -445,3 +445,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Plan **Profesional LITE**: USD 8 ($12.560) por mes, 1 profesional, 1 consultorio, 2 equipos. Esa cuenta usa solo LITE: lo demás muestra «OdontoVoz PRO» con el botón para pedir el cambio.
 - Los planes pagos pasan a llamarse **Profesional PRO, Consultorio PRO, Centro PRO y Empresa PRO**. Con PRO (y en la prueba) se pasa de una versión a la otra con un toque: Menú › Modo LITE / Pasar a PRO, o el botón del inicio. Se recuerda en cada equipo (`odontovoz.lite`).
 - El servidor no necesitó cambios: un plan `lite` ya queda con los límites de un profesional. En el panel de licencias aparece «Profesional LITE» para elegir.
+
+## Web pública (7/11/2026, noche)
+- Portada: recuadro **Acceso rápido** debajo de «Probala gratis» con tres botones: Usar en la web (`app/`), Android: bajar APK (descarga directa) e iPhone y iPad (abre los pasos de Safari). El botón «Descargar» pasa a «Todas las descargas».
+- Encabezado: enlace «Entrar» (abre la app) al lado de «Probar gratis».
+- Barra fija del celular: «Probar gratis» + «Android (APK)»; en iPhone el segundo botón dice «Instalar en iPhone» y en la PC «Abrir la app».
