@@ -46,8 +46,17 @@
   const osCalc = (pid, t) => {
     const pat = A.PAT(pid), os = A.osOf ? A.osOf(pat) : null, code = A.codeFor ? A.codeFor(t) : null, ar = os && os.on && code && os.aran ? os.aran[code] : null;
     if (!ar || !ar.on) return null;
-    return { sigla: os.sigla, cov: ar.cov || 0, cos: ar.cos || 0 };
+    return { id: os.id, sigla: os.sigla, code, cov: ar.cov || 0, cos: ar.cos || 0, mode: os.cop || (A.CFG.copDef || 'cos') };
   };
+  /* 1.38: cuánto paga el paciente cuando tiene obra social: coseguro fijo, diferencia con el precio del consultorio o nada */
+  const payFor = (it, qty) => {
+    qty = qty || it.qty || 1; if (!it.os) return it.price;
+    const m = it.os.mode || 'cos';
+    if (m === 'none') return 0;
+    if (m === 'dif') return Math.max(0, (it.price || 0) - (it.os.cov || 0) * qty);
+    return (it.os.cos || 0) * qty;
+  };
+  A.copPayFor = payFor;
   A.pracParse = (text, pid) => {
     if (!P) return [];
     let s = N(text); SYN.forEach(x => { s = s.replace(x[0], x[1]); });
@@ -62,7 +71,7 @@
       const faces = a.faces ? a.faces.slice().sort().join('') : '';
       const t = { cond, tooth: n, faces, label: A.txLabel(cond, n, faces) };
       const price = A.priceOf(cond, faces.length || 1), os = osCalc(pid, t);
-      push({ key: 'o' + cond + n + faces, kind: 'odon', a: { type: 'mark', teeth: [n], faces: a.faces ? a.faces.slice() : null, cond, status: 'realizado' }, label: t.label, price, os, pay: os ? os.cos : price, on: true });
+      push({ key: 'o' + cond + n + faces, kind: 'odon', a: { type: 'mark', teeth: [n], faces: a.faces ? a.faces.slice() : null, cond, status: 'realizado' }, label: t.label, price, os, pay: payFor({ price, os }), on: true });
     };
     segs.forEach(seg => {
       const r = P.parse(seg, { lastTooth: null }), acts = r.actions.filter(a => a.type === 'mark' && isPract(a.cond === 'extraccion' ? 'extraido' : a.cond));
@@ -80,7 +89,7 @@
       if (kw && A.CAT.some(c => c.label === kw[1])) {
         const price = A.catPrice(kw[1], 0), t = { label: kw[1] }, os = osCalc(pid, t);
         let qty = 1; const mq = /\b(\d|dos|tres|cuatro)\s+cuadrantes?\b/.exec(seg); if (mq && /cuadrante/.test(kw[1])) qty = { dos: 2, tres: 3, cuatro: 4 }[mq[1]] || +mq[1] || 1;
-        push({ key: 'c' + kw[1], kind: 'cat', label: kw[1] + (qty > 1 ? ' × ' + qty : ''), price: price * qty, os, pay: os ? os.cos * qty : price * qty, on: true });
+        push({ key: 'c' + kw[1], kind: 'cat', label: kw[1] + (qty > 1 ? ' × ' + qty : ''), price: price * qty, os, qty, pay: payFor({ price: price * qty, os }, qty), on: true });
       }
     });
     return out;
@@ -132,10 +141,12 @@
     const cob = cobraOf(m.pro), solo = isSolo();
     let b = '<p class="po-who"><b>' + esc(p.name || 'Paciente') + '</b> · ' + esc(os ? os.sigla : (p.cov || 'Particular')) + ' · atendió ' + esc(proName(m.pro)) + '</p>';
     b += '<ul class="po-list">' + m.items.map((it, i) => '<li class="' + (it.on ? '' : 'off') + '"><label class="po-chk"><input type="checkbox" data-chg="poOn" data-i="' + i + '"' + (it.on ? ' checked' : '') + ' aria-label="Incluir ' + esc(it.label) + '"></label><span class="po-l"><b>' + esc(it.label) + '</b>' +
-      (it.os ? '<small>' + esc(it.os.sigla) + ' cubre ' + money(it.os.cov) + ' · paga el paciente</small>' : '<small>' + (os ? 'sin arancel de ' + esc(os.sigla) + ' cargado · ' : '') + 'particular</small>') + '</span>' +
+      (it.os ? '<small>' + esc(it.os.sigla) + ' paga ' + money(it.os.cov * (it.qty || 1)) + (it.price ? ' · tu precio ' + money(it.price) : '') + '</small><label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poCm" data-i="' + i + '">' + [['cos', 'Coseguro' + (it.os.cos ? ' ' + money(it.os.cos * (it.qty || 1)) : '')], ['dif', 'Copago: diferencia ' + money(Math.max(0, (it.price || 0) - it.os.cov * (it.qty || 1)))], ['none', 'Sin cargo al paciente']].map(o => '<option value="' + o[0] + '"' + ((it.os.mode || 'cos') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label>' : '<small>' + (os ? 'sin arancel de ' + esc(os.sigla) + ' cargado · ' : '') + 'particular</small>') + '</span>' +
       '<span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-in="poAmt" data-i="' + i + '" value="' + (it.pay || 0) + '" aria-label="Importe de ' + esc(it.label) + '"></span></li>').join('') + '</ul>';
     b += '<div class="po-add"><select data-chg="poAdd" aria-label="Agregar otra práctica del catálogo"><option value="">+ Agregar otra práctica…</option>' + A.catCats().map(c => '<optgroup label="' + esc(c) + '">' + A.CAT.filter(x => x.cat === c).map(x => '<option value="' + esc(x.k) + '">' + esc(x.label) + ' · ' + money(x.price) + '</option>').join('') + '</optgroup>').join('') + '</select></div>';
-    b += '<div class="po-tot"><span>Total a cobrar hoy</span><b id="poTot">' + money(tot) + '</b></div>';
+    const osTot = m.items.filter(i => i.on && i.os).reduce((t, i) => t + (i.os.cov || 0) * (i.qty || 1), 0);
+    b += '<div class="po-tot"><span>' + (osTot ? 'Paga el paciente hoy' : 'Total a cobrar hoy') + '</span><b id="poTot">' + money(tot) + '</b></div>';
+    if (osTot) b += '<div class="po-tot po-os"><span>A cobrarle a ' + esc(os ? os.sigla : 'la obra social') + ' (queda en su resumen del mes)</span><b>' + money(osTot) + '</b></div>';
     if (!solo && canCfg()) b += '<label class="po-cfg">A ' + esc(proName(m.pro)) + ' le cobra <select data-chg="poCobra"><option value="rcp"' + (cob === 'rcp' ? ' selected' : '') + '>la recepción</option><option value="pro"' + (cob === 'pro' ? ' selected' : '') + '>el mismo profesional</option></select></label>';
     b += '<p class="hint" style="margin:6px 0 0">Las prácticas quedan en la historia clínica y en el odontograma (en rojo, realizadas).</p><div class="hint bad" id="poMsg"></div>';
     const mainRcp = !solo && cob === 'rcp';
@@ -150,8 +161,9 @@
   A.chg.poOn = el => { poSync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (it) it.on = el.checked; A.renderModal(); };
   A.chg.poAdd = el => {
     poSync(); const c = A.CAT.filter(x => x.k === el.value)[0]; if (!c) return; const m = S.modal, os = osCalc(m.pid, { label: c.label });
-    m.items.push({ key: 'c' + c.k + Date.now(), kind: 'cat', label: c.label, price: c.price, os, pay: os ? os.cos : c.price, on: true }); A.renderModal();
+    m.items.push({ key: 'c' + c.k + Date.now(), kind: 'cat', label: c.label, price: c.price, os, pay: payFor({ price: c.price, os }), on: true }); A.renderModal();
   };
+  A.chg.poCm = el => { poSync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it || !it.os) return; it.os.mode = el.value; it.pay = payFor(it); A.renderModal(); };
   A.chg.poCobra = el => { poSync(); A.CFG.cobra = A.CFG.cobra || {}; A.CFG.cobra[S.modal.pro] = el.value; A.save(); A.renderModal(); };
 
   A.acts.poGo = el => {
@@ -167,7 +179,7 @@
       else { const t = { id: A.uid(), cond: null, tooth: null, faces: '', label: it.label, price: it.price, status: 'hecho', planDate: null, doneDate: d, pro: m.pro, bid: null }; pd.tx.push(t); A.onTxDone(pid, t); made.push(t); }
       /* el cargo que se acaba de crear: importe confirmado y a quién le toca cobrarlo */
       pd.ledger.slice(before).filter(e => e.type === 'cargo' && !e.voided).forEach(e => {
-        e.amount = it.pay; e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
+        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
         if (a) e.apptId = a.id; if (curSede() && !e.loc) e.loc = curSede();
       });
     });
@@ -347,6 +359,7 @@
   css.textContent = '.qn-hint{font-size:12.5px;color:var(--ink-2);margin:4px 0}' +
     '.po-who{margin:0 0 8px}.po-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}.po-list li{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px}.po-list li.off{opacity:.5}' +
     '.po-l{flex:1;min-width:0;display:flex;flex-direction:column}.po-l small{color:var(--ink-2);font-size:12.5px}.po-chk input{width:20px;height:20px}.po-v{white-space:nowrap}' +
+    '.po-cop select { margin-top: 4px; font: inherit; font-size: 12.5px; padding: 3px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 100%; } .po-os { font-size: 14px; opacity: .85; }' +
     '.po-amt{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;padding:0 6px;background:var(--surface)}.po-amt input{border:0;background:transparent;width:96px;min-height:38px;font:700 15px inherit;color:var(--ink);text-align:right;outline:0}' +
     '.po-add select{width:100%;min-height:40px;border:1px dashed var(--line);border-radius:10px;padding:0 8px;background:var(--surface);color:var(--ink);font:inherit}' +
     '.po-tot{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 10%,var(--surface))}.po-tot b{font-size:22px}' +

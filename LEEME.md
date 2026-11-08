@@ -461,3 +461,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Inicio: debajo de «Buen día» queda una fila de íconos chicos con su nombre abajo: **Buscar paciente**, **Agenda**, **Ajustes**, **Paciente nuevo** y **Menú**. Los turnos de hoy van debajo. Los accesos se siguen pudiendo elegir y ordenar desde Menú › Apariencia.
 - El ofrecimiento del modo LITE ahora es un botoncito «LITE» arriba a la derecha del saludo.
 - Tema: **claro por defecto**. En Menú › Apariencia › Tema: Claro, Oscuro, **Día y noche** (oscuro de 20:00 a 07:00, con las horas configurables, según la hora del equipo) o Como el celular. Se guarda en cada equipo (`odontovoz.theme`, `odontovoz.themeNight`).
+
+## OdontoVoz 1.38 · Ajustes en un solo lugar, Empresa más simple, copagos y videos
+- **Ajustes** (tuerquita en el inicio y en el menú): una pantalla con todo lo configurable, ordenado en Consultorio, La app en este equipo, Cuenta y datos y Ayuda. Al cerrar una opción se vuelve a Ajustes.
+- Menú: se puede arrastrar a medias; al soltar se abre o se cierra solo según dónde quedó.
+- Agenda en domingo (o un día sin atención): la tira muestra hoy y lo centra; antes saltaba a otra fecha.
+- Al cambiar de cuenta o de lugar, la app arranca en Inicio.
+- **Empresa más simple**: 4 pestañas (Resumen, Centros, Personal, Pagos a profesionales) y «Más» con tarjetas (Por cobrar, Estadísticas, Metas, Stock, Equipos, Registro, Reporte). El resumen muestra arriba Facturado, Cobrado y Le queda a la empresa; el detalle por centro y las tablas largas quedan plegadas; las ayudas largas ocupan una línea y se abren al tocarlas.
+- **Coseguros y copagos**: en cada obra social se elige qué se le cobra al paciente: coseguro fijo, la diferencia con el precio del consultorio, o nada. Al confirmar las prácticas se ve cuánto paga la obra social, el precio del consultorio y lo que paga el paciente (se puede cambiar por práctica). El cargo guarda `os`, `osCov` y `cop`. Arreglo: «limpieza y control» se tomaba como consulta (01.01) en vez de 08.12.
+- **Videos tutoriales** de menos de un minuto para Profesional, Consultorio y centro, Empresa y LITE: en Menú › Videos tutoriales, en Ajustes › Ayuda, en el tutorial paso a paso y en la web (`sitio/video/tut-*.mp4`).

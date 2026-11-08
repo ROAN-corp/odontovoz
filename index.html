@@ -2613,9 +2613,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     while (k <= to && guard++ < 70) {
       const dw = A.dow(k), open = A.CFG.days.indexOf(dw) >= 0 || pros.some(p => A.hoursFor(p, k).length);
       if (k.slice(8) === '01') h += '<span class="ds-month">' + A.MON[A.parse(k).getMonth()].slice(0, 3) + '</span>';
-      if (open) {
+      if (open || k === today || k === S.date) { /* 1.38: hoy y el día elegido siempre aparecen, aunque no se atienda */
         const n = dayAppts(k, pros).filter(real).filter(live).length;
-        h += '<button class="wk' + (k === today ? ' today' : '') + (A.closedOn(k) ? ' closed' : '') + '" data-act="agGoDay" data-date="' + k + '" aria-pressed="' + (k === S.date) + '" aria-label="' + esc(A.fmtLong(k) + ': ' + (n ? n + ' turnos' : 'sin turnos')) + '"><small>' + A.DOW[dw].slice(0, 3) + '</small><b>' + A.parse(k).getDate() + '</b><span>' + (n ? n + ' t.' : '—') + '</span></button>';
+        h += '<button class="wk' + (k === today ? ' today' : '') + (A.closedOn(k) || !open ? ' closed' : '') + '" data-act="agGoDay" data-date="' + k + '" aria-pressed="' + (k === S.date) + '" aria-label="' + esc(A.fmtLong(k) + ': ' + (n ? n + ' turnos' : 'sin turnos')) + '"><small>' + A.DOW[dw].slice(0, 3) + '</small><b>' + A.parse(k).getDate() + '</b><span>' + (n ? n + ' t.' : '—') + '</span></button>';
       }
       k = A.add(k, 1);
     }
@@ -6255,27 +6255,48 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
      ===================================================================== */
   document.body.insertAdjacentHTML('beforeend', '<button id="drHandle" class="dr-handle" data-act="gear" aria-label="Abrir el menú" title="Menú (tocá o deslizá hacia la derecha)"><span></span></button>');
   (function () {
+    /* 1.38: el menú sigue al dedo y al soltar va solo a donde se arrastró (derecha abre, izquierda cierra); nunca queda a medias */
     let sw = null;
+    const W = () => { const d = $('#gearMenu .drawer'); return d ? d.offsetWidth || 300 : 300; };
+    const scrim = () => $('#gearMenu .drawer-scrim');
+    const setX = (x, anim) => {
+      const d = $('#gearMenu .drawer'), sc = scrim(); if (!d) return;
+      d.style.animation = 'none'; d.style.transition = anim ? 'transform .2s ease-out' : 'none'; d.style.transform = 'translateX(' + x + 'px)';
+      if (sc) { sc.style.transition = anim ? 'opacity .2s ease-out' : 'none'; sc.style.opacity = String(Math.max(0, Math.min(1, 1 + x / W()))); }
+    };
+    const clear = () => { const d = $('#gearMenu .drawer'), sc = scrim(); if (d) { d.style.transform = ''; d.style.transition = ''; } if (sc) { sc.style.opacity = ''; sc.style.transition = ''; } };
+    const finish = open => {
+      const w = W();
+      if (open) { setX(0, true); setTimeout(clear, 220); }
+      else { setX(-w, true); setTimeout(() => { A.hideDrawer(); clear(); A.afterRefresh(); }, 200); }
+    };
     document.addEventListener('touchstart', e => {
       if (e.touches.length !== 1) { sw = null; return; }
       const x = e.touches[0].clientX, y = e.touches[0].clientY, d = $('#gearMenu'), open = d && !d.hidden;
       const onHandle = e.target.closest && e.target.closest('#drHandle');
-      if (!open && !S.modal && (x < 22 || onHandle)) sw = { x, y, open: false };
-      else if (open && e.target.closest && e.target.closest('.drawer')) sw = { x, y, open: true };
+      if (!open && !S.modal && (x < 22 || onHandle)) sw = { x, y, open: false, live: false, dx: 0 };
+      else if (open && e.target.closest && e.target.closest('#gearMenu')) sw = { x, y, open: true, live: false, dx: 0 };
       else sw = null;
     }, { passive: true });
     document.addEventListener('touchmove', e => {
       if (!sw) return; const dx = e.touches[0].clientX - sw.x, dy = e.touches[0].clientY - sw.y;
-      if (Math.abs(dy) > Math.abs(dx) * 1.3 && Math.abs(dy) > 20) { sw = null; return; }
-      const dr = $('#gearMenu .drawer');
-      if (!sw.open && dx > 45) { A.showDrawer(); sw = null; }
-      else if (sw.open && dr && dx < 0) dr.style.transform = 'translateX(' + Math.max(-320, dx) + 'px)';
+      if (!sw.live) {
+        if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; }   /* era para desplazarse arriba/abajo */
+        if (Math.abs(dx) < 10) return;
+        sw.live = true;
+        if (!sw.open) { A.showDrawer(); }
+      }
+      sw.dx = dx; const w = W();
+      setX(sw.open ? Math.min(0, Math.max(-w, dx)) : Math.min(0, Math.max(-w, -w + dx)), false);
     }, { passive: true });
-    document.addEventListener('touchend', e => {
-      if (!sw) return; const dx = e.changedTouches[0].clientX - sw.x, dr = $('#gearMenu .drawer');
-      if (sw.open) { if (dr) dr.style.transform = ''; if (dx < -70) { A.hideDrawer(); A.afterRefresh(); } }
-      sw = null;
-    }, { passive: true });
+    const end = e => {
+      if (!sw) return; const s = sw; sw = null;
+      if (!s.live) return;
+      const w = W(), pos = s.open ? Math.min(0, s.dx) : -w + Math.max(0, s.dx);
+      finish(pos > -w / 2 && !(s.open && s.dx < -60) || (!s.open && s.dx > 60));
+    };
+    document.addEventListener('touchend', end, { passive: true });
+    document.addEventListener('touchcancel', end, { passive: true });
   })();
 
   /* =====================================================================
@@ -6949,7 +6970,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (c === 'endodoncia') return u >= 6 ? '03.03' : u >= 4 ? '03.02' : '03.01';
     if (c === 'extraccion' || c === 'extraido') return '10.01';
     if (c === 'corona') return '04.01.15'; if (c === 'perno') return '04.01.08'; if (c === 'implante') return '11.02.00'; if (c === 'sellador') return '05.05';
-    const kw = [[/urgencia/, '01.02'], [/consulta|control|revision|relevamiento/, '01.01'], [/limpieza|tartrectomia|profilaxis|gingivitis|destartraje/, '08.12'], [/fluor/, '05.02'], [/sellador|sellante/, '05.05'],
+    const kw = [[/urgencia/, '01.02'], [/limpieza|tartrectomia|profilaxis|gingivitis|destartraje/, '08.12'], [/consulta|control|revision|relevamiento/, '01.01'], [/fluor/, '05.02'], [/sellador|sellante/, '05.05'],
       [/panoram/, '09.02.04'], [/radiograf|\brx\b|periapical/, '09.01.01'], [/retenid/, '10.09'], [/extracci|exodoncia/, '10.01'], [/endodoncia|conducto/, '03.01'], [/perno/, '04.01.08'], [/provisori/, '04.01.12'],
       [/completa/, '04.03.01'], [/cromo|esqueletic/, '04.02.03'], [/parcial/, '04.02.01'], [/rebasad/, '04.04.10'], [/compostura|reparaci/, '04.04.01'], [/corona/, '04.01.15'], [/implante/, '11.02.00'], [/composite|resina|obturaci|restauraci|amalgama/, '02.01']];
     for (const k of kw) if (k[0].test(l)) return k[1];
@@ -7012,7 +7033,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     b += '<datalist id="osVia"><option>Directo</option><option>' + NC + '</option><option>' + RN + '</option><option>Colegio de Odontólogos</option></datalist>';
     b += '<label class="chk"><input type="checkbox" data-chg="osField" data-os="' + o.id + '" data-k="on"' + (o.on ? ' checked' : '') + '> Trabajo con esta obra social (convenio vigente)</label><label class="chk"><input type="checkbox" data-chg="osField" data-os="' + o.id + '" data-k="auth"' + (o.auth ? ' checked' : '') + '> Pide autorización u orden antes de atender</label>';
     if (o.kind !== 'particular') {
-      b += '<div class="block"><h3>Aranceles por práctica</h3><div class="hint" style="margin:0">Tildá lo que cubre. «Paga la obra social» es lo que te liquida; «Coseguro» es lo que paga el paciente. Al registrar una práctica hecha, al paciente se le carga solo el coseguro.' + (o.upd ? ' Actualizado el ' + A.fmtDMY(o.upd) + '.' : '') + '</div>';
+      const cop = o.cop || A.CFG.copDef || 'cos';
+      b += '<div class="field"><label for="os_cop">Qué le cobrás al paciente</label><select id="os_cop" data-chg="osField" data-os="' + o.id + '" data-k="cop">' + [['cos', 'El coseguro de la tabla'], ['dif', 'Copago: la diferencia entre tu precio y lo que paga ' + o.sigla], ['none', 'Nada: lo cubre todo la obra social']].map(x => '<option value="' + x[0] + '"' + (cop === x[0] ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select><div class="hint" style="margin:4px 0 0">Es lo que se propone al registrar cada práctica; en el momento lo podés cambiar.</div></div>';
+      b += '<div class="block"><h3>Aranceles por práctica</h3><div class="hint" style="margin:0">Tildá lo que cubre. «Paga la obra social» es lo que te liquida; «Coseguro» es lo que paga el paciente. Al registrar una práctica hecha, al paciente se le carga el coseguro o el copago, según lo que elijas arriba.' + (o.upd ? ' Actualizado el ' + A.fmtDMY(o.upd) + '.' : '') + '</div>';
       b += '<div class="os-tbl"><div class="os-th"><span>Código y práctica</span><span>Cubre</span><span>Paga la O.S.</span><span>Coseguro</span></div>' + NOMEN.concat(Object.keys(o.aran).filter(k => !NOMEN.some(x => x[0] === k)).map(k => [k, o.aran[k].label || k])).map(x => {
         const a = o.aran[x[0]] || {};
         return '<div class="os-tr' + (a.on ? ' on' : '') + '"><span><b>' + esc(x[0]) + '</b> ' + esc(x[1]) + '</span><input type="checkbox" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="on" aria-label="Cubre ' + esc(x[1]) + '"' + (a.on ? ' checked' : '') + '><input inputmode="numeric" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cov" value="' + (a.cov || '') + '" placeholder="$" aria-label="Paga la obra social"><input inputmode="numeric" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cos" value="' + (a.cos || '') + '" placeholder="$" aria-label="Coseguro"></div>';
@@ -7748,7 +7771,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.37';
+  A.VERSION = '1.38';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10499,7 +10522,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     rem: { t: 'Recordatorio', s: 'Anotar algo para hoy', act: 'remNew', ic: IC('<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>') },
     cambios: { t: 'Cambios de hoy', s: 'Ver y deshacer', act: 'jrOpen', ic: IC('<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>') },
     paciente: { t: 'Paciente nuevo', s: 'Cargar ficha', act: 'newPatient', ic: IC('<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>') },
-    ajustes: { t: 'Ajustes', s: 'Consultorio y horarios', act: 'cfgOpen', ic: IC('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>') }
+    ajustes: { t: 'Ajustes', s: 'Todas las opciones', act: 'ajOpen', ic: IC('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>') }
   };
   const DEF = ['search', 'agenda', 'ajustes', 'paciente', 'menu']; /* 1.37: fila de íconos chicos */
   const homeKeys = () => { try { const l = JSON.parse(LS.get('odontovoz.home', 'null')); return Array.isArray(l) && l.length ? l.filter(k => SC[k]) : DEF.slice(); } catch (e) { return DEF.slice(); } };
@@ -14701,8 +14724,17 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const osCalc = (pid, t) => {
     const pat = A.PAT(pid), os = A.osOf ? A.osOf(pat) : null, code = A.codeFor ? A.codeFor(t) : null, ar = os && os.on && code && os.aran ? os.aran[code] : null;
     if (!ar || !ar.on) return null;
-    return { sigla: os.sigla, cov: ar.cov || 0, cos: ar.cos || 0 };
+    return { id: os.id, sigla: os.sigla, code, cov: ar.cov || 0, cos: ar.cos || 0, mode: os.cop || (A.CFG.copDef || 'cos') };
   };
+  /* 1.38: cuánto paga el paciente cuando tiene obra social: coseguro fijo, diferencia con el precio del consultorio o nada */
+  const payFor = (it, qty) => {
+    qty = qty || it.qty || 1; if (!it.os) return it.price;
+    const m = it.os.mode || 'cos';
+    if (m === 'none') return 0;
+    if (m === 'dif') return Math.max(0, (it.price || 0) - (it.os.cov || 0) * qty);
+    return (it.os.cos || 0) * qty;
+  };
+  A.copPayFor = payFor;
   A.pracParse = (text, pid) => {
     if (!P) return [];
     let s = N(text); SYN.forEach(x => { s = s.replace(x[0], x[1]); });
@@ -14717,7 +14749,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       const faces = a.faces ? a.faces.slice().sort().join('') : '';
       const t = { cond, tooth: n, faces, label: A.txLabel(cond, n, faces) };
       const price = A.priceOf(cond, faces.length || 1), os = osCalc(pid, t);
-      push({ key: 'o' + cond + n + faces, kind: 'odon', a: { type: 'mark', teeth: [n], faces: a.faces ? a.faces.slice() : null, cond, status: 'realizado' }, label: t.label, price, os, pay: os ? os.cos : price, on: true });
+      push({ key: 'o' + cond + n + faces, kind: 'odon', a: { type: 'mark', teeth: [n], faces: a.faces ? a.faces.slice() : null, cond, status: 'realizado' }, label: t.label, price, os, pay: payFor({ price, os }), on: true });
     };
     segs.forEach(seg => {
       const r = P.parse(seg, { lastTooth: null }), acts = r.actions.filter(a => a.type === 'mark' && isPract(a.cond === 'extraccion' ? 'extraido' : a.cond));
@@ -14735,7 +14767,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       if (kw && A.CAT.some(c => c.label === kw[1])) {
         const price = A.catPrice(kw[1], 0), t = { label: kw[1] }, os = osCalc(pid, t);
         let qty = 1; const mq = /\b(\d|dos|tres|cuatro)\s+cuadrantes?\b/.exec(seg); if (mq && /cuadrante/.test(kw[1])) qty = { dos: 2, tres: 3, cuatro: 4 }[mq[1]] || +mq[1] || 1;
-        push({ key: 'c' + kw[1], kind: 'cat', label: kw[1] + (qty > 1 ? ' × ' + qty : ''), price: price * qty, os, pay: os ? os.cos * qty : price * qty, on: true });
+        push({ key: 'c' + kw[1], kind: 'cat', label: kw[1] + (qty > 1 ? ' × ' + qty : ''), price: price * qty, os, qty, pay: payFor({ price: price * qty, os }, qty), on: true });
       }
     });
     return out;
@@ -14787,10 +14819,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const cob = cobraOf(m.pro), solo = isSolo();
     let b = '<p class="po-who"><b>' + esc(p.name || 'Paciente') + '</b> · ' + esc(os ? os.sigla : (p.cov || 'Particular')) + ' · atendió ' + esc(proName(m.pro)) + '</p>';
     b += '<ul class="po-list">' + m.items.map((it, i) => '<li class="' + (it.on ? '' : 'off') + '"><label class="po-chk"><input type="checkbox" data-chg="poOn" data-i="' + i + '"' + (it.on ? ' checked' : '') + ' aria-label="Incluir ' + esc(it.label) + '"></label><span class="po-l"><b>' + esc(it.label) + '</b>' +
-      (it.os ? '<small>' + esc(it.os.sigla) + ' cubre ' + money(it.os.cov) + ' · paga el paciente</small>' : '<small>' + (os ? 'sin arancel de ' + esc(os.sigla) + ' cargado · ' : '') + 'particular</small>') + '</span>' +
+      (it.os ? '<small>' + esc(it.os.sigla) + ' paga ' + money(it.os.cov * (it.qty || 1)) + (it.price ? ' · tu precio ' + money(it.price) : '') + '</small><label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poCm" data-i="' + i + '">' + [['cos', 'Coseguro' + (it.os.cos ? ' ' + money(it.os.cos * (it.qty || 1)) : '')], ['dif', 'Copago: diferencia ' + money(Math.max(0, (it.price || 0) - it.os.cov * (it.qty || 1)))], ['none', 'Sin cargo al paciente']].map(o => '<option value="' + o[0] + '"' + ((it.os.mode || 'cos') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label>' : '<small>' + (os ? 'sin arancel de ' + esc(os.sigla) + ' cargado · ' : '') + 'particular</small>') + '</span>' +
       '<span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-in="poAmt" data-i="' + i + '" value="' + (it.pay || 0) + '" aria-label="Importe de ' + esc(it.label) + '"></span></li>').join('') + '</ul>';
     b += '<div class="po-add"><select data-chg="poAdd" aria-label="Agregar otra práctica del catálogo"><option value="">+ Agregar otra práctica…</option>' + A.catCats().map(c => '<optgroup label="' + esc(c) + '">' + A.CAT.filter(x => x.cat === c).map(x => '<option value="' + esc(x.k) + '">' + esc(x.label) + ' · ' + money(x.price) + '</option>').join('') + '</optgroup>').join('') + '</select></div>';
-    b += '<div class="po-tot"><span>Total a cobrar hoy</span><b id="poTot">' + money(tot) + '</b></div>';
+    const osTot = m.items.filter(i => i.on && i.os).reduce((t, i) => t + (i.os.cov || 0) * (i.qty || 1), 0);
+    b += '<div class="po-tot"><span>' + (osTot ? 'Paga el paciente hoy' : 'Total a cobrar hoy') + '</span><b id="poTot">' + money(tot) + '</b></div>';
+    if (osTot) b += '<div class="po-tot po-os"><span>A cobrarle a ' + esc(os ? os.sigla : 'la obra social') + ' (queda en su resumen del mes)</span><b>' + money(osTot) + '</b></div>';
     if (!solo && canCfg()) b += '<label class="po-cfg">A ' + esc(proName(m.pro)) + ' le cobra <select data-chg="poCobra"><option value="rcp"' + (cob === 'rcp' ? ' selected' : '') + '>la recepción</option><option value="pro"' + (cob === 'pro' ? ' selected' : '') + '>el mismo profesional</option></select></label>';
     b += '<p class="hint" style="margin:6px 0 0">Las prácticas quedan en la historia clínica y en el odontograma (en rojo, realizadas).</p><div class="hint bad" id="poMsg"></div>';
     const mainRcp = !solo && cob === 'rcp';
@@ -14805,8 +14839,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.chg.poOn = el => { poSync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (it) it.on = el.checked; A.renderModal(); };
   A.chg.poAdd = el => {
     poSync(); const c = A.CAT.filter(x => x.k === el.value)[0]; if (!c) return; const m = S.modal, os = osCalc(m.pid, { label: c.label });
-    m.items.push({ key: 'c' + c.k + Date.now(), kind: 'cat', label: c.label, price: c.price, os, pay: os ? os.cos : c.price, on: true }); A.renderModal();
+    m.items.push({ key: 'c' + c.k + Date.now(), kind: 'cat', label: c.label, price: c.price, os, pay: payFor({ price: c.price, os }), on: true }); A.renderModal();
   };
+  A.chg.poCm = el => { poSync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it || !it.os) return; it.os.mode = el.value; it.pay = payFor(it); A.renderModal(); };
   A.chg.poCobra = el => { poSync(); A.CFG.cobra = A.CFG.cobra || {}; A.CFG.cobra[S.modal.pro] = el.value; A.save(); A.renderModal(); };
 
   A.acts.poGo = el => {
@@ -14822,7 +14857,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       else { const t = { id: A.uid(), cond: null, tooth: null, faces: '', label: it.label, price: it.price, status: 'hecho', planDate: null, doneDate: d, pro: m.pro, bid: null }; pd.tx.push(t); A.onTxDone(pid, t); made.push(t); }
       /* el cargo que se acaba de crear: importe confirmado y a quién le toca cobrarlo */
       pd.ledger.slice(before).filter(e => e.type === 'cargo' && !e.voided).forEach(e => {
-        e.amount = it.pay; e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
+        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
         if (a) e.apptId = a.id; if (curSede() && !e.loc) e.loc = curSede();
       });
     });
@@ -15002,6 +15037,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   css.textContent = '.qn-hint{font-size:12.5px;color:var(--ink-2);margin:4px 0}' +
     '.po-who{margin:0 0 8px}.po-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}.po-list li{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px}.po-list li.off{opacity:.5}' +
     '.po-l{flex:1;min-width:0;display:flex;flex-direction:column}.po-l small{color:var(--ink-2);font-size:12.5px}.po-chk input{width:20px;height:20px}.po-v{white-space:nowrap}' +
+    '.po-cop select { margin-top: 4px; font: inherit; font-size: 12.5px; padding: 3px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: 100%; } .po-os { font-size: 14px; opacity: .85; }' +
     '.po-amt{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;padding:0 6px;background:var(--surface)}.po-amt input{border:0;background:transparent;width:96px;min-height:38px;font:700 15px inherit;color:var(--ink);text-align:right;outline:0}' +
     '.po-add select{width:100%;min-height:40px;border:1px dashed var(--line);border-radius:10px;padding:0 8px;background:var(--surface);color:var(--ink);font:inherit}' +
     '.po-tot{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 10%,var(--surface))}.po-tot b{font-size:22px}' +
@@ -15541,7 +15577,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const p = places().filter(x => x.owner === owner)[0];
     S.modal = { type: 'plBusy', name: p ? p.clinic : '' }; A.renderModal();
     try { if (CL.sync) await CL.sync(); } catch (e) { /* lo que no se pudo subir queda en la cola del otro lugar: se avisa */ }
-    LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1');
+    LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.goHome', '1');
     if (A.wipeLocal) A.wipeLocal();
     try { if (CL.baseClear) await CL.baseClear(); } catch (e) { /* nada */ }
     setTimeout(() => location.reload(), 150);
@@ -15960,7 +15996,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
 
   /* ---------- menú, clase del cuerpo y secciones permitidas ---------- */
-  const DR_OK = ['tab:inicio', 'tab:agenda', 'tab:pacientes', 'appearOpen', 'tutorialOpen', 'voiceHelp', 'supportOpen', 'planOpen', 'liteToggle', 'assistOpen', 'pwaInstall', 'acctOpen', 'licOpen', 'logout', 'cloudLogout', 'acctPass', 'nfOpen'];
+  const DR_OK = ['ajOpen', 'tutVid', 'tab:inicio', 'tab:agenda', 'tab:pacientes', 'appearOpen', 'tutorialOpen', 'voiceHelp', 'supportOpen', 'planOpen', 'liteToggle', 'assistOpen', 'pwaInstall', 'acctOpen', 'licOpen', 'logout', 'cloudLogout', 'acctPass', 'nfOpen'];
   function drawer() {
     const nav = $('#gearMenu .dr-nav'); if (!nav) return;
     let b = $('#drLite');
@@ -16133,7 +16169,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
 
   /* ---------- inicio: accesos como íconos chicos debajo del saludo ---------- */
-  const SHORT = { searchToggle: 'Buscar paciente', 'tab:agenda': 'Agenda', cfgOpen: 'Ajustes', newPatient: 'Paciente nuevo', gear: 'Menú', handsFree: 'Asistente', newAppt: 'Dar turno', 'tab:pacientes': 'Pacientes', 'tab:caja': 'Caja', labAllOpen: 'Laboratorio', tnOpen: 'Turnero', remNew: 'Recordatorio', jrOpen: 'Cambios' };
+  const SHORT = { searchToggle: 'Buscar paciente', 'tab:agenda': 'Agenda', cfgOpen: 'Ajustes', ajOpen: 'Ajustes', newPatient: 'Paciente nuevo', gear: 'Menú', handsFree: 'Asistente', newAppt: 'Dar turno', 'tab:pacientes': 'Pacientes', 'tab:caja': 'Caja', labAllOpen: 'Laboratorio', tnOpen: 'Turnero', remNew: 'Recordatorio', jrOpen: 'Cambios' };
   function homeIcons() {
     if (S.tab !== 'inicio' || (A.liteOn && A.liteOn())) return;
     const v = $('#view-inicio'), wrap = v && v.querySelector('.home-actions'), hi = v && v.querySelector('.home-hi'); if (!wrap) return;
@@ -16210,6 +16246,239 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.home-actions.icons .ha.ha-voice { background: transparent; }',
     '@media (min-width: 760px) { .home-actions.icons { max-width: 560px; } .home-actions.icons .ha span { font-size: 12px; } }',
     '.th-seg { flex-wrap: wrap; } .th-night { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: 14px; } .th-night select { min-height: 40px; }'
+  ].join('\n');
+  document.head.appendChild(css);
+})();
+/* ===== 1.38: pantalla de Ajustes (tuerquita) que junta todas las opciones, y al cambiar de cuenta se vuelve al Inicio ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, MF = A.modalFns, esc = A.esc;
+  const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
+  const GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+
+  /* ---------- grupos de la pantalla de Ajustes ---------- */
+  const GROUPS = [
+    { t: 'Consultorio', k: ['cfgOpen:centro', 'locsOpen', 'catalogOpen', 'osOpen', 'stkOpen', 'tnOpen', 'importOpen'] },
+    { t: 'La app en este equipo', k: ['appearOpen', 'assistOpen', 'notifOpen', 'pwaInstall'] },
+    { t: 'Cuenta y datos', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'tmOpen', 'plOpen', 'cfgOpen:datos', 'modeOpen', 'acctOpen'] },
+    { t: 'Ayuda', k: ['tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
+  ];
+  const keyOf = b => { const a = b.getAttribute('data-act'); return a === 'cfgOpen' ? 'cfgOpen:' + (b.getAttribute('data-t') || 'centro') : a; };
+  function items() {
+    const seen = {}, all = {};
+    A.$$('#gearMenu .aj-sec').forEach(x => x.classList.remove('aj-collapsed'));
+    A.$$('#gearMenu .dr-sec .dnav, #gearMenu .dr-nav .dnav').forEach(b => {
+      const k = keyOf(b); if (!k || seen[k] || b.id === 'drAjustes') return;
+      if (b.hidden || b.classList.contains('lt-hide') || getComputedStyle(b).display === 'none') return;
+      seen[k] = 1; all[k] = b;
+    });
+    A.$$('#gearMenu .aj-sec').forEach(x => x.classList.add('aj-collapsed'));
+    return all;
+  }
+  const rowHTML = b => {
+    const attrs = Array.from(b.attributes).filter(a => /^data-/.test(a.name)).map(a => a.name + '="' + esc(a.value) + '"').join(' ');
+    const svg = b.querySelector('svg'), t = b.querySelector('.t') || b.querySelector('span');
+    let title = b.textContent; if (t) { const c = t.cloneNode(true); c.querySelectorAll('small').forEach(x => x.remove()); title = c.textContent; }
+    if (b.getAttribute('data-act') === 'changeAccount') title = 'Tipo de cuenta: ' + String(title).trim();
+    const sub = t && t.querySelector('small') ? t.querySelector('small').textContent : '';
+    return '<button class="aj-row" ' + attrs + ' data-aj="1">' + (svg ? svg.outerHTML : GEAR) + '<span class="aj-t"><b>' + esc(String(title).trim()) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="aj-go" aria-hidden="true">›</span></button>';
+  };
+  MF.ajustes = () => {
+    const all = items(), used = {};
+    GROUPS.forEach(g => g.k.forEach(k => { if (all[k]) used[k] = 1; }));
+    const extra = Object.keys(all).filter(k => !GROUPS.some(g => g.k.indexOf(k) >= 0) && all[k].closest('.aj-sec'));
+    let b = '<div class="aj">';
+    GROUPS.forEach(g => {
+      const rows = g.k.filter(k => all[k]).map(k => rowHTML(all[k]));
+      if (g.t === 'Consultorio') extra.forEach(k => rows.push(rowHTML(all[k])));
+      if (rows.length) b += '<section class="aj-g"><h3>' + esc(g.t) + '</h3><div class="aj-list">' + rows.join('') + '</div></section>';
+    });
+    b += '<p class="aj-ver">OdontoVoz ' + esc(A.VERSION || '') + '</p></div>';
+    return A.modalShell('Ajustes', b, '<button class="btn primary" data-act="ajClose">Listo</button>', true);
+  };
+  A.acts.ajOpen = () => { if (A.hideDrawer) A.hideDrawer(); S._ajBack = false; S.modal = { type: 'ajustes' }; A.renderModal(); };
+  A.acts.ajClose = () => { S._ajBack = false; S.modal = null; A.renderModal(); };
+  /* tocar una opción: se abre su ventana; al cerrarla se vuelve a Ajustes */
+  document.addEventListener('click', e => { const r = e.target.closest && e.target.closest('.aj-row'); if (r) S._ajBack = true; }, true);
+  const rmPrev = A.renderModal;
+  A.renderModal = function () {
+    if (!S.modal && S._ajBack && !S._ajBusy) {
+      const leftForTab = S.tab && S._ajTab && S.tab !== S._ajTab;
+      if (!leftForTab) { S.modal = { type: 'ajustes' }; }
+      S._ajBack = false;
+    }
+    if (S.modal && S.modal.type === 'ajustes') S._ajTab = S.tab;
+    return rmPrev.apply(this, arguments);
+  };
+
+  /* ---------- videos tutoriales por modo ---------- */
+  const VBASE = 'https://roan-corp.github.io/odontovoz/video/';
+  const VIDS = [['pro', 'Profesional'], ['centro', 'Consultorio y centro'], ['empresa', 'Empresa'], ['lite', 'LITE']];
+  const myVid = () => (A.liteOn && A.liteOn()) ? 'lite' : !S.setup ? 'centro' : S.setup.type === 'empresa' ? 'empresa' : S.setup.type === 'solo' ? 'pro' : 'centro';
+  A.acts.tutVid = el => { if (A.hideDrawer) A.hideDrawer(); S.modal = { type: 'tutVid', v: (el && el.getAttribute && el.getAttribute('data-v')) || myVid() }; A.renderModal(); };
+  MF.tutVid = m => {
+    const v = m.v || myVid();
+    return A.modalShell('Videos tutoriales',
+      '<div class="seg tv-seg" role="group" aria-label="Elegí el video">' + VIDS.map(x => '<button data-act="tutVid" data-v="' + x[0] + '" aria-pressed="' + (v === x[0]) + '">' + esc(x[1]) + (x[0] === myVid() ? ' ·&nbsp;el tuyo' : '') + '</button>').join('') + '</div>' +
+      '<div class="tv-box"><video src="' + VBASE + 'tut-' + v + '.mp4" poster="' + VBASE + 'poster-tut-' + v + '.jpg" controls playsinline preload="metadata"></video></div>' +
+      '<p class="hint" style="text-align:center">Dura menos de un minuto. Si no carga, revisá la conexión a internet.</p>',
+      '<button class="btn" data-act="tutorialOpen">Tutorial paso a paso</button><button class="btn primary" data-act="closeModal">Cerrar</button>', true);
+  };
+  const tutPrev = MF.tutorial;
+  if (tutPrev) MF.tutorial = function () {
+    const h = tutPrev.apply(this, arguments);
+    return h.replace('<div class="tut">', '<button class="tv-cta" data-act="tutVid">▶ Ver el video de tu modo (1 minuto)</button><div class="tut">');
+  };
+
+  /* ---------- menú: una sola entrada «Ajustes» con la tuerquita ---------- */
+  function drawer() {
+    const secs = A.$$('#gearMenu .dr-sec'), sec = secs.filter(s => /Ajustes/.test((s.querySelector('.dr-lbl') || {}).textContent || ''))[0];
+    if (!sec) return;
+    sec.classList.add('aj-sec', 'aj-collapsed');
+    const tb = $('#gearMenu .dnav[data-act="tutorialOpen"]');
+    if (tb && !$('#drTutVid')) tb.insertAdjacentHTML('beforebegin', '<button class="dnav" id="drTutVid" data-act="tutVid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 10l5-3v10l-5-3z"/></svg><span class="t">Videos tutoriales</span></button>');
+    if (!$('#drAjustes')) sec.insertAdjacentHTML('afterbegin', '<button class="dnav" id="drAjustes" data-act="ajOpen">' + GEAR + '<span class="t">Ajustes<small>Consultorio, apariencia, voz, cuenta…</small></span></button>');
+  }
+
+  /* ---------- al cambiar de cuenta o de lugar: al Inicio ---------- */
+  if (LS.get('odontovoz.goHome', '') === '1') { LS.set('odontovoz.goHome', null); S.tab = 'inicio'; S.panel = null; S.date = A.today(); }
+  const owner = () => { try { return (A.ownerId && A.ownerId()) || (A.cloud && A.cloud.session && A.cloud.session.user && A.cloud.session.user.id) || ''; } catch (e) { return ''; } };
+  let lastOwner = null;
+
+  const arPrev = A.afterRefresh;
+  A.afterRefresh = function () {
+    const o = owner();
+    if (lastOwner !== null && o !== lastOwner && S.tab !== 'inicio') {
+      lastOwner = o; S.tab = 'inicio'; S.panel = null; S.date = A.today(); if (A.hideDrawer) A.hideDrawer(); A.refresh(); window.scrollTo(0, 0); return;
+    }
+    lastOwner = o;
+    if (arPrev) arPrev.apply(this, arguments);
+    try { drawer(); } catch (e) { /* nada */ }
+  };
+
+  const css = document.createElement('style');
+  css.textContent = [
+    '#gearMenu .aj-sec.aj-collapsed > .dnav:not(#drAjustes) { display: none !important; }',
+    '.aj { display: flex; flex-direction: column; gap: 18px; }',
+    '.aj-g h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); margin: 0 0 8px 4px; }',
+    '.aj-list { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }',
+    '.aj-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; min-height: 56px; background: none; border: 0; border-top: 1px solid var(--line); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }',
+    '.aj-row:first-child { border-top: 0; } .aj-row:hover { background: var(--bg); }',
+    '.aj-row svg { width: 22px; height: 22px; flex: none; color: var(--accent); }',
+    '.aj-t { flex: 1; min-width: 0; display: flex; flex-direction: column; } .aj-t b { font-weight: 600; font-size: 15.5px; } .aj-t small { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
+    '.aj-go { font-size: 22px; color: var(--ink-2); flex: none; }',
+    '.tv-seg { flex-wrap: wrap; margin-bottom: 12px; } .tv-box { display: flex; justify-content: center; } .tv-box video { height: 62vh; width: auto; max-width: 100%; aspect-ratio: 720 / 1558; object-fit: contain; border-radius: 18px; background: #000; }',
+    '.tv-cta { display: block; width: 100%; margin: 0 0 14px; padding: 12px; border-radius: 14px; border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--accent); font: 700 15px inherit; cursor: pointer; }',
+    '.aj-ver { text-align: center; font-size: 12px; color: var(--ink-2); margin: 0; }'
+  ].join('\n');
+  document.head.appendChild(css);
+})();
+/* ===== 1.38: Empresa más simple (4 pestañas + «Más» con tarjetas, números grandes arriba, ayudas plegadas) ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, esc = A.esc;
+  const IC = p => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+  /* pestañas principales y lo que va dentro de «Más» */
+  const MAIN = [['resumen', 'Resumen'], ['sedes', 'Centros'], ['personal', 'Personal'], ['liq', 'Pagos a profesionales']];
+  const MORE = {
+    cobrar: ['Por cobrar', 'Lo que deben los pacientes, por centro', IC('<path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>')],
+    stats: ['Estadísticas', 'Turnos, ausentes y pacientes nuevos', IC('<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>')],
+    metas: ['Metas', 'Lo que querés lograr en cada centro', IC('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>')],
+    stock: ['Stock', 'Insumos de cada centro', IC('<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/>')],
+    equipos: ['Equipos', 'Celulares y compus que usan la cuenta', IC('<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/>')],
+    registro: ['Registro', 'Quién hizo qué y cuándo', IC('<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>')],
+    report: ['Reporte para imprimir', 'Todo el mes en una hoja', IC('<path d="M6 9V2h12v7"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v8H6z"/>')]
+  };
+  const isMore = t => !!MORE[t];
+
+  A.acts.empMore = () => { S.empTab = '_more'; A.refresh(); window.scrollTo(0, 0); };
+
+  function tabs(host) {
+    const bar = host.querySelector('.emp-tabs'); if (!bar) return;
+    const have = {}; bar.querySelectorAll('.emp-t').forEach(b => { have[b.getAttribute('data-t')] = 1; });
+    const t = S.empTab || 'resumen', inMore = t === '_more' || isMore(t);
+    bar.classList.add('emp-tabs2');
+    bar.innerHTML = MAIN.filter(z => have[z[0]]).map(z => '<button class="emp-t" role="tab" aria-selected="' + (t === z[0]) + '" data-act="empTab" data-t="' + z[0] + '">' + z[1] + '</button>').join('') +
+      '<button class="emp-t" role="tab" aria-selected="' + inMore + '" data-act="empMore">Más ▾</button>';
+    return have;
+  }
+
+  function moreHTML(have) {
+    return '<div class="emp-top"><h2>Más opciones</h2></div><div class="emp-more">' + Object.keys(MORE).filter(k => have[k]).map(k => {
+      const m = MORE[k];
+      return '<button class="emp-mo" data-act="empTab" data-t="' + k + '">' + m[2] + '<span><b>' + esc(m[0]) + '</b><small>' + esc(m[1]) + '</small></span><span class="aj-go" aria-hidden="true">›</span></button>';
+    }).join('') + '</div>';
+  }
+
+  /* números grandes arriba del resumen */
+  function kpis(body) {
+    const tot = body.querySelector('.emp-res tr.tot'); if (!tot || body.querySelector('.emp-kpi')) return;
+    const c = tot.querySelectorAll('td');
+    const v = i => (c[i] ? c[i].textContent.trim() : '');
+    const neg = c[5] && c[5].classList.contains('neg');
+    const html = '<div class="emp-kpi"><div><small>Facturado</small><b>' + esc(v(1)) + '</b></div><div><small>Cobrado</small><b>' + esc(v(2)) + '</b></div><div class="' + (neg ? 'neg' : 'pos') + '"><small>Le queda a la empresa</small><b>' + esc(v(5)) + '</b></div></div>';
+    const top = body.querySelector('.emp-top'); if (top) top.insertAdjacentHTML('afterend', html);
+    const tw = body.querySelector('.emp-res') && body.querySelector('.emp-res').closest('.tbl-wrap');
+    if (tw && !tw.closest('details')) {
+      const d = document.createElement('details'); d.className = 'emp-fold'; d.innerHTML = '<summary>Ver el detalle por centro</summary>';
+      tw.parentNode.insertBefore(d, tw); d.appendChild(tw);
+      const h = d.nextElementSibling; if (h && h.classList.contains('hint')) d.appendChild(h);
+    }
+  }
+
+  /* las secciones largas de «Centros» quedan plegadas */
+  function foldSedes(body) {
+    body.querySelectorAll(':scope > section.card').forEach(sec => {
+      const h = sec.querySelector(':scope > h2'); if (!h || sec.closest('details')) return;
+      const tt = h.textContent;
+      if (!/En qué centro atiende|Ajustes del modo Empresa/.test(tt)) return;
+      const d = document.createElement('details'); d.className = 'emp-fold card';
+      d.innerHTML = '<summary>' + esc(/Ajustes/.test(tt) ? 'Ajustes del modo Empresa (PIN, dejar el modo)' : 'Tabla: en qué centro atiende cada profesional') + '</summary>';
+      sec.parentNode.insertBefore(d, sec); h.remove(); sec.classList.remove('card'); d.appendChild(sec);
+    });
+  }
+
+  /* las ayudas largas quedan en una línea; se tocan para leerlas enteras */
+  function hints(body) {
+    body.querySelectorAll('.hint').forEach(h => {
+      if (h.classList.contains('emp-hc') || h.textContent.length < 90 || h.closest('table')) return;
+      h.classList.add('emp-hc'); h.setAttribute('role', 'button'); h.setAttribute('tabindex', '0'); h.title = 'Tocá para leer todo';
+    });
+  }
+  document.addEventListener('click', e => { const h = e.target.closest && e.target.closest('#view-empresa .emp-hc'); if (h) h.classList.toggle('open'); });
+
+  const rPrev = A.render.empresa;
+  if (rPrev) A.render.empresa = function () {
+    const t = S.empTab;
+    if (t === '_more') S.empTab = 'resumen';
+    rPrev.apply(this, arguments);
+    S.empTab = t;
+    const host = $('#view-empresa'); if (!host) return;
+    const have = tabs(host); const body = host.querySelector('.emp-body'); if (!have || !body) return;
+    if (t === '_more') { body.innerHTML = moreHTML(have); return; }
+    if (isMore(t)) body.insertAdjacentHTML('afterbegin', '<button class="emp-back" data-act="empMore">‹ Más opciones</button>');
+    try { if ((t || 'resumen') === 'resumen') kpis(body); if (t === 'sedes') foldSedes(body); hints(body); } catch (e) { /* nada */ }
+  };
+
+  const css = document.createElement('style');
+  css.textContent = [
+    '.emp-tabs2 { flex-wrap: nowrap; }',
+    '.emp-more { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }',
+    '.emp-mo { display: flex; align-items: center; gap: 14px; padding: 14px; min-height: 64px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }',
+    '.emp-mo:hover { border-color: var(--accent); } .emp-mo svg { width: 26px; height: 26px; color: var(--accent); flex: none; }',
+    '.emp-mo > span:not(.aj-go) { flex: 1; display: flex; flex-direction: column; } .emp-mo b { font-size: 15.5px; } .emp-mo small { color: var(--ink-2); font-size: 13px; }',
+    '.emp-mo .aj-go { font-size: 22px; color: var(--ink-2); }',
+    '.emp-sedes { margin-top: 12px; }',
+    '.emp-back { background: none; border: 0; color: var(--accent); font: 600 15px inherit; padding: 4px 0 10px; cursor: pointer; }',
+    '.emp-kpi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 4px 0 12px; }',
+    '.emp-kpi > div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }',
+    '.emp-kpi small { color: var(--ink-2); font-size: 12.5px; } .emp-kpi b { font-size: 20px; overflow-wrap: anywhere; } .emp-kpi .pos b { color: var(--ok, #15803d); } .emp-kpi .neg b { color: var(--bad, #b91c1c); }',
+    '@media (max-width: 640px) { .emp-kpi { grid-template-columns: 1fr 1fr; } .emp-kpi > div:last-child { grid-column: 1 / -1; } .emp-kpi b { font-size: 18px; } }',
+    '.emp-fold { margin: 0 0 12px; } .emp-fold > summary { cursor: pointer; font-weight: 600; color: var(--accent); padding: 8px 0; list-style-position: inside; }',
+    'details.emp-fold.card > summary { padding: 0; } details.emp-fold.card[open] > summary { margin-bottom: 10px; }',
+    '#view-empresa .emp-hc { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }',
+    '#view-empresa .emp-hc::before { content: "ⓘ "; color: var(--accent); }',
+    '#view-empresa .emp-hc.open { display: block; -webkit-line-clamp: unset; }'
   ].join('\n');
   document.head.appendChild(css);
 })();

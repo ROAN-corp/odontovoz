@@ -244,27 +244,48 @@
      ===================================================================== */
   document.body.insertAdjacentHTML('beforeend', '<button id="drHandle" class="dr-handle" data-act="gear" aria-label="Abrir el menú" title="Menú (tocá o deslizá hacia la derecha)"><span></span></button>');
   (function () {
+    /* 1.38: el menú sigue al dedo y al soltar va solo a donde se arrastró (derecha abre, izquierda cierra); nunca queda a medias */
     let sw = null;
+    const W = () => { const d = $('#gearMenu .drawer'); return d ? d.offsetWidth || 300 : 300; };
+    const scrim = () => $('#gearMenu .drawer-scrim');
+    const setX = (x, anim) => {
+      const d = $('#gearMenu .drawer'), sc = scrim(); if (!d) return;
+      d.style.animation = 'none'; d.style.transition = anim ? 'transform .2s ease-out' : 'none'; d.style.transform = 'translateX(' + x + 'px)';
+      if (sc) { sc.style.transition = anim ? 'opacity .2s ease-out' : 'none'; sc.style.opacity = String(Math.max(0, Math.min(1, 1 + x / W()))); }
+    };
+    const clear = () => { const d = $('#gearMenu .drawer'), sc = scrim(); if (d) { d.style.transform = ''; d.style.transition = ''; } if (sc) { sc.style.opacity = ''; sc.style.transition = ''; } };
+    const finish = open => {
+      const w = W();
+      if (open) { setX(0, true); setTimeout(clear, 220); }
+      else { setX(-w, true); setTimeout(() => { A.hideDrawer(); clear(); A.afterRefresh(); }, 200); }
+    };
     document.addEventListener('touchstart', e => {
       if (e.touches.length !== 1) { sw = null; return; }
       const x = e.touches[0].clientX, y = e.touches[0].clientY, d = $('#gearMenu'), open = d && !d.hidden;
       const onHandle = e.target.closest && e.target.closest('#drHandle');
-      if (!open && !S.modal && (x < 22 || onHandle)) sw = { x, y, open: false };
-      else if (open && e.target.closest && e.target.closest('.drawer')) sw = { x, y, open: true };
+      if (!open && !S.modal && (x < 22 || onHandle)) sw = { x, y, open: false, live: false, dx: 0 };
+      else if (open && e.target.closest && e.target.closest('#gearMenu')) sw = { x, y, open: true, live: false, dx: 0 };
       else sw = null;
     }, { passive: true });
     document.addEventListener('touchmove', e => {
       if (!sw) return; const dx = e.touches[0].clientX - sw.x, dy = e.touches[0].clientY - sw.y;
-      if (Math.abs(dy) > Math.abs(dx) * 1.3 && Math.abs(dy) > 20) { sw = null; return; }
-      const dr = $('#gearMenu .drawer');
-      if (!sw.open && dx > 45) { A.showDrawer(); sw = null; }
-      else if (sw.open && dr && dx < 0) dr.style.transform = 'translateX(' + Math.max(-320, dx) + 'px)';
+      if (!sw.live) {
+        if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; }   /* era para desplazarse arriba/abajo */
+        if (Math.abs(dx) < 10) return;
+        sw.live = true;
+        if (!sw.open) { A.showDrawer(); }
+      }
+      sw.dx = dx; const w = W();
+      setX(sw.open ? Math.min(0, Math.max(-w, dx)) : Math.min(0, Math.max(-w, -w + dx)), false);
     }, { passive: true });
-    document.addEventListener('touchend', e => {
-      if (!sw) return; const dx = e.changedTouches[0].clientX - sw.x, dr = $('#gearMenu .drawer');
-      if (sw.open) { if (dr) dr.style.transform = ''; if (dx < -70) { A.hideDrawer(); A.afterRefresh(); } }
-      sw = null;
-    }, { passive: true });
+    const end = e => {
+      if (!sw) return; const s = sw; sw = null;
+      if (!s.live) return;
+      const w = W(), pos = s.open ? Math.min(0, s.dx) : -w + Math.max(0, s.dx);
+      finish(pos > -w / 2 && !(s.open && s.dx < -60) || (!s.open && s.dx > 60));
+    };
+    document.addEventListener('touchend', end, { passive: true });
+    document.addEventListener('touchcancel', end, { passive: true });
   })();
 
   /* =====================================================================

@@ -30,7 +30,7 @@
     const p = places().filter(x => x.owner === owner)[0];
     S.modal = { type: 'plBusy', name: p ? p.clinic : '' }; A.renderModal();
     try { if (CL.sync) await CL.sync(); } catch (e) { /* lo que no se pudo subir queda en la cola del otro lugar: se avisa */ }
-    LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1');
+    LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.goHome', '1');
     if (A.wipeLocal) A.wipeLocal();
     try { if (CL.baseClear) await CL.baseClear(); } catch (e) { /* nada */ }
     setTimeout(() => location.reload(), 150);

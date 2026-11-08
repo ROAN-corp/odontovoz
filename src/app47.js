@@ -5,7 +5,7 @@
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
 
   /* ---------- inicio: accesos como íconos chicos debajo del saludo ---------- */
-  const SHORT = { searchToggle: 'Buscar paciente', 'tab:agenda': 'Agenda', cfgOpen: 'Ajustes', newPatient: 'Paciente nuevo', gear: 'Menú', handsFree: 'Asistente', newAppt: 'Dar turno', 'tab:pacientes': 'Pacientes', 'tab:caja': 'Caja', labAllOpen: 'Laboratorio', tnOpen: 'Turnero', remNew: 'Recordatorio', jrOpen: 'Cambios' };
+  const SHORT = { searchToggle: 'Buscar paciente', 'tab:agenda': 'Agenda', cfgOpen: 'Ajustes', ajOpen: 'Ajustes', newPatient: 'Paciente nuevo', gear: 'Menú', handsFree: 'Asistente', newAppt: 'Dar turno', 'tab:pacientes': 'Pacientes', 'tab:caja': 'Caja', labAllOpen: 'Laboratorio', tnOpen: 'Turnero', remNew: 'Recordatorio', jrOpen: 'Cambios' };
   function homeIcons() {
     if (S.tab !== 'inicio' || (A.liteOn && A.liteOn())) return;
     const v = $('#view-inicio'), wrap = v && v.querySelector('.home-actions'), hi = v && v.querySelector('.home-hi'); if (!wrap) return;

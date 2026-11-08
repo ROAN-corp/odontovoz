@@ -230,6 +230,8 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .dyn-list span { color: var(--ink-2); font-size: 17px; }
 .reel { margin: 0; justify-self: center; width: min(340px, 100%); }
 .reel video { width: 100%; aspect-ratio: 9 / 16; border-radius: 28px; border: 8px solid #10282a; background: #08484b; display: block; }
+.tuts { padding: 56px 0; } .tut-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } .reel.tut video { aspect-ratio: 720 / 1558; border-width: 6px; border-radius: 22px; }
+@media (max-width: 860px) { .tut-grid { grid-template-columns: 1fr 1fr; } }
 .reel figcaption { text-align: center; color: var(--ink-2); font-size: 15px; margin-top: 10px; }
 .firma { background: var(--deep); color: #fff; }
 .firma .lede, .firma .dyn-list span { color: #cfe7e3; }
@@ -462,6 +464,17 @@ footer .brand { margin-right: auto; }
       <figure><div class="pc"><img src="img/pc-resumen.webp" width="1800" height="1133" alt="Resumen del día en la PC: cobrado, lo que falta cobrar, totales por forma de pago y por odontólogo, y el botón Ir a cerrar la caja." loading="lazy"></div><figcaption><b>Resumen y cierre del día</b><span>Por forma de pago, por consultorio y por odontólogo.</span></figcaption></figure>
       <figure><div class="pc"><img src="img/pc-stock.webp" width="1800" height="1133" alt="Lista «Para comprar» del stock: cada insumo con lo que hay, por qué conviene pedir y cuánto, y el botón para mandar el pedido por WhatsApp." loading="lazy"></div><figcaption><b>Qué hay que comprar</b><span>El pedido armado, listo para mandar por WhatsApp.</span></figcaption></figure>
       <figure><div class="pc"><img src="img/pc-lugares.webp" width="1800" height="1133" alt="Agenda del día en la PC con los turnos del consultorio y, rayados en violeta, los turnos del mismo odontólogo en el Centro Castelli, con el aviso «Hoy también en Centro Castelli»." loading="lazy"></div><figcaption><b>Todos tus turnos, de todos lados</b><span>Tus turnos de otros centros, rayados en tu agenda.</span></figcaption></figure>
+    </div>
+  </div>
+</section>
+<section class="tuts" id="tutoriales" aria-labelledby="t-tut">
+  <div class="wrap">
+    <div class="sec-head"><h2 id="t-tut">Tutoriales de un minuto</h2><p class="lede">Elegí tu forma de trabajar y mirá cómo se usa.</p></div>
+    <div class="tut-grid">
+      <figure class="reel tut"><video src="video/tut-pro.mp4" poster="video/poster-tut-pro.jpg" playsinline controls preload="none" aria-label="Tutorial para profesional"></video><figcaption>Profesional</figcaption></figure>
+      <figure class="reel tut"><video src="video/tut-centro.mp4" poster="video/poster-tut-centro.jpg" playsinline controls preload="none" aria-label="Tutorial para consultorio y centro"></video><figcaption>Consultorio y centro</figcaption></figure>
+      <figure class="reel tut"><video src="video/tut-empresa.mp4" poster="video/poster-tut-empresa.jpg" playsinline controls preload="none" aria-label="Tutorial para empresa con varios centros"></video><figcaption>Empresa</figcaption></figure>
+      <figure class="reel tut"><video src="video/tut-lite.mp4" poster="video/poster-tut-lite.jpg" playsinline controls preload="none" aria-label="Tutorial del modo LITE"></video><figcaption>LITE</figcaption></figure>
     </div>
   </div>
 </section>
