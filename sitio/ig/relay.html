@@ -2,12 +2,12 @@
 <p>Preparando las imágenes…</p>
 <script>
 (async () => {
-  const q = new URLSearchParams(location.search), files = (q.get('f') || '').split(',').filter(f => /^[\w.-]+\.jpg$/.test(f));
+  const q = new URLSearchParams(location.search), files = (q.get('f') || '').split(',').filter(f => /^[\w.-]+\.(jpg|mp4)$/.test(f));
   const out = [];
   for (const f of files) {
     const b = await (await fetch(f)).blob();
     const d = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(b); });
-    out.push({ n: f, d });
+    out.push({ n: f, d, t: b.type || (f.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg') });
   }
   const go = q.get('go') || 'https://www.instagram.com/';
   if (!/^https:\/\/www\.instagram\.com\//.test(go)) return;
