@@ -139,10 +139,11 @@
     paciente: { t: 'Paciente nuevo', s: 'Cargar ficha', act: 'newPatient', ic: IC('<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20a6.5 6.5 0 0 1 13 0"/><path d="M19 8v6M16 11h6"/>') },
     ajustes: { t: 'Ajustes', s: 'Todas las opciones', act: 'ajOpen', ic: IC('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>') }
   };
-  const DEF = ['search', 'agenda', 'ajustes', 'paciente', 'menu']; /* 1.37: fila de íconos chicos */
+  const DEF = ['search', 'paciente', 'agenda', 'ajustes']; /* 1.38: sin «Menú» (ya está arriba); «Paciente nuevo» al lado de buscar */
   const homeKeys = () => { try { const l = JSON.parse(LS.get('odontovoz.home', 'null')); return Array.isArray(l) && l.length ? l.filter(k => SC[k]) : DEF.slice(); } catch (e) { return DEF.slice(); } };
   const saveKeys = l => LS.set('odontovoz.home', JSON.stringify(l));
   let editing = false;
+  A.homeMount = () => mountHome();
   function mountHome() {
     const wrap = document.querySelector('#view-inicio .home-actions'); if (!wrap || wrap.getAttribute('data-cust')) return;
     const orig = {}; Array.from(wrap.querySelectorAll('.ha')).forEach(b => { const a = b.getAttribute('data-act'), t = b.getAttribute('data-tab'); const k = a === 'searchToggle' ? 'search' : a === 'tab' && t === 'agenda' ? 'agenda' : a === 'handsFree' ? 'voice' : a === 'gear' ? 'menu' : null; if (k) orig[k] = b.outerHTML; });
