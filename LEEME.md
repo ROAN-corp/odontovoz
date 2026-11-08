@@ -450,3 +450,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Portada: recuadro **Acceso rápido** debajo de «Probala gratis» con tres botones: Usar en la web (`app/`), Android: bajar APK (descarga directa) e iPhone y iPad (abre los pasos de Safari). El botón «Descargar» pasa a «Todas las descargas».
 - Encabezado: enlace «Entrar» (abre la app) al lado de «Probar gratis».
 - Barra fija del celular: «Probar gratis» + «Android (APK)»; en iPhone el segundo botón dice «Instalar en iPhone» y en la PC «Abrir la app».
+
+## OdontoVoz 1.36.1 · la tira de días arranca en hoy
+- Al entrar a la Agenda (desde el menú, la barra o el inicio) se abre siempre el día de hoy, con la tira de días centrada en ese día. Antes, al volver a la app, a veces quedaba corrida al principio del mes anterior (por ejemplo, en el 27 de octubre).
+- El día de hoy se marca con un recuadro y la palabra «HOY»; si además es el día elegido, va relleno de color.
+- Si deslizás la tira y el día de hoy queda fuera de la vista, o elegís otro día, aparece el botón **Hoy**, que vuelve al día de hoy y lo centra.
+- Si volvés a la app con la agenda abierta después de más de un minuto, vuelve a hoy, centrado.
