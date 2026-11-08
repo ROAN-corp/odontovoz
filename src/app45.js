@@ -291,7 +291,7 @@
     if (arPrev) arPrev();
     try { drawer(); } catch (e) { /* nada */ }
     /* en PRO, un botón para pasar a LITE arriba del inicio */
-    if (!on && S.tab === 'inicio') { const v = $('#view-inicio'); if (v && !v.querySelector('.lt-try')) v.insertAdjacentHTML('afterbegin', '<div class="lt-try"><span>¿Muchos botones? Probá la versión simple.</span><button class="btn small" data-act="liteOn">Modo LITE</button></div>'); }
+    if (!on && S.tab === 'inicio') { const v = $('#view-inicio'); if (v && !v.querySelector('.lt-try')) v.insertAdjacentHTML('afterbegin', '<button class="lt-try" data-act="liteOn" title="Versión simple, con botones grandes" aria-label="Pasar al modo LITE, la versión simple">LITE</button>'); }
     if (on) { const ab = $('#abTitle'); if (ab && S.tab === 'inicio') ab.textContent = 'OdontoVoz LITE'; }
   };
 
@@ -347,7 +347,7 @@
     '.lt-money { font-size: 26px !important; font-weight: 800; }',
     '.lt-meth { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .lt-meth label { display: flex; } .lt-meth input { position: absolute; opacity: 0; } .lt-meth span { flex: 1; text-align: center; padding: 12px 6px; border-radius: 12px; border: 1px solid var(--line); cursor: pointer; font-weight: 700; } .lt-meth input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; } .lt-meth input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }',
     '.lt-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }',
-    '.lt-try { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; margin-bottom: 10px; border-radius: 12px; border: 1px dashed var(--line); font-size: 14px; color: var(--ink-2); }',
+    '#view-inicio { position: relative; } .lt-try { position: absolute; top: 2px; right: 0; z-index: 2; min-height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-size: 11px; font-weight: 800; letter-spacing: .06em; cursor: pointer; opacity: .8; } .lt-try:hover { opacity: 1; color: var(--accent); border-color: var(--accent); }',
     '@media (max-width: 380px) { .lt-tile { min-height: 108px; padding: 12px; } .lt-tile b { font-size: 18px; } .lt-time { min-width: 54px; font-size: 18px; } .lt-q { padding: 0 10px; } }',
     '@media (min-width: 900px) { .lt-tiles { grid-template-columns: repeat(4, 1fr); } }'
   ].join('\n');

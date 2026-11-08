@@ -456,3 +456,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - El día de hoy se marca con un recuadro y la palabra «HOY»; si además es el día elegido, va relleno de color.
 - Si deslizás la tira y el día de hoy queda fuera de la vista, o elegís otro día, aparece el botón **Hoy**, que vuelve al día de hoy y lo centra.
 - Si volvés a la app con la agenda abierta después de más de un minuto, vuelve a hoy, centrado.
+
+## OdontoVoz 1.37 · inicio más simple y tema claro de día
+- Inicio: debajo de «Buen día» queda una fila de íconos chicos con su nombre abajo: **Buscar paciente**, **Agenda**, **Ajustes**, **Paciente nuevo** y **Menú**. Los turnos de hoy van debajo. Los accesos se siguen pudiendo elegir y ordenar desde Menú › Apariencia.
+- El ofrecimiento del modo LITE ahora es un botoncito «LITE» arriba a la derecha del saludo.
+- Tema: **claro por defecto**. En Menú › Apariencia › Tema: Claro, Oscuro, **Día y noche** (oscuro de 20:00 a 07:00, con las horas configurables, según la hora del equipo) o Como el celular. Se guarda en cada equipo (`odontovoz.theme`, `odontovoz.themeNight`).
