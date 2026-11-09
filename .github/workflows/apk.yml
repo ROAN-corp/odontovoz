@@ -35,7 +35,13 @@ jobs:
           ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" | tail -5
 
       - name: Instalar dependencias
-        run: npm install --no-audit --no-fund --legacy-peer-deps
+        run: |
+          # GitHub a veces corta las descargas (504): se reintenta hasta 4 veces
+          for i in 1 2 3 4; do
+            npm install --no-audit --no-fund --legacy-peer-deps && exit 0
+            echo "::warning::Falló la instalación (intento $i); reintento en 30 s"; rm -rf node_modules/sharp; sleep 30
+          done
+          exit 1
 
       - name: Tipografías locales (sin Google Fonts)
         run: npm install --no-save --no-audit --no-fund --legacy-peer-deps @fontsource/bricolage-grotesque@5 @fontsource/ibm-plex-mono@5 @fontsource/instrument-sans@5 @fontsource/atkinson-hyperlegible@5 @fontsource/schibsted-grotesk@5 || echo 'sin tipografías locales'
@@ -68,7 +74,10 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease
+          # más paciencia para bajar Gradle (antes cortaba a los 10 s) y reintentos si falla la red
+          sed -i 's/networkTimeout=[0-9]*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties || true
+          for i in 1 2 3; do ./gradlew --no-daemon assembleRelease && exit 0; echo "::warning::Falló la compilación (intento $i)"; sleep 30; done
+          exit 1
 
       - name: Firmar el APK
         env:
