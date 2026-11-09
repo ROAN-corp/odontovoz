@@ -155,6 +155,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .wa-plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .wa-p { background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: grid; gap: 6px; align-content: start; } .wa-p small { color: var(--ink-2); }
 .wa-usd { font-size: 34px; font-weight: 800; margin-top: 6px; } .wa-usd span { font-size: 16px; font-weight: 500; color: var(--ink-2); }
+.wa-h3 { margin: 6px 0 8px; font-size: 22px; }
 .wa-safe { margin-top: 22px; border: 1px dashed #8fd3a8; border-radius: 18px; padding: 16px 18px; background: var(--white); color: var(--ink-2); line-height: 1.55; } .wa-safe b { color: var(--ink); }
 @media (max-width: 900px) { .wa-grid { grid-template-columns: 1fr 1fr; } .wa-plans { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .wa-grid { grid-template-columns: 1fr; } }
@@ -658,23 +659,24 @@ footer .brand { margin-right: auto; }
 <section class="wa-sec" id="secretaria" aria-labelledby="t-wa">
   <div class="wrap">
     <div class="sec-head">
-      <p class="wa-kick">Servicio adicional · nuevo</p>
-      <h2 id="t-wa">Secretaria virtual por WhatsApp</h2>
-      <p class="lede">Contesta a tus pacientes desde el WhatsApp del consultorio, las 24 horas: les da turno con los horarios libres de tu agenda, responde dudas y manda el recordatorio con un botón para confirmar. Cuando hace falta, te pasa la charla.</p>
+      <p class="wa-kick">Incluido en tu plan · nuevo</p>
+      <h2 id="t-wa">Autogestión por WhatsApp</h2>
+      <p class="lede">Tus pacientes le escriben al WhatsApp del consultorio y, con botones, sacan turno con los horarios libres de tu agenda, ven la dirección y consultan obras sociales y precios. Cuando lo piden, la charla pasa a vos. Sin costo extra.</p>
     </div>
     <div class="wa-grid">
-      <div><b>Da turnos sola</b><span>Ofrece horarios reales y el turno entra directo a tu agenda.</span></div>
-      <div><b>Responde dudas</b><span>Dirección, obras sociales, precios: lo que vos le cargues, sin inventar.</span></div>
-      <div><b>Recordatorios con «Confirmo»</b><span>Salen solos el día anterior y la agenda se marca sola.</span></div>
+      <div><b>Sacan turno solos</b><span>Eligen día y horario con botones y el pedido entra directo a tu agenda.</span></div>
+      <div><b>Responde consultas</b><span>Dirección, obras sociales y precios: lo que vos cargues.</span></div>
+      <div><b>Atiende las 24 h</b><span>Aunque estés atendiendo o sea de noche.</span></div>
       <div><b>Vos seguís a cargo</b><span>Ves todas las charlas en la app y tomás la que quieras.</span></div>
     </div>
+    <h3 class="wa-h3">Recordatorios automáticos · servicio aparte</h3>
+    <p class="plans-note" style="margin-top:0">Salen solos el día anterior con los botones «Confirmo» y «Necesito cambiarlo», y el turno se marca solo en la agenda. Sin este servicio, los recordatorios se siguen mandando gratis con el botón de WhatsApp de la agenda.</p>
     <div class="wa-plans">
-      <div class="wa-p"><b>Secretaria Profesional</b><small>Un profesional · 100 charlas por mes</small><div class="wa-usd">USD 29<span>/mes</span></div><small data-usd="29"></small></div>
-      <div class="wa-p"><b>Secretaria Consultorio</b><small>Varios profesionales · 300 charlas por mes</small><div class="wa-usd">USD 49<span>/mes</span></div><small data-usd="49"></small></div>
-      <div class="wa-p"><b>Secretaria Centro</b><small>Centros y empresas · 800 charlas por mes</small><div class="wa-usd">USD 89<span>/mes</span></div><small data-usd="89"></small></div>
+      <div class="wa-p"><b>Recordatorios 300</b><small>Un profesional · hasta 300 por mes</small><div class="wa-usd">USD 12<span>/mes</span></div><small data-usd="12"></small></div>
+      <div class="wa-p"><b>Recordatorios 1.000</b><small>Consultorios · hasta 1.000 por mes</small><div class="wa-usd">USD 29<span>/mes</span></div><small data-usd="29"></small></div>
+      <div class="wa-p"><b>Recordatorios 3.000</b><small>Centros y empresas · hasta 3.000 por mes</small><div class="wa-usd">USD 69<span>/mes</span></div><small data-usd="69"></small></div>
     </div>
-    <p class="plans-note">Se suma a cualquier plan de OdontoVoz. Charla = una conversación con un paciente en 24 horas. 100 charlas extra: USD 10. Incluye la conexión de tu número.</p>
-    <div class="wa-safe"><b>Tu número, cuidado.</b> Usamos el canal oficial de WhatsApp para empresas (Meta), nunca programas no autorizados. La secretaria solo responde a quien escribe y solo habla de tu consultorio; los recordatorios son únicamente de turnos, de 9 a 20 h, con tope por día y con baja en un toque. Si WhatsApp avisa que la calidad del número baja, los mensajes salientes se frenan solos.</div>
+    <div class="wa-safe"><b>Tu número, cuidado.</b> Usamos el canal oficial de WhatsApp para empresas (Meta), nunca programas no autorizados. Solo responde a quien escribe; los recordatorios son únicamente de turnos, de 9 a 20 h, con tope por día y con baja en un toque. Si WhatsApp avisa que la calidad del número baja, los mensajes salientes se frenan solos.</div>
   </div>
 </section>
 

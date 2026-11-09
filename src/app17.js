@@ -324,7 +324,7 @@
   const invite = pro => 'Hola! Podés sacar tu turno ' + (pro && A.PRO(pro) ? 'con ' + A.PRO(pro).name + ' ' : '') + 'en ' + A.CLINIC + ' desde este link: ' + link(pro);
   A.acts.tnLinkWa = el => window.open('https://wa.me/?text=' + encodeURIComponent(invite(el && el.getAttribute && el.getAttribute('data-p'))), '_blank', 'noopener');
   A.acts.tnLinkShare = () => { try { navigator.share({ title: 'Turnos online · ' + A.CLINIC, text: invite(), url: link() }); } catch (e) { /* nada */ } };
-  A.tnLink = () => link(); A.tnPublish = publish; A.tnClaim = claim;
+  A.tnLink = () => link(); A.tnPublish = publish; A.tnClaim = claim; A.tnPubData = () => pubData().data; A.tnSlug = () => slug();
 
   /* ---------- estilos ---------- */
   const css = document.createElement('style');

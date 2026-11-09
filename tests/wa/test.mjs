@@ -2,6 +2,7 @@ import { T, SENT, AI_CALLS, setAI, inbound, post, today, add } from './harness.m
 const W = await import('../../supabase/functions/wa-webhook/index.ts');
 const S = await import('../../supabase/functions/wa-send/index.ts');
 const C = await import('../../supabase/functions/wa-cron/index.ts');
+T.ov_wa[0].cfg.ai = true;   // estas pruebas cubren la respuesta con IA (guardada); el menú está en testmenu.mjs
 let fails = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + m); if (!c) fails++; };
 
 // verificación GET
@@ -73,7 +74,7 @@ await post(W.serve, { entry: [{ changes: [{ value: { metadata: { phone_number_id
 ok(T.ov_wa_msgs.length === nm, 'reintento de Meta no duplica');
 // audio
 await post(W.serve, inbound('', '5492994123456', { type: 'audio', text: undefined, audio: { id: 'x' } }));
-ok(SENT.at(-1).text.body.includes('escritos'), 'audio: pide que lo escriba');
+ok(SENT.at(-2).text.body.includes('escritos') && SENT.at(-1).type === 'interactive', 'audio: pide que lo escriba y muestra el menú');
 // tope del plan
 T.ov_wa[0].used = 100; T.ov_wa[0].quota = 100;
 await post(W.serve, inbound('hola', '5492995555555'));

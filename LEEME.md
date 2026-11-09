@@ -488,3 +488,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Planes: Secretaria Profesional USD 29 (100 charlas), Consultorio USD 49 (300), Centro USD 89 (800); 100 charlas extra USD 10. En portada, términos, app (`A.WA_PLANS`) y panel.
 - Panel de licencias: botón «WhatsApp» por cuenta (estado, plan, cupo, IDs de Meta) y etiqueta con el uso.
 - Términos y privacidad versión 2026-11-09: servicio adicional y subencargados Meta y Anthropic (solo si se contrata o se prueba).
+
+## OdontoVoz 1.39.1 · Autogestión por WhatsApp (incluida) + recordatorios automáticos (pago)
+- La «Secretaria» pasa a ser **Autogestión por WhatsApp**, una función más incluida sin costo: menú con botones en el WhatsApp del consultorio (pedir turno con los horarios del turnero, dirección y contacto, obras sociales y precios, hablar con una persona). Sin IA, así que no cuesta nada: Meta no cobra las respuestas a quien escribió en las últimas 24 h.
+- El único servicio pago son los **recordatorios automáticos** (Confirmo / Necesito cambiarlo): Recordatorios 300 USD 12, 1.000 USD 29, 3.000 USD 69 por mes. Sin el servicio se siguen mandando gratis con el botón de WhatsApp de la agenda.
+- Motor del menú común a la app y al servidor: `scripts/wa-menu.js` (lo copia `node scripts/build-wa.js`), con pruebas en `tests/wa/menu.test.mjs` y `tests/wa/testmenu.mjs`. «Probala» muestra los botones tal cual los ve el paciente; en el modo prueba carga el turno en la agenda y con cuenta real lo pide como PRUEBA por el turnero.
+- SQL: `ov_wa.rem_plan`, `rem_quota`, `rem_used`, `rem_period`; `ov_wa_chats.state`; `ov_wa_admin_set(owner, status, rem_plan, rem_quota, phone_id, waba_id, display)`; `ov_wa_queue` solo con `rem_plan`. `wa-cron` respeta el cupo del mes. La IA queda guardada (`cfg.ai = true`).
+- Portada, términos y privacidad 2026-11-09.2 (sin Anthropic como subencargado) y panel de licencias actualizados.

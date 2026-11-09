@@ -1,10 +1,12 @@
--- OdontoVoz · Secretaria virtual por WhatsApp (1.39)
+-- OdontoVoz · Autogestión por WhatsApp (1.39.1) · menú con botones incluido + recordatorios automáticos como servicio pago
 -- Correr en Supabase › SQL Editor DESPUÉS de turnero.sql, equipo.sql y vinculos.sql. Se puede volver a correr sin problema.
 --
 -- Cómo funciona:
 --   · Cada cuenta que contrata el servicio conecta su número al canal OFICIAL de WhatsApp para empresas (Cloud API de Meta).
---   · Meta manda cada mensaje del paciente a la función wa-webhook (supabase/functions). La función responde con IA,
---     usando los mismos horarios libres que publica el turnero (ov_booking) y pidiendo el turno con ov_booking_request.
+--   · Meta manda cada mensaje del paciente a la función wa-webhook (supabase/functions). La función responde con un menú
+--     de botones (sin IA, sin costo), usando los mismos horarios libres que publica el turnero (ov_booking) y pidiendo
+--     el turno con ov_booking_request. Las respuestas a quien escribió en las últimas 24 h no las cobra Meta.
+--   · Los recordatorios automáticos (los únicos mensajes que cobra Meta) se activan aparte: rem_plan / rem_quota.
 --   · Los turnos pedidos entran a la agenda igual que los del turnero (la app los toma con ov_booking_claim).
 --   · La app arma la cola de recordatorios (ov_wa_out); wa-cron los manda en horario, con tope por día y respetando las bajas.
 --   · Las respuestas a los recordatorios (Confirmo / Necesito cambiarlo) quedan en ov_wa_events y la app las aplica al turno.
@@ -27,6 +29,13 @@ create table if not exists public.ov_wa (
   cfg         jsonb not null default '{}'::jsonb, -- lo que responde el asistente (lo arma la app)
   updated_at  timestamptz not null default now()
 );
+-- recordatorios automáticos (servicio pago): plan, cupo por mes y uso
+alter table public.ov_wa add column if not exists rem_plan text;              -- null = sin recordatorios automáticos; r1 / r2 / r3
+alter table public.ov_wa add column if not exists rem_quota int not null default 0;
+alter table public.ov_wa add column if not exists rem_used int not null default 0;
+alter table public.ov_wa add column if not exists rem_period text;
+alter table public.ov_wa alter column plan set default 'base';
+alter table public.ov_wa alter column quota set default 100000;
 alter table public.ov_wa enable row level security;
 drop policy if exists "ov_wa_read" on public.ov_wa;
 create policy "ov_wa_read" on public.ov_wa for select to authenticated using (owner = public.ov_owner() or public.ov_is_admin());
@@ -48,6 +57,7 @@ create table if not exists public.ov_wa_chats (
   need       text,                                  -- por qué pide una persona
   unique (owner, wa_id)
 );
+alter table public.ov_wa_chats add column if not exists state jsonb not null default '{}'::jsonb;   -- paso del menú
 create index if not exists ov_wa_chats_owner on public.ov_wa_chats (owner, last_at desc);
 alter table public.ov_wa_chats enable row level security;
 drop policy if exists "ov_wa_chats_read" on public.ov_wa_chats;
@@ -155,7 +165,7 @@ create or replace function public.ov_wa_queue(p_items jsonb) returns int
 language plpgsql security definer set search_path = public as $$
 declare o uuid := public.ov_owner(); n int := 0; it jsonb;
 begin
-  if o is null or not exists (select 1 from public.ov_wa where owner = o and status = 'activo') then return 0; end if;
+  if o is null or not exists (select 1 from public.ov_wa where owner = o and status = 'activo' and rem_plan is not null) then return 0; end if;
   for it in select * from jsonb_array_elements(coalesce(p_items, '[]'::jsonb)) loop
     if exists (select 1 from public.ov_wa_chats c where c.owner = o and c.wa_id = it->>'wa_id' and c.opt_out) then continue; end if;
     insert into public.ov_wa_out (owner, appt, kind, wa_id, params, send_after)
@@ -179,15 +189,16 @@ language sql security definer set search_path = public as $$
   update public.ov_wa_events set done = true where owner = public.ov_owner() and not done returning *;
 $$;
 
--- panel de licencias: dar de alta, cambiar plan o conectar el número de una cuenta
-create or replace function public.ov_wa_admin_set(p_owner uuid, p_status text, p_plan text, p_quota int,
+-- panel de licencias: dar de alta, conectar el número o activar los recordatorios pagos de una cuenta
+drop function if exists public.ov_wa_admin_set(uuid, text, text, int, text, text, text);
+create or replace function public.ov_wa_admin_set(p_owner uuid, p_status text, p_rem_plan text, p_rem_quota int,
   p_phone_id text default null, p_waba_id text default null, p_display text default null) returns void
 language plpgsql security definer set search_path = public as $$
 begin
   if not public.ov_is_admin() then raise exception 'solo administración'; end if;
-  insert into public.ov_wa (owner, status, plan, quota, phone_id, waba_id, display)
-  values (p_owner, coalesce(p_status, 'pendiente'), coalesce(p_plan, 'wa1'), coalesce(p_quota, 100), nullif(p_phone_id, ''), nullif(p_waba_id, ''), nullif(p_display, ''))
-  on conflict (owner) do update set status = coalesce(p_status, ov_wa.status), plan = coalesce(p_plan, ov_wa.plan), quota = coalesce(p_quota, ov_wa.quota),
+  insert into public.ov_wa (owner, status, rem_plan, rem_quota, phone_id, waba_id, display)
+  values (p_owner, coalesce(p_status, 'pendiente'), nullif(p_rem_plan, ''), coalesce(p_rem_quota, 0), nullif(p_phone_id, ''), nullif(p_waba_id, ''), nullif(p_display, ''))
+  on conflict (owner) do update set status = coalesce(p_status, ov_wa.status), rem_plan = nullif(p_rem_plan, ''), rem_quota = coalesce(p_rem_quota, ov_wa.rem_quota),
     phone_id = coalesce(nullif(p_phone_id, ''), ov_wa.phone_id), waba_id = coalesce(nullif(p_waba_id, ''), ov_wa.waba_id),
     display = coalesce(nullif(p_display, ''), ov_wa.display), updated_at = now();
 end $$;

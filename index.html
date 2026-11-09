@@ -6384,7 +6384,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
     set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } }
   };
-  const PRIV_VER = '2026-11-09';
+  const PRIV_VER = '2026-11-09.2';
   A.TERMS_VER = PRIV_VER;
   const WEB = 'https://roan-corp.github.io/odontovoz/';
 
@@ -7771,7 +7771,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.39';
+  A.VERSION = '1.39.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10369,7 +10369,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const invite = pro => 'Hola! Podés sacar tu turno ' + (pro && A.PRO(pro) ? 'con ' + A.PRO(pro).name + ' ' : '') + 'en ' + A.CLINIC + ' desde este link: ' + link(pro);
   A.acts.tnLinkWa = el => window.open('https://wa.me/?text=' + encodeURIComponent(invite(el && el.getAttribute && el.getAttribute('data-p'))), '_blank', 'noopener');
   A.acts.tnLinkShare = () => { try { navigator.share({ title: 'Turnos online · ' + A.CLINIC, text: invite(), url: link() }); } catch (e) { /* nada */ } };
-  A.tnLink = () => link(); A.tnPublish = publish; A.tnClaim = claim;
+  A.tnLink = () => link(); A.tnPublish = publish; A.tnClaim = claim; A.tnPubData = () => pubData().data; A.tnSlug = () => slug();
 
   /* ---------- estilos ---------- */
   const css = document.createElement('style');
@@ -16696,7 +16696,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   ].join('\n');
   document.head.appendChild(css);
 })();
-/* ===== 1.39: Secretaria virtual por WhatsApp (servicio aparte): conversaciones, configuración, prueba y recordatorios automáticos ===== */
+/* ===== 1.39: Autogestión por WhatsApp (incluida, menú con botones) + recordatorios automáticos (servicio pago): charlas, configuración, prueba ===== */
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, CL = A.cloud;
@@ -16704,14 +16704,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const N = s => A.norm(String(s || ''));
   const ARS = usd => A.DOLAR ? ' (≈ $' + Math.round(usd * A.DOLAR).toLocaleString('es-AR') + ')' : '';
 
-  /* ---------- planes del servicio (mantener igual en sitio/index.html, terminos.html y admin.html) ---------- */
-  const PLANS = A.WA_PLANS = {
-    wa1: { name: 'Secretaria Profesional', usd: 29, quota: 100, for: 'Un profesional' },
-    wa2: { name: 'Secretaria Consultorio', usd: 49, quota: 300, for: 'Consultorio con varios profesionales' },
-    wa3: { name: 'Secretaria Centro', usd: 89, quota: 800, for: 'Centros y empresas' }
+  /* ---------- recordatorios automáticos: único servicio pago (mantener igual en sitio/index.html, terminos.html y admin.html) ---------- */
+  const PLANS = A.WA_REM_PLANS = {
+    r1: { name: 'Recordatorios 300', usd: 12, quota: 300, for: 'Un profesional' },
+    r2: { name: 'Recordatorios 1.000', usd: 29, quota: 1000, for: 'Consultorio con varios profesionales' },
+    r3: { name: 'Recordatorios 3.000', usd: 69, quota: 3000, for: 'Centros y empresas' }
   };
-  const EXTRA = { usd: 10, n: 100 };
-  const cfg = () => { const c = A.CFG.waBot || (A.CFG.waBot = {}); if (c.on == null) Object.assign(c, { on: true, book: true, botName: 'Sofi', info: '', rem: true, remWhen: 'dia', remAt: 10, maxDay: 150 }); return c; };
+  const cfg = () => { const c = A.CFG.waBot || (A.CFG.waBot = {}); if (c.on == null) Object.assign(c, { on: true, book: true, info: '', rem: true, remWhen: 'dia', remAt: 10, maxDay: 150 }); return c; };
 
   /* ---------- estado ---------- */
   const W = S.wa || (S.wa = { me: undefined, chats: [], msgs: {}, err: '', busy: false, at: 0 });
@@ -16732,13 +16731,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* ---------- charlas de ejemplo (modo prueba o sin el servicio) ---------- */
   const ago = m => new Date(Date.now() - m * 60000).toISOString();
   const DEMO_CHATS = [
-    { id: 'd1', wa_id: '5492994123456', name: 'Ana Pérez', mode: 'bot', last_text: 'Listo, pedí tu turno para el martes 10:00 (OV-K7P2).', last_at: ago(8), last_in: ago(9), unread: 0 },
-    { id: 'd2', wa_id: '5492994555111', name: 'Jorge Díaz', mode: 'humano', need: 'Quiere hablar de un pago', last_text: 'Te paso con alguien del consultorio.', last_at: ago(25), last_in: ago(26), unread: 2 },
+    { id: 'd1', wa_id: '5492994123456', name: 'Ana Pérez', mode: 'bot', last_text: '¡Listo! Pedimos tu turno para el martes 10:00 (OV-K7P2).', last_at: ago(8), last_in: ago(9), unread: 0 },
+    { id: 'd2', wa_id: '5492994555111', name: 'Jorge Díaz', mode: 'humano', need: 'Pidió hablar con una persona', last_text: 'Listo, ya le aviso a alguien del consultorio.', last_at: ago(25), last_in: ago(26), unread: 2 },
     { id: 'd3', wa_id: '5492995222333', name: 'Lucía Gómez', mode: 'bot', last_text: '¡Gracias por confirmar! Te esperamos. 😊', last_at: ago(95), last_in: ago(96), unread: 0 }
   ];
   const DEMO_MSGS = {
-    d1: [['in', 'paciente', 'Hola! quería un turno para control, a la mañana si puede ser'], ['out', 'bot', '¡Hola Ana! Soy Sofi, la asistente virtual del consultorio 😊 Si preferís, te paso con una persona. Para control tengo: martes 10:00, martes 10:30 o miércoles 9:30. ¿Cuál te queda mejor?'], ['in', 'paciente', 'el martes 10'], ['out', 'bot', 'Perfecto. ¿Me pasás tu nombre, apellido, DNI y obra social?'], ['in', 'paciente', 'Ana Pérez 30123456 OSDE'], ['out', 'bot', 'Listo, pedí tu turno para el martes 10:00 (OV-K7P2). El consultorio te lo confirma por acá.']],
-    d2: [['in', 'paciente', 'Buenas, me cobraron dos veces la última sesión'], ['out', 'bot', 'Hola Jorge, soy Sofi, la asistente virtual. Eso lo tiene que ver una persona del consultorio: te paso con alguien.'], ['in', 'paciente', 'dale gracias'], ['in', 'paciente', '?']],
+    d1: [['in', 'paciente', 'Hola! quería un turno'], ['out', 'bot', '¡Hola! 👋 Te responde el asistente automático del consultorio.\n\n¿Qué necesitás?\n1. Pedir un turno\n2. Dirección y contacto\n3. Obras sociales y precios\n4. Hablar con una persona'], ['in', 'paciente', 'Pedir un turno'], ['out', 'bot', '¿Qué día te queda mejor?\n1. Martes 10/11\n2. Miércoles 11/11'], ['in', 'paciente', 'Martes 10/11'], ['out', 'bot', 'martes 10 de noviembre: elegí el horario.\n1. 10:00 h\n2. 10:30 h\n3. Otro día'], ['in', 'paciente', '10:00 h'], ['out', 'bot', '¿Cuál es el nombre y apellido del paciente?'], ['in', 'paciente', 'Ana Pérez'], ['out', 'bot', 'Gracias. ¿Número de DNI?'], ['in', 'paciente', '30123456'], ['out', 'bot', '¡Listo! ✅ Pedimos tu turno para el martes 10 de noviembre a las 10:00 h. Código: OV-K7P2.']],
+    d2: [['in', 'paciente', 'Buenas, me cobraron dos veces la última sesión'], ['out', 'bot', '¿Qué necesitás?\n1. Pedir un turno\n2. Dirección y contacto\n3. Obras sociales y precios\n4. Hablar con una persona'], ['in', 'paciente', 'Hablar con una persona'], ['out', 'bot', 'Listo, ya le aviso a alguien del consultorio. En breve te responden por acá. 🙌'], ['in', 'paciente', '?']],
     d3: [['out', 'sistema', 'Hola Lucía, te recordamos tu turno en el consultorio el jueves 12 de noviembre a las 17:00 con Dra. Vega. ¿Nos confirmás? [Confirmo] [Necesito cambiarlo]'], ['in', 'paciente', 'Confirmo'], ['out', 'sistema', '¡Gracias por confirmar! Te esperamos. 😊']]
   };
   const chats = () => W.me ? W.chats : DEMO_CHATS;
@@ -16768,33 +16767,37 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
   const SAFE = '<div class="wa-safe"><h4>Cómo cuidamos tu número</h4><ul>' +
     '<li>Canal <b>oficial</b> de WhatsApp para empresas (Meta). Nada de programas «truchos».</li>' +
-    '<li>Solo responde a quien te escribe y solo habla de tu consultorio.</li>' +
+    '<li>Solo responde a quien te escribe, con un menú de botones sobre tu consultorio.</li>' +
     '<li>Recordatorios solo de turnos, de 9 a 20 h y con tope por día. Nunca promociones.</li>' +
     '<li>Cada recordatorio dice cómo darse de baja; con «BAJA» no recibe más.</li>' +
     '<li>Si WhatsApp baja la calidad del número, los recordatorios se frenan solos.</li>' +
-    '<li>Se presenta como asistente virtual y te pasa la charla cuando hace falta.</li></ul></div>';
+    '<li>Se presenta como asistente automático y te pasa la charla cuando el paciente lo pide.</li></ul></div>';
 
+  const remPlans = () => '<div class="wa-plans">' + Object.keys(PLANS).map(k => { const p = PLANS[k]; return '<div class="wa-plan"><b>' + esc(p.name) + '</b><small>' + esc(p.for) + '</small><div class="wa-price">USD ' + p.usd + '<span>/mes</span></div><small>' + ARS(p.usd).replace(/[()]/g, '').trim() + '</small><small>Hasta ' + p.quota.toLocaleString('es-AR') + ' recordatorios por mes</small><button class="btn primary" data-act="waBuy" data-p="' + k + '">Lo quiero</button></div>'; }).join('') + '</div>';
+  const REM_INFO = '<h4 class="wa-h">Recordatorios automáticos · servicio aparte</h4><p class="hint" style="margin-top:0">Salen solos el día anterior por WhatsApp con los botones «Confirmo» y «Necesito cambiarlo», y el turno se marca solo en la agenda. Es lo único que cobra WhatsApp, por eso va aparte. Sin este servicio seguís mandando los recordatorios gratis con el botón de WhatsApp de la agenda.</p>';
   function homeHTML() {
     if (W.err === 'notables') return '<div class="wa-card warn"><b>Falta preparar la base de datos.</b><p>Hay que correr <code>supabase/whatsapp.sql</code> en Supabase (lo hace ROAN).</p></div>';
     if (!W.me) {
-      const plans = Object.keys(PLANS).map(k => { const p = PLANS[k]; return '<div class="wa-plan"><b>' + esc(p.name) + '</b><small>' + esc(p.for) + '</small><div class="wa-price">USD ' + p.usd + '<span>/mes</span></div><small>' + ARS(p.usd).replace(/[()]/g, '').trim() + '</small><small>' + p.quota + ' charlas por mes</small><button class="btn primary" data-act="waBuy" data-p="' + k + '">La quiero</button></div>'; }).join('');
-      return '<div class="wa-hero"><div class="wa-hero-ic">' + WA_IC + '</div><div><h3>Tu secretaria por WhatsApp, las 24 horas</h3><p>Contesta a tus pacientes desde el WhatsApp del consultorio, les da turno con los horarios libres de tu agenda y les manda el recordatorio con un botón para confirmar. Cuando hace falta, te pasa la charla.</p></div></div>' +
-        '<div class="wa-feats">' + [['Da turnos', 'Ofrece horarios reales y el turno entra solo a tu agenda.'], ['Responde dudas', 'Dirección, obras sociales, precios: lo que vos le cargues.'], ['Recordatorios con «Confirmo»', 'Salen solos el día anterior y la agenda se marca sola.'], ['Vos seguís a cargo', 'Ves todas las charlas y tomás la que quieras.']].map(f => '<div><b>' + f[0] + '</b><small>' + f[1] + '</small></div>').join('') + '</div>' +
-        '<button class="btn wa-try" data-act="waTab" data-t="probar">▶ ' + (real() ? 'Probala gratis con tu agenda' : 'Probala ahora (simulación)') + '</button>' +
-        '<h4 class="wa-h">Planes · se suma a tu plan de OdontoVoz</h4><div class="wa-plans">' + plans + '</div>' +
-        '<p class="hint">Charla = una conversación con un paciente en 24 horas, con todos sus mensajes. Si te pasás, se suman ' + EXTRA.n + ' charlas por USD ' + EXTRA.usd + ' o las atiende una persona. Incluye la conexión de tu número: te ayudamos a hacerlo en una videollamada corta.</p>' + SAFE;
+      return '<div class="wa-hero"><div class="wa-hero-ic">' + WA_IC + '</div><div><h3>Tus pacientes se autogestionan por WhatsApp</h3><p>Le escriben al WhatsApp del consultorio y, con botones, sacan turno con los horarios libres de tu agenda, ven la dirección y consultan obras sociales y precios. Cuando lo piden, la charla pasa a vos. <b>Incluido en tu plan, sin costo extra.</b></p></div></div>' +
+        '<div class="wa-feats">' + [['Sacan turno solos', 'Eligen día y horario con botones y el pedido entra a tu agenda.'], ['Responde consultas', 'Dirección, obras sociales y precios: lo que vos cargues.'], ['Atiende las 24 h', 'Aunque estés atendiendo o sea de noche.'], ['Vos seguís a cargo', 'Ves todas las charlas y tomás la que quieras.']].map(f => '<div><b>' + f[0] + '</b><small>' + f[1] + '</small></div>').join('') + '</div>' +
+        '<button class="btn wa-try" data-act="waTab" data-t="probar">▶ Probala ahora, como la ve el paciente</button>' +
+        '<button class="btn primary wa-on" data-act="waBuy" data-p="base">Quiero activarla en mi WhatsApp</button>' +
+        '<p class="hint">Para activarla conectamos el número del consultorio al WhatsApp oficial para empresas. Te ayudamos en una videollamada corta y no tiene costo.</p>' +
+        REM_INFO + remPlans() + SAFE;
     }
-    const w = W.me, p = PLANS[w.plan] || { name: w.plan, quota: w.quota }, pct = Math.min(100, Math.round((w.used || 0) / (w.quota || 1) * 100));
+    const w = W.me, pct = w.rem_quota ? Math.min(100, Math.round((w.rem_used || 0) / w.rem_quota * 100)) : 0;
     const st = { activo: ['ok', 'Activa'], pendiente: ['wait', 'Conectando tu número'], pausado: ['warn', 'Pausada'], baja: ['warn', 'Dada de baja'] }[w.status] || ['wait', w.status];
     const q = { GREEN: ['ok', 'Buena'], YELLOW: ['warn', 'Regular: conviene mandar menos mensajes'], RED: ['bad', 'Baja: se frenaron los recordatorios'] }[String(w.quality || '').toUpperCase()];
-    const c = cfg();
-    return '<div class="wa-card"><div class="wa-row"><span class="wa-st ' + st[0] + '">' + st[1] + '</span><b>' + esc(p.name) + '</b></div>' +
+    const c = cfg(), rp = PLANS[w.rem_plan], per = new Date().toISOString().slice(0, 7);
+    return '<div class="wa-card"><div class="wa-row"><span class="wa-st ' + st[0] + '">' + st[1] + '</span><b>Autogestión por WhatsApp</b></div>' +
       (w.display ? '<p>Número: <b>' + esc(w.display) + '</b></p>' : '<p class="hint">Todavía falta conectar el número. Te escribimos para hacerlo juntos.</p>') +
-      '<div class="wa-use"><div><span>Charlas este mes</span><b>' + (w.period === new Date().toISOString().slice(0, 7) ? w.used || 0 : 0) + ' de ' + (w.quota || p.quota) + '</b></div><div class="wa-bar"><i style="width:' + pct + '%"></i></div></div>' +
       (q ? '<p>Calidad del número según WhatsApp: <span class="wa-st ' + q[0] + '">' + q[1] + '</span></p>' : '') +
-      '<p>Recordatorios automáticos: <b>' + (w.out_paused ? 'frenados' : c.rem === false ? 'apagados' : 'encendidos') + '</b> ' + (w.out_paused ? '<button class="btn small" data-act="waPause" data-v="0">Reanudar</button>' : c.rem !== false ? '<button class="btn small" data-act="waPause" data-v="1">Frenar</button>' : '') + '</p>' +
-      (waiting() ? '<button class="btn primary" data-act="waTab" data-t="charlas">' + waiting() + ' charla(s) esperan una persona ›</button>' : '') + '</div>' + SAFE +
-      '<p class="hint">¿Querés más charlas o cambiar de plan? <button class="btn small" data-act="waBuy" data-p="mas">Escribinos</button></p>';
+      (waiting() ? '<button class="btn primary" data-act="waTab" data-t="charlas">' + waiting() + ' charla(s) esperan una persona ›</button>' : '') + '</div>' +
+      (rp ? '<div class="wa-card"><div class="wa-row"><b>' + esc(rp.name) + '</b><span class="wa-st ' + (w.out_paused ? 'warn' : c.rem === false ? 'wait' : 'ok') + '">' + (w.out_paused ? 'Frenados' : c.rem === false ? 'Apagados' : 'Encendidos') + '</span></div>' +
+        '<div class="wa-use"><div><span>Recordatorios este mes</span><b>' + (w.rem_period === per ? w.rem_used || 0 : 0) + ' de ' + (w.rem_quota || rp.quota).toLocaleString('es-AR') + '</b></div><div class="wa-bar"><i style="width:' + pct + '%"></i></div></div>' +
+        (w.out_paused ? '<button class="btn small" data-act="waPause" data-v="0">Reanudar</button>' : c.rem !== false ? '<button class="btn small" data-act="waPause" data-v="1">Frenar</button>' : '') + '</div>'
+        : REM_INFO + remPlans()) +
+      SAFE + '<p class="hint">¿Querés cambiar el plan de recordatorios? <button class="btn small" data-act="waBuy" data-p="mas">Escribinos</button></p>';
   }
 
   function chatsHTML() {
@@ -16804,7 +16807,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       (l.length ? '<ul class="wa-list">' + l.map(c => {
         const p = patOf(c.wa_id);
         return '<li><button data-act="waChatOpen" data-chat="' + esc(c.id) + '"><span class="wa-av">' + esc(((p && p.name) || c.name || '?').charAt(0).toUpperCase()) + '</span><span class="wa-li"><b>' + esc((p && p.name) || c.name || ('+' + c.wa_id)) + '</b><small>' + esc(c.last_text || '') + '</small></span><span class="wa-meta"><small>' + when(c.last_at) + '</small>' +
-          (c.mode === 'humano' ? '<span class="wa-tag hum">' + (c.need ? 'Te necesita' : 'Persona') + '</span>' : '<span class="wa-tag">Asistente</span>') + (c.unread ? '<span class="wa-dot">' + c.unread + '</span>' : '') + '</span></button></li>';
+          (c.mode === 'humano' ? '<span class="wa-tag hum">' + (c.need ? 'Te necesita' : 'Persona') + '</span>' : '<span class="wa-tag">Automático</span>') + (c.unread ? '<span class="wa-dot">' + c.unread + '</span>' : '') + '</span></button></li>';
       }).join('') + '</ul>' : '<p class="hint">Todavía no hay charlas. Cuando un paciente escriba al WhatsApp del consultorio, aparece acá.</p>');
   }
   function chatHTML(c) {
@@ -16812,8 +16815,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const p = patOf(c.wa_id), ms = msgsOf(c.id), op = open24(c);
     return '<div class="wa-chead"><button class="btn small" data-act="waBack">‹ Charlas</button><div><b>' + esc((p && p.name) || c.name || '+' + c.wa_id) + '</b><small>+' + esc(c.wa_id) + (c.opt_out ? ' · pidió BAJA' : '') + '</small></div>' + (p ? '<button class="btn small" data-act="openFicha" data-pid="' + p.id + '">Ficha</button>' : '') + '</div>' +
       (c.need ? '<div class="wa-need">⚑ ' + esc(c.need) + '</div>' : '') +
-      '<div class="wa-msgs" id="waMsgs">' + ms.map(m => '<div class="wa-b ' + (m.dir === 'in' ? 'in' : 'out ' + m.who) + '">' + (m.dir === 'out' ? '<small>' + ({ bot: 'Asistente', persona: 'Consultorio', sistema: 'Automático' }[m.who] || '') + '</small>' : '') + esc(m.body).replace(/\n/g, '<br>') + (m.created_at ? '<i>' + when(m.created_at) + (m.status === 'failed' ? ' · no salió' : '') + '</i>' : '') + '</div>').join('') + '</div>' +
-      '<div class="wa-ctl">' + (c.mode === 'humano' ? '<span>La atiende una persona.</span><button class="btn small" data-act="waMode" data-v="bot">Devolver al asistente</button>' : '<span>La atiende el asistente.</span><button class="btn small" data-act="waMode" data-v="humano">Tomar la charla</button>') + '</div>' +
+      '<div class="wa-msgs" id="waMsgs">' + ms.map(m => '<div class="wa-b ' + (m.dir === 'in' ? 'in' : 'out ' + m.who) + '">' + (m.dir === 'out' ? '<small>' + ({ bot: 'Automático', persona: 'Consultorio', sistema: 'Automático' }[m.who] || '') + '</small>' : '') + esc(m.body).replace(/\n/g, '<br>') + (m.created_at ? '<i>' + when(m.created_at) + (m.status === 'failed' ? ' · no salió' : '') + '</i>' : '') + '</div>').join('') + '</div>' +
+      '<div class="wa-ctl">' + (c.mode === 'humano' ? '<span>La atiende una persona.</span><button class="btn small" data-act="waMode" data-v="bot">Volver al menú automático</button>' : '<span>La atiende el menú automático.</span><button class="btn small" data-act="waMode" data-v="humano">Tomar la charla</button>') + '</div>' +
       (op ? '<div class="wa-reply"><label class="sr" for="waTxt">Responder</label><textarea id="waTxt" rows="2" placeholder="Escribí tu respuesta…"></textarea><button class="btn primary" data-act="waSend">Enviar</button></div>'
         : '<p class="hint">Pasaron más de 24 horas desde el último mensaje del paciente: WhatsApp no deja escribirle primero desde acá. Esperá a que escriba o llamalo.</p>');
   }
@@ -16821,7 +16824,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const v = el.getAttribute('data-v'), c = chats().find(x => x.id === S.waChat); if (!c) return;
     if (W.me) { try { await CL.api('/rest/v1/rpc/ov_wa_take', { method: 'POST', body: { p_chat: c.id, p_mode: v } }); } catch (e) { A.toast('No se pudo. Revisá la conexión.'); return; } }
     c.mode = v; if (v === 'bot') c.need = null; A.renderModal();
-    A.toast(v === 'bot' ? 'El asistente sigue la charla.' : 'Listo: la charla es tuya; el asistente no responde.');
+    A.toast(v === 'bot' ? 'El menú automático sigue la charla.' : 'Listo: la charla es tuya; el menú automático no responde.');
   };
   A.acts.waSend = async () => {
     const t = ($('#waTxt') || {}).value || '', c = chats().find(x => x.id === S.waChat); if (!t.trim() || !c) return;
@@ -16837,8 +16840,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     try { await CL.api('/rest/v1/rpc/ov_wa_out_pause', { method: 'POST', body: { p_on: on } }); W.me.out_paused = on; A.renderModal(); A.toast(on ? 'Recordatorios frenados.' : 'Recordatorios reanudados.'); } catch (e) { A.toast('No se pudo. Revisá la conexión.'); }
   };
   A.acts.waBuy = el => {
-    const k = el.getAttribute('data-p'), p = PLANS[k];
-    const txt = p ? 'Hola! Quiero contratar la ' + p.name + ' (USD ' + p.usd + '/mes) de OdontoVoz para ' + (A.CLINIC || 'mi consultorio') + '.' : 'Hola! Quiero cambiar mi plan de la Secretaria virtual de OdontoVoz (' + (A.CLINIC || '') + ').';
+    const k = el.getAttribute('data-p'), p = PLANS[k], cl = A.CLINIC || 'mi consultorio';
+    const txt = k === 'base' ? 'Hola! Quiero activar la Autogestión por WhatsApp de OdontoVoz en ' + cl + '.' : p ? 'Hola! Quiero contratar ' + p.name + ' (USD ' + p.usd + '/mes) de recordatorios automáticos de OdontoVoz para ' + cl + '.' : 'Hola! Quiero cambiar mi plan de recordatorios automáticos de OdontoVoz (' + cl + ').';
     const sup = A.SUPPORT || {}, num = (sup.wa && sup.wa[0]) || sup.whatsapp || '5492984513279';
     window.open('https://wa.me/' + String(num).replace(/\D/g, '') + '?text=' + encodeURIComponent(txt), '_blank', 'noopener');
   };
@@ -16847,12 +16850,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const c = cfg(), tn = !(A.CFG.online && (A.CFG.online.on === false || A.CFG.online.link === false));
     const chk = (k, t, sub) => '<label class="wa-sw"><input type="checkbox" data-chg="waCfg" data-k="' + k + '"' + (c[k] !== false ? ' checked' : '') + '><span><b>' + t + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></label>';
     return '<div class="wa-form">' +
-      chk('on', 'Asistente encendido', 'Apagado, las charlas llegan igual y las respondés vos.') +
-      '<label class="lbl" for="waName">Nombre del asistente</label><input id="waName" data-chg="waCfg" data-k="botName" maxlength="24" value="' + esc(c.botName || '') + '" placeholder="Sofi">' +
-      chk('book', 'Que dé turnos', tn ? 'Usa los mismos horarios libres y motivos que el turnero online.' : 'Primero activá el Turnero online: el asistente usa esos horarios.') +
+      chk('on', 'Menú automático encendido', 'Apagado, las charlas llegan igual y las respondés vos.') +
+      chk('book', 'Que puedan sacar turno', tn ? 'Usa los mismos horarios libres y motivos que el turnero online.' : 'Primero activá el Turnero online: el menú usa esos horarios.') +
       (tn ? '' : '<button class="btn small" data-act="tnOpen">Abrir Turnero online</button>') +
-      '<label class="lbl" for="waInfo">Lo que tiene que saber de tu consultorio</label><textarea id="waInfo" rows="7" data-chg="waCfg" data-k="info" maxlength="2500" placeholder="Ej.: Atendemos OSDE, Swiss Medical y particulares. La consulta particular sale $25.000. Hay estacionamiento en la esquina. Aceptamos transferencia y tarjeta. Los sábados no atendemos.">' + esc(c.info || '') + '</textarea>' +
-      '<div class="hint">Lo usa tal cual. Si no está acá, no lo inventa: ofrece pasar con una persona. La dirección y los horarios los toma de tu configuración.</div>' +
+      '<label class="lbl" for="waInfo">Obras sociales, precios y otros datos (lo que ve el paciente en «Obras sociales y precios»)</label><textarea id="waInfo" rows="7" data-chg="waCfg" data-k="info" maxlength="2500" placeholder="Ej.: Atendemos OSDE, Swiss Medical y particulares. La consulta particular sale $25.000. Hay estacionamiento en la esquina. Aceptamos transferencia y tarjeta. Los sábados no atendemos.">' + esc(c.info || '') + '</textarea>' +
+      '<div class="hint">Se muestra tal cual. La dirección y el teléfono los toma de los datos del consultorio; los horarios, de tu agenda.</div>' +
+      '<h4 class="wa-h">Recordatorios automáticos ' + (W.me && W.me.rem_plan ? '' : '<span class="wa-tag">servicio aparte</span>') + '</h4>' +
       chk('rem', 'Recordatorios automáticos con botón «Confirmo»', 'Cuando el paciente toca Confirmo, el turno se marca solo en la agenda.') +
       '<label class="lbl" for="waWhen">Cuándo se mandan</label><select id="waWhen" data-chg="waCfg" data-k="remWhen"><option value="dia"' + (c.remWhen !== '2dias' ? ' selected' : '') + '>El día anterior</option><option value="2dias"' + (c.remWhen === '2dias' ? ' selected' : '') + '>Dos días antes</option></select>' +
       '<label class="lbl" for="waAt">A qué hora</label><select id="waAt" data-chg="waCfg" data-k="remAt">' + [9, 10, 11, 12, 16, 18].map(h => '<option value="' + h + '"' + (+c.remAt === h ? ' selected' : '') + '>' + A.pad(h) + ':00</option>').join('') + '</select>' +
@@ -16870,116 +16873,207 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   async function pushCfg() { if (!active() && !(W.me && W.me.status === 'pendiente')) return; try { await CL.api('/rest/v1/rpc/ov_wa_cfg_set', { method: 'POST', body: { p_cfg: cfg() } }); } catch (e) { /* se reintenta al abrir */ } }
 
-  /* ---------- simulador (en el equipo, sin IA): para probar y mostrar ---------- */
-  const SIM = S.waSim || (S.waSim = { msgs: [], st: {} });
+  /* ---------- motor del menú: lo copia node scripts/build-wa.js desde scripts/wa-menu.js (no editar acá) ---------- */
+  /* >>> MENU */
+/* Autogestión por WhatsApp · motor del menú con botones (sin IA). Código común a la app («Probala») y al servidor (wa-webhook).
+   node scripts/build-wa.js lo copia dentro de supabase/functions/wa-webhook/index.ts y de src/app52.js: editá SOLO este archivo.
+   step(estado, entrada, ctx) → { st, out: [mensajes], act? }
+     entrada: { text, id } (id = botón o fila de lista tocada) · { booked: {ok, code, msg} } (resultado de pedir el turno)
+     ctx: { clinic, addr, phone, info, book, types:[{k,label}], pros:[{id,name}], slots:{tipo:{fecha:[[pro,min,dur]]}}, today:'AAAA-MM-DD', nowMin, now (ms) }
+     mensaje: { text } · { text, buttons:[{id,title}] } (hasta 3) · { text, list:{ button, rows:[{id,title,desc}] } } (hasta 10)
+     act: { book: {type,date,start,pro,dur,first,last,dni,cov} } · { handoff: 'motivo' } */
+const OVMenu = (function () {
+  const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[¿?¡!.,;:]/g, ' ').replace(/\s+/g, ' ').trim();
+  const hm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  const dow = d => new Date(d + 'T12:00:00Z').getUTCDay();
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const dShort = d => cap(DIAS[dow(d)]) + ' ' + (+d.slice(8)) + '/' + (+d.slice(5, 7));
+  const dLong = d => DIAS[dow(d)] + ' ' + (+d.slice(8)) + ' de ' + MES[+d.slice(5, 7) - 1];
+  const cut = (s, n) => { s = String(s || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+  const TIMEOUT = 30 * 60000;
+
+  const MENU_ROWS = ctx => [
+    ctx.book !== false ? { id: 'm:turno', title: 'Pedir un turno', desc: 'Elegís el día y el horario' } : null,
+    { id: 'm:dir', title: 'Dirección y contacto', desc: ctx.addr ? cut(ctx.addr, 72) : '' },
+    ctx.info ? { id: 'm:info', title: 'Obras sociales y precios', desc: 'Lo que atiende el consultorio' } : null,
+    { id: 'm:persona', title: 'Hablar con una persona', desc: 'Te responde alguien del consultorio' }
+  ].filter(Boolean);
+  const menu = (ctx, intro) => ({ text: (intro ? intro + '\n\n' : '') + '¿Qué necesitás?', list: { button: 'Ver opciones', rows: MENU_ROWS(ctx) } });
+  const hello = ctx => '¡Hola! 👋 Te responde el asistente automático de ' + (ctx.clinic || 'el consultorio') + '.';
+  const back = [{ id: 'm:menu', title: 'Volver al menú' }];
+
+  const slotsOf = (ctx, k) => (ctx.slots && (ctx.slots[k] || ctx.slots.control || ctx.slots[Object.keys(ctx.slots)[0]])) || {};
+  const proName = (ctx, id) => ((ctx.pros || []).find(p => p.id === id) || {}).name || '';
+  const okSlot = (ctx, d, t) => d > ctx.today || (d === ctx.today && t >= (ctx.nowMin || 0) + 60);
+  function days(ctx, k) {
+    const by = slotsOf(ctx, k);
+    return Object.keys(by).sort().filter(d => d >= ctx.today).map(d => ({ d, l: by[d].filter(s => okSlot(ctx, d, s[1])) })).filter(x => x.l.length).slice(0, 10);
+  }
+  function askType(st, ctx) {
+    const types = (ctx.types || []).slice(0, 10);
+    if (types.length <= 1) return askDay({ ...st, k: (types[0] || { k: 'control' }).k }, ctx);
+    const rows = types.map(t => ({ id: 't:' + t.k, title: cut(t.label, 24), desc: t.label.length > 24 ? cut(t.label, 72) : '' }));
+    return { st: { ...st, s: 'tipo', rows }, out: [{ text: '¿Para qué es el turno?', list: { button: 'Elegir motivo', rows } }] };
+  }
+  function askDay(st, ctx) {
+    const ds = days(ctx, st.k);
+    if (!ds.length) return { st: { s: 'idle' }, out: [{ text: 'Por ahora no hay horarios libres para eso en los próximos días. Si querés, te paso con alguien del consultorio.', buttons: [{ id: 'm:persona', title: 'Hablar con alguien' }, { id: 'm:menu', title: 'Volver al menú' }] }] };
+    const rows = ds.map(x => ({ id: 'd:' + x.d, title: dShort(x.d), desc: x.l.length + (x.l.length === 1 ? ' horario' : ' horarios') + ' · desde las ' + hm(x.l[0][1]) }));
+    return { st: { ...st, s: 'dia', rows }, out: [{ text: '¿Qué día te queda mejor?', list: { button: 'Elegir día', rows } }] };
+  }
+  function askHour(st, ctx) {
+    const l = (slotsOf(ctx, st.k)[st.d] || []).filter(s => okSlot(ctx, st.d, s[1]));
+    if (!l.length) return askDay(st, ctx);
+    const many = new Set(l.map(s => s[0])).size > 1;
+    let rows = l.slice(0, 9).map(s => ({ id: 'h:' + s[0] + '|' + s[1] + '|' + (s[2] || 30), title: hm(s[1]) + ' h', desc: many ? cut(proName(ctx, s[0]), 72) : '' }));
+    rows.push({ id: 'm:otrodia', title: 'Otro día', desc: '' });
+    return { st: { ...st, s: 'hora', rows }, out: [{ text: dLong(st.d) + ': elegí el horario.', list: { button: 'Elegir horario', rows } }] };
+  }
+  const summary = (st, ctx) => '¿Confirmo el turno?\n\n📅 ' + cap(dLong(st.d)) + ' a las ' + hm(st.t) + ' h' + (proName(ctx, st.pro) ? '\n🦷 ' + proName(ctx, st.pro) : '') + '\n👤 ' + st.first + ' ' + st.last + ' · DNI ' + st.dni + '\n🏥 ' + (st.cov || 'Particular');
+
+  function pick(st, text) {   // texto escrito cuando se esperaba una opción: número o nombre de la fila
+    const t = norm(text), rows = st.rows || [];
+    const n = parseInt(t, 10); if (n >= 1 && n <= rows.length && String(n) === t) return rows[n - 1].id;
+    const r = rows.find(x => norm(x.title) === t) || rows.find(x => t.length >= 3 && norm(x.title).includes(t)) || rows.find(x => t.length >= 4 && norm(x.desc).includes(t));
+    return r ? r.id : '';
+  }
+
+  function step(st0, inp, ctx) {
+    let st = st0 && st0.s ? st0 : { s: 'idle' };
+    const now = ctx.now || Date.now();
+    if (st.at && now - st.at > TIMEOUT && st.s !== 'idle') st = { s: 'idle' };
+    const R = r => { r.st = { ...r.st, at: now }; return r; };
+    if (inp && inp.booked) {
+      const b = inp.booked;
+      if (b.ok) return R({ st: { s: 'idle' }, out: [{ text: '¡Listo! ✅ Pedimos tu turno para el ' + dLong(st.d) + ' a las ' + hm(st.t) + ' h.' + (b.code ? ' Código: ' + b.code + '.' : '') + '\nEl consultorio te lo confirma por acá.', buttons: back }] });
+      const r = askDay({ ...st }, ctx); r.out.unshift({ text: (b.msg || 'Ese horario ya no está libre.') + ' Elegí otro, por favor.' }); return R(r);
+    }
+    const text = String((inp && inp.text) || '').trim(), t = norm(text);
+    let id = (inp && inp.id) || '';
+    if (!id && st.rows && /^(tipo|dia|hora)$/.test(st.s)) id = pick(st, text);
+    const typing = /^(nombre|dni|os)$/.test(st.s);
+
+    /* atajos que valen siempre (salvo mientras escribe sus datos) */
+    if (id === 'm:menu' || (!typing && !id && /^(menu|hola|holis|buenas|buen dia|buenos dias|buenas tardes|buenas noches|inicio|volver|empezar)\b/.test(t)))
+      return R({ st: { s: 'idle' }, out: [menu(ctx, st0 && st0.s ? '' : hello(ctx))] });
+    if (id === 'c:no' || (typing && /^(cancelar|salir)$/.test(t))) return R({ st: { s: 'idle' }, out: [{ text: 'Listo, no anoté nada.' }, menu(ctx)] });
+    if (id === 'm:persona' || (!typing && !id && /(persona|humano|secretari|alguien|hablar con|atencion)/.test(t)))
+      return R({ st: { s: 'idle' }, out: [{ text: 'Listo, ya le aviso a alguien del consultorio. En breve te responden por acá. 🙌' }], act: { handoff: text ? cut(text, 120) : 'Pidió hablar con una persona' } });
+    if (id === 'm:dir' || (!typing && !id && /(direcc|donde (estan|queda)|ubicac|como llego|telefono)/.test(t)))
+      return R({ st: { s: 'idle' }, out: [{ text: (ctx.addr ? '📍 ' + ctx.addr : 'La dirección te la pasa alguien del consultorio.') + (ctx.phone ? '\n📞 ' + ctx.phone : ''), buttons: [ctx.book !== false ? { id: 'm:turno', title: 'Pedir un turno' } : null, { id: 'm:menu', title: 'Volver al menú' }].filter(Boolean) }] });
+    if (id === 'm:info' || (!typing && !id && /(obra social|obras sociales|prepaga|osde|swiss|pami|ioma|galeno|medife|precio|cuanto (sale|cuesta)|valor|pago|tarjeta|transferencia)/.test(t)))
+      return R({ st: { s: 'idle' }, out: [{ text: ctx.info ? cut(ctx.info, 1000) : 'Eso te lo confirma alguien del consultorio.', buttons: [ctx.book !== false ? { id: 'm:turno', title: 'Pedir un turno' } : null, { id: 'm:persona', title: 'Hablar con alguien' }, { id: 'm:menu', title: 'Volver al menú' }].filter(Boolean) }] });
+    if (id === 'm:turno' || (!typing && !id && st.s === 'idle' && /(turno|cita|reserv|agend|sacar|atender|consulta|me duele|dolor)/.test(t))) {
+      if (ctx.book === false) return R({ st: { s: 'idle' }, out: [{ text: 'Los turnos los da una persona del consultorio. Ya le aviso para que te escriba.' }], act: { handoff: 'Quiere un turno' } });
+      const urg = /(me duele|dolor|urgencia|urgente)/.test(t) && (ctx.types || []).some(x => x.k === 'urgencia');
+      return R(urg ? askDay({ s: 'dia', k: 'urgencia' }, ctx) : askType({ s: 'tipo' }, ctx));
+    }
+    if (id === 'm:otrodia' || id === 'c:hora') return R(askDay({ ...st }, ctx));
+
+    /* pasos del turno */
+    if (st.s === 'tipo') { if (id.startsWith('t:')) return R(askDay({ ...st, k: id.slice(2) }, ctx)); return R(askType(st, ctx)); }
+    if (st.s === 'dia') { if (id.startsWith('d:')) return R(askHour({ ...st, d: id.slice(2) }, ctx)); return R(askDay(st, ctx)); }
+    if (st.s === 'hora') {
+      if (!id && /^\d{1,2}([:.h ]\d{2})?/.test(t)) { const m = t.match(/^(\d{1,2})(?:[:.h ](\d{2}))?/), want = +m[1] * 60 + (+m[2] || 0); const r = (st.rows || []).find(x => x.id.startsWith('h:') && +x.id.split('|')[1] === want); if (r) id = r.id; }
+      if (id.startsWith('h:')) { const [pro, tt, dur] = id.slice(2).split('|'); return R({ st: { ...st, s: 'nombre', pro, t: +tt, dur: +dur || 30, rows: null }, out: [{ text: '¡Bien! ' + cap(dLong(st.d)) + ' a las ' + hm(+tt) + ' h.\n¿Cuál es el nombre y apellido del paciente?' }] }); }
+      return R(askHour(st, ctx));
+    }
+    if (st.s === 'nombre') {
+      const w = text.replace(/[^\p{L}\s'-]/gu, ' ').split(/\s+/).filter(x => x.length > 1);
+      if (w.length < 2) return R({ st, out: [{ text: 'Escribime nombre y apellido, por favor (por ejemplo: Ana Pérez).' }] });
+      const T = s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+      return R({ st: { ...st, s: 'dni', first: T(w[0]), last: w.slice(1).map(T).join(' ') }, out: [{ text: 'Gracias. ¿Número de DNI?' }] });
+    }
+    if (st.s === 'dni') {
+      const dni = text.replace(/\D/g, '');
+      if (dni.length < 6 || dni.length > 9) return R({ st, out: [{ text: 'El DNI tiene que tener entre 7 y 8 números. ¿Me lo pasás de nuevo?' }] });
+      return R({ st: { ...st, s: 'os', dni }, out: [{ text: '¿Tenés obra social o prepaga? Escribí cuál, o tocá «Particular».', buttons: [{ id: 'os:part', title: 'Particular' }] }] });
+    }
+    if (st.s === 'os') {
+      const cov = id === 'os:part' || /^(particular|no|ninguna|no tengo)$/.test(t) ? 'Particular' : cut(text, 40);
+      if (!cov) return R({ st, out: [{ text: 'Escribí tu obra social, o tocá «Particular».', buttons: [{ id: 'os:part', title: 'Particular' }] }] });
+      const s2 = { ...st, s: 'ok', cov };
+      return R({ st: s2, out: [{ text: summary(s2, ctx), buttons: [{ id: 'c:si', title: 'Confirmar' }, { id: 'c:hora', title: 'Cambiar horario' }, { id: 'c:no', title: 'Cancelar' }] }] });
+    }
+    if (st.s === 'ok') {
+      if (id === 'c:si' || /^(si|sí|dale|ok|confirmo|confirmar|de una|perfecto)\b/.test(t))
+        return R({ st: { ...st, s: 'wait' }, out: [], act: { book: { type: st.k, date: st.d, start: st.t, pro: st.pro, dur: st.dur, first: st.first, last: st.last, dni: st.dni, cov: st.cov } } });
+      return R({ st, out: [{ text: summary(st, ctx), buttons: [{ id: 'c:si', title: 'Confirmar' }, { id: 'c:hora', title: 'Cambiar horario' }, { id: 'c:no', title: 'Cancelar' }] }] });
+    }
+    if (/(gracias|genial|buenisimo|perfecto|joya)/.test(t)) return R({ st: { s: 'idle' }, out: [{ text: '¡De nada! Cualquier cosa, escribinos. 😊' }] });
+    return R({ st: { s: 'idle' }, out: [menu(ctx, st0 && st0.s ? 'No te entendí bien.' : hello(ctx))] });
+  }
+  return { step, norm, dLong, hm };
+})();
+/* <<< MENU */
+
+  /* ---------- «Probala»: el mismo menú que ve el paciente, con botones ---------- */
+  const SIM = S.waSim || (S.waSim = { msgs: [], st: null });
+  const tnOn = () => !(A.CFG.online && (A.CFG.online.on === false || A.CFG.online.link === false));
+  function simCtx() {
+    const d = (A.tnPubData && A.tnPubData()) || {}, c = cfg(), now = new Date();
+    return { clinic: A.CLINIC, addr: A.CFG.addr || d.addr, phone: A.CFG.phone || d.phone, info: c.info || '', book: c.book !== false, types: d.types || [], pros: d.pros || [], slots: d.slots || {}, today: A.today(), nowMin: now.getHours() * 60 + now.getMinutes(), now: Date.now() };
+  }
   function simHTML() {
-    const aiOn = real() && SIM.ai !== false;
-    return (aiOn ? '<p class="wa-demo ai">Prueba con la <b>inteligencia artificial real</b> y tu agenda de verdad: escribí como si fueras un paciente. Si pedís un turno, entra a tu agenda como «pedido online» marcado PRUEBA (después borralo).' + (tnOn() ? '' : ' <b>Activá el Turnero online</b> para que pueda ofrecer horarios.') + '</p>'
-      : '<p class="wa-demo">Simulación en este equipo: escribí como si fueras un paciente. La secretaria real usa inteligencia artificial y conversa con más naturalidad.' + (A.DEMO ? ' Los turnos que pidas se cargan en tu agenda de prueba.' : ' Acá no se carga ningún turno de verdad.') + '</p>') +
+    const last = SIM.msgs.length - 1;
+    return '<p class="wa-demo">Así lo ve el paciente en WhatsApp: tocá los botones o escribí. ' + (A.DEMO ? 'Los turnos que pidas se cargan en tu agenda de prueba.' : real() ? 'Si pedís un turno, entra a tu agenda como «pedido online» con la nota PRUEBA (después borralo).' + (tnOn() ? '' : ' <b>Activá el Turnero online</b> para que ofrezca horarios.') : 'Es una simulación: no se carga ningún turno.') + '</p>' +
       '<div class="wa-phone"><div class="wa-ph-top">' + WA_IC + '<b>' + esc(A.CLINIC || 'Tu consultorio') + '</b></div><div class="wa-msgs sim" id="waMsgs">' +
-      (SIM.msgs.length ? '' : '<div class="wa-hint">Probá: «Hola, quiero un turno para control», «¿Dónde quedan?», «¿Atienden OSDE?» o «BAJA».</div>') +
-      SIM.msgs.map(m => '<div class="wa-b ' + (m[0] === 'in' ? 'in' : 'out bot') + '">' + esc(m[1]).replace(/\n/g, '<br>') + '</div>').join('') + '</div>' +
+      (SIM.msgs.length ? '' : '<div class="wa-hint">Escribí «Hola» para empezar, o probá «quiero un turno», «¿dónde quedan?» o «BAJA».</div>') +
+      SIM.msgs.map((m, i) => {
+        if (m.dir === 'in') return '<div class="wa-b in">' + esc(m.text) + '</div>';
+        const opts = m.buttons ? m.buttons.map(b => '<button class="wa-opt" data-act="waSimPick" data-id="' + esc(b.id) + '" data-t="' + esc(b.title) + '"' + (i < last ? ' disabled' : '') + '>' + esc(b.title) + '</button>').join('')
+          : m.list ? '<div class="wa-lbtn">☰ ' + esc(m.list.button) + '</div>' + m.list.rows.map(r => '<button class="wa-opt row" data-act="waSimPick" data-id="' + esc(r.id) + '" data-t="' + esc(r.title) + '"' + (i < last ? ' disabled' : '') + '><b>' + esc(r.title) + '</b>' + (r.desc ? '<small>' + esc(r.desc) + '</small>' : '') + '</button>').join('') : '';
+        return '<div class="wa-b out bot">' + esc(m.text).replace(/\n/g, '<br>') + (opts ? '<div class="wa-opts">' + opts + '</div>' : '') + '</div>';
+      }).join('') + '</div>' +
       '<div class="wa-reply"><label class="sr" for="waSimTxt">Mensaje del paciente</label><input id="waSimTxt" placeholder="Escribí como paciente…" autocomplete="off"><button class="btn primary" data-act="waSimSend">Enviar</button></div></div>' +
       '<button class="btn small" data-act="waSimReset">Empezar de nuevo</button>';
   }
-  const DAYN = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-  function simSlots(kind) {
-    const out = [], pros = (A.PROS || []).filter(p => p.sched && Object.keys(p.sched).length);
-    for (let i = 1; i < 21 && out.length < 3; i++) {
-      const d = A.add(A.today(), i); if (A.closedOn && A.closedOn(d)) continue;
-      for (const p of pros) {
-        const fs = A.freeSlots ? A.freeSlots(p, d, Math.max(30, A.slotOf ? A.slotOf(p) : 30), {}) : [];
-        const t = fs.find(x => (kind === 'tarde' ? x >= 780 : kind === 'manana' ? x < 780 : true));
-        if (t != null) { out.push({ d, t, pro: p.id }); break; }
-      }
+  const simDone = () => { A.renderModal(); setTimeout(() => { const m = $('#waMsgs'); if (m) m.scrollTop = m.scrollHeight; }, 30); };
+  async function simBook(req) {
+    if (A.DEMO) {
+      const pat = A.addPatient({ first: req.first, last: req.last, dni: req.dni, cov: req.cov || 'Particular', pro: req.pro });
+      const code = 'OV-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+      const a = { id: A.uid(), pid: pat.id, pro: req.pro, date: req.date, start: req.start, dur: req.dur || 30, what: (A.TYPES[req.type] || ['Control'])[0], status: 'pendiente', online: true, wa: true, code, note: 'Pedido por WhatsApp (autogestión)' };
+      A.mutate([a.date], () => { A.day(a.date).push(a); }); A.saveNow && A.saveNow();
+      A.toast('Turno pedido por WhatsApp: ' + pat.name + ', ' + A.fmtShort(a.date) + ' ' + A.mm(a.start) + '.');
+      return { ok: true, code };
     }
-    return out;
-  }
-  const say = (t) => SIM.msgs.push(['out', t]);
-  function simBot(txt) {
-    const c = cfg(), st = SIM.st, t = N(txt), name = c.botName || 'Sofi';
-    if (!st.hi) { st.hi = 1; say('¡Hola! Soy ' + name + ', la asistente virtual de ' + (A.CLINIC || 'el consultorio') + ' 😊 Si preferís, te paso con una persona.'); }
-    if (/^(baja|stop)\b/.test(t)) { st.step = null; return say('Listo, no te vamos a mandar más recordatorios por acá. Si querés volver a recibirlos, escribí ALTA.'); }
-    if (/persona|humano|secretaria|alguien/.test(t)) { st.step = null; return say('Dale, te paso con alguien del consultorio. En breve te responden.'); }
-    if (st.step === 'pick') {
-      const n = /\b(1|uno|primer|primero)\b/.test(t) ? 0 : /\b(2|dos|segundo)\b/.test(t) ? 1 : /\b(3|tres|tercer|tercero)\b/.test(t) ? 2 : -1;
-      if (n >= 0 && st.opts[n]) { st.sel = st.opts[n]; st.step = 'data'; return say('Perfecto. ¿Me pasás tu nombre, apellido y DNI? Y la obra social, si tenés.'); }
-      return say('¿Cuál te queda mejor? Respondé 1, 2 o 3.');
-    }
-    if (st.step === 'data') {
-      const dni = (txt.match(/\d[\d.]{6,10}/) || [''])[0].replace(/\D/g, ''), words = txt.replace(/\d[\d.]*/g, ' ').split(/[\s,]+/).filter(w => w.length > 1);
-      if (dni.length < 7 || words.length < 2) return say('Me falta algo: necesito nombre, apellido y DNI (por ejemplo: Ana Pérez 30123456).');
-      st.pat = { first: words[0], last: words[1], dni, cov: words.slice(2).join(' ') }; st.step = 'ok';
-      const s = st.sel; return say('Te anoto: ' + st.pat.first + ' ' + st.pat.last + ', ' + DAYN[A.parse(s.d).getDay()] + ' ' + A.fmtShort(s.d).split(' ')[1] + ' a las ' + A.mm(s.t) + ' con ' + (A.PRO(s.pro) || {}).name + '. ¿Lo confirmo?');
-    }
-    if (st.step === 'ok') {
-      if (/^(si|sí|dale|ok|confirm|perfecto|de una)/.test(t)) {
-        const s = st.sel, code = 'OV-' + Math.random().toString(36).slice(2, 6).toUpperCase(); st.step = null;
-        if (A.DEMO) {
-          const pat = A.addPatient({ first: st.pat.first, last: st.pat.last, dni: st.pat.dni, cov: st.pat.cov || 'Particular', pro: s.pro });
-          const a = { id: A.uid(), pid: pat.id, pro: s.pro, date: s.d, start: s.t, dur: 30, what: (A.TYPES[st.kind] || ['Control'])[0], status: 'pendiente', online: true, wa: true, code, note: 'Pedido por WhatsApp (asistente)' };
-          A.mutate([a.date], () => { A.day(a.date).push(a); }); A.saveNow && A.saveNow();
-          A.toast('Turno pedido por WhatsApp: ' + pat.name + ', ' + A.fmtShort(a.date) + ' ' + A.mm(a.start) + '.');
-        }
-        return say('¡Listo! Pedí tu turno (código ' + code + '). El consultorio te lo confirma por acá. ¿Te ayudo con algo más?');
-      }
-      st.step = null; return say('Sin problema, no lo anoto. ¿Querés otro día u horario?');
-    }
-    if (/turno|cita|sacar|agendar|reservar|atender|dolor|control|limpieza|consulta/.test(t)) {
-      if (c.book === false) return say('Por acá no doy turnos, pero te paso con alguien del consultorio que te lo da enseguida.');
-      st.kind = /dolor|urgen|me duele/.test(t) ? 'urgencia' : /limpieza/.test(t) ? 'limpieza' : 'control';
-      const opts = simSlots(/tarde/.test(t) ? 'tarde' : /manana|mañana/.test(txt.toLowerCase()) && !/pasado/.test(t) ? 'manana' : '');
-      if (!opts.length) return say('No encuentro horarios libres en los próximos días. Te paso con alguien del consultorio.');
-      st.opts = opts; st.step = 'pick';
-      return say((st.kind === 'urgencia' ? 'Uh, lamento el dolor. ' : '') + 'Tengo estos horarios:\n' + opts.map((o, i) => (i + 1) + ') ' + DAYN[A.parse(o.d).getDay()] + ' ' + A.fmtShort(o.d).split(' ')[1] + ' a las ' + A.mm(o.t) + ' con ' + (A.PRO(o.pro) || {}).name).join('\n') + '\n¿Cuál te queda mejor?');
-    }
-    if (/donde|direccion|ubicad|queda|llego/.test(t)) return say(A.CFG.addr ? 'Estamos en ' + A.CFG.addr + '.' : 'La dirección te la pasa una persona del consultorio. ¿Te paso con alguien?');
-    if (/horario|abren|atienden los|que dias/.test(t) && !/obra|osde/.test(t)) return say('Atendemos según la agenda de cada profesional. Si querés, te busco el próximo turno libre.');
-    const info = String(c.info || ''), key = t.split(/\W+/).filter(w => w.length > 3);
-    const line = info.split(/(?<=[.\n])\s*/).find(l => key.some(k => N(l).includes(k)));
-    if (line) return say(line.trim());
-    if (/osde|swiss|obra social|prepaga|pami|ioma|galeno|medife|precio|cuanto|sale|cuesta|pago|tarjeta/.test(t)) return say('Eso te lo confirma una persona del consultorio. ¿Querés que te pase con alguien?');
-    if (/gracias|genial|buenisimo|perfecto/.test(t)) return say('¡De nada! Cualquier cosa, escribime.');
-    if (st.hi === 1 && SIM.msgs.length <= 2) return;
-    say('Puedo darte un turno, decirte la dirección o pasarte con una persona. ¿Qué necesitás?');
-  }
-  const tnOn = () => !(A.CFG.online && (A.CFG.online.on === false || A.CFG.online.link === false));
-  const simDone = () => { A.renderModal(); setTimeout(() => { const m = $('#waMsgs'); if (m) m.scrollTop = m.scrollHeight; const x = $('#waSimTxt'); if (x) x.focus(); }, 30); };
-  /* con cuenta real: la IA de verdad (función wa-sim); si no está encendida, la simulación del equipo */
-  async function aiReply() {
-    SIM.busy = true; SIM.msgs.push(['out', '…escribiendo']); simDone();
+    if (!real()) return { ok: true, code: 'PRUEBA' };
     try {
       if (A.tnPublish) await A.tnPublish(true);
-      const r = await CL.api('/functions/v1/wa-sim', { method: 'POST', body: { cfg: cfg(), phone: A.waNumber ? A.waNumber(A.CFG.phone || '') : '', messages: SIM.msgs.filter(m => m[1] !== '…escribiendo').map(m => ({ role: m[0] === 'in' ? 'user' : 'assistant', text: m[1] })) } });
-      SIM.msgs.pop();
-      SIM.msgs.push(['out', (r && r.reply) || '…']);
-      if (r && r.booked) { A.toast('Turno de PRUEBA pedido para ' + A.fmtShort(r.booked.date) + ' ' + A.mm(r.booked.start) + '. Entra a la agenda en unos segundos.'); setTimeout(() => A.tnClaim && A.tnClaim(), 1500); }
-    } catch (e) {
-      SIM.msgs.pop();
-      SIM.ai = false; const last = SIM.msgs[SIM.msgs.length - 1]; if (last && last[0] === 'in') simBot(last[1]);
-      A.toast('La prueba con IA todavía no está encendida: sigue la simulación del equipo.');
-    } finally { SIM.busy = false; simDone(); }
+      const r = await CL.api('/rest/v1/rpc/ov_booking_request', { method: 'POST', body: { p_slug: A.tnSlug(), p_req: { ...req, phone: (A.waNumber && A.waNumber(A.CFG.phone || '')) || '1100000000', note: 'PRUEBA de la Autogestión por WhatsApp.' } } });
+      if (r && r.ok) setTimeout(() => A.tnClaim && A.tnClaim(), 1500);
+      return r || { ok: false };
+    } catch (e) { return { ok: false, msg: 'No se pudo pedir (revisá que el Turnero online esté encendido).' }; }
   }
-  A.acts.waSimSend = () => {
-    const i = $('#waSimTxt'), t = (i && i.value || '').trim(); if (!t || SIM.busy) return;
-    SIM.msgs.push(['in', t]);
-    if (real() && SIM.ai !== false) { aiReply(); return; }
-    simBot(t); simDone();
-  };
-  A.acts.waSimReset = () => { SIM.msgs = []; SIM.st = {}; if (SIM.ai === false) SIM.ai = undefined; A.renderModal(); };
+  async function simRun(inp) {
+    const t = OVMenu.norm(inp.text || '');
+    if (/^(baja|stop)$/.test(t)) { SIM.msgs.push({ dir: 'out', text: 'Listo, no te vamos a mandar más recordatorios por acá. Si querés volver a recibirlos, escribí ALTA.' }); return simDone(); }
+    const ctx = simCtx();
+    let r = OVMenu.step(SIM.st, inp, ctx);
+    r.out.forEach(m => SIM.msgs.push({ dir: 'out', ...m }));
+    if (r.act && r.act.book) { simDone(); const res = await simBook(r.act.book); r = OVMenu.step(r.st, { booked: res }, ctx); r.out.forEach(m => SIM.msgs.push({ dir: 'out', ...m })); }
+    if (r.act && r.act.handoff) SIM.msgs.push({ dir: 'out', text: '(En la versión real, la charla pasa a la pestaña Charlas y te llega un aviso).', note: true });
+    SIM.st = r.st; simDone();
+  }
+  A.acts.waSimSend = () => { const i = $('#waSimTxt'), t = (i && i.value || '').trim(); if (!t) return; SIM.msgs.push({ dir: 'in', text: t }); simRun({ text: t }); setTimeout(() => { const x = $('#waSimTxt'); if (x) x.focus(); }, 40); };
+  A.acts.waSimPick = el => { if (el.disabled) return; SIM.msgs.push({ dir: 'in', text: el.getAttribute('data-t') }); simRun({ id: el.getAttribute('data-id') }); };
+  A.acts.waSimReset = () => { SIM.msgs = []; SIM.st = null; A.renderModal(); };
   document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.id === 'waSimTxt') { e.preventDefault(); A.acts.waSimSend(); } if (e.key === 'Enter' && !e.shiftKey && e.target && e.target.id === 'waTxt') { e.preventDefault(); A.acts.waSend(); } });
 
   MF.wa = () => {
     const t = S.waTab || 'inicio';
     const body = tabsHTML(t) + '<div class="wa-body">' + (t === 'charlas' ? chatsHTML() : t === 'config' ? configHTML() : t === 'probar' ? simHTML() : homeHTML()) + '</div>';
     setTimeout(() => { const m = $('#waMsgs'); if (m) m.scrollTop = m.scrollHeight; }, 20);
-    return A.modalShell('Secretaria virtual por WhatsApp', body, '<button class="btn primary" data-act="closeModal">Cerrar</button>', true);
+    return A.modalShell('Autogestión por WhatsApp', body, '<button class="btn primary" data-act="closeModal">Cerrar</button>', true);
   };
 
   /* ---------- recordatorios automáticos: la app arma la cola ---------- */
   const isoAt = (d, h) => new Date(d + 'T' + A.pad(h) + ':00:00-03:00').toISOString();
   async function queue() {
-    const c = cfg(); if (!active() || c.rem === false || W.me.out_paused) return;
+    const c = cfg(); if (!active() || !W.me.rem_plan || c.rem === false || W.me.out_paused) return;
     const items = [], marks = [];
     const before = c.remWhen === '2dias' ? 2 : 1;
     for (let n = 1; n <= before; n++) {
@@ -17046,7 +17140,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function menu() {
     if ($('#drWa')) { const b = $('#drWa .wa-dot'), n = waiting(); if (W.me && n) { if (b) b.textContent = n; else $('#drWa .t').insertAdjacentHTML('beforeend', '<span class="wa-dot">' + n + '</span>'); } else if (b) b.remove(); return; }
     const ref = $('#gearMenu .dr-nav .dnav[data-act="tnOpen"]') || $('#gearMenu .dr-nav .dnav:last-child'); if (!ref) return;
-    ref.insertAdjacentHTML('afterend', '<button class="dnav" id="drWa" data-act="waOpen">' + WA_IC + '<span class="t">Secretaria por WhatsApp<small>Responde y da turnos 24 h</small></span><span class="wa-new">Nuevo</span></button>');
+    ref.insertAdjacentHTML('afterend', '<button class="dnav" id="drWa" data-act="waOpen">' + WA_IC + '<span class="t">Autogestión por WhatsApp<small>Tus pacientes sacan turno solos</small></span><span class="wa-new">Nuevo</span></button>');
   }
   const arPrev = A.afterRefresh;
   A.afterRefresh = function () { if (arPrev) arPrev.apply(this, arguments); try { menu(); } catch (e) { /* nada */ } };
@@ -17054,7 +17148,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* voz: «abrí la secretaria», «abrí WhatsApp de pacientes» */
   const execPrev = A.cmd && A.cmd.exec;
   if (execPrev) A.cmd.exec = (text, o) => {
-    if (/^(?:abr[ií]|ir a|mostr[aá](?:me)?|ver)\s+(?:la\s+)?(?:secretaria(?: virtual)?|charlas de whatsapp|whatsapp de (?:los )?pacientes)\b/i.test(String(text || '').trim())) { A.acts.waOpen(); return { ok: true, msg: 'Abrí la Secretaria por WhatsApp.' }; }
+    if (/^(?:abr[ií]|ir a|mostr[aá](?:me)?|ver)\s+(?:la\s+)?(?:secretaria(?: virtual)?|autogesti[oó]n(?: por whatsapp)?|charlas de whatsapp|whatsapp de (?:los )?pacientes)\b/i.test(String(text || '').trim())) { A.acts.waOpen(); return { ok: true, msg: 'Abrí la Autogestión por WhatsApp.' }; }
     return execPrev(text, o);
   };
 
@@ -17097,9 +17191,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.wa-b.out { align-self: flex-end; background: #d9fdd3; } .wa-b.out.persona { background: #cfe9ff; } .wa-b.out.sistema { background: #f3f0e8; }',
     '[data-theme="dark"] .wa-b { background: #202c33; color: #e9edef; } [data-theme="dark"] .wa-b.out { background: #005c4b; } [data-theme="dark"] .wa-b.out.persona { background: #12446b; } [data-theme="dark"] .wa-b.out.sistema { background: #2a3238; }',
     '.wa-b small { display: block; font: 700 11px inherit; color: #1c7c45; margin-bottom: 2px; } .wa-b i { display: block; text-align: right; font: 400 11px inherit; color: #667781; margin-top: 2px; font-style: normal; }',
+    '.wa-opts { display: flex; flex-direction: column; gap: 4px; margin: 8px -4px -2px; } .wa-opt { border: 0; border-top: 1px solid rgba(0,0,0,.08); background: none; color: #027eb5; font: 600 14px inherit; padding: 8px 6px; cursor: pointer; text-align: center; display: flex; flex-direction: column; } .wa-opt.row { text-align: left; color: #111; } .wa-opt.row small { color: #667781; font-weight: 400; font-size: 12.5px; } .wa-opt:disabled { cursor: default; opacity: .55; } .wa-lbtn { text-align: center; color: #027eb5; font-weight: 600; font-size: 14px; padding: 6px 0 2px; border-top: 1px solid rgba(0,0,0,.08); margin-top: 8px; }',
+    '[data-theme="dark"] .wa-opt { color: #53bdeb; border-color: rgba(255,255,255,.1); } [data-theme="dark"] .wa-opt.row { color: #e9edef; } [data-theme="dark"] .wa-lbtn { color: #53bdeb; border-color: rgba(255,255,255,.1); }',
+    '.wa-on { width: 100%; margin-bottom: 4px; }',
     '.wa-hint { align-self: center; text-align: center; color: #54656f; font-size: 13px; background: rgba(255,255,255,.7); border-radius: 10px; padding: 8px 10px; }',
     '.wa-ctl { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; color: var(--ink-2); flex-wrap: wrap; }',
-    '.wa-reply { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; } .wa-reply textarea, .wa-reply input { flex: 1; min-height: 44px; border-radius: 22px; padding: 10px 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; resize: none; }',
+    '.wa-reply { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; } .wa-reply textarea, .wa-reply input { flex: 1; min-width: 0; min-height: 44px; border-radius: 22px; padding: 10px 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; resize: none; }',
     '.wa-phone { border: 1px solid var(--line); border-radius: 22px; overflow: hidden; max-width: 460px; margin: 0 auto 10px; padding-bottom: 10px; background: var(--surface); } .wa-phone .wa-reply { padding: 0 10px; }',
     '.wa-ph-top { display: flex; gap: 10px; align-items: center; background: #075e54; color: #fff; padding: 10px 14px; } .wa-ph-top svg { width: 22px; height: 22px; }',
     '.wa-phone .wa-msgs { border-radius: 0; max-height: 46vh; min-height: 280px; }',

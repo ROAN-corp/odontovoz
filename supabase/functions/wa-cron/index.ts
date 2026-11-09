@@ -1,4 +1,5 @@
-// OdontoVoz · Secretaria virtual por WhatsApp · manda los recordatorios en cola y cuida el número (1.39)
+// @ts-nocheck
+// OdontoVoz · Recordatorios automáticos por WhatsApp (servicio pago) · manda los de la cola y cuida el número (1.39.1)
 // Se publica como «wa-cron» SIN «Verify JWT»; la llama pg_cron cada 10 minutos con el encabezado x-ov-cron.
 // Secretos: META_TOKEN, WA_CRON_KEY. Opcionales: WA_TPL_REM (nombre de la plantilla), WA_TPL_LANG, GRAPH_VER.
 //
@@ -79,12 +80,16 @@ export async function serve(req: Request): Promise<Response> {
   const list = (await db('ov_wa?status=eq.activo&select=*')) || [];
   for (let w of list) {
     try { w = await quality(w); } catch (e) { console.error(e); }
-    if (w.out_paused || w.cfg?.rem === false) continue;
+    if (w.out_paused || w.cfg?.rem === false || !w.rem_plan) continue;   // sin el servicio pago de recordatorios, no se manda nada
+    const per = now.date.slice(0, 7);
+    if (w.rem_period !== per) { w.rem_used = 0; w.rem_period = per; await db('ov_wa?owner=eq.' + w.owner, { method: 'PATCH', prefer: 'return=minimal', body: { rem_used: 0, rem_period: per } }); }
+    let monthLeft = (w.rem_quota || 0) - (w.rem_used || 0);
+    if (monthLeft <= 0) continue;                                         // se terminó el cupo del mes
     const [h0, h1] = env('WA_HOURS', '9-20').split('-').map(Number);
     if (now.hour < h0 || now.hour >= h1) continue;                    // solo en horario razonable (9 a 20 h)
     const max = Math.min(HARD_MAX_DAY, +(w.cfg?.maxDay || 150));
     const sentToday = ((await db('ov_wa_out?owner=eq.' + w.owner + '&status=eq.enviado&sent_at=gte.' + dayStartUTC(now.date) + '&select=id')) || []).length;
-    let room = max - sentToday;
+    let room = Math.min(max - sentToday, monthLeft);
     if (room <= 0) continue;
     const due = (await db('ov_wa_out?owner=eq.' + w.owner + '&status=eq.cola&send_after=lte.' + new Date().toISOString() + '&order=send_after.asc&limit=' + Math.min(room, 60) + '&select=*')) || [];
     for (const it of due) {
@@ -92,7 +97,10 @@ export async function serve(req: Request): Promise<Response> {
       if (at && at < Date.now()) { await db('ov_wa_out?id=eq.' + it.id, { method: 'PATCH', prefer: 'return=minimal', body: { status: 'omitido', why: 'el turno ya pasó' } }); sum.skipped++; continue; }
       const opt = ((await db('ov_wa_chats?owner=eq.' + w.owner + '&wa_id=eq.' + it.wa_id + '&opt_out=eq.true&select=id')) || []).length;
       if (opt) { await db('ov_wa_out?id=eq.' + it.id, { method: 'PATCH', prefer: 'return=minimal', body: { status: 'omitido', why: 'baja' } }); sum.skipped++; continue; }
-      try { (await sendOne(w, it)) ? sum.sent++ : sum.failed++; } catch (e) { console.error(e); sum.failed++; }
+      try {
+        if (await sendOne(w, it)) { sum.sent++; w.rem_used = (w.rem_used || 0) + 1; await db('ov_wa?owner=eq.' + w.owner, { method: 'PATCH', prefer: 'return=minimal', body: { rem_used: w.rem_used } }); }
+        else sum.failed++;
+      } catch (e) { console.error(e); sum.failed++; }
       if (--room <= 0) break;
     }
   }

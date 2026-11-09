@@ -1,4 +1,5 @@
-// OdontoVoz · Secretaria virtual por WhatsApp · una persona del consultorio responde desde la app (1.39)
+// @ts-nocheck
+// OdontoVoz · Autogestión por WhatsApp · una persona del consultorio responde desde la app (1.39)
 // Se publica como «wa-send» CON «Verify JWT» (solo usuarios con sesión). Secretos: META_TOKEN.
 // Solo deja escribir dentro de las 24 h desde el último mensaje del paciente (regla de WhatsApp, y es gratis).
 
@@ -34,7 +35,7 @@ export async function serve(req: Request): Promise<Response> {
   const place = req.headers.get('x-ov-owner'); if (place) h['x-ov-owner'] = place;
   const r = await fetch(SB() + '/rest/v1/rpc/ov_wa_me', { method: 'POST', headers: h, body: '{}' });
   const w = r.ok ? await r.json() : null;
-  if (!w || !w.owner) return out({ ok: false, msg: 'Esta cuenta no tiene la Secretaria virtual.' }, 403);
+  if (!w || !w.owner) return out({ ok: false, msg: 'Esta cuenta no tiene la Autogestión por WhatsApp.' }, 403);
   if (w.status !== 'activo' || !w.phone_id) return out({ ok: false, msg: 'El número todavía no está conectado.' }, 409);
 
   const chat = ((await db('ov_wa_chats?id=eq.' + encodeURIComponent(b.chat) + '&owner=eq.' + w.owner + '&select=*')) || [])[0];

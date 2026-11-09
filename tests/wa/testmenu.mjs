@@ -1,0 +1,34 @@
+// Autogestión por WhatsApp: el webhook responde con el menú de botones (sin IA)
+import { T, SENT, AI_CALLS, inbound, reply, post, today, add } from './harness.mjs';
+const W = await import('../../supabase/functions/wa-webhook/index.ts');
+let fails = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + m); if (!c) fails++; };
+const last = () => SENT.at(-1);
+await post(W.serve, inbound('Hola'));
+ok(last().type === 'interactive' && last().interactive.type === 'list' && last().interactive.action.sections[0].rows.length === 4, 'saluda con el menú como lista de WhatsApp');
+ok(AI_CALLS.length === 0, 'sin IA');
+await post(W.serve, reply('m:turno', 'Pedir un turno'));
+ok(last().interactive.action.sections[0].rows[0].id === 't:control', 'pide el motivo');
+await post(W.serve, reply('t:control', 'Control'));
+const dayRow = last().interactive.action.sections[0].rows[0];
+ok(dayRow.id === 'd:' + add(today, 1), 'ofrece los días con horarios reales');
+await post(W.serve, reply(dayRow.id, dayRow.title));
+const hr = last().interactive.action.sections[0].rows[0];
+ok(/^h:p1\|540\|30$/.test(hr.id), 'ofrece los horarios');
+await post(W.serve, reply(hr.id, hr.title));
+await post(W.serve, inbound('Ana Pérez'));
+await post(W.serve, inbound('30123456'));
+ok(last().interactive.type === 'button' && last().interactive.action.buttons[0].reply.title === 'Particular', 'botón Particular');
+await post(W.serve, inbound('OSDE'));
+ok(last().interactive.action.buttons[0].reply.id === 'c:si', 'resumen con Confirmar');
+await post(W.serve, { entry: [{ changes: [{ value: { metadata: { phone_number_id: 'P1' }, messages: [{ id: 'wamid.c1', from: '5492994123456', type: 'interactive', interactive: { type: 'button_reply', button_reply: { id: 'c:si', title: 'Confirmar' } } }] } }] }] });
+const rq = T.booking_reqs.at(-1);
+ok(rq && rq.p_req.first === 'Ana' && rq.p_req.dni === '30123456' && rq.p_req.cov === 'OSDE' && rq.p_req.phone === '5492994123456' && rq.p_req.start === 540, 'pide el turno al turnero con los datos y el teléfono del chat');
+ok((last().text?.body || last().interactive?.body?.text || '').includes('OV-AB12'), 'confirma con el código');
+ok(T.ov_wa_msgs.some(m => m.dir === 'out' && m.body.includes('1. Pedir un turno')), 'la bandeja guarda las opciones como texto legible');
+await post(W.serve, inbound('quiero hablar con una persona'));
+ok(T.ov_wa_chats[0].mode === 'humano' && T.ov_wa_events.some(e => e.kind === 'persona'), 'pasa con una persona y avisa');
+// botón «Necesito cambiarlo» del recordatorio → menú de turno
+T.ov_wa_chats[0].mode = 'bot';
+await post(W.serve, { entry: [{ changes: [{ value: { metadata: { phone_number_id: 'P1' }, messages: [{ id: 'wamid.b2', from: '5492994123456', type: 'button', button: { text: 'Necesito cambiarlo', payload: 'camb:a5' } }] } }] }] });
+ok(T.ov_wa_events.some(e => e.kind === 'cambia' && e.appt === 'a5') && last().interactive, '«Necesito cambiarlo» avisa y ofrece horarios nuevos');
+console.log(fails ? fails + ' fallas' : 'todo bien');

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // OdontoVoz · Secretaria virtual · PRUEBA con la inteligencia artificial real, sin WhatsApp (1.39)
 // Sirve para que cualquier cuenta (testers incluidos) charle con el asistente desde la app, con su agenda de verdad.
 // Se publica como «wa-sim» CON «Verify JWT». Secretos: ANTHROPIC_API_KEY. Opcional: WA_AI_MODEL, WA_SIM_MAX (respuestas por día y cuenta).

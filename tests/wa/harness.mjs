@@ -6,7 +6,7 @@ const OWNER = 'o1';
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
 const add = (d, n) => { const t = new Date(d + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 export const T = {
-  ov_wa: [{ owner: OWNER, status: 'activo', plan: 'wa1', quota: 100, used: 0, period: today.slice(0, 7), phone_id: 'P1', cfg: { botName: 'Sofi', info: 'Atendemos OSDE y Swiss Medical.' }, out_paused: false }],
+  ov_wa: [{ owner: OWNER, status: 'activo', plan: 'wa1', quota: 100, used: 0, period: today.slice(0, 7), phone_id: 'P1', cfg: { botName: 'Sofi', info: 'Atendemos OSDE y Swiss Medical.' }, out_paused: false, rem_plan: 'r1', rem_quota: 300, rem_used: 0, rem_period: today.slice(0, 7) }],
   ov_booking: [{ owner: OWNER, slug: 'abc12345', enabled: true, data: { clinic: 'Consultorio Allen', addr: 'Roca 123', types: [{ k: 'control', label: 'Control' }, { k: 'urgencia', label: 'Urgencia' }], pros: [{ id: 'p1', name: 'Dra. Vega' }], slots: { control: { [add(today, 1)]: [['p1', 540, 30], ['p1', 600, 30], ['p1', 900, 30]], [add(today, 2)]: [['p1', 570, 30]] } } } }],
   ov_wa_chats: [], ov_wa_msgs: [], ov_wa_out: [], ov_wa_events: [], booking_reqs: [],
 };
@@ -55,6 +55,8 @@ globalThis.fetch = async (url, init = {}) => {
   return res({ error: 'unexpected ' + url }, 500);
 };
 export const sign = raw => 'sha256=' + crypto.createHmac('sha256', 'sec').update(raw).digest('hex');
+export const reply = (id, title, from = '5492994123456') => ({ entry: [{ changes: [{ value: { metadata: { phone_number_id: 'P1' }, messages: [{ id: 'wamid.in' + (++id_), from, type: 'interactive', interactive: { type: 'list_reply', list_reply: { id, title } } }] } }] }] });
+let id_ = 5000;
 export const inbound = (text, from = '5492994123456', extra = {}) => ({ entry: [{ changes: [{ value: { metadata: { phone_number_id: 'P1' }, contacts: [{ wa_id: from, profile: { name: 'Ana' } }], messages: [{ id: 'wamid.in' + (++id), from, type: 'text', text: { body: text }, ...extra }] } }] }] });
 export const post = (handler, payload, sig) => { const raw = JSON.stringify(payload); return handler(new Request('https://x/wa-webhook', { method: 'POST', body: raw, headers: { 'x-hub-signature-256': sig === undefined ? sign(raw) : sig } })); };
 export { today, add };

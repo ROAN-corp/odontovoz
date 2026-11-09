@@ -1,11 +1,11 @@
-name: Publicar funciones de la Secretaria por WhatsApp
+name: Publicar funciones de la Autogestión por WhatsApp
 # Sube las funciones de supabase/functions a Supabase cada vez que cambian (y a mano desde Actions).
 # Necesita el secreto SUPABASE_ACCESS_TOKEN del repositorio (un token personal de supabase.com › Account › Access Tokens).
 # Sin ese secreto no hace nada. Los secretos de las funciones (Meta, IA) se cargan aparte en el panel de Supabase.
 on:
   push:
     branches: [main]
-    paths: ['supabase/functions/**', 'scripts/build-wa.js', '.github/workflows/functions.yml']
+    paths: ['supabase/functions/**', 'scripts/build-wa.js', 'scripts/wa-menu.js', '.github/workflows/functions.yml']
   workflow_dispatch:
 
 jobs:
@@ -22,9 +22,9 @@ jobs:
       - name: Revisar que wa-sim esté al día y pasen las pruebas
         run: |
           node scripts/build-wa.js
-          git diff --exit-code supabase/functions/wa-sim/index.ts || (echo "::error::Corré node scripts/build-wa.js y subí wa-sim/index.ts" && exit 1)
-          cd tests/wa && node --experimental-strip-types --no-warnings test.mjs | tee /tmp/t1 && node --experimental-strip-types --no-warnings testsim.mjs | tee /tmp/t2
-          grep -q "todo bien" /tmp/t1 && grep -q "todo bien" /tmp/t2
+          git diff --exit-code supabase/functions src/app52.js || (echo "::error::Corré node scripts/build-wa.js y subí los archivos generados" && exit 1)
+          cd tests/wa
+          for f in menu.test.mjs testmenu.mjs test.mjs testsim.mjs; do node --experimental-strip-types --no-warnings $f | tee /tmp/$f.out; grep -q "todo bien" /tmp/$f.out; done
       - name: Publicar en Supabase
         if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
