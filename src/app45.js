@@ -9,7 +9,9 @@
   /* ---------- cuándo está activo ---------- */
   const plan = () => (CL && CL.session && CL.lic && !A.DEMO ? CL.lic.plan || 'prueba' : null);
   A.liteForced = () => plan() === 'lite';                         /* el plan LITE solo tiene esta versión */
-  A.liteOn = () => A.liteForced() || LS.get(KEY, '0') === '1';    /* los planes PRO (y la prueba) pueden pasar de una a otra */
+  /* 1.40.4: LITE es del consultorio propio. Trabajando en el lugar de otro dueño (persona del equipo) se usa la app completa con su puesto */
+  const away = () => !!(A.isMember && A.isMember());
+  A.liteOn = () => A.liteForced() || (LS.get(KEY, '0') === '1' && !away());    /* los planes PRO (y la prueba) pueden pasar de una a otra */
   const setLite = on => { LS.set(KEY, on ? '1' : null); S.panel = null; S.modal = null; A.renderModal(); if (on && TABS.indexOf(S.tab) < 0) S.tab = 'inicio'; A.refresh(); window.scrollTo(0, 0); };
 
   /* ---------- utilidades ---------- */

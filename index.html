@@ -6654,6 +6654,20 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
          con ella el equipo «borraría» en la nube todo lo que ya no tiene. Se empieza de cero y se baja todo. */
       if (!LS.get('odontovoz.cloud.since', '') && Object.keys(BASE).length) { await baseClear(); await baseLoad(); }
       if (CL.checkLicense) await CL.checkLicense();
+      /* 1.40.4: los datos de este equipo y la copia base son de UN dueño (un lugar). Si el lugar cambió y quedaron datos
+         del otro (o de antes de este arreglo, en equipos que trabajan en varios lugares), se borran y se baja todo de nuevo,
+         sin subir nada: subirlos mezclaría consultorios. */
+      if (CL.ownerId) {
+        const was = LS.get('odontovoz.dataOwner', ''), many = (CL.places || []).length > 1;
+        if ((was && was !== CL.ownerId) || (!was && many)) {
+          LS.set('odontovoz.dataOwner', CL.ownerId);
+          if (A.wipeLocal) A.wipeLocal(); else { A.noSave = true; LS.set('odontovoz.real.v1', null); }
+          LS.set('odontovoz.cloud.since', null); await baseClear();
+          setState('busy', 'Bajando los datos de este lugar…'); setTimeout(() => location.reload(), 150);
+          return;
+        }
+        if (!was) LS.set('odontovoz.dataOwner', CL.ownerId);
+      }
       if (!(await devCheck())) { setState('err', 'Este equipo no está habilitado para tu cuenta.'); return; }
       const ch = await pull(); const up = CL.readonly ? 0 : await push();
       CL.last = Date.now(); LS.set('odontovoz.cloud.last', String(CL.last)); setState('ok');
@@ -7796,7 +7810,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.40.3';
+  A.VERSION = '1.40.4';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -15603,7 +15617,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const p = places().filter(x => x.owner === owner)[0];
     S.modal = { type: 'plBusy', name: p ? p.clinic : '' }; A.renderModal();
     try { if (CL.sync) await CL.sync(); } catch (e) { /* lo que no se pudo subir queda en la cola del otro lugar: se avisa */ }
-    LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.goHome', '1');
+    LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.goHome', '1'); LS.set('odontovoz.dataOwner', owner); LS.set('odontovoz.cloud.since', null);
     if (A.wipeLocal) A.wipeLocal();
     try { if (CL.baseClear) await CL.baseClear(); } catch (e) { /* nada */ }
     setTimeout(() => location.reload(), 150);
@@ -15617,7 +15631,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     try {
       const r = await rpc('ov_leave', { p_owner: m.o }); if (!r || !r.ok) { $('#plMsg2').textContent = 'No se pudo.'; return; }
       CL.places = places().filter(p => p.owner !== m.o);
-      if (m.o === curOwner()) { const mine = CL.places.filter(p => p.mine)[0]; LS.set('odontovoz.place', mine ? mine.owner : null); LS.set('odontovoz.placeJust', '1'); if (A.wipeLocal) A.wipeLocal(); try { await CL.baseClear(); } catch (e) { /* nada */ } location.reload(); return; }
+      if (m.o === curOwner()) { const mine = CL.places.filter(p => p.mine)[0]; LS.set('odontovoz.place', mine ? mine.owner : null); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.dataOwner', mine ? mine.owner : null); LS.set('odontovoz.cloud.since', null); if (A.wipeLocal) A.wipeLocal(); try { await CL.baseClear(); } catch (e) { /* nada */ } location.reload(); return; }
       A.toast('Dejaste ' + m.name + '.'); A.acts.plOpen();
     } catch (e) { $('#plMsg2').textContent = noServer(e) ? 'Falta actualizar el servidor (vinculos.sql).' : e.message || 'Sin conexión.'; }
   };
@@ -15761,7 +15775,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* ---------- cuándo está activo ---------- */
   const plan = () => (CL && CL.session && CL.lic && !A.DEMO ? CL.lic.plan || 'prueba' : null);
   A.liteForced = () => plan() === 'lite';                         /* el plan LITE solo tiene esta versión */
-  A.liteOn = () => A.liteForced() || LS.get(KEY, '0') === '1';    /* los planes PRO (y la prueba) pueden pasar de una a otra */
+  /* 1.40.4: LITE es del consultorio propio. Trabajando en el lugar de otro dueño (persona del equipo) se usa la app completa con su puesto */
+  const away = () => !!(A.isMember && A.isMember());
+  A.liteOn = () => A.liteForced() || (LS.get(KEY, '0') === '1' && !away());    /* los planes PRO (y la prueba) pueden pasar de una a otra */
   const setLite = on => { LS.set(KEY, on ? '1' : null); S.panel = null; S.modal = null; A.renderModal(); if (on && TABS.indexOf(S.tab) < 0) S.tab = 'inicio'; A.refresh(); window.scrollTo(0, 0); };
 
   /* ---------- utilidades ---------- */

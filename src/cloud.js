@@ -276,6 +276,20 @@
          con ella el equipo «borraría» en la nube todo lo que ya no tiene. Se empieza de cero y se baja todo. */
       if (!LS.get('odontovoz.cloud.since', '') && Object.keys(BASE).length) { await baseClear(); await baseLoad(); }
       if (CL.checkLicense) await CL.checkLicense();
+      /* 1.40.4: los datos de este equipo y la copia base son de UN dueño (un lugar). Si el lugar cambió y quedaron datos
+         del otro (o de antes de este arreglo, en equipos que trabajan en varios lugares), se borran y se baja todo de nuevo,
+         sin subir nada: subirlos mezclaría consultorios. */
+      if (CL.ownerId) {
+        const was = LS.get('odontovoz.dataOwner', ''), many = (CL.places || []).length > 1;
+        if ((was && was !== CL.ownerId) || (!was && many)) {
+          LS.set('odontovoz.dataOwner', CL.ownerId);
+          if (A.wipeLocal) A.wipeLocal(); else { A.noSave = true; LS.set('odontovoz.real.v1', null); }
+          LS.set('odontovoz.cloud.since', null); await baseClear();
+          setState('busy', 'Bajando los datos de este lugar…'); setTimeout(() => location.reload(), 150);
+          return;
+        }
+        if (!was) LS.set('odontovoz.dataOwner', CL.ownerId);
+      }
       if (!(await devCheck())) { setState('err', 'Este equipo no está habilitado para tu cuenta.'); return; }
       const ch = await pull(); const up = CL.readonly ? 0 : await push();
       CL.last = Date.now(); LS.set('odontovoz.cloud.last', String(CL.last)); setState('ok');

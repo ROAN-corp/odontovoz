@@ -513,3 +513,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.40.3 (urgente)
 - **Arreglo de borrado de datos en la nube.** Un equipo que perdía sus datos locales (al cambiar de cuenta, entrar como usuario del equipo o cambiar de lugar) pero conservaba la «copia base» de la sincronización subía días y lista de pacientes vacíos. Ahora: si los datos locales son nuevos se descarta la copia base y se baja todo; y un freno no deja subir el vaciado de 3 o más días o de más de la mitad de los pacientes (vuelve a bajar todo). `afterLogin` espera a que se borre la copia base antes de recargar.
+
+## OdontoVoz 1.40.4
+- Trabajar en el consultorio de otro dueño: los datos de cada equipo quedan marcados con el dueño del lugar (`odontovoz.dataOwner`). Si no coinciden, o si el equipo trabaja en varios lugares y todavía no tiene la marca, se borran los datos locales y la copia base y se baja todo de nuevo, sin subir nada (evita mezclar consultorios).
+- El modo LITE es solo del consultorio propio: como persona del equipo de otro lugar se usa la app completa con el puesto asignado.

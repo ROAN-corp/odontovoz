@@ -30,7 +30,7 @@
     const p = places().filter(x => x.owner === owner)[0];
     S.modal = { type: 'plBusy', name: p ? p.clinic : '' }; A.renderModal();
     try { if (CL.sync) await CL.sync(); } catch (e) { /* lo que no se pudo subir queda en la cola del otro lugar: se avisa */ }
-    LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.goHome', '1');
+    LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.goHome', '1'); LS.set('odontovoz.dataOwner', owner); LS.set('odontovoz.cloud.since', null);
     if (A.wipeLocal) A.wipeLocal();
     try { if (CL.baseClear) await CL.baseClear(); } catch (e) { /* nada */ }
     setTimeout(() => location.reload(), 150);
@@ -44,7 +44,7 @@
     try {
       const r = await rpc('ov_leave', { p_owner: m.o }); if (!r || !r.ok) { $('#plMsg2').textContent = 'No se pudo.'; return; }
       CL.places = places().filter(p => p.owner !== m.o);
-      if (m.o === curOwner()) { const mine = CL.places.filter(p => p.mine)[0]; LS.set('odontovoz.place', mine ? mine.owner : null); LS.set('odontovoz.placeJust', '1'); if (A.wipeLocal) A.wipeLocal(); try { await CL.baseClear(); } catch (e) { /* nada */ } location.reload(); return; }
+      if (m.o === curOwner()) { const mine = CL.places.filter(p => p.mine)[0]; LS.set('odontovoz.place', mine ? mine.owner : null); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.dataOwner', mine ? mine.owner : null); LS.set('odontovoz.cloud.since', null); if (A.wipeLocal) A.wipeLocal(); try { await CL.baseClear(); } catch (e) { /* nada */ } location.reload(); return; }
       A.toast('Dejaste ' + m.name + '.'); A.acts.plOpen();
     } catch (e) { $('#plMsg2').textContent = noServer(e) ? 'Falta actualizar el servidor (vinculos.sql).' : e.message || 'Sin conexión.'; }
   };
