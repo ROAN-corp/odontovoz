@@ -241,8 +241,28 @@
     if (cur && cur[0]) { const m = merge3(v, cur[0].v, b ? b.v : undefined); await basePut(k, { v: cur[0].v, rev: cur[0].rev }); if (J(m) !== J(v)) { apply(k, m); pendingRefresh = true; } return pushKey(k, m, (tries || 0) + 1); }
     if (b) { delete BASE[k]; return pushKey(k, v, (tries || 0) + 1); }
   }
+  /* 1.40.3: freno de seguridad. Si este equipo quiere vaciar muchos días o la lista de pacientes de golpe,
+     casi seguro es un equipo que perdió sus datos (no una decisión de alguien): no se sube nada y se vuelve a bajar todo. */
+  function massWipe(all) {
+    let days = 0, big = 0;
+    Object.keys(all).forEach(k => {
+      const b = BASE[k]; if (!b || !Array.isArray(b.v)) return;
+      const bn = b.v.filter(x => x && x.type !== 'block').length, ln = Array.isArray(all[k]) ? all[k].filter(x => x && x.type !== 'block').length : 0;
+      if (k.indexOf('day:') === 0 && bn >= 1 && ln === 0) { days++; big += bn; }
+      if (k === 'pats' && bn >= 10 && ln < bn * 0.5) big += 1000;
+    });
+    return days >= 3 || big >= 1000;
+  }
+  CL._massWipe = massWipe;
   async function push() {
     const all = collect(); let n = 0;
+    if (massWipe(all)) {
+      try { if (A.logError) A.logError('nube', new Error('Se frenó un borrado masivo desde este equipo')); } catch (e) { /* nada */ }
+      LS.set('odontovoz.cloud.since', null); await baseClear();
+      A.toast('Este equipo tenía los datos incompletos. No se borró nada en la nube: se están bajando de nuevo.');
+      setTimeout(CL.sync, 500);
+      return 0;
+    }
     for (const k of Object.keys(all)) { const b = BASE[k]; if (A.recAllowed && !A.recAllowed(k, all[k])) continue; if (!b || J(b.v) !== J(all[k])) { await pushKey(k, all[k]); n++; } }
     return n;
   }
@@ -252,6 +272,9 @@
     running = true; setState('busy');
     try {
       await baseLoad();
+      /* 1.40.3: si los datos de este equipo se borraron (cambio de cuenta o de lugar), la copia base vieja no sirve:
+         con ella el equipo «borraría» en la nube todo lo que ya no tiene. Se empieza de cero y se baja todo. */
+      if (!LS.get('odontovoz.cloud.since', '') && Object.keys(BASE).length) { await baseClear(); await baseLoad(); }
       if (CL.checkLicense) await CL.checkLicense();
       if (!(await devCheck())) { setState('err', 'Este equipo no está habilitado para tu cuenta.'); return; }
       const ch = await pull(); const up = CL.readonly ? 0 : await push();
@@ -418,10 +441,11 @@
   };
   function afterLogin() {
     const uid = CL.session.user.id, prev = LS.get('odontovoz.cloud.uid', '');
-    if (prev && prev !== uid) { /* otra cuenta en este equipo: se empieza de cero para no mezclar consultorios */ LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.since', null); baseClear(); }
+    let clr = Promise.resolve();
+    if (prev && prev !== uid) { /* otra cuenta en este equipo: se empieza de cero para no mezclar consultorios */ LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.since', null); clr = baseClear(); }
     LS.set('odontovoz.cloud.uid', uid); LS.set('odontovoz.localOnly', null);
     CL.hideLogin();
-    if (A.DEMO || (prev && prev !== uid)) { LS.set('odontovoz.mode', 'real'); A.noSave = true; setTimeout(() => location.reload(), 60); return; }
+    if (A.DEMO || (prev && prev !== uid)) { LS.set('odontovoz.mode', 'real'); A.noSave = true; clr.then(() => setTimeout(() => location.reload(), 60)); return; }
     A.toast('Ingresaste como ' + CL.who(CL.session.user.email) + '. Sincronizando…'); startLoop(); A.afterRefresh();
   }
   CL.afterLogin = afterLogin;

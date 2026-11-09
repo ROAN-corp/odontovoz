@@ -510,3 +510,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.40.2
 - El ingreso de usuarios del equipo indica dónde está ahora el cambio de contraseña (Ajustes › Equipo e invitaciones).
+
+## OdontoVoz 1.40.3 (urgente)
+- **Arreglo de borrado de datos en la nube.** Un equipo que perdía sus datos locales (al cambiar de cuenta, entrar como usuario del equipo o cambiar de lugar) pero conservaba la «copia base» de la sincronización subía días y lista de pacientes vacíos. Ahora: si los datos locales son nuevos se descarta la copia base y se baja todo; y un freno no deja subir el vaciado de 3 o más días o de más de la mitad de los pacientes (vuelve a bajar todo). `afterLogin` espera a que se borre la copia base antes de recargar.
