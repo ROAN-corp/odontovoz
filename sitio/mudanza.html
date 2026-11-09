@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es-AR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mudanza gratis a OdontoVoz</title>
+<meta name="description" content="Pasá tus pacientes, tu agenda y tus evoluciones desde Bilog, Dentalink u otro sistema a OdontoVoz, gratis.">
+<link rel="icon" href="img/icono.png">
+<link rel="stylesheet" href="legal.css">
+<style>
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 12px; }
+  .steps > li { counter-increment: s; position: relative; padding: 14px 16px 14px 56px; border: 1px solid #d6e2e2; border-radius: 16px; background: #fff; }
+  .steps > li::before { content: counter(s); position: absolute; left: 14px; top: 14px; width: 30px; height: 30px; border-radius: 15px; background: #0b6b6f; color: #fff; font-weight: 800; display: grid; place-items: center; }
+  .bm { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 12px; background: #f6c453; color: #08484b; font-weight: 800; text-decoration: none; border: 2px dashed #08484b; cursor: grab; margin: 8px 0; }
+  .note { font-size: 14px; color: #4a5f60; }
+  .letter { white-space: pre-wrap; background: #f6f9f9; border: 1px solid #d6e2e2; border-radius: 12px; padding: 14px; font-size: 14px; }
+  .hero { background: linear-gradient(135deg, #0b6b6f, #08484b); color: #fff; border-radius: 20px; padding: 22px; margin: 14px 0 6px; }
+  .hero h1 { color: #fff; margin: 0 0 6px; } .hero p { margin: 0; color: #d8f0eb; }
+  .free { display: inline-block; background: #f6c453; color: #08484b; border-radius: 999px; padding: 3px 10px; font-weight: 800; font-size: 13px; margin-bottom: 8px; }
+</style></head>
+<body><main>
+<div class="top"><a href="./">← OdontoVoz</a><span><a href="terminos.html">Términos</a> · <a href="privacidad.html">Privacidad</a></span></div>
+<div class="hero"><span class="free">GRATIS</span><h1>Mudanza a OdontoVoz</h1><p>Traé tus pacientes, tu agenda y tus evoluciones desde Bilog, Dentalink u otro sistema, sin cargarlos de nuevo.</p></div>
+
+<h2>Con el asistente de mudanza (en la computadora)</h2>
+<ol class="steps">
+<li><b>Guardá el botón en tus favoritos.</b> Mostrá la barra de favoritos de Chrome (Ctrl + Shift + B) y arrastrá este botón hasta ella:<br>
+<a class="bm" id="bm" href="#" title="Arrastralo a la barra de favoritos">📦 Mudanza a OdontoVoz</a><br>
+<span class="note">No lo toques acá: se usa adentro del otro sistema. Si no podés arrastrarlo, escribinos y lo instalamos juntos.</span></li>
+<li><b>Entrá a tu sistema anterior</b> con tu usuario, como siempre, y abrí el <b>listado de pacientes</b>.</li>
+<li><b>Tocá el botón «📦 Mudanza a OdontoVoz»</b> de tus favoritos. Aparece un panel abajo a la derecha que va contando lo que encuentra.</li>
+<li><b>Pasá a la página 2 del listado</b> y tocá <b>«Traer todas las páginas»</b>. Recorre el listado completo, de a poco. Repetí lo mismo en la agenda y, si querés, en las evoluciones.</li>
+<li><b>Tocá «Bajar archivo para OdontoVoz»</b> y, en OdontoVoz, andá a <b>Ajustes › Mudanza desde otro sistema</b> y elegí ese archivo. Se cargan los pacientes (sin duplicar), los turnos que vienen y las evoluciones.</li>
+</ol>
+<p class="note">Todo pasa en tu computadora: el asistente lee lo que el sistema anterior ya te muestra a vos y lo guarda en un archivo tuyo. No nos llega nada a nosotros y no guardamos tus contraseñas. Si el listado no se deja recorrer solo, en cada pantalla podés tocar «Leer la tabla de esta pantalla».</p>
+
+<h2>Si preferís, pediles tus datos por escrito</h2>
+<p>Los datos de tus pacientes son tuyos: el sistema los guarda por tu cuenta y tiene que entregártelos si se los pedís. Copiá este mensaje y mandalo por correo a su soporte:</p>
+<div class="letter" id="letter">Asunto: Pedido de entrega de mis datos
+
+Hola. Soy [nombre y apellido], [profesión] con matrícula [número], titular de la cuenta [usuario o correo] de [nombre del sistema].
+
+Como responsable de los datos de mis pacientes, les pido que me entreguen, en un formato de planilla (Excel o CSV) o en un archivo estándar, la totalidad de la información cargada en mi cuenta: listado de pacientes con sus datos de contacto y cobertura, agenda de turnos (pasados y futuros) e historias clínicas con sus evoluciones, odontogramas e imágenes.
+
+Lo pido en ejercicio de mis derechos sobre los datos que les confié para su tratamiento por mi cuenta (Ley 25.326 de Protección de los Datos Personales) y de mi obligación de conservar las historias clínicas (Ley 26.529).
+
+Quedo a la espera de la entrega dentro de los próximos 10 días hábiles. Muchas gracias.
+
+[Firma]</div>
+<p><button class="btn" id="copy">Copiar el mensaje</button> <span class="small" id="copied"></span></p>
+<p class="note">Modelo orientativo: no reemplaza el consejo de un abogado.</p>
+
+<h2>¿Te ayudamos?</h2>
+<p>Hacemos la mudanza con vos en una videollamada, sin costo. Escribinos: <a href="https://wa.me/5492984513279?text=Hola!%20Quiero%20hacer%20la%20mudanza%20gratis%20a%20OdontoVoz">WhatsApp 2984 513279</a> · <a href="mailto:somosroan@gmail.com">somosroan@gmail.com</a>.</p>
+</main>
+<footer><a href="./">OdontoVoz</a> · <a href="terminos.html">Términos y condiciones</a> · <a href="privacidad.html">Privacidad</a></footer>
+<script>
+(function () {
+  'use strict';
+  /* el botón de favoritos lleva el asistente completo adentro (no depende de que el otro sistema deje cargar archivos de afuera) */
+  fetch('mudanza.js', { cache: 'no-cache' }).then(r => r.text()).then(code => {
+    const bm = document.getElementById('bm');
+    bm.href = 'javascript:' + encodeURIComponent('(function(){' + code + '})();void 0');
+  }).catch(() => {});
+  document.getElementById('bm').addEventListener('click', e => { e.preventDefault(); alert('Arrastrá este botón a la barra de favoritos y usalo adentro de tu sistema anterior.'); });
+  document.getElementById('copy').addEventListener('click', () => {
+    const t = document.getElementById('letter').textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { document.getElementById('copied').textContent = 'Copiado.'; }).catch(() => { document.getElementById('copied').textContent = 'Seleccioná el texto y copialo.'; });
+  });
+})();
+</script>
+</body></html>

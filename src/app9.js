@@ -58,6 +58,7 @@
     return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = () => res(window.XLSX); s.onerror = () => rej(new Error('Para leer archivos de Excel hace falta internet. También podés guardarlo como CSV desde Excel y subir ese.')); document.head.appendChild(s); });
   }
   A.acts.importOpen = () => { A.hideDrawer(); S.modal = { type: 'importPats', step: 1 }; A.renderModal(); };
+  A.impGuess = h => guess(h); A.impToPat = (r, map) => toPat(r, map);
   MF.importPats = m => {
     if (m.step === 1) return A.modalShell('Importar pacientes',
       '<p>Traé tus pacientes desde <b>Bilog</b> u otro programa sin cargarlos de nuevo.</p>' +

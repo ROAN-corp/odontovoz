@@ -495,3 +495,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Motor del menú común a la app y al servidor: `scripts/wa-menu.js` (lo copia `node scripts/build-wa.js`), con pruebas en `tests/wa/menu.test.mjs` y `tests/wa/testmenu.mjs`. «Probala» muestra los botones tal cual los ve el paciente; en el modo prueba carga el turno en la agenda y con cuenta real lo pide como PRUEBA por el turnero.
 - SQL: `ov_wa.rem_plan`, `rem_quota`, `rem_used`, `rem_period`; `ov_wa_chats.state`; `ov_wa_admin_set(owner, status, rem_plan, rem_quota, phone_id, waba_id, display)`; `ov_wa_queue` solo con `rem_plan`. `wa-cron` respeta el cupo del mes. La IA queda guardada (`cfg.ai = true`).
 - Portada, términos y privacidad 2026-11-09.2 (sin Anthropic como subencargado) y panel de licencias actualizados.
+
+## OdontoVoz 1.40 · Mudanza gratis desde otro sistema
+- **Asistente de mudanza** (`sitio/mudanza.html` + `sitio/mudanza.js`): un botón para la barra de favoritos que se usa con la sesión abierta en Bilog, Dentalink u otro sistema. Escucha lo que la página recibe (fetch/XHR) y lee las tablas, reconoce pacientes, turnos y evoluciones, recorre todas las páginas del último listado (de a poco) y baja `mudanza-odontovoz-….json`. Todo en el navegador; no manda nada a ningún servidor ni guarda contraseñas.
+- **Importador nuevo** (`src/app53.js`, Ajustes › «Mudanza desde otro sistema»): lee ese archivo (o Excel/CSV como antes), reconoce columnas también en formato camelCase, carga pacientes sin duplicar, turnos de hoy en adelante (los pasados, opcional, como historial; los cancelados no), evoluciones como «[Sistema anterior]», y los pacientes que solo aparecían en la agenda. Opción «solo pacientes con actividad en los últimos 2 años» (recomendada con más de 5.000).
+- Carta modelo para pedir los datos al sistema anterior (Ley 25.326 y 26.529) y botón «Que nos ayuden (gratis)».
+- Portada: sección «Te mudamos gratis».
