@@ -504,3 +504,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## Mudanza desde Bilog (web, 9/11/2026)
 - El asistente de mudanza reconoce Bilog y muestra «Traer todo de Bilog»: trae todos los pacientes (con teléfono, correo, obra social y antecedentes), las evoluciones de la historia clínica y los turnos, sin pasar páginas. Antes hay que abrir un paciente y entrar una vez a «Historia clínica» y «Turnos».
+
+## OdontoVoz 1.40.1
+- Ajustes › Cuenta y datos suma **«Equipo e invitaciones»** (crear usuarios e invitar a un odontólogo que ya usa OdontoVoz; solo dueño o administrador) y **«Cuenta y equipos»**. Desde la reorganización de 1.38 no había un acceso visible al equipo.

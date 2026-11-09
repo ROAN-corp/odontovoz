@@ -9,7 +9,7 @@
   const GROUPS = [
     { t: 'Consultorio', k: ['cfgOpen:centro', 'locsOpen', 'catalogOpen', 'osOpen', 'stkOpen', 'tnOpen', 'importOpen'] },
     { t: 'La app en este equipo', k: ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall'] },
-    { t: 'Cuenta y datos', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'tmOpen', 'plOpen', 'cfgOpen:datos', 'modeOpen', 'acctOpen'] },
+    { t: 'Cuenta y datos', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'plOpen', 'tmOpen', 'cfgOpen:datos', 'modeOpen', 'acctOpen'] },
     { t: 'Ayuda', k: ['tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
   ];
   const keyOf = b => { const a = b.getAttribute('data-act'); return a === 'cfgOpen' ? 'cfgOpen:' + (b.getAttribute('data-t') || 'centro') : a; };
@@ -34,6 +34,13 @@
   };
   MF.ajustes = () => {
     const all = items(), used = {};
+    /* filas propias (no están en el menú): equipo e invitaciones, y la cuenta */
+    const CLx = A.cloud, mk = (act, t, sub, ic) => { const b = document.createElement('button'); b.setAttribute('data-act', act); b.innerHTML = ic + '<span class="t">' + esc(t) + '<small>' + esc(sub) + '</small></span>'; return b; };
+    if (CLx && CLx.session) {
+      const role = A.mbRole ? A.mbRole() : '', boss = !(A.isMember && A.isMember()) || role === 'admin';
+      if (boss && A.acts.teamOpen) all.tmOpen = mk('teamOpen', 'Equipo e invitaciones', 'Usuarios, e invitar a un odontólogo que ya usa OdontoVoz', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>');
+      all.acctOpen = all.acctOpen || mk('acctOpen', 'Cuenta y equipos', 'Sincronizar, contraseña, PIN y equipos conectados', GEAR);
+    }
     GROUPS.forEach(g => g.k.forEach(k => { if (all[k]) used[k] = 1; }));
     const extra = Object.keys(all).filter(k => !GROUPS.some(g => g.k.indexOf(k) >= 0) && all[k].closest('.aj-sec'));
     let b = '<div class="aj">';
