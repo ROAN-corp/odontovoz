@@ -38,4 +38,63 @@ if (fs.existsSync(stylesPath)) {
   }
 }
 
+// WhatsApp y WhatsApp Business: abrir enlaces intent:// (con el paquete elegido) y whatsapp:// desde la app
+if (!m.includes('com.whatsapp.w4b')) {
+  m = m.replace('</manifest>', '    <queries>\n        <package android:name="com.whatsapp" />\n        <package android:name="com.whatsapp.w4b" />\n    </queries>\n</manifest>');
+  fs.writeFileSync(manifestPath, m);
+}
+const mainDir = path.join(root, 'android', 'app', 'src', 'main', 'java', 'ar', 'odontovoz', 'app');
+fs.mkdirSync(mainDir, { recursive: true });
+fs.writeFileSync(path.join(mainDir, 'MainActivity.java'), `package ar.odontovoz.app;
+
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebView;
+import com.getcapacitor.Bridge;
+import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebViewClient;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (bridge != null) bridge.setWebViewClient(new OvClient(bridge));
+    }
+
+    private void openIntent(String u) {
+        Intent i;
+        try { i = Intent.parseUri(u, Intent.URI_INTENT_SCHEME); } catch (Exception e) { return; }
+        i.addCategory(Intent.CATEGORY_BROWSABLE);
+        i.setComponent(null);
+        i.setSelector(null);
+        try {
+            startActivity(i);
+        } catch (ActivityNotFoundException e) {
+            String f = i.getStringExtra("browser_fallback_url");
+            if (f != null) {
+                try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(f))); } catch (Exception e2) { /* nada */ }
+            }
+        } catch (Exception e) { /* nada */ }
+    }
+
+    private class OvClient extends BridgeWebViewClient {
+        OvClient(Bridge b) { super(b); }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            String u = request.getUrl().toString();
+            if (u.startsWith("intent:")) { openIntent(u); return true; }
+            if (u.startsWith("whatsapp:")) {
+                try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(u))); } catch (Exception e) { /* nada */ }
+                return true;
+            }
+            return super.shouldOverrideUrlLoading(view, request);
+        }
+    }
+}
+`);
+
 console.log('Android listo: micrófono habilitado, versión', pkg.version, '(' + runNumber + ')');

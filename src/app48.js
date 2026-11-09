@@ -8,7 +8,7 @@
   /* ---------- grupos de la pantalla de Ajustes ---------- */
   const GROUPS = [
     { t: 'Consultorio', k: ['cfgOpen:centro', 'locsOpen', 'catalogOpen', 'osOpen', 'stkOpen', 'tnOpen', 'importOpen'] },
-    { t: 'La app en este equipo', k: ['appearOpen', 'assistOpen', 'notifOpen', 'pwaInstall'] },
+    { t: 'La app en este equipo', k: ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall'] },
     { t: 'Cuenta y datos', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'tmOpen', 'plOpen', 'cfgOpen:datos', 'modeOpen', 'acctOpen'] },
     { t: 'Ayuda', k: ['tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
   ];

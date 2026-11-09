@@ -475,3 +475,8 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Accesos del inicio: sale «Menú» (ya está arriba) y entran **Ajustes** (tuerquita) y **Paciente nuevo** al lado de «Buscar paciente». Los equipos que ya tenían sus accesos guardados se pasan solos una vez (`odontovoz.homeV`).
 - Arreglo: después de andar por varias secciones el inicio a veces volvía con el formato viejo (se dibujaba sin pasar por `afterRefresh`); ahora se vigila y siempre queda con la fila de íconos.
 - PC (1100 px o más): a la derecha del inicio, un panel con Próximos turnos, Los próximos 7 días (barras por día), Caja (cobrado hoy, 7 días, producción, esperando cobro; solo dueño o administración) y Pacientes. Tocar un turno o un día abre la agenda en ese día. En el inicio de Empresa no se muestra.
+
+## OdontoVoz 1.38.2 · WhatsApp o WhatsApp Business
+- En Android, al tocar cualquier botón de WhatsApp (recordatorio del turno, presupuesto, turnero, avisos) la app pregunta si abrir **WhatsApp** o **WhatsApp Business**, con «Recordar en este equipo». Se cambia en Ajustes › La app en este equipo › WhatsApp para recordatorios (`odontovoz.waApp`: ask/wa/biz).
+- En la computadora y el iPhone sigue igual (wa.me abre el WhatsApp principal).
+- APK: la app ahora abre enlaces `intent://` y `whatsapp://` (nueva `MainActivity` en `scripts/patch-android.js`), necesario para elegir WhatsApp Business.
