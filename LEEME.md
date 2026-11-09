@@ -527,3 +527,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.41.2
 - En el odontograma de cada paciente con evoluciones del sistema anterior sin pasar aparece un aviso «Ver y pasar» (antes solo estaba en Mudanza). Mejor lectura: códigos del nomenclador escritos a mano («208 en 34» = obturación), «24 o 25» (o = elegir), errores de tipeo pegados a la pieza («deln34»), y piezas sueltas en lo pendiente («la de 24 o 25 son las que faltan»), salvo días, plata, etc.
+
+## OdontoVoz 1.42
+- Las evoluciones nuevas van solas al odontograma: lo hecho («hice restauración en 25», «208 en 34») aparece en «Prácticas de hoy» para cobrar y queda en rojo (también si se elige «Solo nota, sin cobrar»); lo de la próxima se marca planificado sin cobrar. Sin prácticas de cobro, se marca directo al guardar.

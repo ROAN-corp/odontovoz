@@ -1,7 +1,7 @@
 /* ===== 1.41: evoluciones (sobre todo las traídas de otro sistema) → odontograma: lo hecho en rojo, lo que queda por hacer en azul ===== */
 (function () {
   'use strict';
-  const A = window.App, S = A.S, esc = A.esc, MF = A.modalFns, P = window.OdontoParser;
+  const A = window.App, S = A.S, esc = A.esc, $ = A.$ || (q => document.querySelector(q)), MF = A.modalFns, P = window.OdontoParser;
   const N = s => (A.norm ? A.norm(s) : String(s || '').toLowerCase());
   const TOOTH = /\b([1-4][1-8]|[5-8][1-5])\b/g;
   /* lo que indica que es para la próxima (azul) */
@@ -183,6 +183,56 @@
   A.acts.evoOne = el => { S.modal = { type: 'evoOne', pid: el.getAttribute('data-pid') }; A.renderModal(); };
   A.chg.evoMonthsOne = el => { S.evoMonths = +el.value; A.renderModal(); };
   A.acts.evoOneGo = el => { const pid = el.getAttribute('data-pid'), r = A.evoApply(pid, false); A.saveNow && A.saveNow(); S.modal = null; A.renderModal(); A.refresh(); A.toast(r.marks ? 'Listo: ' + r.marks + ' marcas en el odontograma.' : 'Listo.'); };
+
+  /* =====================================================================
+     1.42: las evoluciones NUEVAS (escritas en OdontoVoz) también van solas al odontograma.
+     Lo hecho pasa a «Prácticas de hoy» para cobrar (como antes); lo que es para la próxima
+     se marca planificado sin cobrar; y aunque elijas «Solo nota», lo hecho queda en el odontograma.
+     ===================================================================== */
+  const FW = { O: 'oclusal', M: 'mesial', D: 'distal', V: 'vestibular', L: 'lingual', P: 'palatino', I: 'incisal' };
+  const prevParse = A.pracParse;
+  if (prevParse) A.pracParse = (text, pid) => {
+    const ev = A.evoOdon(text), done = ev.filter(a => a.status === 'realizado');
+    /* lo hecho, reescrito como lo entiende el cobro («obturación oclusal 25»); lo de la próxima, afuera */
+    const synth = done.map(a => (a.cond === 'extraido' ? 'extraccion' : a.cond) + (a.faces ? ' ' + a.faces.map(f => FW[f] || f).join(' y ') : '') + ' ' + a.teeth.join(' y ')).join('. ');
+    const fromEv = synth ? prevParse(synth, pid) : [];
+    const cats = prevParse(text, pid).filter(it => it.kind !== 'odon');
+    if (!ev.length) { const all = prevParse(text, pid); return all; }   /* sin piezas: como siempre */
+    const keys = {}; const out = [];
+    fromEv.concat(cats).forEach(it => { if (keys[it.key || it.label]) return; keys[it.key || it.label] = 1; out.push(it); });
+    return out;
+  };
+  /* marca en el odontograma, sin cobrar: lo planificado siempre; lo hecho si se pide (nota sin cobro, o nota sin prácticas de cobro) */
+  const markEvo = (pid, text, withDone) => {
+    const pd = A.pd(pid); if (!pd) return 0; let n = 0;
+    A.evoOdon(text).forEach(a => { if (a.status === 'realizado' && !withDone) return; const b = Object.assign({}, a); delete b.nofaces; A.applyAction(pd, b); n++; });
+    if (n) { pd.odonDate = pd.odonDate || A.today(); A.touchPd(pid); }
+    return n;
+  };
+  const after = (pid, txt, wasModal) => {
+    if (!txt || !pid) return;
+    const m = S.modal;
+    if (m && m.type === 'pracOk') { m.evoTxt = txt; return; }        /* se resuelve al elegir cómo cobrar */
+    if (!wasModal) { const n = markEvo(pid, txt, true); if (n) { A.save && A.save(); A.toast('Marcado en el odontograma: ' + n + (n === 1 ? ' pieza' : ' marcas') + '.'); if (A.renderPanel) A.renderPanel(); A.refresh(); } }
+  };
+  ['addNote', 'qnSave'].forEach(k => {
+    const prev = A.acts[k]; if (!prev) return;
+    A.acts[k] = function (el) {
+      const txt = (((k === 'addNote' ? $('#noteTxt') : $('#qnTxt')) || {}).value || '').trim();
+      const pid = k === 'addNote' ? S.fichaPid : el && el.getAttribute('data-pid');
+      const was = !!S.modal && S.modal.type !== 'pracOk' && k === 'qnSave' ? S.modal.type : null;
+      const r = prev.apply(this, arguments);
+      try { const role = A.mbRole ? A.mbRole() : ''; if (role !== 'recepcion' && role !== 'asistente') after(pid, txt, false); } catch (e) { /* nada */ }
+      return r;
+    };
+  });
+  const prevPo = A.acts.poGo;
+  if (prevPo) A.acts.poGo = function (el) {
+    const m = S.modal, k = el.getAttribute('data-k'), txt = m && m.evoTxt, pid = m && m.pid;
+    const r = prevPo.apply(this, arguments);
+    try { if (txt && pid && (!S.modal || S.modal.type !== 'pracOk')) { markEvo(pid, txt, k === 'nota'); A.save && A.save(); if (A.renderPanel) A.renderPanel(); A.refresh(); } } catch (e) { /* nada */ }
+    return r;
+  };
 
   const css = document.createElement('style');
   css.textContent = '.ev-r{color:#c62828}.ev-b{color:#1565c0}' +
