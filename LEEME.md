@@ -524,3 +524,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.41.1
 - Evoluciones al odontograma, criterio de «estado actual»: lo hecho se marca aunque sea viejo; caries y pendientes solo si son recientes (6 meses, 1 año —predeterminado—, 2 años o todo); lo repetido en la misma pieza y cara se marca una vez (queda la última); la cara supuesta se descarta si la pieza ya tiene la práctica con cara.
+
+## OdontoVoz 1.41.2
+- En el odontograma de cada paciente con evoluciones del sistema anterior sin pasar aparece un aviso «Ver y pasar» (antes solo estaba en Mudanza). Mejor lectura: códigos del nomenclador escritos a mano («208 en 34» = obturación), «24 o 25» (o = elegir), errores de tipeo pegados a la pieza («deln34»), y piezas sueltas en lo pendiente («la de 24 o 25 son las que faltan»), salvo días, plata, etc.

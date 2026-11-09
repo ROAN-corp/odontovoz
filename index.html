@@ -7810,7 +7810,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.41.1';
+  A.VERSION = '1.41.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -17512,6 +17512,10 @@ const OVMenu = (function () {
     [/\b(no especifi\w*|sin especificar)( la)? caras?\b/g, ' '],
     [/\b(solo|solamente|tambien|ademas|la|las|el|los|en|de|del|pieza|piezas|diente|dientes|vez)\b/g, ' ']
   ];
+  /* códigos del nomenclador escritos a mano («208», «2.08», «02.08», «301»…) seguidos de una pieza */
+  const CODE = /\b0?(2|3|10)[.,]?(\d{2})\b(?=\s+(?:en\s+)?(?:la\s+|el\s+)?(?:pieza\s+)?(?:[1-4][1-8]|[5-8][1-5])\b)/g;
+  const UNITS = /\b\d{1,3}\s*(dias?|semanas?|meses|mes|anos?|hs|horas?|min|mil|k|pesos|%)|\$/;
+  const CODES = { 2: 'obturacion', 3: 'endodoncia', 10: 'extraccion' };
   let CK0 = null;
   const CKs = () => CK0 || (CK0 = Object.keys((P && P.COND_META) || {}).filter(c => c !== 'sano').map(c => [new RegExp('\\b' + c + '\\b'), c]));
   const CK = { filter: f => CKs().filter(f) };
@@ -17535,7 +17539,10 @@ const OVMenu = (function () {
       out.push({ type: 'mark', teeth: [n], faces: fs, cond, status, nofaces: guess });
     };
     String(text || '').replace(/^\[Sistema anterior\]\s*/, '').split(/[.;\n]+/).forEach(sent => {
-      const raw = N(sent); if (!raw.trim()) return;
+      let raw = N(sent); if (!raw.trim()) return;
+      raw = raw.replace(/([a-z])(\d{2})\b/g, '$1 $2')                                  /* «deln34» → «deln 34» */
+        .replace(/\b(\d{2})\s+o\s+(?=\d{2}\b)/g, '$1 y ')                              /* «24 o 25»: o = «o» de elegir, no la cara */
+        .replace(CODE, (all, a, b) => (CODES[+a] || all) + ' ');                        /* código del nomenclador antes de la pieza: «208 en 34» */
       let fut = false;   /* desde que aparece «la próx», «queda», «falta»… lo que sigue en la oración es para la próxima */
       raw.split(/,|\s+y\s+(?=[a-z])/).forEach(seg0 => {
         if (FUT.test(seg0)) fut = true;
@@ -17554,7 +17561,8 @@ const OVMenu = (function () {
         const kw = nums.length && CK.filter(c => c[0].test(seg))[0];
         if (kw) { nums.forEach(n => add(kw[1], n, null, fut)); last = { cond: kw[1], faces: null }; return; }
         /* solo piezas («la próx hacer solo en 24», «falta 45 y 44»): repite la práctica anterior */
-        if (nums.length && last && /^(?:\d{2}|y|e|\s)+$/.test(seg)) nums.forEach(n => add(last.cond, n, null, fut));
+        /* o, en lo que queda para la próxima, piezas con otras palabras («la de 24 o 25 son las que faltan»), si no son días, plata, etc. */
+        if (nums.length && last && (/^(?:\d{2}|y|e|\s)+$/.test(seg) || (fut && !UNITS.test(seg)))) nums.forEach(n => add(last.cond, n, null, fut));
       });
     });
     return out;
@@ -17638,11 +17646,40 @@ const OVMenu = (function () {
     return h;
   };
 
+  /* en la ficha: si el paciente tiene evoluciones viejas sin pasar, se avisa arriba del odontograma */
+  const bnr = () => {
+    const v = document.getElementById('view-ficha'); if (!v || S.tab !== 'ficha') return;
+    const st = v.querySelector('.od-sticky'), pid = S.fichaPid; if (!st || !pid) return;
+    const pd = (A.S.pd || {})[pid], n = pd ? pending(pd).length : 0;
+    const old = v.querySelector('.ev-bnr');
+    if (!n) { if (old) old.remove(); return; }
+    if (old && old.getAttribute('data-n') === String(n)) return;
+    if (old) old.remove();
+    const d = document.createElement('div'); d.className = 'ev-bnr'; d.setAttribute('data-n', n);
+    d.innerHTML = '<span><b>' + n + (n === 1 ? ' evolución' : ' evoluciones') + ' del sistema anterior</b> sin pasar al odontograma.</span><button class="btn small primary" data-act="evoOne" data-pid="' + esc(pid) + '">Ver y pasar</button>';
+    st.parentNode.insertBefore(d, st);
+  };
+  A.afterRefresh = (prev => function () { const r = prev && prev.apply(this, arguments); try { bnr(); } catch (e) { /* nada */ } return r; })(A.afterRefresh);
+  try { new MutationObserver(() => { try { bnr(); } catch (e) { /* nada */ } }).observe(document.getElementById('view-ficha') || document.body, { childList: true, subtree: true }); } catch (e) { /* nada */ }
+  MF.evoOne = m => {
+    const p = A.PIDX[m.pid] || {}, r = A.evoApply(m.pid, true);
+    let b = '<p>Esto es lo que encontré en las evoluciones de <b>' + esc((p.first || '') + ' ' + (p.last || '')) + '</b>: <b class="ev-r">en rojo lo hecho</b>, <b class="ev-b">en azul lo que dice para la próxima</b>.</p>';
+    const mo = S.evoMonths == null ? 12 : +S.evoMonths;
+    b += '<label class="ev-per">Caries y pendientes: <select data-chg="evoMonthsOne">' + [[6, 'de los últimos 6 meses'], [12, 'del último año'], [24, 'de los últimos 2 años'], [0, 'de cualquier fecha']].map(o => '<option value="' + o[0] + '"' + (o[0] === mo ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label>';
+    b += r.marks ? '<div class="ev-ex"><div>' + r.acts.map(chip).join(' ') + '</div></div>' : '<p class="hint">No encontré piezas ni prácticas para marcar en esas evoluciones. Si las paso igual, quedan como revisadas.</p>';
+    if (r.old) b += '<p class="hint">' + r.old + ' caries o pendientes más viejos no se marcan.</p>';
+    return A.modalShell('Evoluciones al odontograma', b, '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="evoOneGo" data-pid="' + esc(m.pid) + '">' + (r.marks ? 'Marcar en el odontograma' : 'Marcar como revisadas') + '</button>');
+  };
+  A.acts.evoOne = el => { S.modal = { type: 'evoOne', pid: el.getAttribute('data-pid') }; A.renderModal(); };
+  A.chg.evoMonthsOne = el => { S.evoMonths = +el.value; A.renderModal(); };
+  A.acts.evoOneGo = el => { const pid = el.getAttribute('data-pid'), r = A.evoApply(pid, false); A.saveNow && A.saveNow(); S.modal = null; A.renderModal(); A.refresh(); A.toast(r.marks ? 'Listo: ' + r.marks + ' marcas en el odontograma.' : 'Listo.'); };
+
   const css = document.createElement('style');
   css.textContent = '.ev-r{color:#c62828}.ev-b{color:#1565c0}' +
     '.ev-chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;margin:2px 2px 0 0}' +
     '.ev-chip.done{background:#fde7e7;color:#b71c1c}.ev-chip.plan{background:#e3f0fd;color:#0d47a1}' +
     '.ev-h{margin:14px 0 6px;font-size:14px}.ev-ex{border:1px solid var(--line,#dde);border-radius:12px;padding:8px 10px;margin:6px 0}.ev-ex q{display:block;font-size:13px;color:var(--muted,#567);margin:3px 0 4px}' +
+    '.ev-bnr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;border:1px solid #f0c674;background:#fff8e6;color:#5b4300;border-radius:14px;padding:10px 12px;margin:0 0 10px;font-size:14px}' +
     '.ev-per{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0;font-size:14px}.ev-per select{padding:6px 8px;border-radius:10px;border:1px solid var(--line,#ccd)}' +
     '.ev-offer{display:grid;gap:4px;border:1px solid var(--line,#dde);border-radius:14px;padding:10px 12px;margin:12px 0}.ev-offer span{font-size:13px;color:var(--muted,#567)}.ev-offer .btn{justify-self:start;margin-top:4px}';
   document.head.appendChild(css);
