@@ -270,7 +270,7 @@
   };
 
   /* ---------- menú, clase del cuerpo y secciones permitidas ---------- */
-  const DR_OK = ['ajOpen', 'tutVid', 'waCfg', 'tab:inicio', 'tab:agenda', 'tab:pacientes', 'appearOpen', 'tutorialOpen', 'voiceHelp', 'supportOpen', 'planOpen', 'liteToggle', 'assistOpen', 'pwaInstall', 'acctOpen', 'licOpen', 'logout', 'cloudLogout', 'acctPass', 'nfOpen'];
+  const DR_OK = ['ajOpen', 'tutVid', 'waCfg', 'waOpen', 'tab:inicio', 'tab:agenda', 'tab:pacientes', 'appearOpen', 'tutorialOpen', 'voiceHelp', 'supportOpen', 'planOpen', 'liteToggle', 'assistOpen', 'pwaInstall', 'acctOpen', 'licOpen', 'logout', 'cloudLogout', 'acctPass', 'nfOpen'];
   function drawer() {
     const nav = $('#gearMenu .dr-nav'); if (!nav) return;
     let b = $('#drLite');

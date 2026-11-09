@@ -44,7 +44,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
   const PLANES = { prueba: 'Prueba', lite: 'Profesional LITE', basico: 'Profesional PRO', consultorio: 'Consultorio PRO', centro: 'Centro PRO', empresa: 'Empresa PRO', red: 'Empresa (nombre viejo)' };
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let ses = null, rows = [], fb = null, rq = null, q = '', filt = 'todas';
+  let ses = null, rows = [], fb = null, rq = null, wa = null, q = '', filt = 'todas';
   const RQK = { baja: 'Baja de servicio', arrepentimiento: 'Arrepentimiento (10 días)', eliminar: 'Eliminar cuenta y datos' };
   try { ses = JSON.parse(sessionStorage.getItem('ovadm') || 'null'); } catch (e) { ses = null; }
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -86,6 +86,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
       rows = await http('/rest/v1/rpc/ov_admin_accounts', { method: 'POST', body: {} }) || [];
       try { fb = await http('/rest/v1/ov_feedback?select=*&order=created_at.desc&limit=100') || []; } catch (e) { fb = null; }
       try { rq = await http('/rest/v1/ov_requests?select=*&order=created_at.desc&limit=200') || []; } catch (e) { rq = null; }
+      wa = {}; try { (await http('/rest/v1/rpc/ov_wa_admin_list', { method: 'POST', body: {} }) || []).forEach(x => { wa[x.owner] = x; }); } catch (e) { wa = null; }
       render();
     } catch (e) { app.innerHTML = '<div class="card err">' + esc(e.message) + '</div>'; }
   }
@@ -97,7 +98,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     app.innerHTML = '<div class="stats"><div class="stat"><b>' + c.todas + '</b><span>cuentas</span></div><div class="stat"><b>' + c.activa + '</b><span>pagando</span></div><div class="stat"><b>' + c.prueba + '</b><span>en prueba</span></div><div class="stat"><b>' + soon + '</b><span>vencen en 7 días</span></div><div class="stat"><b>' + (c.vencida + c.suspendida) + '</b><span>vencidas o suspendidas</span></div></div>' +
       '<div class="tools"><input id="qq" placeholder="Buscar por correo o nota" value="' + esc(q) + '"><select id="ff">' + ['todas', 'activa', 'prueba', 'vencida', 'suspendida'].map(f => '<option value="' + f + '"' + (f === filt ? ' selected' : '') + '>' + (f === 'todas' ? 'Todas' : f) + ' (' + c[f] + ')</option>').join('') + '</select><button class="small" id="rl">Actualizar</button></div>' +
       '<table><thead><tr><th>Cuenta</th><th>Plan</th><th>Estado</th><th>Vence</th><th>Uso</th><th>Acciones</th></tr></thead><tbody>' +
-      (list.length ? list.map(r => '<tr><td><b>' + esc(r.email) + '</b><div class="muted">Alta ' + dmy((r.created_at || '').slice(0, 10)) + (r.notes ? ' · ' + esc(r.notes) : '') + '</div></td><td>' + esc(PLANES[r.plan] || r.plan) + (r.max_locs > 1 ? '<div class="muted">' + r.max_locs + ' consultorios</div>' : '') + '</td><td>' + chip(state(r)) + '</td><td>' + dmy(until(r)) + '</td>' +
+      (list.length ? list.map(r => '<tr><td><b>' + esc(r.email) + '</b><div class="muted">Alta ' + dmy((r.created_at || '').slice(0, 10)) + (r.notes ? ' · ' + esc(r.notes) : '') + '</div></td><td>' + esc(PLANES[r.plan] || r.plan) + (r.max_locs > 1 ? '<div class="muted">' + r.max_locs + ' consultorios</div>' : '') + (wa && wa[r.owner] ? '<div><span class="chip ' + (wa[r.owner].status === 'activo' ? 'ok' : 'acc') + '" title="Secretaria por WhatsApp">WA ' + esc((WAP[wa[r.owner].plan] || {}).n || wa[r.owner].plan) + ' · ' + esc(wa[r.owner].status) + ' · ' + (wa[r.owner].used || 0) + '/' + wa[r.owner].quota + '</span></div>' : '') + '</td><td>' + chip(state(r)) + '</td><td>' + dmy(until(r)) + '</td>' +
         '<td class="muted">' + (r.limits ? '<b style="color:inherit">' + (r.devices || 0) + '/' + r.limits.devices + '</b> equipos · ' + r.limits.pros + ' prof.<br>' : '') + (r.flags ? '<span class="chip warn" title="' + esc(r.flags) + '">revisar</span> ' : '') + (r.records || 0) + ' registros<br>' + (r.last_sync ? 'sincronizó ' + dmy(r.last_sync.slice(0, 10)) : 'sin datos aún') + '</td>' +
         '<td><div class="acts"><button class="small" data-x="m30" data-id="' + r.owner + '">+1 mes</button><button class="small" data-x="y1" data-id="' + r.owner + '">+1 año</button>' +
         (r.status === 'suspendida' ? '<button class="small primary" data-x="on" data-id="' + r.owner + '">Reactivar</button>' : '<button class="small danger" data-x="off" data-id="' + r.owner + '">Suspender</button>') +
@@ -125,6 +126,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     const base = [today(), r.paid_until].filter(Boolean).sort().pop();
     if (x === 'm30' || x === 'y1') { const n = x === 'm30' ? 30 : 365; if (r.plan === 'prueba') { edit(r, addDays(base, n)); return; } patch(id, { paid_until: addDays(base, n), status: 'activa' }); return; }
     if (x === 'dv') { devs(r); return; }
+    if (x === 'wa') { waEdit(r); return; }
     if (x === 'off') { if (confirm('¿Suspender ' + r.email + '? Va a quedar en solo lectura.')) patch(id, { status: 'suspendida' }); return; }
     if (x === 'on') { patch(id, { status: 'activa' }); return; }
     if (x === 'ed') edit(r);
@@ -147,6 +149,26 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     $('#eOk').onclick = async () => {
       try { await patch(r.owner, { plan: $('#ePl').value, status: $('#eSt').value, trial_until: $('#eTr').value || r.trial_until, paid_until: $('#ePa').value || null, lim_pros: parseInt($('#ePr').value, 10) || null, lim_devices: parseInt($('#eDv').value, 10) || null, max_locs: Math.min(5, Math.max(1, parseInt($('#eLc').value, 10))) || null, notes: $('#eNo').value.trim() || null }); d.remove(); }
       catch (e) { $('#eEr').textContent = e.message; }
+    };
+  }
+  /* Secretaria por WhatsApp (1.39): mantener igual que A.WA_PLANS en src/app52.js y la portada */
+  const WAP = { wa1: { n: 'Profesional', q: 100, usd: 29 }, wa2: { n: 'Consultorio', q: 300, usd: 49 }, wa3: { n: 'Centro', q: 800, usd: 89 } };
+  function waEdit(r) {
+    const w = (wa && wa[r.owner]) || {}, d = document.createElement('div'); d.className = 'drawer';
+    d.innerHTML = '<div class="card"><h2 style="margin:0">Secretaria por WhatsApp · ' + esc(r.email) + '</h2>' +
+      '<div class="row2"><div><label>Estado</label><select id="wSt">' + ['pendiente', 'activo', 'pausado', 'baja'].map(k => '<option' + (k === (w.status || 'pendiente') ? ' selected' : '') + '>' + k + '</option>').join('') + '</select></div>' +
+      '<div><label>Plan</label><select id="wPl">' + Object.keys(WAP).map(k => '<option value="' + k + '"' + (k === (w.plan || 'wa1') ? ' selected' : '') + '>' + WAP[k].n + ' (USD ' + WAP[k].usd + ', ' + WAP[k].q + ' charlas)</option>').join('') + '</select></div></div>' +
+      '<div class="row2"><div><label>Charlas por mes</label><input type="number" id="wQ" min="10" max="10000" value="' + (w.quota || 100) + '"></div><div><label>Número que ve el paciente</label><input id="wDi" value="' + esc(w.display || '') + '" placeholder="+54 9 299 412-3456"></div></div>' +
+      '<div class="row2"><div><label>Phone number ID (Meta)</label><input id="wPh" value="' + esc(w.phone_id || '') + '"></div><div><label>WABA ID (Meta)</label><input id="wWb" value="' + esc(w.waba_id || '') + '"></div></div>' +
+      (w.owner ? '<p class="muted">Este mes: ' + (w.used || 0) + ' charlas · calidad ' + esc(w.quality || 'sin dato') + (w.out_paused ? ' · recordatorios frenados' : '') + '</p>' : '<p class="muted">Todavía no tiene el servicio. Guardá en «pendiente» y, cuando el número esté conectado en Meta, cargá los dos ID y pasalo a «activo».</p>') +
+      '<div class="err" id="wEr"></div><div class="acts" style="justify-content:flex-end"><button id="wCa">Cancelar</button><button class="primary" id="wOk">Guardar</button></div></div>';
+    document.body.appendChild(d);
+    d.onclick = e => { if (e.target === d) d.remove(); };
+    $('#wCa').onclick = () => d.remove();
+    $('#wPl').onchange = () => { $('#wQ').value = WAP[$('#wPl').value].q; };
+    $('#wOk').onclick = async () => {
+      try { await http('/rest/v1/rpc/ov_wa_admin_set', { method: 'POST', body: { p_owner: r.owner, p_status: $('#wSt').value, p_plan: $('#wPl').value, p_quota: parseInt($('#wQ').value, 10) || 100, p_phone_id: $('#wPh').value.trim(), p_waba_id: $('#wWb').value.trim(), p_display: $('#wDi').value.trim() } }); d.remove(); load(); }
+      catch (e) { $('#wEr').textContent = /could not find|schema cache/i.test(e.message) ? 'Falta correr supabase/whatsapp.sql en Supabase.' : e.message; }
     };
   }
   async function devs(r) {

@@ -1,0 +1,37 @@
+name: Publicar funciones de la Secretaria por WhatsApp
+# Sube las funciones de supabase/functions a Supabase cada vez que cambian (y a mano desde Actions).
+# Necesita el secreto SUPABASE_ACCESS_TOKEN del repositorio (un token personal de supabase.com › Account › Access Tokens).
+# Sin ese secreto no hace nada. Los secretos de las funciones (Meta, IA) se cargan aparte en el panel de Supabase.
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/functions/**', 'scripts/build-wa.js', '.github/workflows/functions.yml']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      REF: hcppfvioiaaejayzzhpa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Revisar que wa-sim esté al día y pasen las pruebas
+        run: |
+          node scripts/build-wa.js
+          git diff --exit-code supabase/functions/wa-sim/index.ts || (echo "::error::Corré node scripts/build-wa.js y subí wa-sim/index.ts" && exit 1)
+          cd tests/wa && node --experimental-strip-types --no-warnings test.mjs | tee /tmp/t1 && node --experimental-strip-types --no-warnings testsim.mjs | tee /tmp/t2
+          grep -q "todo bien" /tmp/t1 && grep -q "todo bien" /tmp/t2
+      - name: Publicar en Supabase
+        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
+        run: |
+          npx --yes supabase@2 functions deploy wa-sim --project-ref "$REF" --use-api
+          npx --yes supabase@2 functions deploy wa-send --project-ref "$REF" --use-api
+          npx --yes supabase@2 functions deploy wa-webhook --project-ref "$REF" --use-api --no-verify-jwt
+          npx --yes supabase@2 functions deploy wa-cron --project-ref "$REF" --use-api --no-verify-jwt
+      - name: Aviso
+        if: ${{ env.SUPABASE_ACCESS_TOKEN == '' }}
+        run: echo "::notice::Falta el secreto SUPABASE_ACCESS_TOKEN; las funciones no se publicaron."

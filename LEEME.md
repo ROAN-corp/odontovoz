@@ -480,3 +480,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - En Android, al tocar cualquier botón de WhatsApp (recordatorio del turno, presupuesto, turnero, avisos) la app pregunta si abrir **WhatsApp** o **WhatsApp Business**, con «Recordar en este equipo». Se cambia en Ajustes › La app en este equipo › WhatsApp para recordatorios (`odontovoz.waApp`: ask/wa/biz).
 - En la computadora y el iPhone sigue igual (wa.me abre el WhatsApp principal).
 - APK: la app ahora abre enlaces `intent://` y `whatsapp://` (nueva `MainActivity` en `scripts/patch-android.js`), necesario para elegir WhatsApp Business.
+
+## OdontoVoz 1.39 · Secretaria virtual por WhatsApp (servicio aparte)
+- Nueva sección **Secretaria por WhatsApp** (menú, debajo de Turnero online): Inicio (planes o estado del servicio, charlas del mes, calidad del número, frenar/reanudar recordatorios), **Charlas** (bandeja: tomar la charla, devolver al asistente, responder dentro de las 24 h, ver ficha), **Configurar** (encendido, nombre, dar turnos, lo que tiene que saber del consultorio, recordatorios automáticos, hora y tope diario) y **Probala**.
+- **Probala**: con cuenta real usa la IA de verdad (función `wa-sim`) con la agenda del consultorio y pide turnos marcados PRUEBA; sin cuenta o si la IA no está encendida, una simulación en el equipo. Pensado para que los testers la prueben antes de conectar WhatsApp.
+- Servidor (`supabase/functions`): `wa-webhook` (Meta → IA → respuesta; BAJA/ALTA; botones Confirmo/Cambiar; tope de charlas y de respuestas), `wa-send` (responder desde la app), `wa-cron` (recordatorios 9–20 h con tope y calidad del número: en ROJO se frenan solos), `wa-sim` (prueba con IA). SQL `supabase/whatsapp.sql`. Publicación automática con `.github/workflows/functions.yml` cuando exista el secreto `SUPABASE_ACCESS_TOKEN`.
+- Planes: Secretaria Profesional USD 29 (100 charlas), Consultorio USD 49 (300), Centro USD 89 (800); 100 charlas extra USD 10. En portada, términos, app (`A.WA_PLANS`) y panel.
+- Panel de licencias: botón «WhatsApp» por cuenta (estado, plan, cupo, IDs de Meta) y etiqueta con el uso.
+- Términos y privacidad versión 2026-11-09: servicio adicional y subencargados Meta y Anthropic (solo si se contrata o se prueba).

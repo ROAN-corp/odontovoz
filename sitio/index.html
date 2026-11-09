@@ -148,6 +148,16 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .wake { margin-top: 28px; color: var(--ink-2); max-width: 66ch; }
 
 /* ---------- planes ---------- */
+.wa-sec { background: linear-gradient(180deg, #effbf3, var(--white)); }
+.wa-kick { font: 700 13px/1 var(--f-mono, monospace); letter-spacing: .1em; text-transform: uppercase; color: #1c7c45; margin: 0; }
+.wa-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 26px; }
+.wa-grid > div { background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 6px; align-content: start; } .wa-grid span { color: var(--ink-2); }
+.wa-plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.wa-p { background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: grid; gap: 6px; align-content: start; } .wa-p small { color: var(--ink-2); }
+.wa-usd { font-size: 34px; font-weight: 800; margin-top: 6px; } .wa-usd span { font-size: 16px; font-weight: 500; color: var(--ink-2); }
+.wa-safe { margin-top: 22px; border: 1px dashed #8fd3a8; border-radius: 18px; padding: 16px 18px; background: var(--white); color: var(--ink-2); line-height: 1.55; } .wa-safe b { color: var(--ink); }
+@media (max-width: 900px) { .wa-grid { grid-template-columns: 1fr 1fr; } .wa-plans { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .wa-grid { grid-template-columns: 1fr; } }
 .plans-sec { background: var(--white); border-block: 1px solid var(--line); }
 .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
 .plan { border: 1px solid var(--line); border-radius: 18px; padding: 24px 22px; display: flex; flex-direction: column; gap: 14px; background: var(--paper); }
@@ -645,6 +655,29 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
+<section class="wa-sec" id="secretaria" aria-labelledby="t-wa">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="wa-kick">Servicio adicional · nuevo</p>
+      <h2 id="t-wa">Secretaria virtual por WhatsApp</h2>
+      <p class="lede">Contesta a tus pacientes desde el WhatsApp del consultorio, las 24 horas: les da turno con los horarios libres de tu agenda, responde dudas y manda el recordatorio con un botón para confirmar. Cuando hace falta, te pasa la charla.</p>
+    </div>
+    <div class="wa-grid">
+      <div><b>Da turnos sola</b><span>Ofrece horarios reales y el turno entra directo a tu agenda.</span></div>
+      <div><b>Responde dudas</b><span>Dirección, obras sociales, precios: lo que vos le cargues, sin inventar.</span></div>
+      <div><b>Recordatorios con «Confirmo»</b><span>Salen solos el día anterior y la agenda se marca sola.</span></div>
+      <div><b>Vos seguís a cargo</b><span>Ves todas las charlas en la app y tomás la que quieras.</span></div>
+    </div>
+    <div class="wa-plans">
+      <div class="wa-p"><b>Secretaria Profesional</b><small>Un profesional · 100 charlas por mes</small><div class="wa-usd">USD 29<span>/mes</span></div><small data-usd="29"></small></div>
+      <div class="wa-p"><b>Secretaria Consultorio</b><small>Varios profesionales · 300 charlas por mes</small><div class="wa-usd">USD 49<span>/mes</span></div><small data-usd="49"></small></div>
+      <div class="wa-p"><b>Secretaria Centro</b><small>Centros y empresas · 800 charlas por mes</small><div class="wa-usd">USD 89<span>/mes</span></div><small data-usd="89"></small></div>
+    </div>
+    <p class="plans-note">Se suma a cualquier plan de OdontoVoz. Charla = una conversación con un paciente en 24 horas. 100 charlas extra: USD 10. Incluye la conexión de tu número.</p>
+    <div class="wa-safe"><b>Tu número, cuidado.</b> Usamos el canal oficial de WhatsApp para empresas (Meta), nunca programas no autorizados. La secretaria solo responde a quien escribe y solo habla de tu consultorio; los recordatorios son únicamente de turnos, de 9 a 20 h, con tope por día y con baja en un toque. Si WhatsApp avisa que la calidad del número baja, los mensajes salientes se frenan solos.</div>
+  </div>
+</section>
+
 <section id="descargas" aria-labelledby="t-desc">
   <div class="wrap">
     <div class="sec-head">
@@ -832,6 +865,7 @@ footer .brand { margin-right: auto; }
 const CONTACTO = { whatsapp: ['5492984513279', '5492984764428'], nombres: ['Rodrigo', 'Angel'], email: 'somosroan@gmail.com' }; // números con código de país (549 + área + número)
 /* usd: precio en dólares por mes; en pesos se calcula con DOLAR (mantener igual que src/app25.js y terminos.html) */
 const DOLAR = 1570; /* pesos por dólar de referencia */
+document.querySelectorAll('[data-usd]').forEach(el => { el.textContent = '≈ $' + Math.round(+el.getAttribute('data-usd') * DOLAR).toLocaleString('es-AR') + ' por mes'; });
 const PLANES = [
   { nombre: 'Prueba', quien: 'Para conocerla con tus pacientes reales.', usd: 0, por: '7 días', items: ['Todas las funciones de todos los planes', 'Profesionales y consultorios sin límite de prueba', 'Hasta 5 equipos', 'Sin tarjeta de crédito', 'Lanzamiento: los primeros 50 tienen 14 días'], boton: 'Empezar gratis', link: 'app/' },
   { nombre: 'Profesional LITE', quien: 'Para el que quiere lo justo, sin vueltas: botones grandes y pocos menús.', usd: 8, items: ['1 profesional, 1 consultorio', 'Agenda del día y turnos con un toque', 'Pacientes con teléfono, notas de cada visita y cobros', 'Recordatorios por WhatsApp listos para mandar', 'Asistente por voz y respaldo en la nube', 'Hasta 2 equipos (celular y PC)'], boton: 'Contratar' },
