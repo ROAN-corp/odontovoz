@@ -517,3 +517,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.40.4
 - Trabajar en el consultorio de otro dueño: los datos de cada equipo quedan marcados con el dueño del lugar (`odontovoz.dataOwner`). Si no coinciden, o si el equipo trabaja en varios lugares y todavía no tiene la marca, se borran los datos locales y la copia base y se baja todo de nuevo, sin subir nada (evita mezclar consultorios).
 - El modo LITE es solo del consultorio propio: como persona del equipo de otro lugar se usa la app completa con el puesto asignado.
+
+## OdontoVoz 1.41
+- **Evoluciones al odontograma** (`src/app54.js`): lee las evoluciones traídas de otro sistema y marca lo hecho en rojo y lo que dice «la próx / queda / falta / hay que…» como planificado. Sin cara: oclusal (o vestibular en anteriores), avisado. Una sola vez por evolución. Se ofrece al terminar la mudanza y queda un botón en «Mudanza desde otro sistema».
+- Cambiar de lugar sin internet ya no borra lo que no se subió: se avisa y no cambia.

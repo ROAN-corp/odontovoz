@@ -29,7 +29,16 @@
     if (!owner || owner === curOwner()) { S.modal = null; A.renderModal(); return; }
     const p = places().filter(x => x.owner === owner)[0];
     S.modal = { type: 'plBusy', name: p ? p.clinic : '' }; A.renderModal();
-    try { if (CL.sync) await CL.sync(); } catch (e) { /* lo que no se pudo subir queda en la cola del otro lugar: se avisa */ }
+    let okSync = true;
+    const idle = async () => { for (let i = 0; i < 60 && CL.state === 'busy'; i++) await new Promise(r => setTimeout(r, 500)); };
+    try { await idle(); if (CL.sync) await CL.sync(); await idle(); } catch (e) { okSync = false; }
+    if (CL.state !== 'ok') okSync = false;
+    /* 1.40.5: si no se pudo guardar lo de acá en la nube (sin internet), no se cambia: al cambiar se borra lo de este equipo */
+    if (!okSync || CL.state === 'err' || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+      S.modal = null; A.renderModal();
+      A.toast('No se pudo guardar en la nube lo de este lugar (¿sin internet?). Probá de nuevo cuando haya conexión: si cambiás ahora se perdería.');
+      return;
+    }
     LS.set('odontovoz.place', owner); LS.set('odontovoz.placeJust', '1'); LS.set('odontovoz.goHome', '1'); LS.set('odontovoz.dataOwner', owner); LS.set('odontovoz.cloud.since', null);
     if (A.wipeLocal) A.wipeLocal();
     try { if (CL.baseClear) await CL.baseClear(); } catch (e) { /* nada */ }
