@@ -501,3 +501,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - **Importador nuevo** (`src/app53.js`, Ajustes › «Mudanza desde otro sistema»): lee ese archivo (o Excel/CSV como antes), reconoce columnas también en formato camelCase, carga pacientes sin duplicar, turnos de hoy en adelante (los pasados, opcional, como historial; los cancelados no), evoluciones como «[Sistema anterior]», y los pacientes que solo aparecían en la agenda. Opción «solo pacientes con actividad en los últimos 2 años» (recomendada con más de 5.000).
 - Carta modelo para pedir los datos al sistema anterior (Ley 25.326 y 26.529) y botón «Que nos ayuden (gratis)».
 - Portada: sección «Te mudamos gratis».
+
+## Mudanza desde Bilog (web, 9/11/2026)
+- El asistente de mudanza reconoce Bilog y muestra «Traer todo de Bilog»: trae todos los pacientes (con teléfono, correo, obra social y antecedentes), las evoluciones de la historia clínica y los turnos, sin pasar páginas. Antes hay que abrir un paciente y entrar una vez a «Historia clínica» y «Turnos».

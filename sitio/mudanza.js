@@ -131,6 +131,71 @@
     M.busy = false; say('Listo: recorrí ' + (i) + ' páginas. Si hay otro listado (agenda, evoluciones), abrilo, pasá a la página 2 y volvé a tocar «Traer todas las páginas».');
   }
 
+  /* ---------- Bilog (app.bilog.com.ar): no tiene listado completo; pide los datos con «server actions» de Next.js ----------
+     Los identificadores de cada acción cambian con cada versión de Bilog, así que se buscan en el código ya cargado por su nombre. */
+  var BILOG = /(^|\.)bilog\.com\.ar$/i.test(location.hostname);
+  var BA = {};
+  async function bilogFind() {
+    var want = ['searchPatient', 'getPatientHc', 'getAppointmentPatient'];
+    var urls = Array.prototype.map.call(document.scripts, function (s) { return s.src; }).concat(performance.getEntriesByType('resource').map(function (e) { return e.name; }))
+      .filter(function (u, i, a) { return u && /\/_next\/.*\.js(\?|$)/.test(u) && a.indexOf(u) === i; });
+    var re = /createServerReference\)\("([0-9a-f]{40,})",[^)]*?"(\w+)"\)/g;
+    for (var i = 0; i < urls.length && want.some(function (w) { return !BA[w]; }); i++) {
+      var t = ''; try { t = await (await of.call(window, urls[i])).text(); } catch (e) { continue; }
+      var m; re.lastIndex = 0; while ((m = re.exec(t))) if (want.indexOf(m[2]) >= 0) BA[m[2]] = m[1];
+    }
+    return BA;
+  }
+  async function bilogCall(name, args) {
+    var r = await of.call(window, '/dashboard', { method: 'POST', credentials: 'include', headers: { 'Next-Action': BA[name], Accept: 'text/x-component', 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify(args) });
+    if (r.status === 401 || r.status === 403) throw new Error('sesion');
+    var t = await r.text(), rows = {};
+    t.split('\n').forEach(function (l) { var m = /^([0-9a-f]+):(.*)$/.exec(l); if (m) { try { rows[m[1]] = JSON.parse(m[2]); } catch (e) { } } });
+    var ref = rows['0'] && typeof rows['0'].a === 'string' ? rows['0'].a.replace(/^\$@?/, '') : '1';
+    return rows[ref] !== undefined ? rows[ref] : null;
+  }
+  var day = function (s) { s = String(s || ''); return /^\d{4}-\d{2}-\d{2}/.test(s) && !/^(0001|1900)-/.test(s) ? s.slice(0, 10) : ''; };
+  async function bilog() {
+    if (M.busy) return; M.busy = true; M.stop = false;
+    try {
+      say('Buscando cómo pide los datos Bilog…');
+      await bilogFind();
+      if (!BA.searchPatient) { say('No encontré cómo pide los pacientes. Abrí Pacientes › Datos personales, buscá cualquier paciente y volvé a tocar el botón.'); return; }
+      var falta = [];
+      if (!BA.getPatientHc) falta.push('«Historia clínica»');
+      if (!BA.getAppointmentPatient) falta.push('«Turnos»');
+      if (falta.length && !M.bilogAnyway) { M.bilogAnyway = true; say('Para traer también evoluciones y turnos, abrí un paciente y entrá una vez a ' + falta.join(' y ') + ' (menú de la izquierda). Después volvé a tocar el botón. Si lo tocás de nuevo sin hacerlo, traigo solo los pacientes.'); return; }
+      var miss = 0, id = 0, errs = 0, np = 0;
+      while (miss < 80 && id < 200000 && !M.stop) {
+        id++;
+        var p = null;
+        try { p = await bilogCall('searchPatient', [id]); errs = 0; } catch (e) { if (e.message === 'sesion' || ++errs >= 5) { say('Bilog dejó de responder (¿se cerró la sesión?). Volvé a entrar y tocá el botón otra vez: sigo sin duplicar.'); return; } await sleep(1500); id--; continue; }
+        if (!p || p.error || !(p.full_name || p.id_patient)) { miss++; continue; }
+        miss = 0; np++;
+        var pid = String(p.id_patient || id), name = String(p.full_name || '').trim(), dni = String(p.document_number || '').replace(/\D/g, '');
+        var pl = p.plan_navigation || {}, mi = pl.medical_insurance_navigation || pl.medical_insurance || {};
+        var os = (typeof mi === 'string' ? mi : mi.name || mi.description || '') || '';
+        var ant = [['allergy', 'alergia'], ['diabetes', 'diabetes'], ['heart_condition', 'cardiopatía'], ['renal_condition', 'enfermedad renal'], ['hepatitis', 'hepatitis'], ['pregnancy', 'embarazo'], ['alpha', 'otros antecedentes']].filter(function (x) { return p[x[0]] === true; }).map(function (x) { return x[1]; });
+        var obs = [p.alert ? 'Alerta: ' + p.alert : '', ant.length ? 'Antecedentes: ' + ant.join(', ') : '', p.notes || ''].filter(Boolean).join(' · ');
+        M.pats['b' + pid] = { 'id': pid, 'Apellido y nombre': name, 'DNI': dni, 'Fecha de nacimiento': day(p.date_of_birth), 'Celular': p.mobile_phone || '', 'Telefono fijo': p.home_phone || p.work_phone || '', 'Email': p.email || '',
+          'Domicilio': p.address || '', 'Localidad': [p.city, p.state].filter(Boolean).join(', '), 'Obra social': /^particular$/i.test(os) ? '' : os, 'Plan de la obra social': pl.name || '', 'Nro afiliado': p.affiliate_number || '',
+          'Historia clinica': p.clinical_history_number || '', 'Sexo': p.gender || '', 'Ocupacion': p.occupation || '', 'Observaciones': obs, 'Alta en Bilog': day(p.registration_date) };
+        var who = { 'Paciente': name, 'DNI': dni, 'Paciente id': pid };
+        if (BA.getPatientHc) {
+          try { var hc = await bilogCall('getPatientHc', [+pid]); (Array.isArray(hc) ? hc : []).forEach(function (h) { var tx = String(h.cli_hist || '').trim(); if (!tx) return; var pr = h.professional || {}; M.notes['b' + (h.id_cli_hist || pid + '-' + h.date + '-' + tx.length)] = Object.assign({ 'Fecha': day(h.date), 'Profesional': typeof pr === 'string' ? pr : pr.name || '', 'Evolucion': tx }, who); }); } catch (e) { }
+          await sleep(60);
+        }
+        if (BA.getAppointmentPatient) {
+          try { var ap = await bilogCall('getAppointmentPatient', [+pid]); (Array.isArray(ap) ? ap : []).forEach(function (a) { var pr = a.professional_navigation || {}; M.appts['b' + (a.id_schedule || pid + '-' + a.date + a.time)] = Object.assign({ 'Fecha': day(a.date), 'Hora': String(a.time || '').slice(0, 5), 'Profesional': pr.name || '', 'Motivo': (a.is_overturn ? 'Sobreturno' : '') + (a.observation ? (a.is_overturn ? ' · ' : '') + a.observation : ''), 'Estado': a.do_not ? 'Ausente' : '' }, who); }); } catch (e) { }
+        }
+        paint(); say('Leyendo paciente ' + np.toLocaleString('es-AR') + '… (tocá Frenar para cortar; lo leído queda)');
+        await sleep(90 + Math.random() * 80);   // de a poco, sin apurar al sistema
+      }
+      say((M.stop ? 'Frenado. ' : 'Listo. ') + 'Traje ' + count(M.pats).toLocaleString('es-AR') + ' pacientes, ' + count(M.appts).toLocaleString('es-AR') + ' turnos y ' + count(M.notes).toLocaleString('es-AR') + ' evoluciones. Tocá «Bajar archivo para OdontoVoz».');
+    } finally { M.busy = false; paint(); }
+  }
+  M.bilog = bilog;
+
   /* ---------- archivo para OdontoVoz ---------- */
   function download() {
     var data = { app: 'odontovoz-mudanza', v: 1, source: location.host, at: new Date().toISOString(),
@@ -149,9 +214,9 @@
   box.setAttribute('style', 'position:fixed;right:16px;bottom:16px;z-index:2147483647;width:320px;max-width:calc(100vw - 32px);background:#fff;color:#0f2b2c;border:2px solid #0b6b6f;border-radius:16px;box-shadow:0 18px 50px -12px rgba(0,0,0,.45);font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:14px');
   box.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><b style="font-size:15px;flex:1">Mudanza a OdontoVoz</b><button data-ov="x" title="Cerrar" style="border:0;background:none;font-size:20px;cursor:pointer;color:#0f2b2c">×</button></div>' +
     '<div data-ov="n" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin-bottom:8px"></div>' +
-    '<div data-ov="m" style="font-size:12.5px;color:#4a5f60;min-height:34px;margin-bottom:8px">Abrí el listado de pacientes del sistema y pasá de página: voy juntando lo que aparece.</div>' +
+    '<div data-ov="m" style="font-size:12.5px;color:#4a5f60;min-height:34px;margin-bottom:8px">' + (BILOG ? 'Estás en Bilog: tocá «Traer todo de Bilog». Tarda unos minutos (unos 2 por cada 100 pacientes).' : 'Abrí el listado de pacientes del sistema y pasá de página: voy juntando lo que aparece.') + '</div>' +
     '<div style="display:grid;gap:6px">' +
-    '<button data-ov="all" style="padding:10px;border-radius:10px;border:1px solid #0b6b6f;background:#e6f4f3;color:#0b4f52;font-weight:700;cursor:pointer">Traer todas las páginas</button>' +
+    '<button data-ov="all" style="padding:10px;border-radius:10px;border:1px solid #0b6b6f;background:#e6f4f3;color:#0b4f52;font-weight:700;cursor:pointer">' + (BILOG ? 'Traer todo de Bilog' : 'Traer todas las páginas') + '</button>' +
     '<button data-ov="tab" style="padding:8px;border-radius:10px;border:1px solid #c9d6d6;background:#fff;cursor:pointer">Leer la tabla de esta pantalla</button>' +
     '<button data-ov="stop" style="padding:8px;border-radius:10px;border:1px solid #c9d6d6;background:#fff;cursor:pointer">Frenar</button>' +
     '<button data-ov="dl" style="padding:10px;border-radius:10px;border:0;background:#0b6b6f;color:#fff;font-weight:700;cursor:pointer">Bajar archivo para OdontoVoz</button></div>' +
@@ -165,10 +230,10 @@
     var b = e.target.closest && e.target.closest('[data-ov]'); if (!b) return; var k = b.getAttribute('data-ov');
     if (k === 'x') box.style.display = 'none';
     if (k === 'tab') { var n = tables(); paint(); say(n ? 'Sumé ' + n + ' registros de la tabla. Pasá de página y volvé a tocar, o probá «Traer todas las páginas».' : 'No encontré una tabla de pacientes, turnos o evoluciones en esta pantalla.'); }
-    if (k === 'all') crawl();
+    if (k === 'all') { if (BILOG) bilog(); else crawl(); }
     if (k === 'stop') { M.stop = true; say('Frenado.'); }
     if (k === 'dl') download();
   });
   paint();
-  var n0 = tables(); if (n0) { paint(); say('Ya encontré ' + n0 + ' registros en esta pantalla. Seguí navegando o tocá «Traer todas las páginas».'); }
+  var n0 = BILOG ? 0 : tables(); if (n0) { paint(); say('Ya encontré ' + n0 + ' registros en esta pantalla. Seguí navegando o tocá «Traer todas las páginas».'); }
 })();
