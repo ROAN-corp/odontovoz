@@ -521,3 +521,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.41
 - **Evoluciones al odontograma** (`src/app54.js`): lee las evoluciones traídas de otro sistema y marca lo hecho en rojo y lo que dice «la próx / queda / falta / hay que…» como planificado. Sin cara: oclusal (o vestibular en anteriores), avisado. Una sola vez por evolución. Se ofrece al terminar la mudanza y queda un botón en «Mudanza desde otro sistema».
 - Cambiar de lugar sin internet ya no borra lo que no se subió: se avisa y no cambia.
+
+## OdontoVoz 1.41.1
+- Evoluciones al odontograma, criterio de «estado actual»: lo hecho se marca aunque sea viejo; caries y pendientes solo si son recientes (6 meses, 1 año —predeterminado—, 2 años o todo); lo repetido en la misma pieza y cara se marca una vez (queda la última); la cara supuesta se descarta si la pieza ya tiene la práctica con cara.
