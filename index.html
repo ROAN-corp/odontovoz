@@ -7772,7 +7772,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.40.1';
+  A.VERSION = '1.40.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -15091,7 +15091,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       '<div class="field"><label for="lgPass">Contraseña</label><input id="lgPass" type="password" autocomplete="current-password"></div>' +
       '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>' +
       '<button class="btn primary" type="submit" style="min-height:48px">Ingresar</button>' +
-      '<p class="hint" style="margin:0">¿Te olvidaste la contraseña? Pedile al dueño que te ponga una nueva desde Menú › Cuenta › Usuarios del equipo.</p>' +
+      '<p class="hint" style="margin:0">¿Te olvidaste la contraseña? Pedile al dueño que te ponga una nueva desde Ajustes › Equipo e invitaciones.</p>' +
       '<button type="button" class="btn ghost" data-act="lgMail">Ingresar con correo (dueño de la cuenta)</button>' +
       '<div class="row-btns" style="justify-content:center"><button type="button" class="btn small ghost" data-act="loginDemo">Probar con pacientes de ejemplo</button></div></form>';
     w.innerHTML = h;

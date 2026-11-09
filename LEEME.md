@@ -507,3 +507,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.40.1
 - Ajustes › Cuenta y datos suma **«Equipo e invitaciones»** (crear usuarios e invitar a un odontólogo que ya usa OdontoVoz; solo dueño o administrador) y **«Cuenta y equipos»**. Desde la reorganización de 1.38 no había un acceso visible al equipo.
+
+## OdontoVoz 1.40.2
+- El ingreso de usuarios del equipo indica dónde está ahora el cambio de contraseña (Ajustes › Equipo e invitaciones).
