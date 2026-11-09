@@ -530,3 +530,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.42
 - Las evoluciones nuevas van solas al odontograma: lo hecho («hice restauración en 25», «208 en 34») aparece en «Prácticas de hoy» para cobrar y queda en rojo (también si se elige «Solo nota, sin cobrar»); lo de la próxima se marca planificado sin cobrar. Sin prácticas de cobro, se marca directo al guardar.
+
+## OdontoVoz 1.43
+- **Novedades sin cansar** (`src/app55.js`): una sola tarjeta en el inicio con hasta 3 novedades de las versiones no vistas (se cierra con ✕ y no vuelve), una entrada silenciosa (leída) en la casilla por versión y Ajustes › Ayuda › «Novedades».
+- **Sugerencias y críticas** en Ajustes › Ayuda (y en el menú): idea, crítica, algo no anda, me gustó. Llegan al panel de licencias (`ov_feedback`; la crítica va como «otro» con «[Crítica]»).

@@ -10,7 +10,7 @@
     { t: 'Consultorio', k: ['cfgOpen:centro', 'locsOpen', 'catalogOpen', 'osOpen', 'stkOpen', 'tnOpen', 'importOpen'] },
     { t: 'La app en este equipo', k: ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall'] },
     { t: 'Cuenta y datos', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'plOpen', 'tmOpen', 'cfgOpen:datos', 'modeOpen', 'acctOpen'] },
-    { t: 'Ayuda', k: ['tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
+    { t: 'Ayuda', k: ['newsOpen', 'fbOpen', 'tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
   ];
   const keyOf = b => { const a = b.getAttribute('data-act'); return a === 'cfgOpen' ? 'cfgOpen:' + (b.getAttribute('data-t') || 'centro') : a; };
   function items() {
