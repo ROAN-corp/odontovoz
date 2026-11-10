@@ -534,3 +534,6 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.43
 - **Novedades sin cansar** (`src/app55.js`): una sola tarjeta en el inicio con hasta 3 novedades de las versiones no vistas (se cierra con ✕ y no vuelve), una entrada silenciosa (leída) en la casilla por versión y Ajustes › Ayuda › «Novedades».
 - **Sugerencias y críticas** en Ajustes › Ayuda (y en el menú): idea, crítica, algo no anda, me gustó. Llegan al panel de licencias (`ov_feedback`; la crítica va como «otro» con «[Crítica]»).
+
+## OdontoVoz 1.44
+- **Odontograma: «ya lo tenía» vs. «lo hice yo hoy».** Lo que se pinta o dicta en rojo en el odontograma queda como preexistente (`pre: true`): no crea práctica hecha ni cargo. Es «hecho hoy» (con cobro) si la frase dice «hice/realicé/terminé…», si esa pieza estaba planificada, o si se elige «Lo hice yo hoy». Antes todo lo rojo se cobraba como hecho por el profesional.

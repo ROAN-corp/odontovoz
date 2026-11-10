@@ -851,6 +851,9 @@ body.has-modal .vdock .vd-hf { display: none; }
 .login-card .legal { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
 .peer-toast { border-left: 4px solid var(--accent); }
 .odon.tight .num { font-size: 15px; font-weight: 600; } .odon.tight .prim-lbl { font-size: 15px; } .odon .midline.q { stroke-width: 1.6; }
+.od-red { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.od-red button { border: 1px solid var(--line); background: var(--card, #fff); border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer; }
+.od-red button[aria-pressed="true"] { background: #fde7e7; border-color: #e57373; color: #a31515; }
 .od-toolbar { display: flex; gap: 6px; align-items: center; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: thin; }
 .od-toolbar .tool { flex: 0 0 auto; white-space: nowrap; } .od-toolbar .sep { flex: 0 0 1px; align-self: stretch; background: var(--line); margin: 2px 2px; } .od-toolbar select { flex: 0 0 auto; }
 .od-tb-lbl { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; }
@@ -1984,7 +1987,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* sincroniza el odontograma con la lista de tratamientos (plan / realizado) */
   function syncTx(pd, a, ctx) {
-    if (a.type !== 'mark' || !A.ARANCEL[a.cond]) return [];
+    if (a.type !== 'mark' || !A.ARANCEL[a.cond] || a.pre) return [];
     const notes = [];
     a.teeth.forEach(n => {
       const faces = a.faces ? a.faces.slice().sort().join('') : '';
@@ -2015,15 +2018,16 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         a.faces.forEach(f => {
           const prev = d.faces[f];
           if (prev && prev.status === 'planificado' && a.status === 'realizado' && prev.cond === a.cond) notes.push(n + ' ' + A.faceName(f, n) + ': planificado → realizado');
-          d.faces[f] = { cond: a.cond, status: a.status };
+          d.faces[f] = a.pre ? { cond: a.cond, status: a.status, pre: true } : { cond: a.cond, status: a.status };
         });
       } else if (a.cond === 'ausente' || a.cond === 'extraido') {
-        d.faces = {}; d.whole = [{ cond: a.cond, status: a.status }];
+        d.faces = {}; d.whole = [a.pre ? { cond: a.cond, status: a.status, pre: true } : { cond: a.cond, status: a.status }];
       } else {
         d.whole = d.whole.filter(w => w.cond !== 'ausente' && w.cond !== 'extraido');
         const i = d.whole.findIndex(w => w.cond === a.cond);
-        if (i >= 0) { if (d.whole[i].status === 'planificado' && a.status === 'realizado') notes.push(n + ' ' + label.toLowerCase() + ': planificado → realizado'); d.whole[i] = { cond: a.cond, status: a.status }; }
-        else d.whole.push({ cond: a.cond, status: a.status });
+        const w = a.pre ? { cond: a.cond, status: a.status, pre: true } : { cond: a.cond, status: a.status };
+        if (i >= 0) { if (d.whole[i].status === 'planificado' && a.status === 'realizado') notes.push(n + ' ' + label.toLowerCase() + ': planificado → realizado'); d.whole[i] = w; }
+        else d.whole.push(w);
       }
     });
     if (ctx) syncTx(pd, a, ctx);
@@ -2358,6 +2362,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return (od.control ? '<div class="ctl-banner"><b>Control en curso:</b> actualizá el odontograma (tocá las piezas o dictá) y después confirmá. <button class="btn small primary" data-act="ctlDone" data-pid="' + pid + '">Terminar control</button></div>' : '') + '<div class="atn-grid"><div>' +
       '<div class="od-sticky"><div class="od-head"><h2>Odontograma</h2><span class="count" id="odonCount"></span><button class="btn small od-zoom" data-act="odZoom" aria-pressed="' + !!S.odZoom + '" title="Ver las piezas más grandes (se desliza hacia los costados)">' + (S.odZoom ? '− Achicar' : '+ Agrandar') + '</button></div>' +
       '<div class="od-toolbar" role="toolbar" aria-label="Pintar a mano: elegí qué marcar y tocá la cara"><span class="od-tb-lbl">Pintar a mano:</span>' + tools + '</div>' +
+      '<div class="od-red" role="group" aria-label="Lo que marco en rojo"><span>Lo que marco en rojo:</span><button data-act="odRed" data-v="ya" aria-pressed="' + (od.redMode !== 'hoy') + '">Ya lo tenía</button><button data-act="odRed" data-v="hoy" aria-pressed="' + (od.redMode === 'hoy') + '">Lo hice yo hoy (se cobra)</button></div>' +
       '<div class="odon-scroll' + (S.odZoom ? ' zoom' : '') + '" id="odonHost"></div>' +
       '<div class="od-voice"><button class="mic" id="micBtn" data-act="odMic" aria-pressed="false" aria-label="Iniciar dictado por voz">' + mic + '</button>' +
       '<div class="od-live" aria-live="polite"><span class="st" id="micState">Dictado por voz</span><span class="tx" id="liveHost">Tocá el micrófono y decí: «caries oclusal del 35»</span><span class="rs" id="odRes"></span></div>' +
@@ -2436,6 +2441,18 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     else { od.sel = SWEEP[od.sweep.i]; od.lastTooth = od.sel; }
     return changed;
   }
+  /* 1.44: en la exploración, lo que se pinta en rojo es lo que el paciente YA TRAÍA (no se cobra ni figura como hecho por vos).
+     Es «lo hice hoy» si la frase lo dice («hice», «realicé», «terminé»…), si estaba planificado, o si se eligió «Lo hice hoy». */
+  const DID_RE = /\b(hice|hicimos|realice|realizamos|lo hice|termine|terminamos|coloque|cemente|obture|extraje|saque)\b/;
+  const PRE_RE = /\b(ya tenia|ya tiene|ya traia|ya trae|existente|preexistente|de antes|viejo|vieja|antiguo|antigua|previo|previa|de otro)\b/;
+  function preOf(pd, a, info) {
+    const ph = A.norm ? A.norm(info && info.phrase || '') : String(info && info.phrase || '').toLowerCase();
+    if (DID_RE.test(ph)) return false;
+    if (PRE_RE.test(ph)) return true;
+    const planned = (pd.tx || []).some(t => t.status === 'plan' && a.teeth.indexOf(t.tooth) >= 0 && (t.cond === a.cond || (a.cond === 'extraido' && t.cond === 'extraccion')));
+    if (planned) return false;
+    return S.od.redMode !== 'hoy';
+  }
   function commit(actions, info) {
     const od = S.od, snap = snapshot(), lines = []; let changed = false; od.msg = '';
     actions.forEach(a => {
@@ -2449,6 +2466,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         if (sweepNext(pd)) { changed = true; lines.push(n0 + ' · sano (por defecto)'); } else lines.push('Siguiente pieza');
         return;
       }
+      if (a.type === 'mark' && a.status === 'realizado' && preOf(pd, a, info)) a.pre = true;
       const notes = A.applyAction(pd, a, ctx()); changed = true;
       lines.push(A.describe(a)); notes.forEach(x => lines.push(x));
       od.lastTooth = a.teeth[a.teeth.length - 1]; od.sel = od.lastTooth;
@@ -2524,6 +2542,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       commit([{ type: 'mark', teeth: issue.teeth, faces: fk, cond: issue.cond, status: issue.status }], { phrase: 'Cara elegida: ' + fk.map(f => A.faceName(f, issue.teeth[0])).join(' + '), src: 'toque' });
     } else A.odonUpdate();
   };
+  A.acts.odRed = el => { S.od.redMode = el.getAttribute('data-v'); A.$$('.od-red button').forEach(b => b.setAttribute('aria-pressed', String(b.getAttribute('data-v') === S.od.redMode))); };
   A.acts.odSweep = () => commit([{ type: 'sweep', raw: 'iniciar barrido' }], { phrase: 'Barrido guiado', src: 'toque' });
   A.acts.odSweepNext = () => commit([{ type: 'next', raw: 'siguiente' }], { phrase: 'Botón siguiente', src: 'toque' });
   A.acts.odSweepStop = () => { S.od.sweep.on = false; S.od.sel = null; A.odonUpdate(); };
@@ -7810,7 +7829,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.43';
+  A.VERSION = '1.44';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -17742,6 +17761,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.44', d: '2026-11-09', items: [
+      { t: 'Odontograma: lo que marcás en rojo al revisar al paciente queda como «ya lo tenía» y no se cobra. Si lo hiciste vos hoy, elegí «Lo hice yo hoy» o decí «hice…».', top: 1 }] },
     { v: '1.43', d: '2026-11-09', items: [
       { t: 'Ajustes › Ayuda › «Sugerencias y críticas»: contanos qué mejorarías, lo leemos todo.', top: 1 },
       { t: 'Ajustes › Novedades: la lista de lo nuevo de cada versión.' }] },
