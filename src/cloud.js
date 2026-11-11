@@ -6,7 +6,7 @@
     get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
     set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } }
   };
-  const PRIV_VER = '2026-11-11';
+  const PRIV_VER = '2026-11-11.2';
   A.TERMS_VER = PRIV_VER;
   const WEB = 'https://roan-corp.github.io/odontovoz/';
 

@@ -7,7 +7,7 @@
 <body><main>
 <div class="top"><a href="./">← OdontoVoz</a><span><a href="terminos.html">Términos</a> · <a href="baja.html">Botón de baja de servicio</a> · <a href="baja.html#arrepentimiento">Botón de arrepentimiento</a></span></div>
 <h1>Política de privacidad</h1>
-<p class="meta">Versión 2026-11-11 · Vigente desde el 11 de noviembre de 2026</p>
+<p class="meta">Versión 2026-11-11.2 · Vigente desde el 11 de noviembre de 2026</p>
 
 <div class="box"><b>¿Sos paciente?</b> Andá directo a <a href="#pacientes">la sección para pacientes</a>: ahí está quién tiene tus datos y cómo pedir que los veas, corrijas o borres.</div>
 
@@ -34,6 +34,8 @@
 <tr><td>Supabase</td><td>Base de datos, cuentas y fotos</td><td>Unión Europea (Irlanda)</td><td>Todos los datos de la cuenta y de los pacientes, cifrados</td></tr>
 <tr><td>Google (reconocimiento de voz del navegador o de Android)</td><td>Pasar a texto lo que se dicta, <b>solo si activás la voz y lo aceptás</b></td><td>Principalmente EE. UU.</td><td>El audio de lo que dictás</td></tr>
 <tr><td>Meta (WhatsApp Business Platform)</td><td>Autogestión y recordatorios por WhatsApp, <b>solo si el consultorio los activa</b></td><td>EE. UU. y otros</td><td>Los mensajes con el consultorio y el número de WhatsApp del paciente</td></tr>
+<tr><td>Google (Firebase Cloud Messaging)</td><td>Llevar los avisos al celular con la app cerrada, <b>solo si los activás en el teléfono</b></td><td>EE. UU. y otros</td><td>El texto del aviso (por ejemplo «Llegó Ana Pérez · 10:00») y la dirección de notificaciones del teléfono</td></tr>
+<tr><td>Google (Google Drive)</td><td>Guardar las copias de seguridad</td><td>EE. UU. y otros</td><td>Copias <b>cifradas</b> de todos los datos: Google no puede leerlas (la clave la tiene solo ROAN corp)</td></tr>
 <tr><td>GitHub (Microsoft)</td><td>Publicar la página y la app</td><td>EE. UU.</td><td>Ningún dato de pacientes; ve la dirección de internet (IP) de quien entra</td></tr>
 </table>
 <p>La Argentina considera que la Unión Europea tiene un nivel de protección adecuado para transferir datos personales. Los datos viajan cifrados (HTTPS) y se guardan cifrados.</p>
@@ -48,13 +50,14 @@
 <li>Cada cuenta solo puede leer y cambiar sus propios datos: lo controla el servidor, no solo la app.</li>
 <li>Solo los equipos registrados de la cuenta pueden acceder, dentro del límite del plan. Un equipo desconectado pierde el acceso y se borran sus datos guardados.</li>
 <li>Queda un registro de cambios en el servidor: qué usuario cargó, cambió o anuló cada cosa y cuándo, con las versiones anteriores de la historia clínica (las de la agenda y otros datos, 90 días). Nadie lo puede borrar desde la app. Lo ven el titular de la cuenta y sus administradores. Lo escrito en la historia clínica no se borra: se anula con motivo, y los pacientes se archivan.</li>
+<li>Copias de seguridad en tres lugares: el proveedor de la base (copias diarias), una copia cifrada cada noche en un segundo proveedor (Google Drive; se guarda una por año durante al menos diez años) y un disco propio fuera de internet. Comprobamos solos, todas las noches, que se puedan restaurar.</li>
 <li>Bloqueo con PIN para equipos compartidos.</li>
 <li>Los documentos firmados llevan un sello que permite comprobar que no se alteraron.</li>
 <li>Nuestro equipo solo entra al contenido de una cuenta si el profesional lo pide para resolver un problema.</li>
 </ul>
 
 <h2 id="tiempo">6. Cuánto tiempo se guardan</h2>
-<p>Los datos de una cuenta se guardan mientras la cuenta exista. Si dejás de pagar o te das de baja, la cuenta queda en solo lectura para que puedas consultarla y descargarla. La historia clínica se debe conservar al menos 10 años (Ley 26.529, art. 18): esa obligación es del profesional, y por eso no borramos nada salvo que lo pidas. Si pedís eliminar la cuenta, borramos todo dentro de los 10 días hábiles.</p>
+<p>Los datos de una cuenta se guardan mientras la cuenta exista. Si dejás de pagar o te das de baja, la cuenta queda en solo lectura para que puedas consultarla y descargarla. La historia clínica se debe conservar al menos 10 años (Ley 26.529, art. 18): esa obligación es del profesional, y por eso no borramos nada salvo que lo pidas. Si pedís eliminar la cuenta, borramos todo de la base dentro de los 10 días hábiles. Las copias de seguridad cifradas no se pueden editar una por una: lo borrado desaparece de las diarias en 35 días y de las mensuales en 13 meses; las anuales se conservan cifradas y sin uso solo mientras dure la obligación legal de conservar la historia clínica, y se destruyen al cumplirse.</p>
 
 <h2 id="derechos">7. Tus derechos</h2>
 <p>Tenés derecho a acceder a tus datos, a pedir que se corrijan, actualicen o borren (Ley 25.326, arts. 14 a 16). El acceso es gratuito a intervalos no menores de seis meses, salvo que acredites un interés legítimo. Como profesional, podés ver, corregir, descargar y borrar todo desde la app. Para cualquier pedido, escribinos a <a href="mailto:somosroan@gmail.com">somosroan@gmail.com</a>: respondemos dentro de los plazos de la ley (10 días corridos para el acceso y 5 días hábiles para la rectificación o supresión).</p>

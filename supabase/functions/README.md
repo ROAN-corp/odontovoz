@@ -9,6 +9,7 @@ El motor del menú es `scripts/wa-menu.js` (pruebas: `tests/wa/menu.test.mjs`); 
 | `wa-sim` | Sí | (Guardada) prueba con IA desde la app. Hoy «Probala» usa el menú dentro de la app. | `ANTHROPIC_API_KEY` (opcional `WA_AI_MODEL`, `WA_SIM_MAX`) |
 | `wa-webhook` | **No** | Recibe los mensajes de Meta y responde con el menú de botones; BAJA/ALTA; botones del recordatorio. | `META_APP_SECRET`, `META_TOKEN`, `WA_VERIFY_TOKEN` |
 | `wa-send` | Sí | Una persona responde desde la app (solo dentro de las 24 h). | `META_TOKEN` |
+| `push-hook` | **No** | Avisos al celular con la app cerrada (Firebase). La despierta la base (`supabase/push.sql`, pg_net) y solo procesa la cola `ov_push_q`. Guía: `docs/PUSH.md`. | `FCM_SERVICE_ACCOUNT` |
 | `wa-cron` | **No** | Cada 10 min: manda recordatorios en cola solo a cuentas con `rem_plan` y cupo del mes (9 a 20 h, tope diario, sin bajas) y revisa la calidad del número. | `META_TOKEN`, `WA_CRON_KEY` (opcional `WA_TPL_REM`, `WA_TPL_LANG`, `WA_HOURS`) |
 
 - `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY` los inyecta Supabase; nadie los copia.

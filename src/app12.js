@@ -314,6 +314,7 @@
   const chan = ln => chanOk || (chanOk = Promise.resolve(ln.createChannel ? ln.createChannel({ id: 'ov-avisos', name: 'Avisos de OdontoVoz', description: 'Llegó un paciente, turnos online, stock, laboratorio y otros avisos', importance: 5, visibility: 1, vibration: true, lights: true, lightColor: '#0B6B6F' }) : null).catch(() => null));
   async function sysNotify(title, body, extra) {
     const p = PREF(); if (!p.system) return;
+    if (A.pushCovers && A.pushCovers(extra)) return; /* ya lo avisa el servidor (push) */
     try {
       const ln = NL();
       if (ln) { await chan(ln); await ln.schedule({ notifications: [{ id: (Date.now() % 100000) + (nid++), title, body, largeBody: body, channelId: 'ov-avisos', smallIcon: 'ic_stat_ov', iconColor: '#0B6B6F', extra: extra || {}, group: 'odontovoz' }] }); return; }

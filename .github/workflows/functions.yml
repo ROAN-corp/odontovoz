@@ -5,7 +5,7 @@ name: Publicar funciones de la Autogestión por WhatsApp
 on:
   push:
     branches: [main]
-    paths: ['supabase/functions/**', 'scripts/build-wa.js', 'scripts/wa-menu.js', '.github/workflows/functions.yml']
+    paths: ['supabase/functions/**', 'tests/push/**', 'scripts/build-wa.js', 'scripts/wa-menu.js', '.github/workflows/functions.yml']
   workflow_dispatch:
 
 jobs:
@@ -25,6 +25,8 @@ jobs:
           git diff --exit-code supabase/functions src/app52.js || (echo "::error::Corré node scripts/build-wa.js y subí los archivos generados" && exit 1)
           cd tests/wa
           for f in menu.test.mjs testmenu.mjs test.mjs testsim.mjs; do node --experimental-strip-types --no-warnings $f | tee /tmp/$f.out; grep -q "todo bien" /tmp/$f.out; done
+          cd ../..
+          node --experimental-strip-types --no-warnings tests/push/push.test.mjs | tee /tmp/push.out; grep -q "todo bien" /tmp/push.out
       - name: Publicar en Supabase
         if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
@@ -32,6 +34,7 @@ jobs:
           npx --yes supabase@2 functions deploy wa-send --project-ref "$REF" --use-api
           npx --yes supabase@2 functions deploy wa-webhook --project-ref "$REF" --use-api --no-verify-jwt
           npx --yes supabase@2 functions deploy wa-cron --project-ref "$REF" --use-api --no-verify-jwt
+          npx --yes supabase@2 functions deploy push-hook --project-ref "$REF" --use-api --no-verify-jwt
       - name: Aviso
         if: ${{ env.SUPABASE_ACCESS_TOKEN == '' }}
         run: echo "::notice::Falta el secreto SUPABASE_ACCESS_TOKEN; las funciones no se publicaron."
