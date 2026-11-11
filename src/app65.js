@@ -107,15 +107,15 @@
       const name = (A.PAT(pid) || {}).name || (pd.prof && pd.prof.name) || 'Paciente';
       const cargos = pd.ledger.filter(e => e.type === 'cargo' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
       const left = {}; cargos.forEach(e => { left[e.id] = Math.max(0, +e.amount || 0); });
-      const piece = (e, amt, date, via) => { if (amt > 0) out.push({ pid, patient: name, cargo: e, pro: e.pro || 'pr1', desc: e.desc, cat: (e.txId && txCat[e.txId]) || (A.catOf ? A.catOf({ desc: e.desc }) : ''), date, amount: amt, via }); };
+      const piece = (e, amt, date, via, method, osId) => { if (amt > 0) out.push({ pid, patient: name, cargo: e, pro: e.pro || 'pr1', desc: e.desc, cat: (e.txId && txCat[e.txId]) || (A.catOf ? A.catOf({ desc: e.desc }) : ''), date, amount: amt, via, method: method || '', os: osId || null, osMonth: osId ? e.date.slice(0, 7) : null }); };
       pd.ledger.filter(e => e.type === 'pago' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).forEach(p => {
         let av = +p.amount || 0;
         const first = (p.pcIds || []).map(id => cargos.filter(c => c.id === id)[0]).filter(Boolean);
-        first.concat(cargos.filter(c => first.indexOf(c) < 0)).forEach(c => { if (av <= 0 || !(left[c.id] > 0)) return; const x = Math.min(av, left[c.id]); left[c.id] -= x; av -= x; piece(c, x, p.date, 'paciente'); });
+        first.concat(cargos.filter(c => first.indexOf(c) < 0)).forEach(c => { if (av <= 0 || !(left[c.id] > 0)) return; const x = Math.min(av, left[c.id]); left[c.id] -= x; av -= x; piece(c, x, p.date, 'paciente', p.method); });
       });
       cargos.forEach(c => {
         if (!c.os || !(+c.osCov > 0)) return; const r = osRows[c.os + '|' + c.date.slice(0, 7)]; if (!r) return;
-        piece(c, Math.round(+c.osCov * Math.min(1, r.paid / r.amt)), r.pay.date, 'obra social');
+        piece(c, Math.round(+c.osCov * Math.min(1, r.paid / r.amt)), r.pay.date, 'obra social', 'Obra social', c.os);
       });
     });
     memo = out; memoAt = Date.now(); return out;

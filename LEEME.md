@@ -548,6 +548,17 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.48 · Aranceles de la Federación, permisos, costos y consentimiento en papel
+
+- **Aranceles de la Federación Odontológica de Río Negro**: el día 2 de cada mes el workflow `aranceles.yml` baja los PDF de odontorionegro.com (aranceles de 44 obras sociales y aranceles éticos), los pasa a `sitio/aranceles/forn.json` y publica la web. En la app: Obras sociales › «Federación RN» (agregar o actualizar varias) y, dentro de cada obra social, «Traer aranceles» (elegir tabla, columna de lo que paga y coseguro; «Una por plan» crea una obra social por plan). Los coseguros propios se respetan. Aviso en la casilla cuando hay valores nuevos.
+- **Permisos**: precios, aranceles, acuerdos y costos solo los cambia el dueño o un administrador. Recepción y asistente cargan turnos, pacientes, cobros y archivos; pueden cancelar y mover turnos, pero no borrar ni anular lo hecho, ni cambiar datos ya cargados (sí completar los vacíos). En el servidor: `supabase/permisos.sql`.
+- **Subir precios por %** (todos o por categoría, con vista previa, redondeo e historial para volver atrás) y **coseguros por %** de todas las obras sociales.
+- **Costos y rentabilidad** (Prácticas y aranceles): precios de insumos mes a mes, costo de cada práctica según las recetas del stock, gastos fijos con historial, resultado del mes con margen y precio sugerido para no perder ganancia.
+- **Consentimiento en papel**: se imprime con los datos del paciente, se firma y se sube la foto o el escaneo; aviso en la ficha mientras falte.
+- **Radiografías y estudios en PDF** (cada página pasa a imagen), arrastrando el archivo o pegándolo con Ctrl+V en la PC.
+- **Liquidación**: cobrado por medio de pago, obras sociales en una línea por mes, evolución de 12 meses. Cada profesional del equipo ve «Mis números».
+- Al cobrar se muestra el código y el coseguro de la obra social, y avisa si falta cargar un arancel. Poner el DNI completo en el buscador abre la ficha.
+
 ## OdontoVoz 1.47 · Caja nueva, obras sociales que pagan después y acuerdos con los profesionales
 
 - **Caja › Cobros del día** (se abre ahí): total del día, por medio de pago, «Para cobrar» si hay alguien esperando, aviso de lo que deben las obras sociales y los cobros agrupados por odontólogo (paciente, qué pagó, quién cobró, medio, importe). Flechas para ver otros días. El odontólogo del equipo ve solo lo de sus pacientes. «Resumen» pasó a «Números del mes».

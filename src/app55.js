@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.48', d: '2026-11-11', items: [
+      { t: 'Aranceles de la Federación Odontológica de Río Negro: en Obras sociales tocá «Federación RN» y se cargan solos. Cada mes te avisamos cuando haya valores nuevos; tus coseguros los decidís vos.', top: 1 },
+      { t: 'Subir precios por porcentaje (todos o por categoría) y «Costos y rentabilidad»: precios de insumos mes a mes, gastos fijos y precio sugerido para no perder margen.', top: 1 },
+      { t: 'Consentimiento en papel: se imprime, se firma y se sube la foto a la historia clínica. Radiografías en PDF, arrastrando o pegando. Recepción carga sin poder borrar lo hecho.', top: 1 }] },
     { v: '1.47', d: '2026-11-11', items: [
       { t: 'La Caja abre en «Cobros del día»: el total de hoy, por medio de pago y por odontólogo, con quién cobró y qué pagó cada paciente.', top: 1 },
       { t: 'Obras sociales que pagan después (como OSOEFRNyN): lo que pagan no queda «para cobrar» al paciente; en Caja › Obras sociales ves lo que te deben por mes y marcás «Llegó el pago».', top: 1 },

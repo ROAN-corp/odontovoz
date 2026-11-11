@@ -127,6 +127,7 @@
   const expSoon = i => i.exp && i.qty > 0 && A.dayDiff(today(), i.exp) <= 45;
   const status = i => (i.qty <= 0 ? 'out' : (i.min > 0 && i.qty <= i.min) || (daysLeft(i) != null && daysLeft(i) <= 10) ? 'low' : 'ok');
   A.stockList = sd => list(sd || place()).map(norm1);
+  A.stkRec = { recOf: k => recOf(k), recKey: it => recKey(it), RNAME, CATI, BASE };
 
   /* ---------- descuento automático al cargar prácticas («Prácticas de hoy») ---------- */
   A.stockConsume = (items, pid, sdIn) => {

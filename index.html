@@ -7887,7 +7887,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.47.0';
+  A.VERSION = '1.48.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -15425,6 +15425,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const expSoon = i => i.exp && i.qty > 0 && A.dayDiff(today(), i.exp) <= 45;
   const status = i => (i.qty <= 0 ? 'out' : (i.min > 0 && i.qty <= i.min) || (daysLeft(i) != null && daysLeft(i) <= 10) ? 'low' : 'ok');
   A.stockList = sd => list(sd || place()).map(norm1);
+  A.stkRec = { recOf: k => recOf(k), recKey: it => recKey(it), RNAME, CATI, BASE };
 
   /* ---------- descuento automático al cargar prácticas («Prácticas de hoy») ---------- */
   A.stockConsume = (items, pid, sdIn) => {
@@ -17946,6 +17947,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.48', d: '2026-11-11', items: [
+      { t: 'Aranceles de la Federación Odontológica de Río Negro: en Obras sociales tocá «Federación RN» y se cargan solos. Cada mes te avisamos cuando haya valores nuevos; tus coseguros los decidís vos.', top: 1 },
+      { t: 'Subir precios por porcentaje (todos o por categoría) y «Costos y rentabilidad»: precios de insumos mes a mes, gastos fijos y precio sugerido para no perder margen.', top: 1 },
+      { t: 'Consentimiento en papel: se imprime, se firma y se sube la foto a la historia clínica. Radiografías en PDF, arrastrando o pegando. Recepción carga sin poder borrar lo hecho.', top: 1 }] },
     { v: '1.47', d: '2026-11-11', items: [
       { t: 'La Caja abre en «Cobros del día»: el total de hoy, por medio de pago y por odontólogo, con quién cobró y qué pagó cada paciente.', top: 1 },
       { t: 'Obras sociales que pagan después (como OSOEFRNyN): lo que pagan no queda «para cobrar» al paciente; en Caja › Obras sociales ves lo que te deben por mes y marcás «Llegó el pago».', top: 1 },
@@ -19171,15 +19176,15 @@ const OVMenu = (function () {
       const name = (A.PAT(pid) || {}).name || (pd.prof && pd.prof.name) || 'Paciente';
       const cargos = pd.ledger.filter(e => e.type === 'cargo' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
       const left = {}; cargos.forEach(e => { left[e.id] = Math.max(0, +e.amount || 0); });
-      const piece = (e, amt, date, via) => { if (amt > 0) out.push({ pid, patient: name, cargo: e, pro: e.pro || 'pr1', desc: e.desc, cat: (e.txId && txCat[e.txId]) || (A.catOf ? A.catOf({ desc: e.desc }) : ''), date, amount: amt, via }); };
+      const piece = (e, amt, date, via, method, osId) => { if (amt > 0) out.push({ pid, patient: name, cargo: e, pro: e.pro || 'pr1', desc: e.desc, cat: (e.txId && txCat[e.txId]) || (A.catOf ? A.catOf({ desc: e.desc }) : ''), date, amount: amt, via, method: method || '', os: osId || null, osMonth: osId ? e.date.slice(0, 7) : null }); };
       pd.ledger.filter(e => e.type === 'pago' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).forEach(p => {
         let av = +p.amount || 0;
         const first = (p.pcIds || []).map(id => cargos.filter(c => c.id === id)[0]).filter(Boolean);
-        first.concat(cargos.filter(c => first.indexOf(c) < 0)).forEach(c => { if (av <= 0 || !(left[c.id] > 0)) return; const x = Math.min(av, left[c.id]); left[c.id] -= x; av -= x; piece(c, x, p.date, 'paciente'); });
+        first.concat(cargos.filter(c => first.indexOf(c) < 0)).forEach(c => { if (av <= 0 || !(left[c.id] > 0)) return; const x = Math.min(av, left[c.id]); left[c.id] -= x; av -= x; piece(c, x, p.date, 'paciente', p.method); });
       });
       cargos.forEach(c => {
         if (!c.os || !(+c.osCov > 0)) return; const r = osRows[c.os + '|' + c.date.slice(0, 7)]; if (!r) return;
-        piece(c, Math.round(+c.osCov * Math.min(1, r.paid / r.amt)), r.pay.date, 'obra social');
+        piece(c, Math.round(+c.osCov * Math.min(1, r.paid / r.amt)), r.pay.date, 'obra social', 'Obra social', c.os);
       });
     });
     memo = out; memoAt = Date.now(); return out;
@@ -19243,6 +19248,716 @@ const OVMenu = (function () {
   css.textContent = '.dl-box{display:flex;flex-direction:column;gap:8px}.dl-ex{border:1px solid var(--line);border-radius:12px;padding:10px}.dl-ex ul{list-style:none;margin:6px 0;padding:0}' +
     '.dl-ex li{display:flex;align-items:center;gap:8px;padding:4px 0}.dl-ex li>span{flex:1}.pct-in{display:flex;align-items:center;gap:4px}.pct-in input{width:80px}.pct-in.sm input{width:64px}' +
     '.dl-add{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}.dl-add select{flex:1 1 140px;min-width:0}.dl-sum{display:block;font-size:.85rem;color:var(--muted,#667);font-weight:400}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.48: permisos (precios solo el dueño; recepción y asistente cargan sin cambiar lo hecho), aumentos por porcentaje, coseguro claro al cobrar y DNI que abre la ficha ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const money = n => A.money(n || 0);
+  const role = () => (A.isMember && A.isMember() && A.mbRole) ? A.mbRole() : 'dueno';
+  A.isBoss = () => role() === 'dueno' || role() === 'admin';
+  A.isCarga = () => role() === 'recepcion' || role() === 'asistente';
+
+  /* ---------- 1) qué no puede tocar cada uno ---------- */
+  /* precios, aranceles, acuerdos y ajustes de plata: solo dueño o administración */
+  const BOSS_ACT = ['catDel', 'catAdd', 'catReset', 'osDel', 'osNew', 'osPct', 'osPctGo', 'osCode', 'dlRuleDel', 'dlRuleAdd', 'dlBase', 'liqRuleDel', 'liqRuleAdd', 'liqDedDel', 'liqDedAdd', 'liqPay',
+    'osPayNew', 'osPayGo', 'osPayUndo', 'pctOpen', 'pctGo', 'osPctAll', 'osPctAllGo', 'fornOpen', 'fornGo', 'fornAll', 'fornAllGo', 'fornUpdGo', 'cfgProDel', 'costOpen', 'costGo', 'fixAdd', 'fixDel', 'stkPriceGo'];
+  const BOSS_CHG = ['catEdit', 'aranEdit', 'osAr', 'osField', 'dlSet', 'dlRulePct', 'liqPct', 'liqRulePct', 'liqMode', 'liqModBy', 'liqModPrice', 'fixF', 'stkPrice'];
+  /* recepción y asistente: dan turnos, cargan pacientes, cobran y suben archivos; no borran ni anulan lo hecho */
+  const CARGA_ACT = ['apDelAsk', 'apDelGo', 'evDelAsk', 'evDelGo', 'evVoidAsk', 'evVoidGo', 'ledVoid', 'txVoid', 'mvDel', 'pmDel', 'pdGo', 'arOpen', 'arGo', 'mgOpen', 'mgGo', 'imDel', 'rxDel', 'odPlanDel',
+    'tpBudDelAsk', 'tpBudDelGo', 'tpDel', 'labDel', 'labItDel', 'labOneDel', 'leDel', 'leDelGo', 'pcDelAsk', 'pcDelGo', 'stkDel', 'tpFree', 'clReopen'];
+  const CARGA_FILL = ['profField', 'hcText', 'reField', 'tpField']; /* completar lo vacío sí; cambiar lo cargado, no */
+  const why = boss => boss ? 'Solo el dueño o un administrador pueden cambiar precios, aranceles y acuerdos.' : 'Tu usuario puede cargar datos nuevos, pero no cambiar ni borrar lo que ya está. Pedíselo al dueño o a un administrador.';
+  A.permWhy = why;
+  const blockedAct = a => (!A.isBoss() && BOSS_ACT.indexOf(a) >= 0) ? 'boss' : (A.isCarga() && CARGA_ACT.indexOf(a) >= 0) ? 'carga' : '';
+  A.permBlocked = blockedAct;
+  document.addEventListener('click', e => {
+    const el = e.target.closest && e.target.closest('[data-act]'); if (!el) return;
+    const b = blockedAct(el.getAttribute('data-act')); if (!b) return;
+    e.stopImmediatePropagation(); e.preventDefault(); A.toast(why(b === 'boss'));
+  }, true);
+  document.addEventListener('change', e => {
+    const el = e.target; if (!el || !el.getAttribute) return; const c = el.getAttribute('data-chg'); if (!c) return;
+    if (!A.isBoss() && BOSS_CHG.indexOf(c) >= 0) { e.stopImmediatePropagation(); if (el.type === 'checkbox') el.checked = el.defaultChecked; else el.value = el.defaultValue; A.toast(why(true)); return; }
+    if (A.isCarga() && CARGA_FILL.indexOf(c) >= 0 && el.type !== 'checkbox' && String(el.defaultValue || '').trim() && el.value !== el.defaultValue) {
+      e.stopImmediatePropagation(); el.value = el.defaultValue; A.toast(why(false));
+    }
+  }, true);
+  /* se ocultan los botones que no puede usar (así no se ofrecen) */
+  const css0 = document.createElement('style');
+  css0.textContent = BOSS_ACT.map(a => 'body.pm-noboss [data-act="' + a + '"]').join(',') + '{display:none!important}' +
+    CARGA_ACT.map(a => 'body.pm-carga [data-act="' + a + '"]').join(',') + '{display:none!important}' +
+    'body.pm-noboss .m-body [data-chg="catEdit"],body.pm-noboss .m-body [data-chg="aranEdit"],body.pm-noboss .m-body [data-chg="osAr"]{pointer-events:none;background:transparent;border-color:transparent}';
+  document.head.appendChild(css0);
+  const mark = () => { document.body.classList.toggle('pm-noboss', !A.isBoss()); document.body.classList.toggle('pm-carga', A.isCarga()); };
+  const arPrev = A.afterRefresh; A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; mark(); return r; };
+  const rmPrev = A.renderModal; A.renderModal = function () { mark(); const r = rmPrev.apply(this, arguments); if (!A.isBoss()) { const h = $('.m-body'); if (h && S.modal && /^(catalog|osEdit|cfg)$/.test(S.modal.type)) h.querySelectorAll('[data-chg="catEdit"],[data-chg="aranEdit"],[data-chg="osAr"],[data-chg="osField"],[data-chg^="dl"]').forEach(i => { i.disabled = true; }); } return r; };
+
+  /* ---------- 2) subir precios por porcentaje ---------- */
+  const round = (v, r) => (r > 1 ? Math.round(v / r) * r : Math.round(v));
+  const pctOf = v => parseFloat(String(v || '').replace(',', '.')) || 0;
+  A.acts.pctOpen = () => { S.modal = { type: 'pctUp', back: S.modal, cat: '', pct: '', r: 100 }; A.renderModal(); };
+  MF.pctUp = m => {
+    const cats = A.catCats(), p = pctOf(m.pct), list = A.CAT.filter(x => !m.cat || x.cat === m.cat);
+    let b = '<p class="m-lead">Sube (o baja, con un número negativo) los precios particulares de tu lista. Mirás cómo quedan antes de aplicar.</p>' +
+      '<div class="row3"><div class="field"><label for="puCat">A qué prácticas</label><select id="puCat" data-chg="puSet" data-f="cat"><option value="">Todas</option>' + cats.map(c => '<option' + (c === m.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="puPct">Porcentaje</label><div class="pct-in"><input id="puPct" inputmode="decimal" data-chg="puSet" data-f="pct" value="' + esc(m.pct) + '" placeholder="Ej.: 8"><span>%</span></div></div>' +
+      '<div class="field"><label for="puR">Redondear a</label><select id="puR" data-chg="puSet" data-f="r">' + [[1, 'sin redondeo'], [100, '$ 100'], [500, '$ 500'], [1000, '$ 1.000']].map(x => '<option value="' + x[0] + '"' + (+m.r === x[0] ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div></div>';
+    if (p) b += '<div class="tbl-scroll" style="max-height:46vh"><table class="tbl"><thead><tr><th>Práctica</th><th class="num">Ahora</th><th class="num">Queda</th></tr></thead><tbody>' + list.map(x => '<tr><td>' + esc(x.label) + '</td><td class="num">' + money(x.price) + '</td><td class="num"><b>' + money(round(x.price * (1 + p / 100), +m.r)) + '</b></td></tr>').join('') + '</tbody></table></div>';
+    else b += '<div class="hint">Poné el porcentaje para ver cómo quedan los ' + list.length + ' precios.</div>';
+    b += '<div class="hint">La lista anterior queda guardada: podés volver atrás desde «Historial de precios».</div>';
+    return A.modalShell('Subir precios por porcentaje', b, '<button class="btn" data-act="pctBack">Volver</button><button class="btn primary" data-act="pctGo"' + (p ? '' : ' disabled') + '>Aplicar a ' + list.length + ' prácticas</button>');
+  };
+  A.chg.puSet = el => { const m = S.modal; m[el.getAttribute('data-f')] = el.value; A.renderModal(); };
+  A.acts.pctBack = () => { S.modal = S.modal.back || null; A.renderModal(); };
+  /* historial: cada cambio masivo guarda la lista anterior (máx. 12) */
+  const hist = () => A.CFG.priceHist || (A.CFG.priceHist = []);
+  A.acts.pctGo = () => {
+    const m = S.modal, p = pctOf(m.pct); if (!p) return;
+    hist().unshift({ at: new Date().toISOString(), what: (m.cat || 'Todas') + ' ' + (p > 0 ? '+' : '') + p + '%', prev: A.CAT.map(x => [x.k, x.price]) }); A.CFG.priceHist = hist().slice(0, 12);
+    let n = 0; A.CAT.forEach(x => { if (!m.cat || x.cat === m.cat) { x.price = round(x.price * (1 + p / 100), +m.r); n++; } });
+    A.save(); S.modal = m.back || null; A.renderModal(); A.toast(n + ' precios actualizados ' + (p > 0 ? '+' : '') + p + '%.');
+  };
+  A.acts.phOpen = () => { S.modal = { type: 'priceHist', back: S.modal }; A.renderModal(); };
+  MF.priceHist = () => {
+    const H = hist();
+    const b = H.length ? '<ul class="pd-list">' + H.map((h, i) => '<li><b>' + esc(A.fmtDMY(h.at.slice(0, 10))) + '</b> · ' + esc(h.what) + ' <button class="btn small ghost" data-act="phUndo" data-i="' + i + '">Volver a los precios de antes</button></li>').join('') + '</ul>' : '<div class="empty">Todavía no hubo cambios masivos de precios.</div>';
+    return A.modalShell('Historial de precios', b, '<button class="btn" data-act="pctBack">Volver</button>');
+  };
+  A.acts.phUndo = el => {
+    if (!A.isBoss()) { A.toast(why(true)); return; }
+    const h = hist()[+el.getAttribute('data-i')]; if (!h) return; const mp = {}; h.prev.forEach(x => { mp[x[0]] = x[1]; });
+    A.CAT.forEach(x => { if (mp[x.k] != null) x.price = mp[x.k]; }); A.save(); S.modal = S.modal.back || null; A.renderModal(); A.toast('Precios restaurados al ' + A.fmtDMY(h.at.slice(0, 10)) + '.');
+  };
+  const catPrev = MF.catalog;
+  MF.catalog = m => {
+    const h = catPrev(m); if (typeof h !== 'string') return h;
+    const top = '<div class="row-btns pu-row"><button class="btn small primary" data-act="pctOpen">Subir precios por %</button><button class="btn small" data-act="phOpen">Historial de precios</button>' + (A.costOpenBtn ? A.costOpenBtn() : '') + '</div>';
+    return h.replace(/(<p class="hint">Cargá y modificá tus prácticas[^<]*<\/p>)/, '$1' + top);
+  };
+
+  /* coseguros de todas las obras sociales a la vez */
+  A.acts.osPctAll = () => { S.modal = { type: 'osPctAll', back: S.modal, pct: '', what: 'cos' }; A.renderModal(); };
+  MF.osPctAll = m => {
+    const L = A.osList().filter(o => o.on && o.kind !== 'particular' && Object.keys(o.aran || {}).length);
+    const b = '<p class="m-lead">Cambia de una vez lo cargado en todas las obras sociales con aranceles (' + L.length + '). Se redondea a $ 100.</p>' +
+      '<div class="row2"><div class="field"><label for="opWhat">Qué</label><select id="opWhat" data-chg="opSet" data-f="what"><option value="cos"' + (m.what === 'cos' ? ' selected' : '') + '>Los coseguros (lo que paga el paciente)</option><option value="cov"' + (m.what === 'cov' ? ' selected' : '') + '>Lo que pagan las obras sociales</option><option value="both"' + (m.what === 'both' ? ' selected' : '') + '>Las dos cosas</option></select></div>' +
+      '<div class="field"><label for="opPct">Porcentaje</label><div class="pct-in"><input id="opPct" inputmode="decimal" data-chg="opSet" data-f="pct" value="' + esc(m.pct) + '" placeholder="Ej.: 10"><span>%</span></div></div></div>' +
+      '<div class="small-note">' + L.map(o => esc(o.sigla)).join(' · ') + '</div>';
+    return A.modalShell('Coseguros: subir por porcentaje', b, '<button class="btn" data-act="pctBack">Volver</button><button class="btn primary" data-act="osPctAllGo">Aplicar</button>');
+  };
+  A.chg.opSet = el => { S.modal[el.getAttribute('data-f')] = el.value; };
+  A.acts.osPctAllGo = () => {
+    const m = S.modal, p = pctOf(($('#opPct') || {}).value || m.pct), w = ($('#opWhat') || {}).value || m.what; if (!p) { A.toast('Poné el porcentaje.'); return; }
+    let n = 0; A.osList().forEach(o => { if (!o.on || o.kind === 'particular') return; Object.keys(o.aran || {}).forEach(k => { const a = o.aran[k]; if (w !== 'cov') a.cos = round((a.cos || 0) * (1 + p / 100), 100); if (w !== 'cos') a.cov = round((a.cov || 0) * (1 + p / 100), 100); n++; }); o.upd = A.today(); });
+    A.save(); S.modal = m.back || null; A.renderModal(); A.toast(n + ' valores actualizados ' + p + '%.');
+  };
+  const osListPrev = MF.osList;
+  if (osListPrev) MF.osList = m => {
+    const h = osListPrev(m); if (typeof h !== 'string') return h;
+    return h.replace('<button class="btn" data-act="osNew">', '<button class="btn" data-act="osPctAll">Coseguros por %</button>' + (A.fornBtn ? A.fornBtn() : '') + '<button class="btn" data-act="osNew">');
+  };
+
+  /* ---------- 3) al cobrar: qué paga el paciente según su obra social ---------- */
+  const poPrev = MF.pracOk;
+  if (poPrev) MF.pracOk = m => {
+    let h = poPrev(m); if (typeof h !== 'string') return h;
+    const p = A.PAT(m.pid) || {}, os = A.osOf ? A.osOf(p) : null;
+    if (!os) return h;
+    const miss = m.items.filter(i => i.on && !i.os).map(i => i.label);
+    const codes = m.items.filter(i => i.on && i.os && i.os.code).map(i => i.os.code + (i.os.cos ? ' coseguro ' + money(i.os.cos) : ' sin coseguro'));
+    let add = '';
+    if (codes.length) add += '<div class="po-osinfo">Según los aranceles de <b>' + esc(os.sigla) + '</b>' + (os.forn && os.forn.vig ? ' (vigencia ' + esc(os.forn.vig) + ')' : '') + ': ' + esc(codes.join(' · ')) + '.</div>';
+    if (miss.length) add += '<div class="po-osinfo warn">' + esc(os.sigla) + ' no tiene cargado el arancel de: ' + esc(miss.join(', ')) + '. Se cobra como particular.' + (A.isBoss() ? ' <button class="btn small" data-act="osEdit" data-id="' + esc(os.id) + '">Cargar aranceles</button>' : '') + '</div>';
+    return h.replace('<div class="po-tot">', add + '<div class="po-tot">');
+  };
+
+  /* ---------- 4) DNI completo en el buscador: abre la ficha ---------- */
+  document.addEventListener('input', e => {
+    const el = e.target; if (!el || el.id !== 'topQ') return;
+    const v = String(el.value || '').replace(/\D/g, ''); if (v.length < 7 || v !== String(el.value).replace(/[\s.]/g, '')) return;
+    const L = A.PATS.filter(p => String(p.dni || '').replace(/\D/g, '') === v); if (L.length !== 1) return;
+    setTimeout(() => { el.value = ''; const host = $('#topRes'); if (host) host.innerHTML = ''; el.blur(); A.openFicha(L[0].id, 'datos'); A.toast('Ficha de ' + L[0].name + '.'); }, 120);
+  });
+
+  const css = document.createElement('style');
+  css.textContent = '.pu-row{margin:4px 0 10px}.po-osinfo{font-size:.85rem;margin:8px 0 0;padding:8px 10px;border-radius:10px;background:var(--soft,#eef6f6)}.po-osinfo.warn{background:#fff4e0}.po-osinfo .btn{margin-left:6px}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.48: aranceles de la Federación Odontológica de Río Negro (se bajan solos cada mes; cada consultorio pone su coseguro) ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const money = n => A.money(n || 0);
+  const N = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const URL = 'https://roan-corp.github.io/odontovoz/aranceles/forn.json';
+  const RN = 'Federación Odontológica de Río Negro';
+  const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
+
+  /* ---------- datos ---------- */
+  let DATA = null, loading = null;
+  A.fornGet = (force) => {
+    if (DATA && !force) return Promise.resolve(DATA);
+    if (A._fornData) { DATA = A._fornData; return Promise.resolve(DATA); } /* para pruebas */
+    if (loading) return loading;
+    loading = fetch(URL + '?m=' + A.today().slice(0, 7), { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(d => { DATA = d; loading = null; return d; }).catch(() => { loading = null; return null; });
+    return loading;
+  };
+  const fById = slug => (DATA && DATA.os || []).filter(f => f.slug === slug)[0] || null;
+  const fName = f => f.name + (f.sub && f.sub.length < 60 ? ' · ' + f.sub : '');
+  const tblName = (t, i) => (t.title ? t.title : 'Tabla ' + (i + 1)) + ' · ' + Object.keys(t.rows).length + ' prácticas';
+
+  /* parecido de nombres (obra social de la app ↔ de la Federación) */
+  const ALIAS = { 'sancor salud': 'asociacion-mutual-sancor', ospjn: 'osjpn', 'luz y fuerza': 'osfatlyf', osfatlyf: 'osfatlyf', 'swiss medical': 'swiss-medical', jerarquicos: 'jerarquicos-salud', avalian: 'avalian-aca-salud', 'federada salud': 'federada-salud-2', 'prevencion salud': 'prevencion-salud', medife: 'medife', omint: 'consulmed', 'ospsa': 'ospsa-sanidad', 'uom': 'uom', 'osde': 'osde', 'galeno': 'galeno', 'medicus': 'medicus' };
+  A.fornMatch = o => {
+    if (!DATA) return null;
+    if (o.forn && fById(o.forn.slug)) return fById(o.forn.slug);
+    const s = N(o.sigla), n = N(o.name);
+    if (ALIAS[s] && fById(ALIAS[s])) return fById(ALIAS[s]);
+    let best = null, bs = 0;
+    DATA.os.forEach(f => {
+      const fs = N(f.slug.replace(/-\d+$/, '').replace(/-/g, ' ')), fn = N(f.name), fsub = N(f.sub);
+      let sc = 0;
+      if (s && (fs === s || fn.replace(/ /g, '') === s.replace(/ /g, ''))) sc = 10;
+      else if (s.length > 3 && (fn.indexOf(s) >= 0 || fsub.indexOf(s) >= 0 || fs.indexOf(s) >= 0)) sc = 6;
+      else { const w = (n + ' ' + s).split(' ').filter(x => x.length > 3), fw = (fn + ' ' + fsub + ' ' + fs); sc = w.filter(x => fw.indexOf(x) >= 0).length; }
+      if (sc > bs) { bs = sc; best = f; }
+    });
+    return bs >= 2 ? best : null;
+  };
+  /* qué columna es «paga la O.S.» y cuál «coseguro» */
+  const guessCols = t => {
+    const k = t.cols.map(c => c.kind);
+    const cos = k.indexOf('cos'), cov = k.indexOf('cov'), tot = k.indexOf('total');
+    return { cov: cov >= 0 ? cov : (tot >= 0 ? tot : 0), cos: cos, sub: cov < 0 && cos >= 0 && tot >= 0 }; /* sub: «paga la O.S.» = total − coseguro */
+  };
+  /* aplica una tabla a una obra social de la app; el coseguro propio se respeta si la tabla no trae */
+  A.fornApply = (o, map) => {
+    const f = fById(map.slug), t = f && f.tables[map.t]; if (!t) return 0;
+    o.aran = o.aran || {}; let n = 0;
+    Object.keys(t.rows).forEach(code => {
+      const r = t.rows[code], v = r.v; let cov = v[map.cov], cos = map.cos >= 0 ? v[map.cos] : null;
+      if (cov == null) return;
+      if (map.sub && cos != null) cov = Math.max(0, cov - cos);
+      const a = o.aran[code] || (o.aran[code] = { on: true, cov: 0, cos: 0 });
+      a.on = true; a.cov = cov; if (cos != null) a.cos = cos; if (!(A.NOMEN || []).some(x => x[0] === code)) a.label = r.d; a.forn = 1; n++;
+    });
+    o.forn = { slug: map.slug, t: map.t, cov: map.cov, cos: map.cos, sub: !!map.sub, vig: t.vig || f.vig || null, at: DATA.at, sig: sigOf(t) };
+    if (!o.via) o.via = RN; if (f.normas && !(o.notes || '').includes(f.normas)) o.notes = ((o.notes || '') + '\nNormas de trabajo (FORN): ' + f.normas).trim();
+    o.upd = A.today(); return n;
+  };
+  const sigOf = t => { let h = 0; const s = JSON.stringify(t.rows); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
+
+  /* ---------- pantalla: traer aranceles para una obra social ---------- */
+  A.fornBtn = () => '<button class="btn" data-act="fornAll">Federación RN</button>';
+  A.acts.fornOpen = el => {
+    const o = A.osById(el.getAttribute('data-id') || (S.modal && S.modal.id)); if (!o) return;
+    S.modal = { type: 'fornPick', id: o.id, back: S.modal, loading: true }; A.renderModal();
+    A.fornGet().then(d => {
+      const m = S.modal; if (!m || m.type !== 'fornPick') return; m.loading = false;
+      if (!d) { m.err = 'No se pudieron bajar los aranceles. Revisá la conexión a internet.'; A.renderModal(); return; }
+      const f = A.fornMatch(o); m.slug = f ? f.slug : ''; m.t = (o.forn && o.forn.slug === m.slug) ? o.forn.t : 0; setCols(m); A.renderModal();
+    });
+  };
+  const setCols = m => {
+    const f = fById(m.slug), t = f && f.tables[m.t]; if (!t) return;
+    const o = A.osById(m.id), g = guessCols(t);
+    if (o && o.forn && o.forn.slug === m.slug && o.forn.t === m.t) { m.cov = o.forn.cov; m.cos = o.forn.cos; m.sub = o.forn.sub; } else { m.cov = g.cov; m.cos = g.cos; m.sub = g.sub; }
+  };
+  MF.fornPick = m => {
+    const o = A.osById(m.id);
+    if (m.loading) return A.modalShell('Aranceles de la Federación', '<div class="empty">Bajando los aranceles de la ' + RN + '…</div>', '<button class="btn" data-act="fornBack">Volver</button>');
+    if (m.err) return A.modalShell('Aranceles de la Federación', '<div class="empty">' + esc(m.err) + '</div>', '<button class="btn" data-act="fornBack">Volver</button>');
+    const f = fById(m.slug), t = f && f.tables[m.t];
+    let b = '<p class="m-lead">Aranceles publicados por la ' + RN + ' (actualizados el ' + esc(A.fmtDMY(DATA.at.slice(0, 10))) + '). Elegí la tabla que corresponde a <b>' + esc(o.sigla) + '</b>.</p>';
+    b += '<div class="field"><label for="fpOs">Obra social en la Federación</label><select id="fpOs" data-chg="fpSet" data-f="slug"><option value="">Elegí…</option>' + DATA.os.slice().sort((a, b) => a.name.localeCompare(b.name)).map(x => '<option value="' + esc(x.slug) + '"' + (x.slug === m.slug ? ' selected' : '') + '>' + esc(fName(x)) + (x.vig ? ' (' + esc(x.vig) + ')' : '') + '</option>').join('') + '</select></div>';
+    if (f) {
+      if (f.tables.length > 1) b += '<div class="field"><label for="fpT">Tabla</label><select id="fpT" data-chg="fpSet" data-f="t">' + f.tables.map((x, i) => '<option value="' + i + '"' + (i === m.t ? ' selected' : '') + '>' + esc(tblName(x, i)) + '</option>').join('') + '</select></div>';
+      const colOpt = (sel, none) => (none ? '<option value="-1"' + (sel < 0 ? ' selected' : '') + '>' + none + '</option>' : '') + t.cols.map((c, i) => '<option value="' + i + '"' + (i === sel ? ' selected' : '') + '>' + esc(c.label || 'Columna ' + (i + 1)) + '</option>').join('');
+      b += '<div class="row2"><div class="field"><label for="fpCov">' + (m.sub ? 'Valor total (le resto el coseguro)' : 'Lo que paga la obra social') + '</label><select id="fpCov" data-chg="fpSet" data-f="cov">' + colOpt(m.cov) + '</select></div>' +
+        '<div class="field"><label for="fpCos">Coseguro</label><select id="fpCos" data-chg="fpSet" data-f="cos">' + colOpt(m.cos, 'Lo pongo yo (dejo mis coseguros)') + '</select></div></div>';
+      if (m.cos >= 0 && t.cols[m.cov] && t.cols[m.cov].kind === 'total') b += '<label class="chk"><input type="checkbox" data-chg="fpSet" data-f="sub"' + (m.sub ? ' checked' : '') + '> El valor total incluye el coseguro (la obra social paga el total menos el coseguro)</label>';
+      if ((f.notes || []).length) b += '<div class="fp-notes"><b>Notas de la Federación</b><ul>' + f.notes.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></div>';
+      const codes = Object.keys(t.rows);
+      b += '<div class="tbl-scroll" style="max-height:38vh"><table class="tbl fp-tbl"><thead><tr><th>Código</th><th>Práctica</th><th class="num">Ahora paga</th><th class="num">Nuevo</th><th class="num">Coseguro</th></tr></thead><tbody>' + codes.map(c => {
+        const r = t.rows[c], cur = (o.aran || {})[c] || {}; let cov = r.v[m.cov], cos = m.cos >= 0 ? r.v[m.cos] : (cur.cos || 0); if (m.sub && m.cos >= 0 && cov != null) cov -= (cos || 0);
+        return '<tr><td class="mono">' + esc(c) + '</td><td>' + esc(r.d) + '</td><td class="num">' + (cur.on ? money(cur.cov) : '—') + '</td><td class="num"><b>' + (cov == null ? '—' : money(cov)) + '</b></td><td class="num">' + money(cos || 0) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+      const plans = t.cols.filter(c => c.kind === 'plan').length;
+      if (plans > 1) b += '<div class="hint">Esta obra social paga distinto según el plan. Si atendés varios planes, usá «Una por plan» y se crea una obra social para cada plan (por ejemplo «' + esc(o.sigla) + ' ' + esc(t.cols[1].label.split(/[ ;]/)[0]) + '»).</div>';
+      b += '<div class="hint">Tus coseguros los decidís vos' + (m.cos >= 0 ? ' (podés cambiarlos después en la tabla de la obra social)' : ': quedan los que ya tenías cargados') + '. Cada mes, cuando la Federación publique valores nuevos, te avisamos para actualizar con un toque.</div>';
+    }
+    const plans = t ? t.cols.filter(c => c.kind === 'plan').length : 0;
+    return A.modalShell('Aranceles de la Federación · ' + o.sigla, b, '<button class="btn" data-act="fornBack">Volver</button>' + (plans > 1 ? '<button class="btn" data-act="fornPlans">Una por plan</button>' : '') + '<button class="btn primary" data-act="fornGo"' + (t ? '' : ' disabled') + '>Usar estos aranceles</button>');
+  };
+  A.chg.fpSet = el => {
+    const m = S.modal, f = el.getAttribute('data-f');
+    if (f === 'slug') { m.slug = el.value; m.t = 0; setCols(m); }
+    else if (f === 't') { m.t = +el.value; setCols(m); }
+    else if (f === 'sub') m.sub = el.checked;
+    else m[f] = +el.value;
+    A.renderModal();
+  };
+  A.acts.fornBack = () => { S.modal = S.modal.back || null; A.renderModal(); };
+  A.acts.fornGo = () => {
+    const m = S.modal, o = A.osById(m.id); if (!o) return;
+    const n = A.fornApply(o, m); A.save(); S.modal = m.back || null; if (S.modal && S.modal.type === 'osEdit') S.modal.id = o.id; A.renderModal(); A.toast(n + ' aranceles de ' + o.sigla + ' cargados.');
+  };
+  A.acts.fornPlans = () => {
+    if (!A.isBoss()) { A.toast(A.permWhy(true)); return; }
+    const m = S.modal, o = A.osById(m.id), t = fById(m.slug).tables[m.t]; let made = 0;
+    t.cols.forEach((c, i) => {
+      if (c.kind !== 'plan') return; const lab = (c.label || 'Plan ' + (i + 1)).replace(/\s+/g, ' ').slice(0, 30);
+      let x = made === 0 ? o : null;
+      if (!x) { x = Object.assign({}, o, { id: A.uid(), aran: JSON.parse(JSON.stringify(o.aran || {})), forn: null }); A.osList().push(x); }
+      x.sigla = o.sigla.replace(/\s+\(.*$/, '') + ' (' + lab + ')'; A.fornApply(x, { slug: m.slug, t: m.t, cov: i, cos: -1 }); made++;
+    });
+    A.save(); S.modal = { type: 'osList', m: A.today().slice(0, 7), q: '' }; A.renderModal(); A.toast('Se crearon ' + made + ' planes de ' + o.sigla.replace(/\s+\(.*$/, '') + '. Elegí el plan en la ficha de cada paciente.');
+  };
+  /* en la obra social: estado de la tabla y botón */
+  const osEditPrev = MF.osEdit;
+  MF.osEdit = m => {
+    const h = osEditPrev(m), o = A.osById(m.id); if (typeof h !== 'string' || !o || o.kind === 'particular') return h;
+    const st = o.forn ? 'Usa los aranceles de la Federación' + (o.forn.vig ? ' (vigencia ' + esc(o.forn.vig) + ')' : '') + '.' : 'Podés traer los aranceles que publica la ' + RN + '.';
+    const box = '<div class="fp-box"><span>' + st + '</span>' + (A.isBoss() ? '<button class="btn small primary" data-act="fornOpen" data-id="' + esc(o.id) + '">' + (o.forn ? 'Actualizar' : 'Traer aranceles') + '</button>' : '') + '</div>';
+    return h.replace('<div class="block"><h3>Aranceles por práctica</h3>', box + '<div class="block"><h3>Aranceles por práctica</h3>');
+  };
+
+  /* ---------- todas las de la Federación de una vez ---------- */
+  A.acts.fornAll = () => {
+    S.modal = { type: 'fornAll', back: S.modal, loading: true, sel: {} }; A.renderModal();
+    A.fornGet().then(d => { const m = S.modal; if (!m || m.type !== 'fornAll') return; m.loading = false; if (!d) m.err = 'No se pudieron bajar los aranceles. Revisá la conexión.'; A.renderModal(); });
+  };
+  MF.fornAll = m => {
+    if (m.loading || m.err) return A.modalShell('Obras sociales de la Federación', '<div class="empty">' + esc(m.err || 'Bajando los aranceles de la ' + RN + '…') + '</div>', '<button class="btn" data-act="fornBack">Volver</button>');
+    const mine = {}; A.osList().forEach(o => { const f = A.fornMatch(o); if (f) mine[f.slug] = o; });
+    let b = '<p class="m-lead">La ' + RN + ' publica los aranceles de ' + DATA.os.length + ' obras sociales y prepagas (actualizado el ' + esc(A.fmtDMY(DATA.at.slice(0, 10))) + '). Tildá con las que trabajás: se agregan o se actualizan con sus valores. Los coseguros que ya tenías cargados no se tocan.</p>';
+    b += '<div class="fa-list">' + DATA.os.slice().sort((a, b) => a.name.localeCompare(b.name)).map(f => {
+      const o = mine[f.slug], on = m.sel[f.slug] != null ? m.sel[f.slug] : !!(o && o.forn);
+      return '<label class="fa-row"><input type="checkbox" data-chg="faSel" data-s="' + esc(f.slug) + '"' + (on ? ' checked' : '') + '><span><b>' + esc(f.name) + '</b><small>' + esc(f.sub || '') + (f.vig ? ' · vigencia ' + esc(f.vig) : '') + (o ? ' · en tu lista como ' + esc(o.sigla) : '') + '</small></span></label>';
+    }).join('') + '</div>';
+    b += '<div class="hint">Los valores salen de los PDF publicados en odontorionegro.com. Revisá siempre la normativa de cada obra social.</div>';
+    return A.modalShell('Obras sociales de la Federación', b, '<button class="btn" data-act="fornBack">Volver</button><button class="btn primary" data-act="fornAllGo">Agregar / actualizar</button>');
+  };
+  A.chg.faSel = el => { S.modal.sel[el.getAttribute('data-s')] = el.checked; };
+  A.acts.fornAllGo = () => {
+    const m = S.modal; document.querySelectorAll('[data-chg="faSel"]').forEach(i => { m.sel[i.getAttribute('data-s')] = i.checked; });
+    const mine = {}; A.osList().forEach(o => { const f = A.fornMatch(o); if (f) mine[f.slug] = o; });
+    let add = 0, upd = 0;
+    Object.keys(m.sel).filter(s => m.sel[s]).forEach(slug => {
+      const f = fById(slug); if (!f) return; let o = mine[slug];
+      if (!o) { o = { id: A.uid(), sigla: f.name.length <= 22 ? f.name : (f.slug.toUpperCase().replace(/-\d+$/, '').replace(/-/g, ' ')), name: fName(f), kind: 'prepaga', via: RN, on: true, auth: false, plans: '', notes: '', upd: null, aran: {} }; A.osList().push(o); add++; } else upd++;
+      const t = o.forn && o.forn.slug === slug ? o.forn.t : 0, g = guessCols(f.tables[t]);
+      A.fornApply(o, o.forn && o.forn.slug === slug ? o.forn : { slug, t, cov: g.cov, cos: g.cos, sub: g.sub });
+    });
+    A.CFG.fornSeen = DATA.at; A.save(); S.modal = m.back || null; A.renderModal(); A.toast((add ? add + ' obras sociales agregadas' : '') + (add && upd ? ' y ' : '') + (upd ? upd + ' actualizadas' : '') + (add || upd ? '.' : 'No elegiste ninguna.'));
+  };
+
+  /* ---------- aviso mensual: hay valores nuevos ---------- */
+  A.fornCheck = () => A.fornGet(true).then(d => {
+    if (!d || !A.isBoss()) return [];
+    const L = A.osList().filter(o => o.forn && fById(o.forn.slug)).filter(o => { const t = fById(o.forn.slug).tables[o.forn.t]; return t && sigOf(t) !== o.forn.sig; });
+    if (L.length && A.nfAdd) A.nfAdd({ id: 'forn:' + d.at.slice(0, 10), k: 'info', t: 'Aranceles nuevos de la Federación', b: L.map(o => o.sigla).join(', ') + '. Tocá para actualizarlos.', act: 'fornUpd' });
+    return L;
+  });
+  A.acts.fornUpd = () => { S.modal = { type: 'fornUpd', loading: true }; A.renderModal(); A.fornCheck().then(L => { const m = S.modal; if (!m || m.type !== 'fornUpd') return; m.loading = false; m.list = L.map(o => o.id); A.renderModal(); }); };
+  MF.fornUpd = m => {
+    if (m.loading) return A.modalShell('Aranceles nuevos', '<div class="empty">Revisando…</div>', '<button class="btn" data-act="closeModal">Cerrar</button>');
+    const L = (m.list || []).map(A.osById).filter(Boolean);
+    if (!L.length) return A.modalShell('Aranceles nuevos', '<div class="empty">Tus obras sociales ya tienen los últimos valores de la Federación.</div>', '<button class="btn" data-act="closeModal">Cerrar</button>');
+    const b = '<p class="m-lead">La ' + RN + ' publicó valores nuevos para:</p><ul class="pd-list">' + L.map(o => { const f = fById(o.forn.slug), t = f.tables[o.forn.t]; return '<li><b>' + esc(o.sigla) + '</b> · vigencia ' + esc(t.vig || f.vig || '') + '</li>'; }).join('') + '</ul><div class="hint">Se actualiza lo que paga cada obra social. Tus coseguros se mantienen, salvo en las obras sociales donde elegiste usar el coseguro de la tabla.</div>';
+    return A.modalShell('Aranceles nuevos', b, '<button class="btn" data-act="closeModal">Después</button><button class="btn primary" data-act="fornUpdGo">Actualizar ' + L.length + '</button>');
+  };
+  A.acts.fornUpdGo = () => {
+    const L = (S.modal.list || []).map(A.osById).filter(Boolean); L.forEach(o => A.fornApply(o, o.forn));
+    A.CFG.fornSeen = DATA.at; A.save(); S.modal = null; A.renderModal(); A.toast('Aranceles actualizados: ' + L.map(o => o.sigla).join(', ') + '.');
+  };
+  /* se revisa una vez por día (al abrir la app) */
+  let checked = false;
+  const arPrev = A.afterRefresh;
+  A.afterRefresh = function () {
+    const r = arPrev ? arPrev.apply(this, arguments) : undefined;
+    if (!checked && !A.DEMO && navigator.onLine !== false) {
+      checked = true; const k = 'odontovoz.fornDay';
+      if (LS.get(k) !== A.today() && A.osList().some(o => o.forn)) { LS.set(k, A.today()); setTimeout(() => A.fornCheck(), 8000); }
+    }
+    return r;
+  };
+
+  const css = document.createElement('style');
+  css.textContent = '.fp-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;padding:10px 12px;margin:10px 0;border-radius:12px;background:var(--soft,#eef6f6)}' +
+    '.fp-notes{font-size:.85rem;margin:8px 0;padding:8px 10px;border-radius:10px;background:#fff8e6}.fp-notes ul{margin:4px 0 0;padding-left:18px}' +
+    '.fa-list{display:flex;flex-direction:column;gap:2px;max-height:50vh;overflow:auto}.fa-row{display:flex;gap:10px;align-items:flex-start;padding:7px 4px;border-bottom:1px solid var(--line)}.fa-row small{display:block;color:var(--muted,#667);font-size:.8rem}@media (max-width:640px){.fp-tbl th:nth-child(3),.fp-tbl td:nth-child(3){display:none}.fp-tbl{font-size:.85rem}}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.48: consentimiento en papel (se imprime, se firma y se sube la foto a la historia clínica) y radiografías en PDF, arrastrando o pegando ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  if (A.IMG_KINDS) { A.IMG_KINDS.consent = 'Consentimiento firmado'; A.IMG_KINDS.doc = 'Documento o estudio (PDF)'; }
+
+  /* ---------- 1) consentimiento en papel ---------- */
+  const paper = pid => { const pd = A.pd(pid); return pd.paper || (pd.paper = []); };
+  const pending = pid => paper(pid).filter(x => !x.img && !x.drop);
+  A.paperPending = pending;
+  A.acts.ppPrint = el => {
+    const pid = S.fichaPid, tpl = el.getAttribute('data-tpl'), pat = A.PAT(pid), T = A.CONSENTS[tpl]; if (!T || !pat) return;
+    const o = A.pdfDoc_ && A.pdfDoc_('Consentimiento ' + T.title); if (!o) return;
+    const body = A.consentBody(pid, tpl);
+    o.head(body.title, 'Para firmar en papel. Una vez firmado se guarda una foto o escaneo en la historia clínica.', pat, '');
+    body.sections.forEach(s => { o.h(s.h); if (s.p) o.p(s.p); if (s.list) o.list(s.list); });
+    o.h('Lugar y fecha'); o.p('................................................, ......./......./...........');
+    o.y += 4;
+    const pro = A.PRO(pat.pro) || A.PROS[0] || {};
+    o.sigs([{ role: 'Paciente o responsable (firma, aclaración y DNI)', name: pat.name, dni: pat.dni }, { role: 'Profesional (firma y sello)', name: pro.name, mat: pro.mat }]);
+    o.finish('consentimiento-' + tpl + '-' + String(pat.last || pat.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.pdf');
+    paper(pid).push({ id: A.uid(), tpl, title: T.title, at: new Date().toISOString(), by: (A.actor && A.actor().who) || '', img: null });
+    A.touchPd(pid); A.refresh(); A.toast('Imprimilo, que lo firme y después tocá «Subir firmado».');
+  };
+  A.acts.ppUp = el => { const f = $('#ppFile'); if (!f) return; f.setAttribute('data-id', el.getAttribute('data-id')); f.click(); };
+  A.acts.ppDrop = el => { const x = paper(S.fichaPid).filter(p => p.id === el.getAttribute('data-id'))[0]; if (!x) return; x.drop = { at: new Date().toISOString(), by: (A.actor && A.actor().who) || '' }; A.touchPd(S.fichaPid); A.refresh(); A.toast('Quitado de pendientes. El registro de que se imprimió queda guardado.'); };
+  /* foto → jpg reducido */
+  const toJpg = (file, max, q) => new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', q)); };
+    im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('img')); }; im.src = url;
+  });
+  A.chg.ppFile = async el => {
+    const pid = S.fichaPid, id = el.getAttribute('data-id'), x = paper(pid).filter(p => p.id === id)[0], files = Array.prototype.slice.call(el.files || []); if (!x || !files.length) return;
+    A.toast('Guardando…'); let ids = [];
+    for (const f0 of files) {
+      const imgs = /pdf$/i.test(f0.type) || /\.pdf$/i.test(f0.name) ? await pdfPages(f0) : [f0];
+      for (const f of imgs) { try { const full = await toJpg(f, 2000, 0.85), thumb = await toJpg(f, 160, 0.6); const it = await A.imgAdd(pid, { kind: 'consent', note: 'Consentimiento firmado en papel: ' + x.title }, full, thumb); ids.push(it.id); } catch (e) { /* sigue */ } }
+    }
+    el.value = '';
+    if (!ids.length) { A.toast('No se pudo leer el archivo.'); return; }
+    x.img = ids; x.upAt = new Date().toISOString(); x.upBy = (A.actor && A.actor().who) || ''; A.touchPd(pid);
+    if (A.alog) A.alog(pid, 'consentimiento', 'Subió el consentimiento firmado en papel: ' + x.title);
+    A.refresh(); A.toast('Consentimiento firmado guardado en la historia clínica.');
+  };
+  const docsPrev = A.render.docsTab;
+  if (docsPrev) A.render.docsTab = pid => {
+    let h = docsPrev(pid); const P = paper(pid), pend = pending(pid);
+    let c = '<section class="card pp-card"><h2>Consentimiento en papel <span class="chip ok">recomendado</span></h2>' +
+      '<p class="hint" style="margin-top:0">Se imprime con los datos del paciente, lo firma en papel y le sacás una foto (o lo escaneás). Queda guardado en la historia clínica con fecha y quién lo subió. Es la opción más segura ante un reclamo.</p>' +
+      '<div class="row-btns">' + Object.keys(A.CONSENTS).map(k => '<button class="btn small" data-act="ppPrint" data-tpl="' + k + '">' + esc(A.CONSENTS[k].title) + '</button>').join('') + '</div>';
+    if (pend.length) c += '<div class="pp-pend"><b>Falta subir firmado:</b>' + pend.map(x => '<div class="pp-row"><span>' + esc(x.title) + ' · impreso el ' + esc(A.fmtDMY(x.at.slice(0, 10))) + '</span><button class="btn small primary" data-act="ppUp" data-id="' + x.id + '">Subir firmado</button><button class="btn small ghost" data-act="ppDrop" data-id="' + x.id + '">No se firmó</button></div>').join('') + '</div>';
+    const done = P.filter(x => x.img);
+    if (done.length) c += '<div class="pp-done">' + done.slice().reverse().map(x => '<div class="pp-row"><span>✓ ' + esc(x.title) + ' · firmado y subido el ' + esc(A.fmtDMY(x.upAt.slice(0, 10))) + (x.upBy ? ' por ' + esc(x.upBy) : '') + '</span><button class="btn small" data-act="imOpenP" data-id="' + x.img[0] + '">Ver</button></div>').join('') + '</div>';
+    c += '<input type="file" id="ppFile" accept="image/*,application/pdf" capture="environment" multiple hidden data-chg="ppFile"></section>';
+    return c + h;
+  };
+  A.acts.imOpenP = el => { S.modal = { type: 'img', pid: S.fichaPid, id: el.getAttribute('data-id') }; A.renderModal(); };
+  /* aviso arriba de la ficha */
+  const banner = () => {
+    if (S.tab !== 'ficha' || !S.fichaPid) return; const v = $('#view-ficha'); if (!v) return;
+    const old = v.querySelector('.pp-bnr'); const pend = pending(S.fichaPid);
+    if (!pend.length) { if (old) old.remove(); return; }
+    const html = '<div class="pp-bnr" role="status"><span>Falta subir firmado: <b>' + esc(pend.map(x => x.title).join(', ')) + '</b></span><button class="btn small" data-act="fichaTab" data-tab="docs">Ir a documentos</button></div>';
+    if (old) { old.outerHTML = html; return; }
+    const h1 = v.querySelector('h1'); const at = h1 ? (h1.closest('.ag-bar') || h1) : v.firstElementChild; if (at) at.insertAdjacentHTML('afterend', html);
+  };
+  const arPrev = A.afterRefresh; A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; try { banner(); } catch (e) { /* nada */ } return r; };
+
+  /* ---------- 2) radiografías y estudios en PDF ---------- */
+  const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  let pdfLib = null;
+  const loadPdf = () => pdfLib || (pdfLib = new Promise((res, rej) => {
+    if (window.pdfjsLib) { res(window.pdfjsLib); return; }
+    const s = document.createElement('script'); s.src = PDFJS + 'pdf.min.js';
+    s.onload = () => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; res(window.pdfjsLib); };
+    s.onerror = () => { pdfLib = null; rej(new Error('pdfjs')); }; document.head.appendChild(s);
+  }));
+  /* cada página del PDF pasa a imagen (máx. 10 páginas) */
+  async function pdfPages(file) {
+    const lib = await loadPdf(), doc = await lib.getDocument({ data: await file.arrayBuffer() }).promise, out = [];
+    for (let i = 1; i <= Math.min(doc.numPages, 10); i++) {
+      const pg = await doc.getPage(i), vp0 = pg.getViewport({ scale: 1 }), k = Math.min(3, 2000 / Math.max(vp0.width, vp0.height)), vp = pg.getViewport({ scale: k });
+      const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+      await pg.render({ canvasContext: g, viewport: vp }).promise;
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+      out.push(new File([blob], file.name.replace(/\.pdf$/i, '') + '-p' + i + '.jpg', { type: 'image/jpeg' }));
+    }
+    return out;
+  }
+  A.pdfPages = pdfPages;
+  const upPrev = A.chg.imUpload;
+  const upload = async files => {
+    const list = [];
+    for (const f of files) {
+      if (/pdf$/i.test(f.type) || /\.pdf$/i.test(f.name)) { try { A.toast('Leyendo el PDF…'); (await pdfPages(f)).forEach(x => list.push(x)); } catch (e) { A.toast('No se pudo abrir el PDF (necesita internet la primera vez).'); } }
+      else if (/^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|bmp)$/i.test(f.name)) list.push(f);
+    }
+    if (!list.length) return;
+    if (!$('#imKind')) { A.toast('Abrí la pestaña «Imágenes» del paciente para agregar archivos.'); return; }
+    await upPrev({ files: list, value: '' });
+  };
+  if (upPrev) A.chg.imUpload = el => upload(Array.prototype.slice.call(el.files || [])).then(() => { try { el.value = ''; } catch (e) { /* nada */ } });
+  const imgPrev = A.render.imgTab;
+  if (imgPrev) A.render.imgTab = pid => {
+    let h = imgPrev(pid);
+    h = h.split('accept="image/*" multiple hidden data-chg="imUp"').join('accept="image/*,application/pdf" multiple hidden data-chg="imUp"');
+    return h.replace('<section class="card ph-opt">', '<section class="card ph-opt im-drop"><div class="im-dz">En la computadora podés <b>arrastrar acá</b> la radiografía o el PDF que llegó por mail, o pegarla con Ctrl+V. Con «+ Subir» también se aceptan PDF.</div>');
+  };
+  const onImg = () => S.tab === 'ficha' && S.fichaTab === 'img' && !S.modal;
+  document.addEventListener('dragover', e => { if (!onImg()) return; e.preventDefault(); document.body.classList.add('im-dragging'); });
+  document.addEventListener('dragleave', e => { if (e.target === document.documentElement || !e.relatedTarget) document.body.classList.remove('im-dragging'); });
+  document.addEventListener('drop', e => { if (!onImg()) return; e.preventDefault(); document.body.classList.remove('im-dragging'); const f = Array.prototype.slice.call((e.dataTransfer && e.dataTransfer.files) || []); if (f.length) upload(f); });
+  document.addEventListener('paste', e => {
+    if (!onImg()) return; const items = Array.prototype.slice.call((e.clipboardData && e.clipboardData.files) || []); if (!items.length) return;
+    e.preventDefault(); upload(items);
+  });
+
+  const css = document.createElement('style');
+  css.textContent = '.pp-pend,.pp-done{margin-top:10px;display:flex;flex-direction:column;gap:6px}.pp-pend{padding:10px;border-radius:12px;background:#fff4e0}.pp-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pp-row>span{flex:1 1 200px}' +
+    '.pp-bnr{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin:8px 0;padding:10px 12px;border-radius:12px;background:#fff4e0;font-size:.9rem}' +
+    '.im-dz{display:none;font-size:.85rem;color:var(--muted,#667);margin-bottom:6px}@media (hover:hover) and (pointer:fine){.im-dz{display:block}}body.im-dragging .im-drop{outline:3px dashed var(--teal,#0b6b6f);outline-offset:4px}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.48: liquidación por medio de pago, obras sociales en una línea, evolución de 12 meses y «Mis números» para cada profesional ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const money = n => A.money(n || 0);
+  const MON = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const MONL = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const addM = (m, n) => { const d = new Date(+m.slice(0, 4), +m.slice(5) - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+  const mName = m => MONL[+m.slice(5) - 1] + ' ' + m.slice(0, 4);
+  const METH = ['Efectivo', 'Transferencia', 'Débito', 'Crédito'];
+  const methOf = x => { if (x.via === 'obra social') return 'Obras sociales'; const t = String(x.method || '').toLowerCase(); return /efect/.test(t) ? 'Efectivo' : /transf|mercado|mp|qr/.test(t) ? 'Transferencia' : /d[eé]bito/.test(t) ? 'Débito' : /cr[eé]dito|tarjeta/.test(t) ? 'Crédito' : 'Otros'; };
+
+  /* el acuerdo de cada profesional también queda en su ficha de profesional (así cada uno ve sus números sin ver los de los demás) */
+  const mirror = pid => { const p = A.PRO(pid); if (!p || !A.isBoss || !A.isBoss()) return; const c = A.liqCfg(pid); p.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode || 'pct', mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado' })); };
+  ['dlSet', 'dlRulePct'].forEach(k => { const prev = A.chg[k]; if (prev) A.chg[k] = function (el) { const r = prev.apply(this, arguments); mirror(el.getAttribute('data-id')); A.save(); return r; }; });
+  ['dlBase', 'dlRuleDel', 'dlRuleAdd'].forEach(k => { const prev = A.acts[k]; if (prev) A.acts[k] = function (el) { const r = prev.apply(this, arguments); mirror(el.getAttribute('data-id')); A.save(); return r; }; });
+  const cfgPrev = A.liqCfg;
+  A.liqCfg = pid => {
+    if (A.isMember && A.isMember() && !(A.isBoss && A.isBoss()) && !(S.liq && S.liq.cfg && S.liq.cfg[pid])) { const p = A.PRO(pid); if (p && p.deal) { S.liq.cfg[pid] = JSON.parse(JSON.stringify(p.deal)); return S.liq.cfg[pid]; } }
+    return cfgPrev(pid);
+  };
+
+  /* números del mes de un profesional */
+  A.liqMethods = (pid, m) => {
+    const P = A.cobAlloc().filter(x => x.pro === pid && x.date.slice(0, 7) === m), by = {}, os = {};
+    P.forEach(x => { const k = methOf(x); by[k] = (by[k] || 0) + x.amount; if (x.via === 'obra social') { const kk = x.os + '|' + x.osMonth; os[kk] = (os[kk] || 0) + x.amount; } });
+    let owed = 0; if (A.osDue) A.osDue().filter(r => !r.pay).forEach(r => { r.items.forEach(i => { if (i.pro === pid) owed += i.amt; }); });
+    return { by, os, owed, total: P.reduce((s, x) => s + x.amount, 0) };
+  };
+  A.liqYear = (pid, m) => { const out = []; for (let i = 11; i >= 0; i--) { const mm = addM(m, -i), c = A.liqCalc(pid, mm); out.push({ m: mm, prod: c.prod, dent: c.dent, net: c.net }); } return out; };
+
+  function extraHTML(pid, m) {
+    const M = A.liqMethods(pid, m), c = A.liqCalc(pid, m), keys = METH.concat(['Otros', 'Obras sociales']).filter(k => M.by[k]);
+    let h = '<section class="card lq-x"><h2>Cobrado en ' + esc(mName(m)) + ' por medio de pago</h2>';
+    h += keys.length ? '<table class="tbl"><tbody>' + keys.map(k => '<tr><td>' + esc(k) + '</td><td class="num">' + money(M.by[k]) + '</td></tr>').join('') + '<tr class="tot"><td><b>Total cobrado</b></td><td class="num"><b>' + money(M.total) + '</b></td></tr></tbody></table>' : '<div class="empty">Sin cobros en el mes.</div>';
+    const osK = Object.keys(M.os);
+    if (osK.length) h += '<h3 style="margin-top:12px">Obras sociales (una línea por mes)</h3><table class="tbl"><tbody>' + osK.map(k => { const [id, mm] = k.split('|'), o = A.osById ? A.osById(id) : null; return '<tr><td>' + esc(o ? o.sigla : 'Obra social') + ' · prácticas de ' + esc(mName(mm)) + '</td><td class="num">' + money(M.os[k]) + '</td></tr>'; }).join('') + '</tbody></table>';
+    if (M.owed) h += '<div class="hint">Las obras sociales todavía le deben ' + money(M.owed) + ' por prácticas de este profesional: se suman cuando se marque «Llegó el pago».</div>';
+    const Y = A.liqYear(pid, m), mx = Math.max.apply(null, Y.map(y => y.prod).concat([1]));
+    h += '<h3 style="margin-top:14px">Últimos 12 meses</h3><div class="lq-bars" role="img" aria-label="Cobrado y lo del profesional, últimos 12 meses">' + Y.map(y => '<div class="lq-b" title="' + esc(mName(y.m)) + ': cobrado ' + money(y.prod) + ' · profesional ' + money(y.dent) + '"><div class="lq-col"><span class="lq-p" style="height:' + Math.round(y.prod / mx * 100) + '%"></span><span class="lq-d" style="height:' + Math.round(y.dent / mx * 100) + '%"></span></div><small>' + MON[+y.m.slice(5) - 1] + '</small></div>').join('') + '</div>' +
+      '<div class="lq-leg"><span><i class="lq-p"></i>Cobrado</span><span><i class="lq-d"></i>Para el profesional</span></div>';
+    const prev = Y[10];
+    if (prev && prev.dent) { const v = Math.round((c.dent - prev.dent) / prev.dent * 100); h += '<div class="hint">Comparado con ' + esc(mName(prev.m)) + ': ' + (v >= 0 ? '+' : '') + v + '%.</div>'; }
+    return h + '</section>';
+  }
+  A.liqExtraHTML = extraHTML;
+  const liqPrev = A.render.liq;
+  A.render.liq = () => {
+    liqPrev(); const host = $('#view-liq'), pid = S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : null; if (!host || !pid) return;
+    const secs = host.querySelectorAll('section.card'), last = Array.prototype.filter.call(secs, s => /Detalle de prácticas/.test((s.querySelector('h2') || {}).textContent || ''))[0];
+    const html = extraHTML(pid, A.liqMonth()); if (last) last.insertAdjacentHTML('beforebegin', html); else host.insertAdjacentHTML('beforeend', html);
+  };
+
+  /* ---------- «Mis números» para el profesional del equipo ---------- */
+  const myPro = () => { const mb = A.memberNow && A.memberNow(); return mb && mb.pro ? mb.pro : null; };
+  A.acts.myLiq = () => { S.modal = { type: 'myLiq', m: A.today().slice(0, 7) }; A.renderModal(); };
+  A.acts.myLiqM = el => { S.modal.m = addM(S.modal.m, +el.getAttribute('data-n')); A.renderModal(); };
+  MF.myLiq = m => {
+    const pid = myPro() || (A.isBoss() ? (S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : (A.PROS[0] || {}).id) : null);
+    if (!pid) return A.modalShell('Mis números', '<div class="empty">Tu usuario no tiene una agenda de profesional asignada.</div>', '<button class="btn" data-act="closeModal">Cerrar</button>');
+    const c = A.liqCalc(pid, m.m);
+    let b = '<div class="cj-day"><button class="btn small" data-act="myLiqM" data-n="-1" aria-label="Mes anterior">‹</button><b>' + esc(A.cap(mName(m.m))) + '</b><button class="btn small" data-act="myLiqM" data-n="1" aria-label="Mes siguiente"' + (m.m >= A.today().slice(0, 7) ? ' disabled' : '') + '>›</button></div>';
+    b += '<div class="cj-kpis"><div class="cj-kpi big"><small>Te corresponde</small><b>' + money(c.net) + '</b><span>' + esc(c.deal || '') + '</span></div><div class="cj-kpi"><small>Cobrado</small><b>' + money(c.prod) + '</b></div>' + (c.ded ? '<div class="cj-kpi"><small>Descuentos</small><b>' + money(c.ded) + '</b></div>' : '') + '</div>';
+    b += extraHTML(pid, m.m);
+    b += '<div class="hint">Es un cálculo con lo cargado hasta hoy. La liquidación final la cierra el centro.</div>';
+    return A.modalShell('Mis números · ' + ((A.PRO(pid) || {}).name || ''), b, '<button class="btn" data-act="closeModal">Cerrar</button>');
+  };
+  /* entrada en el menú para el profesional del equipo */
+  const addMenu = () => {
+    const show = !!myPro(); const nav = document.querySelector('nav.dr-nav');
+    let b = document.getElementById('drMyLiq');
+    if (!show) { if (b) b.remove(); return; }
+    if (b || !nav) return;
+    const ref = nav.querySelector('.dnav[data-act="newsOpen"]') || nav.querySelector('.dnav');
+    const btn = document.createElement('button'); btn.className = 'dnav'; btn.id = 'drMyLiq'; btn.setAttribute('data-act', 'myLiq'); btn.innerHTML = '<span class="t">Mis números</span>';
+    if (ref) ref.parentNode.insertBefore(btn, ref); else nav.appendChild(btn);
+  };
+  const arPrev = A.afterRefresh; A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; try { addMenu(); } catch (e) { /* nada */ } return r; };
+
+  const css = document.createElement('style');
+  css.textContent = '.lq-bars{display:flex;gap:6px;align-items:flex-end;height:150px;padding:6px 0;overflow-x:auto}.lq-b{flex:1 0 22px;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}' +
+    '.lq-col{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}.lq-col span{width:42%;border-radius:4px 4px 0 0;min-height:1px}.lq-b small{font-size:.7rem;color:var(--muted,#667)}' +
+    '.lq-p{background:#9cc7c9}.lq-d{background:var(--teal,#0b6b6f)}.lq-leg{display:flex;gap:14px;font-size:.8rem;color:var(--muted,#667)}.lq-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.48: costos y rentabilidad: precios de insumos mes a mes, costo de cada práctica, gastos fijos y precio sugerido para no perder margen ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const money = n => A.money(n || 0);
+  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const MONL = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const mName = m => MONL[+m.slice(5) - 1] + ' ' + m.slice(0, 4);
+  const addM = (m, n) => { const d = new Date(+m.slice(0, 4), +m.slice(5) - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+  const pct = (a, b) => (b ? Math.round((a - b) / b * 1000) / 10 : 0);
+  const fmtPct = v => (v > 0 ? '+' : '') + String(v).replace('.', ',') + '%';
+  const R = () => A.stkRec || null;
+
+  /* ---------- datos (en ajustes: solo el dueño o administración los cambian) ---------- */
+  const SP = () => A.CFG.supPrice || (A.CFG.supPrice = {});      /* { ck: [{m, p}] }  precio por unidad de compra */
+  const FX = () => A.CFG.fixed || (A.CFG.fixed = []);            /* [{id, name, hist:[{m, p}]}] gastos fijos por mes */
+  const at = (hist, m) => { let v = null; (hist || []).slice().sort((a, b) => (a.m < b.m ? -1 : 1)).forEach(h => { if (h.m <= m) v = h.p; }); return v; };
+  const setAt = (hist, m, p) => { const i = hist.findIndex(h => h.m === m); if (i >= 0) hist[i].p = p; else hist.push({ m, p }); };
+  A.supPriceAt = (ck, m) => at(SP()[ck], m);
+  A.fixedAt = m => FX().reduce((s, f) => s + (at(f.hist, m) || 0), 0);
+
+  /* insumos que se usan: los del stock (si hay) y los de las recetas */
+  const supplies = () => {
+    const r = R(); if (!r) return [];
+    const L = {}, stock = (A.stockList ? A.stockList('main') : []) || [];
+    stock.forEach(i => { L[i.ck || i.id] = { ck: i.ck || i.id, name: i.name, unit: i.unit || 'unidad', uses: i.uses || 1 }; });
+    Object.keys(r.CATI).forEach(ck => { if (!L[ck]) { const c = r.CATI[ck]; L[ck] = { ck, name: c[1], unit: c[3], uses: c[4] || 1 }; } });
+    return Object.keys(L).map(k => L[k]);
+  };
+  const usesOf = ck => { const s = supplies().filter(x => x.ck === ck)[0]; return s ? s.uses : 1; };
+  /* costo de insumos de una receta, en un mes */
+  const recCost = (rec, m) => rec.reduce((s, x) => { const p = A.supPriceAt(x[0], m); return s + (p ? p / usesOf(x[0]) * x[1] : 0); }, 0);
+  A.pracCost = (label, m) => {
+    const r = R(); if (!r) return { cost: 0, known: false };
+    const k = r.recKey({ label }); const rec = (k ? r.recOf(k) : []).concat(r.recOf('atencion'));
+    const known = rec.some(x => A.supPriceAt(x[0], m));
+    return { cost: Math.round(recCost(rec, m)), known, key: k };
+  };
+
+  /* lo hecho en un mes: cantidad de prácticas, cobrado, costo de insumos y parte de los profesionales */
+  A.monthResult = m => {
+    let n = 0, ins = 0, fact = 0;
+    (A.allPids ? A.allPids() : A.PATS.map(p => p.id)).forEach(id => { (A.pd(id).ledger || []).forEach(e => { if (e.type !== 'cargo' || e.voided || e.anula || e.date.slice(0, 7) !== m) return; n++; fact += (+e.amount || 0) + (+e.osCov || 0); ins += A.pracCost(e.desc, m).cost; }); });
+    const cob = A.cobAlloc ? A.cobAlloc().filter(x => x.date.slice(0, 7) === m).reduce((s, x) => s + x.amount, 0) : fact;
+    const pros = (A.PROS || []).reduce((s, p) => s + (A.liqCalc ? A.liqCalc(p.id, m).dent : 0), 0);
+    const solo = S.setup && S.setup.type === 'solo';
+    const fixed = A.fixedAt(m), res = cob - ins - fixed - (solo ? 0 : pros);
+    return { m, n, fact, cob, ins, fixed, pros: solo ? 0 : pros, res, margin: cob ? Math.round(res / cob * 1000) / 10 : 0 };
+  };
+
+  /* ---------- pantalla ---------- */
+  A.costOpenBtn = () => '<button class="btn small" data-act="costOpen">Costos y rentabilidad</button>';
+  A.acts.costOpen = () => { S.modal = { type: 'costs', back: S.modal, tab: 'res', m: A.today().slice(0, 7), q: '' }; A.renderModal(); };
+  A.acts.costTab = el => { S.modal.tab = el.getAttribute('data-t'); A.renderModal(); };
+  A.acts.costM = el => { S.modal.m = addM(S.modal.m, +el.getAttribute('data-n')); A.renderModal(); };
+  A.acts.costBack = () => { S.modal = S.modal.back || null; A.renderModal(); };
+  MF.costs = m => {
+    const T = [['res', 'Rentabilidad'], ['sup', 'Precios de insumos'], ['prac', 'Costo por práctica'], ['fix', 'Gastos fijos']];
+    let b = '<div class="seg cs-tabs" role="group">' + T.map(t => '<button data-act="costTab" data-t="' + t[0] + '" aria-pressed="' + (m.tab === t[0]) + '">' + t[1] + '</button>').join('') + '</div>';
+    b += '<div class="cj-day"><button class="btn small" data-act="costM" data-n="-1" aria-label="Mes anterior">‹</button><b>' + esc(A.cap(mName(m.m))) + '</b><button class="btn small" data-act="costM" data-n="1" aria-label="Mes siguiente"' + (m.m >= A.today().slice(0, 7) ? ' disabled' : '') + '>›</button></div>';
+    b += m.tab === 'sup' ? supHTML(m) : m.tab === 'prac' ? pracHTML(m) : m.tab === 'fix' ? fixHTML(m) : resHTML(m);
+    return A.modalShell('Costos y rentabilidad', b, '<button class="btn" data-act="costBack">Volver</button>', true);
+  };
+
+  function resHTML(m) {
+    const Y = [addM(m.m, -2), addM(m.m, -1), m.m].map(A.monthResult), c = Y[2], p = Y[1];
+    let h = '<div class="cj-kpis"><div class="cj-kpi big"><small>Te queda (' + esc(mName(m.m)) + ')</small><b>' + money(c.res) + '</b><span>' + String(c.margin).replace('.', ',') + '% de lo cobrado</span></div>' +
+      '<div class="cj-kpi"><small>Cobrado</small><b>' + money(c.cob) + '</b></div><div class="cj-kpi"><small>Insumos usados</small><b>' + money(c.ins) + '</b></div><div class="cj-kpi"><small>Gastos fijos</small><b>' + money(c.fixed) + '</b></div>' + (c.pros ? '<div class="cj-kpi"><small>Profesionales</small><b>' + money(c.pros) + '</b></div>' : '') + '</div>';
+    h += '<div class="tbl-scroll"><table class="tbl"><thead><tr><th>Mes</th><th class="num">Prácticas</th><th class="num">Cobrado</th><th class="num">Insumos</th><th class="num">Fijos</th>' + (c.pros || p.pros ? '<th class="num">Profesionales</th>' : '') + '<th class="num">Queda</th><th class="num">Margen</th></tr></thead><tbody>' +
+      Y.map(y => '<tr><td>' + esc(A.cap(mName(y.m))) + '</td><td class="num">' + y.n + '</td><td class="num">' + money(y.cob) + '</td><td class="num">' + money(y.ins) + '</td><td class="num">' + money(y.fixed) + '</td>' + (c.pros || p.pros ? '<td class="num">' + money(y.pros) + '</td>' : '') + '<td class="num"><b>' + money(y.res) + '</b></td><td class="num">' + String(y.margin).replace('.', ',') + '%</td></tr>').join('') + '</tbody></table></div>';
+    const insUp = supChange(m.m), fixUp = pct(A.fixedAt(m.m), A.fixedAt(addM(m.m, -1))), catUp = catChange();
+    const msgs = [];
+    if (insUp != null) msgs.push('Los insumos ' + (insUp >= 0 ? 'subieron ' : 'bajaron ') + fmtPct(Math.abs(insUp)).replace('+', '') + ' respecto del mes anterior.');
+    if (fixUp) msgs.push('Los gastos fijos ' + (fixUp >= 0 ? 'subieron ' : 'bajaron ') + String(Math.abs(fixUp)).replace('.', ',') + '%.');
+    if (catUp != null) msgs.push('Tu último cambio de precios fue ' + fmtPct(catUp) + '.');
+    if (p.cob && c.margin < p.margin - 2) msgs.push('<b>Tu margen bajó de ' + String(p.margin).replace('.', ',') + '% a ' + String(c.margin).replace('.', ',') + '%.</b> Mirá «Costo por práctica» para ver qué precios quedaron atrasados.');
+    if (msgs.length) h += '<div class="cs-msg">' + msgs.map(x => '<p>' + x + '</p>').join('') + '</div>';
+    if (!Object.keys(SP()).length) h += '<div class="hint">Para calcular el costo de los insumos, cargá sus precios en «Precios de insumos». Los gastos fijos (alquiler, expensas, servicios, sueldos) van en «Gastos fijos».</div>';
+    return h;
+  }
+  /* variación promedio de los insumos con precio en los dos meses */
+  const supChange = m => { const P = SP(), pm = addM(m, -1); const v = Object.keys(P).map(ck => [at(P[ck], m), at(P[ck], pm)]).filter(x => x[0] && x[1]); if (!v.length) return null; return Math.round(v.reduce((s, x) => s + (x[0] - x[1]) / x[1], 0) / v.length * 1000) / 10; };
+  const catChange = () => { const h = (A.CFG.priceHist || [])[0]; if (!h) return null; const m = /([+-]?\d+(?:[.,]\d+)?)%/.exec(h.what); return m ? parseFloat(m[1].replace(',', '.')) : null; };
+
+  function supHTML(m) {
+    const pm = addM(m.m, -1), q = A.norm ? A.norm(m.q || '') : '', L = supplies().filter(s => !q || (A.norm(s.name)).indexOf(q) >= 0).sort((a, b) => a.name.localeCompare(b.name));
+    let h = '<p class="m-lead">Poné lo que te costó cada insumo este mes (por unidad de compra: caja, paquete, kit…). El mes siguiente cargás los precios nuevos y la app calcula cuánto subió cada práctica.</p>';
+    h += '<input class="inp" data-in="csQ" placeholder="Buscar insumo" value="' + esc(m.q || '') + '" style="width:100%;margin:4px 0 8px">';
+    h += '<div class="tbl-scroll" style="max-height:52vh"><table class="tbl"><thead><tr><th>Insumo</th><th class="num">' + esc(MONL[+pm.slice(5) - 1]) + '</th><th class="num">' + esc(MONL[+m.m.slice(5) - 1]) + '</th><th class="num">Var.</th></tr></thead><tbody>' + L.map(s => {
+      const now = at(SP()[s.ck], m.m), prev = at(SP()[s.ck], pm), own = (SP()[s.ck] || []).some(x => x.m === m.m);
+      return '<tr><td>' + esc(s.name) + '<small class="cs-u"> · ' + esc(s.unit) + ' (' + s.uses + ' usos)</small></td><td class="num">' + (prev ? money(prev) : '—') + '</td><td class="num"><input class="p" inputmode="numeric" data-chg="stkPrice" data-ck="' + esc(s.ck) + '" value="' + (own ? now : '') + '" placeholder="' + (now ? String(now) : '') + '" aria-label="Precio de ' + esc(s.name) + '"></td><td class="num">' + (now && prev && own ? fmtPct(pct(now, prev)) : '') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+    return h + '<div class="hint">Si un precio no cambió, no hace falta volver a cargarlo: se usa el último.</div>';
+  }
+  A.ins.csQ = el => { S.modal.q = el.value; const pos = el.selectionStart; A.renderModal(); const i = $('[data-in="csQ"]'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) { /* nada */ } } };
+  A.chg.stkPrice = el => { const ck = el.getAttribute('data-ck'), v = num(el.value), P = SP(); P[ck] = P[ck] || []; if (v) setAt(P[ck], S.modal.m, v); else P[ck] = P[ck].filter(x => x.m !== S.modal.m); A.save(); const b = $('.m-body'), t = b ? b.scrollTop : 0; A.renderModal(); const b2 = $('.m-body'); if (b2) b2.scrollTop = t; };
+
+  function pracHTML(m) {
+    const pm = addM(m.m, -1), res = A.monthResult(m.m), fixPer = res.n ? Math.round(res.fixed / res.n) : 0;
+    const rows = A.CAT.map(x => { const c = A.pracCost(x.label, m.m), cp = A.pracCost(x.label, pm); return { x, c: c.cost, cp: cp.cost, known: c.known }; }).filter(r => r.known);
+    let h = '<p class="m-lead">Costo de los insumos de cada práctica (según las recetas del stock) y precio sugerido para mantener tu margen si subieron los costos.' + (fixPer ? ' Los gastos fijos de ' + esc(mName(m.m)) + ' equivalen a <b>' + money(fixPer) + '</b> por práctica.' : '') + '</p>';
+    if (!rows.length) return h + '<div class="empty">Todavía no hay precios de insumos para calcular. Cargalos en «Precios de insumos».</div>';
+    m.sel = m.sel || {};
+    h += '<div class="tbl-scroll" style="max-height:50vh"><table class="tbl cs-prac"><thead><tr><th></th><th>Práctica</th><th class="num">Precio</th><th class="num">Insumos</th><th class="num">Var. costo</th><th class="num">Margen</th><th class="num">Sugerido</th></tr></thead><tbody>' + rows.map(r => {
+      const tot = r.c + fixPer, mg = r.x.price ? Math.round((r.x.price - tot) / r.x.price * 1000) / 10 : 0;
+      const s = r.cp && r.c > r.cp ? Math.round((r.x.price + (r.c - r.cp)) / 100) * 100 : null;
+      return '<tr><td>' + (s ? '<input type="checkbox" data-chg="csSel" data-k="' + esc(r.x.k) + '"' + (m.sel[r.x.k] !== false ? ' checked' : '') + ' aria-label="Usar sugerido">' : '') + '</td><td>' + esc(r.x.label) + '</td><td class="num">' + money(r.x.price) + '</td><td class="num">' + money(r.c) + '</td><td class="num">' + (r.cp ? fmtPct(pct(r.c, r.cp)) : '—') + '</td><td class="num' + (mg < 30 ? ' cs-low' : '') + '">' + String(mg).replace('.', ',') + '%</td><td class="num">' + (s ? '<b>' + money(s) + '</b>' : '—') + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+    h += '<div class="hint">Margen = precio menos insumos y gastos fijos por práctica. El sugerido mantiene la misma ganancia en pesos que antes del aumento de los insumos.</div>';
+    h += '<div class="row-btns"><button class="btn primary" data-act="costGo">Aplicar sugeridos a lo tildado</button><button class="btn" data-act="pctOpen">Subir todo un %</button></div>';
+    return h;
+  }
+  A.chg.csSel = el => { S.modal.sel = S.modal.sel || {}; S.modal.sel[el.getAttribute('data-k')] = el.checked; };
+  A.acts.costGo = () => {
+    const m = S.modal, pm = addM(m.m, -1); let n = 0;
+    const hist = A.CFG.priceHist || (A.CFG.priceHist = []); hist.unshift({ at: new Date().toISOString(), what: 'Sugeridos por costos de ' + mName(m.m), prev: A.CAT.map(x => [x.k, x.price]) }); A.CFG.priceHist = hist.slice(0, 12);
+    A.CAT.forEach(x => {
+      if ((m.sel || {})[x.k] === false) return; const c = A.pracCost(x.label, m.m), cp = A.pracCost(x.label, pm);
+      if (!c.known || !cp.cost || c.cost <= cp.cost) return; x.price = Math.round((x.price + (c.cost - cp.cost)) / 100) * 100; n++;
+    });
+    A.save(); A.renderModal(); A.toast(n ? n + ' precios actualizados para cubrir el aumento de los insumos.' : 'No hay precios para actualizar.');
+  };
+
+  function fixHTML(m) {
+    const pm = addM(m.m, -1), F = FX();
+    let h = '<p class="m-lead">Lo que pagás todos los meses aunque no atiendas: alquiler, expensas, luz, gas, internet, sueldos, contador, seguros… Si un mes cambia, cargás el valor nuevo y queda el historial.</p>';
+    h += F.length ? '<table class="tbl"><thead><tr><th>Gasto</th><th class="num">' + esc(MONL[+pm.slice(5) - 1]) + '</th><th class="num">' + esc(MONL[+m.m.slice(5) - 1]) + '</th><th></th></tr></thead><tbody>' + F.map(f => {
+      const now = at(f.hist, m.m), prev = at(f.hist, pm), own = f.hist.some(x => x.m === m.m);
+      return '<tr><td><input class="inp" data-chg="fixF" data-id="' + f.id + '" data-f="name" value="' + esc(f.name) + '" aria-label="Nombre del gasto"></td><td class="num">' + (prev ? money(prev) : '—') + '</td><td class="num"><input class="p" inputmode="numeric" data-chg="fixF" data-id="' + f.id + '" data-f="p" value="' + (own ? now : '') + '" placeholder="' + (now || '') + '" aria-label="Importe"></td><td><button class="btn small ghost" data-act="fixDel" data-id="' + f.id + '" aria-label="Quitar">✕</button></td></tr>';
+    }).join('') + '<tr class="tot"><td><b>Total del mes</b></td><td class="num">' + money(A.fixedAt(pm)) + '</td><td class="num"><b>' + money(A.fixedAt(m.m)) + '</b></td><td></td></tr></tbody></table>' : '<div class="empty">Todavía no cargaste gastos fijos.</div>';
+    h += '<div class="row-btns" style="margin-top:8px">' + ['Alquiler', 'Expensas', 'Luz', 'Gas', 'Internet y teléfono', 'Sueldos', 'Contador', 'Seguros', 'Otro'].filter(n => !F.some(f => f.name === n)).map(n => '<button class="chip-ex" data-act="fixAdd" data-n="' + esc(n) + '">+ ' + esc(n) + '</button>').join('') + '</div>';
+    return h;
+  }
+  A.acts.fixAdd = el => { FX().push({ id: A.uid(), name: el.getAttribute('data-n'), hist: [] }); A.save(); A.renderModal(); };
+  A.acts.fixDel = el => { A.CFG.fixed = FX().filter(f => f.id !== el.getAttribute('data-id')); A.save(); A.renderModal(); };
+  A.chg.fixF = el => { const f = FX().filter(x => x.id === el.getAttribute('data-id'))[0]; if (!f) return; if (el.getAttribute('data-f') === 'name') f.name = el.value.trim() || f.name; else { const v = num(el.value); if (v) setAt(f.hist, S.modal.m, v); else f.hist = f.hist.filter(x => x.m !== S.modal.m); } A.save(); A.renderModal(); };
+
+  /* aviso mensual al dueño: cargá los precios del mes */
+  const arPrev = A.afterRefresh;
+  let done = false;
+  A.afterRefresh = function () {
+    const r = arPrev ? arPrev.apply(this, arguments) : undefined;
+    if (!done && A.isBoss && A.isBoss() && A.nfAdd && !A.DEMO) { done = true; const m = A.today().slice(0, 7), d = +A.today().slice(8); if (Object.keys(SP()).length && d <= 10 && !Object.keys(SP()).some(ck => SP()[ck].some(x => x.m === m))) A.nfAdd({ id: 'cost:' + m, k: 'info', t: 'Precios de insumos de ' + mName(m), b: 'Cargá lo que te costaron los insumos este mes para ver si tus precios quedaron atrasados.', act: 'costOpen' }); }
+    return r;
+  };
+
+  const css = document.createElement('style');
+  css.textContent = '.cs-tabs{margin-bottom:8px;flex-wrap:wrap}.cs-u{color:var(--muted,#667);font-size:.78rem}.cs-low{color:#b3261e;font-weight:600}.cs-msg{margin:10px 0;padding:10px 12px;border-radius:12px;background:#fff8e6;font-size:.9rem}.cs-msg p{margin:4px 0}@media (max-width:640px){.cs-prac th:nth-child(4),.cs-prac td:nth-child(4){display:none}.cs-prac{font-size:.85rem}}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
