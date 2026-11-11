@@ -548,6 +548,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.47 · Caja nueva, obras sociales que pagan después y acuerdos con los profesionales
+
+- **Caja › Cobros del día** (se abre ahí): total del día, por medio de pago, «Para cobrar» si hay alguien esperando, aviso de lo que deben las obras sociales y los cobros agrupados por odontólogo (paciente, qué pagó, quién cobró, medio, importe). Flechas para ver otros días. El odontólogo del equipo ve solo lo de sus pacientes. «Resumen» pasó a «Números del mes».
+- **Obras sociales que pagan después**: se agrega OSOEFRNyN (sin coseguro). Si la obra social del paciente no cobra nada al paciente, la práctica queda en $ 0 para el paciente y lo de la obra social (a tu precio de lista si no hay arancel cargado) no aparece «para cobrar». En **Caja › Obras sociales** se ve lo que debe cada obra social por mes; «Llegó el pago» guarda lo que pagó de verdad, la fecha y el débito.
+- **Acuerdo con el centro** en Ajustes › Profesionales (y en Liquidaciones): porcentaje con excepciones por categoría, módulo, porcentaje + módulo, consultorio entero (monto fijo por mes) u otro acuerdo. La liquidación se calcula **sobre lo cobrado** (o sobre lo facturado, a elección).
+
 ## OdontoVoz 1.46.4 · Cerrar sesión solo acá y precios de la lista
 - **Error encontrado en la prueba con 4 equipos:** «Cerrar sesión» llamaba a `/auth/v1/logout` sin `scope`, y Supabase por defecto cierra **todas** las sesiones de esa persona: al cambiar de cuenta en un equipo se caía la misma persona en los otros (por eso se cerraron el celu de Rodrigo y la cuenta de Ángel). Ahora `?scope=local` (`src/cloud.js`).
 - **Precios:** `src/app63.js` hace que `A.priceOf` (cobros desde la evolución, «Qué hice hoy» y odontograma) tome el precio de «Prácticas y aranceles»: obturación/composite según caras («1 cara», «2 caras», «3 o más»), amalgama, sellador, extracción simple, endodoncia, corona, perno, implante (`A.catItemFor(cond, caras)`). La tabla «Valores por pieza del odontograma» queda solo para lo que no está en la lista. Antes cambiar «Composite · 1 cara» a 75.000 no cambiaba lo que se proponía cobrar (40.000).

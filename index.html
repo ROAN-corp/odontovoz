@@ -7887,7 +7887,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.46.4';
+  A.VERSION = '1.47.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -17946,6 +17946,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.47', d: '2026-11-11', items: [
+      { t: 'La Caja abre en «Cobros del día»: el total de hoy, por medio de pago y por odontólogo, con quién cobró y qué pagó cada paciente.', top: 1 },
+      { t: 'Obras sociales que pagan después (como OSOEFRNyN): lo que pagan no queda «para cobrar» al paciente; en Caja › Obras sociales ves lo que te deben por mes y marcás «Llegó el pago».', top: 1 },
+      { t: 'Acuerdo de cada profesional al crearlo o editarlo: porcentaje con excepciones (ej.: 40% y Ortodoncia 60%), módulo, consultorio entero u otro. La liquidación se hace sobre lo cobrado.' }] },
     { v: '1.46.4', d: '2026-11-11', items: [
       { t: 'Cerrar sesión en un equipo ya no cierra la sesión de esa persona en sus otros equipos.', top: 1 },
       { t: 'Lo que se cobra desde la evolución usa tus precios de «Prácticas y aranceles» (por ejemplo, composite por cantidad de caras).', top: 1 }] },
@@ -18869,6 +18873,377 @@ const OVMenu = (function () {
   };
   const prev = A.priceOf;
   A.priceOf = (cond, nFaces) => { const it = A.catItemFor(cond, nFaces); return it ? it.price : prev(cond, nFaces); };
+})();
+/* ===== 1.47: Caja «Hoy» (cobros del día por odontólogo) + obras sociales que pagan después (lo que te deben, «llegó el pago») ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const money = n => A.money(n || 0);
+  const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const isEmp = () => S.setup && S.setup.type === 'empresa';
+  const canCfg = () => !A.isMember || !A.isMember() || (A.mbRole && A.mbRole() === 'admin');
+  const MON = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const monName = m => A.cap(MON[+m.slice(5) - 1]) + ' ' + m.slice(0, 4);
+
+  /* =================== OBRAS SOCIALES =================== */
+  /* OSOEFRNyN: no estaba en la lista; se suma una vez (sin coseguro: el paciente no paga nada) */
+  const OSO = { sigla: 'OSOEFRNyN', name: 'Obra Social de Obreros Empacadores de Fruta de Río Negro y Neuquén', kind: 'sindical', via: '', on: true, auth: false, plans: '', notes: 'Paga aprox. al mes. Sin coseguro.', upd: null, aran: {}, cop: 'none' };
+  let osDone = false;
+  const osSeed = () => {
+    if (osDone || !A.osList || !canCfg()) return; osDone = true;
+    const l = A.osList(); if (l.some(o => /osoefrnyn|empacadores/.test(norm(o.sigla + ' ' + o.name)))) return;
+    l.push(Object.assign({ id: 'os-osoefrnyn' }, OSO)); A.save();
+  };
+
+  /* si el paciente tiene una obra social que «no cobra nada al paciente» y la práctica no está cargada en su lista,
+     igual la cubre la obra social (al precio de tu lista, como estimado) y no aparece «para cobrar» */
+  const ppPrev = A.pracParse;
+  if (ppPrev) A.pracParse = function (text, pid) {
+    const out = ppPrev.apply(this, arguments) || [];
+    try {
+      const os = A.osOf && A.osOf(A.PAT(pid));
+      if (os && os.on && (os.cop || A.CFG.copDef) === 'none') out.forEach(it => {
+        if (it.os) return;
+        it.os = { id: os.id, sigla: os.sigla, code: null, cov: it.price || 0, cos: 0, mode: 'none', est: true }; it.pay = 0;
+      });
+    } catch (e) { /* nada */ }
+    return out;
+  };
+  /* lo que paga la obra social no queda «para cobrar» al paciente */
+  const poPrev = A.acts.poGo;
+  if (poPrev) A.acts.poGo = function () {
+    const m = S.modal, pid = m && m.pid;
+    const r = poPrev.apply(this, arguments);
+    try {
+      if (pid) { const pd = A.pd(pid); let ch = 0; (pd.ledger || []).forEach(e => { if (e.type === 'cargo' && e.cob && !e.cobOk && e.os && !(+e.amount > 0)) { e.cobOk = 'os'; ch++; } }); if (ch) { A.touchPd(pid); A.refresh(); } }
+    } catch (e) { /* nada */ }
+    return r;
+  };
+
+  /* lo que te debe cada obra social, por mes (según las prácticas cargadas con obra social) */
+  /* todos los pacientes con datos (también archivados) */
+  A.allPids = () => { const o = {}; A.PATS.forEach(p => { o[p.id] = 1; }); Object.keys(A.S.pd || {}).forEach(k => { o[k] = 1; }); return Object.keys(o); };
+  A.osPayStore = () => A.CFG.osPay || (A.CFG.osPay = {});
+  A.osDue = () => {
+    const by = {};
+    A.allPids().forEach(id => {
+      const pd = A.pd(id); if (!pd) return; const p = { id, name: (A.PAT(id) || {}).name || (pd.prof && pd.prof.name) || 'Paciente' };
+      (pd.ledger || []).forEach(e => {
+        if (e.type !== 'cargo' || e.voided || e.anula || !e.os || !(+e.osCov > 0)) return;
+        const mk = e.date.slice(0, 7), o = by[e.os] || (by[e.os] = {}), r = o[mk] || (o[mk] = { amt: 0, n: 0, items: [] });
+        r.amt += +e.osCov; r.n++; r.items.push({ pid: p.id, name: p.name, desc: e.desc, date: e.date, amt: +e.osCov, pro: e.pro });
+      });
+    });
+    const P = A.osPayStore(), rows = [];
+    Object.keys(by).forEach(id => Object.keys(by[id]).forEach(mk => {
+      const pay = (P[id] || {})[mk] || null, os = A.osById ? A.osById(id) : null;
+      rows.push({ os: id, sigla: os ? os.sigla : 'Obra social', month: mk, amt: by[id][mk].amt, n: by[id][mk].n, items: by[id][mk].items, paid: pay ? +pay.amt || 0 : 0, pay });
+    }));
+    return rows.sort((a, b) => (a.month < b.month ? 1 : a.month > b.month ? -1 : a.sigla.localeCompare(b.sigla)));
+  };
+  A.osOwed = () => A.osDue().filter(r => !r.pay).reduce((s, r) => s + r.amt, 0);
+
+  function osHTML() {
+    const rows = A.osDue(), owed = rows.filter(r => !r.pay);
+    let h = '<div class="cj-kpis"><div class="cj-kpi big"><small>Te deben las obras sociales</small><b>' + money(owed.reduce((s, r) => s + r.amt, 0)) + '</b><span>' + owed.length + ' liquidaci' + (owed.length === 1 ? 'ón' : 'ones') + ' por cobrar</span></div></div>';
+    h += '<p class="small-note">Lo que te paga la obra social no entra en la caja del día: queda acá hasta que llega el pago. El coseguro que paga el paciente sí entra en la caja.</p>';
+    if (!rows.length) return h + '<div class="empty">Todavía no hay prácticas con obra social. Cuando registres una práctica a un paciente con obra social, lo que paga la obra social aparece acá.</div>';
+    h += '<div class="cj-os">' + rows.map(r => '<div class="cj-osrow' + (r.pay ? ' paid' : '') + '"><div class="cj-osn"><b>' + esc(r.sigla) + '</b><small>' + esc(monName(r.month)) + ' · ' + r.n + ' práctica' + (r.n === 1 ? '' : 's') + '</small></div>' +
+      '<div class="cj-osa"><b>' + money(r.amt) + '</b>' + (r.pay ? '<small class="ok">Pagó ' + money(r.paid) + ' el ' + esc(A.fmtDMY(r.pay.date)) + (r.paid < r.amt ? ' · débito ' + money(r.amt - r.paid) : '') + '</small>' : '<small>a cobrar</small>') + '</div>' +
+      '<div class="cj-osb"><button class="btn small" data-act="osDueSee" data-os="' + esc(r.os) + '" data-m="' + r.month + '">Ver</button>' + (canCfg() ? (r.pay ? '<button class="btn small ghost" data-act="osPayUndo" data-os="' + esc(r.os) + '" data-m="' + r.month + '">Deshacer</button>' : '<button class="btn small primary" data-act="osPayNew" data-os="' + esc(r.os) + '" data-m="' + r.month + '">Llegó el pago</button>') : '') + '</div></div>').join('') + '</div>';
+    return h;
+  }
+  const findRow = (os, m) => A.osDue().filter(r => r.os === os && r.month === m)[0];
+  A.acts.osDueSee = el => { S.modal = { type: 'osDueSee', os: el.getAttribute('data-os'), m: el.getAttribute('data-m') }; A.renderModal(); };
+  MF.osDueSee = m => {
+    const r = findRow(m.os, m.m); if (!r) return A.modalShell('Obra social', '<div class="empty">Sin prácticas.</div>', '<button class="btn" data-act="closeModal">Cerrar</button>');
+    const b = '<div class="tbl-scroll"><table class="tbl"><thead><tr><th>Fecha</th><th>Paciente</th><th>Práctica</th><th>Profesional</th><th class="num">Paga la O.S.</th></tr></thead><tbody>' +
+      r.items.sort((x, y) => (x.date < y.date ? -1 : 1)).map(i => '<tr><td class="mono">' + esc(A.fmtShort ? A.fmtShort(i.date) : i.date) + '</td><td>' + esc(i.name) + '</td><td>' + esc(i.desc) + '</td><td>' + esc((A.PRO(i.pro) || {}).short || '') + '</td><td class="num">' + money(i.amt) + '</td></tr>').join('') +
+      '</tbody><tfoot><tr><td colspan="4"><b>Total</b></td><td class="num"><b>' + money(r.amt) + '</b></td></tr></tfoot></table></div>';
+    return A.modalShell(r.sigla + ' · ' + monName(r.month), b, '<button class="btn" data-act="closeModal">Cerrar</button>');
+  };
+  A.acts.osPayNew = el => { const r = findRow(el.getAttribute('data-os'), el.getAttribute('data-m')); if (!r) return; S.modal = { type: 'osPay', os: r.os, m: r.month }; A.renderModal(); };
+  MF.osPay = m => {
+    const r = findRow(m.os, m.m);
+    return A.modalShell('Llegó el pago · ' + esc(r ? r.sigla : '') + ' ' + monName(m.m),
+      '<p class="m-lead">Facturado: <b>' + money(r ? r.amt : 0) + '</b>. Poné lo que pagó de verdad (si te debitaron algo, la diferencia queda anotada).</p>' +
+      '<div class="row2"><div class="field"><label for="opAmt">Pagó</label><input id="opAmt" inputmode="numeric" value="' + (r ? r.amt : '') + '"></div><div class="field"><label for="opDate">Fecha</label><input id="opDate" type="date" value="' + A.today() + '"></div></div>' +
+      '<div class="field"><label for="opNote">Nota (opcional)</label><input id="opNote" placeholder="Ej.: transferencia del círculo, débito por falta de RX"></div><div id="opMsg" class="m-msg"></div>',
+      '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="osPayGo">Guardar</button>');
+  };
+  A.acts.osPayGo = () => {
+    const m = S.modal, amt = parseInt((($('#opAmt') || {}).value || '').replace(/\D/g, ''), 10);
+    if (!(amt >= 0) || isNaN(amt)) { const x = $('#opMsg'); if (x) x.textContent = 'Poné el importe que pagó.'; return; }
+    const P = A.osPayStore(); P[m.os] = P[m.os] || {};
+    P[m.os][m.m] = { amt, date: ($('#opDate') || {}).value || A.today(), note: (($('#opNote') || {}).value || '').trim(), by: (A.actor && A.actor().who) || '', at: new Date().toISOString() };
+    A.save(); S.modal = null; A.renderModal(); A.refresh(); A.toast('Pago de la obra social registrado: ' + money(amt) + '.');
+  };
+  A.acts.osPayUndo = el => { const P = A.osPayStore(), os = el.getAttribute('data-os'), mk = el.getAttribute('data-m'); const old = (P[os] || {})[mk]; if (!old) return; delete P[os][mk]; A.save(); A.refresh(); A.toast('Pago quitado.', () => { P[os] = P[os] || {}; P[os][mk] = old; A.save(); A.refresh(); }); };
+
+  /* =================== CAJA «HOY» =================== */
+  /* a qué odontólogo corresponde un cobro: el de las prácticas que paga, si no el del turno de ese día, si no el del paciente */
+  A.payPro = (pid, e) => {
+    const pd = A.pd(pid);
+    if (e.pcIds && e.pcIds.length) { const c = (pd.ledger || []).filter(x => x.id === e.pcIds[0])[0]; if (c && c.pro) return c.pro; }
+    const a = A.day(e.date).filter(x => x.pid === pid && x.type !== 'block' && x.status !== 'cancelado')[0]; if (a && a.pro) return a.pro;
+    return e.pro || ((A.PAT(pid) || {}).pro) || '';
+  };
+  const dayPays = d => {
+    const out = [];
+    A.PATS.forEach(p => { const pd = A.pd(p.id); if (!pd) return; (pd.ledger || []).forEach(e => { if (e.type === 'pago' && e.date === d && !e.voided && !e.anula) out.push({ pid: p.id, name: p.name, e, pro: A.payPro(p.id, e) }); }); });
+    return out;
+  };
+  /* qué pagó: las prácticas elegidas al cobrar, o lo que se le hizo ese día */
+  const GEN = /^(cobro|pago|pago de paciente|cobro de paciente)?$/i;
+  const what = x => {
+    if (x.e.desc && !GEN.test(x.e.desc.trim())) return x.e.desc;
+    const L = (A.pd(x.pid).ledger || []).filter(c => c.type === 'cargo' && !c.voided && !c.anula);
+    let c = (x.e.pcIds || []).map(id => L.filter(y => y.id === id)[0]).filter(Boolean);
+    if (!c.length) c = L.filter(y => y.date === x.e.date);
+    if (!c.length) return 'A cuenta de su saldo';
+    const t = c.map(y => String(y.desc || '').replace(/\s*\(presupuesto.*$/i, '')).filter(Boolean);
+    return t.slice(0, 2).join(' · ') + (t.length > 2 ? ' y ' + (t.length - 2) + ' más' : '');
+  };
+  const NAV = [['hoy', 'Cobros del día'], ['os', 'Obras sociales'], ['resumen', 'Números del mes'], ['control', 'Control del día'], ['mov', 'Ingresos y gastos'], ['pend', 'Pendientes'], ['cierre', 'Cierre del día']];
+  const navHTML = sub => '<div class="seg cashnav" role="group" aria-label="Secciones de la caja">' + NAV.map(x => '<button data-act="cajaSub" data-s="' + x[0] + '" aria-pressed="' + (sub === x[0]) + '">' + x[1] + '</button>').join('') + '</div>';
+  function hoyHTML() {
+    const d = S.caja.day || A.today(), mp = A.myProOnly ? A.myProOnly() : null;
+    let L = dayPays(d); if (mp) L = L.filter(x => x.pro === mp);
+    const tot = L.reduce((s, x) => s + (+x.e.amount || 0), 0), byM = {};
+    L.forEach(x => { const k = x.e.method || 'Otro'; byM[k] = (byM[k] || 0) + (+x.e.amount || 0); });
+    const isToday = d === A.today();
+    let h = '<div class="cj-day"><button class="btn small" data-act="cajDay" data-n="-1" aria-label="Día anterior">‹</button><b>' + (isToday ? 'Hoy, ' : '') + esc(A.fmtLong ? A.fmtLong(d) : A.fmtDMY(d)) + '</b><button class="btn small" data-act="cajDay" data-n="1" aria-label="Día siguiente"' + (isToday ? ' disabled' : '') + '>›</button>' + (isToday ? '' : '<button class="btn small" data-act="cajDay" data-n="0">Hoy</button>') + '</div>';
+    h += '<div class="cj-kpis"><div class="cj-kpi big"><small>Cobrado ' + (isToday ? 'hoy' : 'ese día') + (mp ? ' · tus pacientes' : '') + '</small><b>' + money(tot) + '</b><span>' + L.length + ' cobro' + (L.length === 1 ? '' : 's') + '</span></div>' +
+      Object.keys(byM).sort((a, b) => byM[b] - byM[a]).map(k => '<div class="cj-kpi"><small>' + esc(k) + '</small><b>' + money(byM[k]) + '</b></div>').join('') + '</div>';
+    if (isToday && A.pcHTML && A.pcList && A.pcList().length) { const pc = A.pcHTML('caja'); if (pc) h += pc; }
+    if (!mp) { const ow = A.osOwed(); if (ow > 0) h += '<button class="cj-osbar" data-act="cajaSub" data-s="os"><span>Las obras sociales te deben <b>' + money(ow) + '</b></span><span aria-hidden="true">›</span></button>'; }
+    if (!L.length) return h + '<div class="empty">No hay cobros registrados ' + (isToday ? 'hoy' : 'ese día') + '.</div>';
+    const by = {}; L.forEach(x => { (by[x.pro] = by[x.pro] || []).push(x); });
+    const ids = Object.keys(by).sort((a, b) => by[b].reduce((s, x) => s + x.e.amount, 0) - by[a].reduce((s, x) => s + x.e.amount, 0));
+    h += ids.map(id => {
+      const p = A.PRO(id), list = by[id], st = list.reduce((s, x) => s + (+x.e.amount || 0), 0);
+      return '<section class="card cj-pro"><h2><span class="cj-dot" style="background:' + esc((p && p.color) || '#999') + '"></span>' + esc(p ? p.name : 'Sin profesional') + '<span class="cj-st">' + money(st) + '</span></h2>' +
+        '<div class="cj-list">' + list.map(x => '<div class="cj-row"><button class="cj-pat" data-act="openFicha" data-pid="' + x.pid + '"><b>' + esc(x.name) + '</b><small>' + esc(what(x)) + (x.e.by ? ' · cobró ' + esc(x.e.by) : '') + '</small></button><span class="cj-m">' + esc(x.e.method || '') + '</span><b class="cj-a">' + money(x.e.amount) + '</b></div>').join('') + '</div></section>';
+    }).join('');
+    return h;
+  }
+  A.acts.cajDay = el => { const n = +el.getAttribute('data-n'); S.caja.day = n === 0 ? null : A.add(S.caja.day || A.today(), n); if (S.caja.day && S.caja.day > A.today()) S.caja.day = null; A.refresh(); };
+
+  const prevCaja = A.render.caja;
+  A.render.caja = () => {
+    osSeed(); if (A.cashSeed) A.cashSeed();
+    if (isEmp() && !S.cajaGral) return prevCaja();
+    S.caja = S.caja || {};
+    if (!S._cjInit) { S._cjInit = 1; if (!S.caja.sub || S.caja.sub === 'resumen') S.caja.sub = 'hoy'; }
+    const sub = S.caja.sub && NAV.some(x => x[0] === S.caja.sub) ? S.caja.sub : 'hoy';
+    const host = $('#view-caja'); if (!host) return prevCaja();
+    if (sub === 'hoy' || sub === 'os') {
+      host.innerHTML = '<div class="cash-top">' + navHTML(sub) + '</div><div class="ag-bar"><h1 class="ag-title">' + (sub === 'hoy' ? 'Cobros del día' : 'Obras sociales') + '<small>' + esc(A.CLINIC) + (A.DEMO ? ' · datos de ejemplo' : '') + '</small></h1></div>' + (sub === 'hoy' ? hoyHTML() : osHTML());
+      return;
+    }
+    prevCaja();
+    const nav = host.querySelector('.cashnav'); if (nav) nav.outerHTML = navHTML(sub);
+  };
+  A.osDueHTML = osHTML;
+
+  const css = document.createElement('style');
+  css.textContent = '.cj-day{display:flex;align-items:center;gap:8px;margin:4px 0 12px;flex-wrap:wrap}.cj-day b{font-size:1.05rem}' +
+    '.cj-kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.cj-kpi{flex:1 1 120px;background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:10px 12px}' +
+    '.cj-kpi small{display:block;color:var(--muted,#667);font-size:.8rem}.cj-kpi b{display:block;font-size:1.15rem}.cj-kpi span{font-size:.8rem;color:var(--muted,#667)}.cj-kpi.big{flex:2 1 220px;background:var(--soft,#eef6f6)}.cj-kpi.big b{font-size:1.7rem;color:var(--teal,#0b6b6f)}' +
+    '.cj-osbar{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 14px;margin:0 0 12px;border:1px solid var(--line);border-radius:12px;background:#fff8e6;color:inherit;font:inherit;cursor:pointer;text-align:left}' +
+    '.cj-pro h2{display:flex;align-items:center;gap:8px}.cj-dot{width:12px;height:12px;border-radius:50%;flex:0 0 12px}.cj-st{margin-left:auto;font-size:1rem}' +
+    '.cj-list{display:flex;flex-direction:column}.cj-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.cj-row:first-child{border-top:0}' +
+    '.cj-pat{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer}.cj-pat b{display:block}.cj-pat small{display:block;color:var(--muted,#667);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.cj-m{font-size:.82rem;color:var(--muted,#667);white-space:nowrap}.cj-a{white-space:nowrap}' +
+    '.cj-os{display:flex;flex-direction:column;gap:8px}.cj-osrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card,#fff)}.cj-osrow.paid{opacity:.75}' +
+    '.cj-osn{flex:1 1 160px}.cj-osn small,.cj-osa small{display:block;color:var(--muted,#667);font-size:.8rem}.cj-osa{text-align:right}.cj-osa small.ok{color:#2e7d32}.cj-osb{display:flex;gap:6px}' +
+    '@media (max-width:640px){#view-caja .cashnav{overflow-x:auto!important;flex-wrap:nowrap!important;display:flex!important;max-width:100%;scrollbar-width:none}#view-caja .cashnav button{white-space:nowrap;flex:0 0 auto}.cj-m{font-size:.75rem}}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.47: acuerdo de cada profesional con el centro (porcentaje con excepciones, módulo, consultorio entero, otro) y liquidación sobre lo cobrado ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const money = n => A.money(n || 0);
+  const canCfg = () => !A.isMember || !A.isMember() || (A.mbRole && A.mbRole() === 'admin');
+  const MODES = [
+    ['pct', 'Porcentaje de lo que trabaja'],
+    ['mod', 'Alquila un módulo (se queda con todo y paga el módulo)'],
+    ['pctmod', 'Porcentaje + módulo'],
+    ['alq', 'Alquila el consultorio entero (monto fijo por mes)'],
+    ['otro', 'Otro acuerdo']
+  ];
+  const BY = [['hora', 'por hora'], ['turno', 'por turno'], ['dia', 'por día']];
+  const cfgOf = pid => { const c = A.liqCfg(pid); c.rules = c.rules || []; return c; };
+  const baseOf = c => c.base || 'cobrado';
+  const num = v => parseInt(String(v || '').replace(/\D/g, ''), 10) || 0;
+  const pctNum = v => Math.min(100, Math.max(0, parseFloat(String(v).replace(',', '.')) || 0));
+
+  /* ---------- el acuerdo, en palabras (para la lista y la liquidación) ---------- */
+  A.liqDeal = pid => {
+    const c = cfgOf(pid), mode = c.mode || 'pct', ex = c.rules.map(r => r.key + ' ' + r.pct + '%').join(', ');
+    const pc = c.pct + '% para el profesional' + (ex ? ' (' + ex + ')' : '');
+    const md = c.mod && c.mod.price ? money(c.mod.price) + ' ' + ((BY.filter(x => x[0] === c.mod.by)[0] || BY[0])[1]) : 'módulo sin valor';
+    const t = mode === 'pct' ? pc : mode === 'mod' ? 'Alquila módulo: ' + md : mode === 'pctmod' ? pc + ' + módulo ' + md
+      : mode === 'alq' ? 'Alquila el consultorio: ' + money((c.alq || {}).price) + ' por mes' : 'Otro: ' + ((c.otro || {}).txt || 'sin detalle');
+    return t + (mode === 'alq' || mode === 'mod' ? '' : baseOf(c) === 'cobrado' ? ' · sobre lo cobrado' : ' · sobre lo facturado');
+  };
+
+  /* ---------- el formulario del acuerdo (mismo en «Profesionales» y en Liquidaciones) ---------- */
+  function dealHTML(pid) {
+    const c = cfgOf(pid), mode = c.mode || 'pct', mod = c.mod || { by: 'hora', price: 0 }, cats = A.catCats ? A.catCats() : [];
+    const D = 'data-id="' + pid + '"';
+    let h = '<div class="dl-box"><div class="field"><label for="dlMode">Cómo trabaja con el centro</label><select id="dlMode" data-chg="dlSet" data-f="mode" ' + D + '>' +
+      MODES.map(x => '<option value="' + x[0] + '"' + (x[0] === mode ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>';
+    if (mode === 'pct' || mode === 'pctmod' || mode === 'otro') {
+      h += '<div class="row2"><div class="field"><label for="dlPct">Porcentaje para el profesional</label><div class="pct-in"><input id="dlPct" inputmode="decimal" data-chg="dlSet" data-f="pct" ' + D + ' value="' + (c.pct != null ? c.pct : 40) + '"><span>%</span></div></div>' +
+        '<div class="field"><label>Sobre qué se calcula</label><div class="seg" role="group"><button data-act="dlBase" data-v="cobrado" ' + D + ' aria-pressed="' + (baseOf(c) === 'cobrado') + '">Lo cobrado</button><button data-act="dlBase" data-v="facturado" ' + D + ' aria-pressed="' + (baseOf(c) === 'facturado') + '">Lo facturado</button></div></div></div>';
+      h += '<div class="dl-ex"><b>Excepciones</b>' + (c.rules.length ? '<ul>' + c.rules.map((r, i) => '<li><span>' + esc(r.key) + (r.t === 'pr' ? ' (práctica)' : '') + '</span><div class="pct-in sm"><input inputmode="decimal" data-chg="dlRulePct" data-i="' + i + '" ' + D + ' value="' + r.pct + '" aria-label="Porcentaje para ' + esc(r.key) + '"><span>%</span></div><button class="btn small ghost" data-act="dlRuleDel" data-i="' + i + '" ' + D + ' aria-label="Quitar">✕</button></li>').join('') + '</ul>' : '<div class="hint">Sin excepciones: todas las prácticas al mismo porcentaje.</div>') +
+        '<div class="dl-add"><select id="dlCat" aria-label="Categoría">' + cats.map(k => '<option>' + esc(k) + '</option>').join('') + '</select><div class="pct-in sm"><input id="dlCatPct" inputmode="decimal" placeholder="60" aria-label="Porcentaje"><span>%</span></div><button class="btn small" data-act="dlRuleAdd" ' + D + '>+ Excepción</button></div>' +
+        '<div class="hint">Ejemplo: 40% de todo y Ortodoncia al 60% (porque pone los materiales).</div></div>';
+    }
+    if (mode === 'mod' || mode === 'pctmod') {
+      h += '<div class="row2"><div class="field"><label for="dlModBy">El módulo se paga</label><select id="dlModBy" data-chg="dlSet" data-f="modBy" ' + D + '>' + BY.map(x => '<option value="' + x[0] + '"' + (x[0] === mod.by ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
+        '<div class="field"><label for="dlModP">Valor</label><input id="dlModP" inputmode="numeric" data-chg="dlSet" data-f="modPrice" ' + D + ' value="' + (mod.price || '') + '" placeholder="Ej.: 8000"></div></div>' +
+        '<div class="hint">Las horas, turnos o días salen de la agenda y se descuentan solos en la liquidación.</div>';
+    }
+    if (mode === 'alq') {
+      h += '<div class="field"><label for="dlAlq">Paga por mes</label><input id="dlAlq" inputmode="numeric" data-chg="dlSet" data-f="alq" ' + D + ' value="' + ((c.alq || {}).price || '') + '" placeholder="Ej.: 350000"></div>' +
+        '<div class="hint">Se queda con todo lo que cobra y el alquiler se descuenta solo en su liquidación.</div>';
+    }
+    if (mode === 'otro') {
+      h += '<div class="field"><label for="dlTxt">Cómo es el acuerdo</label><textarea id="dlTxt" rows="2" data-chg="dlSet" data-f="txt" ' + D + ' placeholder="Ej.: 50% de lo cobrado y el laboratorio a medias">' + esc((c.otro || {}).txt || '') + '</textarea></div>' +
+        '<div class="field"><label for="dlFix">Además paga por mes (opcional)</label><input id="dlFix" inputmode="numeric" data-chg="dlSet" data-f="fix" ' + D + ' value="' + ((c.otro || {}).fix || '') + '" placeholder="0"></div>';
+    }
+    return h + '<div id="dlMsg" class="m-msg"></div></div>';
+  }
+  A.liqDealHTML = dealHTML;
+  const redraw = () => {
+    A.save();
+    if (S.modal) { const b = $('.m-body'), t = b ? b.scrollTop : 0; A.renderModal(); const b2 = $('.m-body'); if (b2) b2.scrollTop = t; } else A.refresh();
+  };
+  A.chg.dlSet = el => {
+    const c = cfgOf(el.getAttribute('data-id')), f = el.getAttribute('data-f'), v = el.value;
+    if (f === 'mode') { c.mode = v; if (v === 'mod' || v === 'pctmod') c.mod = c.mod || { by: 'hora', price: 0 }; }
+    else if (f === 'pct') c.pct = pctNum(v);
+    else if (f === 'modBy') { c.mod = c.mod || {}; c.mod.by = v; }
+    else if (f === 'modPrice') { c.mod = c.mod || { by: 'hora' }; c.mod.price = num(v); }
+    else if (f === 'alq') c.alq = { price: num(v) };
+    else if (f === 'txt') { c.otro = c.otro || {}; c.otro.txt = v.trim(); }
+    else if (f === 'fix') { c.otro = c.otro || {}; c.otro.fix = num(v); }
+    redraw();
+  };
+  A.acts.dlBase = el => { cfgOf(el.getAttribute('data-id')).base = el.getAttribute('data-v'); redraw(); };
+  A.chg.dlRulePct = el => { const c = cfgOf(el.getAttribute('data-id')), r = c.rules[+el.getAttribute('data-i')]; if (r) r.pct = pctNum(el.value); redraw(); };
+  A.acts.dlRuleDel = el => { cfgOf(el.getAttribute('data-id')).rules.splice(+el.getAttribute('data-i'), 1); redraw(); };
+  A.acts.dlRuleAdd = el => {
+    const c = cfgOf(el.getAttribute('data-id')), k = ($('#dlCat') || {}).value, p = ($('#dlCatPct') || {}).value;
+    if (!k || p === '' || isNaN(parseFloat(String(p).replace(',', '.')))) { const m = $('#dlMsg'); if (m) m.textContent = 'Elegí la categoría y poné el porcentaje.'; return; }
+    const i = c.rules.findIndex(r => r.t === 'cat' && r.key === k), r = { t: 'cat', key: k, pct: pctNum(p) };
+    if (i >= 0) c.rules[i] = r; else c.rules.push(r); redraw();
+  };
+
+  /* en el editor del profesional (Ajustes › Profesionales), antes de los horarios */
+  const cfgPrev = MF.cfg;
+  if (cfgPrev) MF.cfg = m => {
+    const h = cfgPrev(m);
+    if (!m || m.tab !== 'pros' || !m.sel || m.wiz || m.rm || !canCfg() || (A.liteOn && A.liteOn()) || !A.PRO(m.sel)) return h;
+    const mark = '<div class="block"><h3>Días y horarios de atención</h3>';
+    if (typeof h !== 'string' || h.indexOf(mark) < 0) return h;
+    return h.replace(mark, '<div class="block"><h3>Acuerdo con el centro</h3><div class="hint">Cómo se reparte lo que trabaja. Se usa solo en la liquidación de cada mes.</div>' + dealHTML(m.sel) + '</div>' + mark);
+  };
+
+  /* ---------- lo cobrado de cada práctica ----------
+     Cada pago se reparte entre las prácticas del paciente: primero las que eligió al cobrar (pcIds), después de la más vieja a la más nueva.
+     Lo que paga la obra social cuenta cuando se marca «Llegó el pago» de ese mes. */
+  let memo = null, memoAt = 0;
+  A.cobAlloc = () => {
+    if (memo && Date.now() - memoAt < 400) return memo;
+    const out = [], osRows = {};
+    if (A.osDue) A.osDue().forEach(r => { if (r.pay && r.amt > 0) osRows[r.os + '|' + r.month] = r; });
+    A.allPids().forEach(pid => {
+      const pd = A.pd(pid); if (!pd || !pd.ledger) return;
+      const txCat = {}; (pd.tx || []).forEach(t => { txCat[t.id] = t.cat || null; });
+      const name = (A.PAT(pid) || {}).name || (pd.prof && pd.prof.name) || 'Paciente';
+      const cargos = pd.ledger.filter(e => e.type === 'cargo' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+      const left = {}; cargos.forEach(e => { left[e.id] = Math.max(0, +e.amount || 0); });
+      const piece = (e, amt, date, via) => { if (amt > 0) out.push({ pid, patient: name, cargo: e, pro: e.pro || 'pr1', desc: e.desc, cat: (e.txId && txCat[e.txId]) || (A.catOf ? A.catOf({ desc: e.desc }) : ''), date, amount: amt, via }); };
+      pd.ledger.filter(e => e.type === 'pago' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).forEach(p => {
+        let av = +p.amount || 0;
+        const first = (p.pcIds || []).map(id => cargos.filter(c => c.id === id)[0]).filter(Boolean);
+        first.concat(cargos.filter(c => first.indexOf(c) < 0)).forEach(c => { if (av <= 0 || !(left[c.id] > 0)) return; const x = Math.min(av, left[c.id]); left[c.id] -= x; av -= x; piece(c, x, p.date, 'paciente'); });
+      });
+      cargos.forEach(c => {
+        if (!c.os || !(+c.osCov > 0)) return; const r = osRows[c.os + '|' + c.date.slice(0, 7)]; if (!r) return;
+        piece(c, Math.round(+c.osCov * Math.min(1, r.paid / r.amt)), r.pay.date, 'obra social');
+      });
+    });
+    memo = out; memoAt = Date.now(); return out;
+  };
+
+  /* ---------- liquidación ---------- */
+  const pctPrev = A.liqPctFor;
+  A.liqPctFor = (pid, line) => { const md = cfgOf(pid).mode; return md === 'alq' ? { pct: 100, why: 'alquila el consultorio' } : pctPrev(pid, line); };
+  const calcPrev = A.liqCalc;
+  A.liqCalc = (pid, m) => {
+    const c = calcPrev(pid, m), cfg = cfgOf(pid), mode = cfg.mode || 'pct';
+    if (baseOf(cfg) === 'cobrado') {
+      const lines = A.cobAlloc().filter(x => x.pro === pid && x.date.slice(0, 7) === m).map(x => {
+        const ln = { date: x.date, pid: x.pid, patient: x.patient, desc: x.desc + (x.via === 'obra social' ? ' (pagó la obra social)' : ''), cat: x.cat, amount: x.amount };
+        const r = A.liqPctFor(pid, ln); ln.pct = r.pct; ln.why = r.why; ln.dent = Math.round(ln.amount * ln.pct / 100); ln.center = ln.amount - ln.dent; return ln;
+      }).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.patient < b.patient ? -1 : 1));
+      const byCat = {}; lines.forEach(l => { const k = byCat[l.cat] || (byCat[l.cat] = { n: 0, amount: 0, dent: 0, center: 0 }); k.n++; k.amount += l.amount; k.dent += l.dent; k.center += l.center; });
+      c.lines = lines; c.byCat = byCat; c.prod = lines.reduce((s, l) => s + l.amount, 0); c.dent = lines.reduce((s, l) => s + l.dent, 0);
+      c.eff = c.prod ? Math.round(c.dent / c.prod * 1000) / 10 : 0; c.base = 'cobrado';
+    }
+    let fee = 0, why = '';
+    if (mode === 'alq' && cfg.alq && cfg.alq.price > 0) { fee = cfg.alq.price; why = 'Alquiler del consultorio (mes)'; }
+    if (mode === 'otro' && cfg.otro && cfg.otro.fix > 0) { fee = cfg.otro.fix; why = 'Monto fijo del acuerdo (mes)'; }
+    if (fee) c.deds = [{ id: 'alquiler', auto: true, desc: why, amount: fee }].concat((c.deds || []).filter(d => d.id !== 'alquiler'));
+    c.ded = (c.deds || []).reduce((s, d) => s + (+d.amount || 0), 0);
+    c.center = c.prod - c.dent + (c.modFee || 0) + fee; c.net = c.dent - c.ded; c.deal = A.liqDeal(pid);
+    return c;
+  };
+
+  /* en Liquidaciones: el acuerdo reemplaza al cuadro viejo de porcentajes, y «facturado» pasa a «cobrado» */
+  const liqPrev = A.render.liq;
+  A.render.liq = () => {
+    liqPrev();
+    const host = $('#view-liq'); if (!host) return;
+    const pid = S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : null;
+    if (pid && canCfg()) {
+      const sec = Array.prototype.slice.call(host.querySelectorAll('section.card')).filter(s => /^Porcentajes de/.test((s.querySelector('h2') || {}).textContent || ''))[0];
+      if (sec) sec.innerHTML = '<h2>Acuerdo de ' + esc((A.PRO(pid) || {}).short || '') + '</h2>' + dealHTML(pid);
+    }
+    host.querySelectorAll('[data-act="liqDedDel"][data-id="alquiler"]').forEach(b => { b.replaceWith(Object.assign(document.createElement('span'), { className: 'chip', textContent: 'automático' })); });
+    const allCob = A.PROS.every(p => baseOf(cfgOf(p.id)) === 'cobrado');
+    const one = pid ? baseOf(cfgOf(pid)) === 'cobrado' : allCob;
+    host.querySelectorAll('th, td').forEach(n => {
+      if (n.children.length) return;
+      if (n.textContent === 'Facturado' && (one || n.closest('section.card') && !pid && allCob)) n.textContent = 'Cobrado';
+      if (n.textContent === 'Total facturado' && one) n.textContent = 'Total cobrado en el mes';
+    });
+    if (one) host.querySelectorAll('.small-note, .hint, p').forEach(n => { if (/devengado/.test(n.textContent)) n.textContent = 'Se liquida sobre lo cobrado en el mes: cada pago se reparte entre las prácticas del paciente (primero las que se eligieron al cobrar, después las más viejas). Lo de las obras sociales entra cuando se marca «Llegó el pago». «Centro» es lo que queda para el dueño antes de gastos.'; });
+    if (pid) {
+      const h1 = host.querySelector('.ag-title small'); if (h1 && !host.querySelector('.dl-sum')) h1.insertAdjacentHTML('afterend', '<span class="dl-sum">' + esc(A.liqDeal(pid)) + '</span>');
+    }
+  };
+  const txtPrev = A.liqText;
+  if (txtPrev) A.liqText = (pid, m) => {
+    let t = txtPrev(pid, m); const c = A.liqCalc(pid, m);
+    if (c.base === 'cobrado') t = t.replace(/Total facturado/g, 'Total cobrado').replace(/facturado/g, 'cobrado');
+    return t.replace(/\n/, '\nAcuerdo: ' + A.liqDeal(pid) + '\n');
+  };
+
+  const css = document.createElement('style');
+  css.textContent = '.dl-box{display:flex;flex-direction:column;gap:8px}.dl-ex{border:1px solid var(--line);border-radius:12px;padding:10px}.dl-ex ul{list-style:none;margin:6px 0;padding:0}' +
+    '.dl-ex li{display:flex;align-items:center;gap:8px;padding:4px 0}.dl-ex li>span{flex:1}.pct-in{display:flex;align-items:center;gap:4px}.pct-in input{width:80px}.pct-in.sm input{width:64px}' +
+    '.dl-add{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}.dl-add select{flex:1 1 140px;min-width:0}.dl-sum{display:block;font-size:.85rem;color:var(--muted,#667);font-weight:400}';
+  document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {
