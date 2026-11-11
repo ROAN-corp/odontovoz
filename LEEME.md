@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.45.4 · Turnero online más claro
+- Por internet se reserva **como máximo 30 minutos** (`ONLINE_MAX`/`capDur` en `src/app17.js`; si el profesional usa turnos de más de 30, uno solo). Si el motivo lleva más (endodoncia, extracción, primera consulta), el consultorio lo alarga después. Vale también para la Autogestión por WhatsApp, que usa los mismos horarios.
+- `sitio/turnos.html`: cada día muestra «N turnos libres» separado de la fecha (antes «nov · 14» se confundía con el día 14) y una aclaración arriba.
+
 ## OdontoVoz 1.45.3 · Sincronización al instante
 - `src/app60.js`: cada equipo se conecta al canal de avisos del lugar (Supabase Realtime, canal público `ov-<dueño>`, solo un «toc toc» sin datos). Al subir cambios avisa, y los demás equipos abiertos sincronizan en el momento (unos 2 segundos de punta a punta) en vez de esperar la vuelta de 8 segundos (más en segundo plano). Sin canal, todo sigue igual que antes. El guardado sube a los 0,8 s (antes 1,5 s).
 

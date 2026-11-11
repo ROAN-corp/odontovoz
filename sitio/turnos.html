@@ -43,6 +43,7 @@ h2 { font: 800 21px/1.2 var(--display); margin: 22px 0 10px; }
 .day { padding: 10px 6px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--white); color: inherit; font: inherit; cursor: pointer; text-align: center; line-height: 1.2; }
 .day b { display: block; font: 800 22px var(--display); }
 .day small { color: var(--ink-2); font-size: 13px; }
+.day .free { display: block; margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--line); font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--teal); }
 .day[aria-pressed="true"] { border-color: var(--teal); background: color-mix(in srgb, var(--teal) 10%, var(--white)); }
 .times { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
 .time { padding: 12px 6px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--white); color: inherit; font: 700 17px var(--display); cursor: pointer; }
@@ -121,10 +122,10 @@ footer a { color: inherit; }
       if (D.msg) h += '<p class="note">' + esc(D.msg) + '</p>';
     } else if (F.step === 2) {
       const s = slotsFor(), days = Object.keys(s);
-      h = steps(2) + '<button class="back" data-a="to" data-s="1">‹ Cambiar motivo</button><h2>Elegí el día</h2>';
+      h = steps(2) + '<button class="back" data-a="to" data-s="1">‹ Cambiar motivo</button><h2>Elegí el día</h2><p class="note">Debajo de cada día figura cuántos turnos quedan libres.</p>';
       if (!days.length) h += '<div class="empty">No hay horarios libres para este motivo. Probá con otro o escribile al consultorio.</div>';
       else {
-        h += '<div class="days">' + days.map(k => { const d = dt(k); return '<button class="day" data-a="date" data-d="' + k + '" aria-pressed="' + (F.date === k) + '"><small>' + DOW[d.getDay()].slice(0, 3) + '</small><b>' + d.getDate() + '</b><small>' + MON[d.getMonth()].slice(0, 3) + ' · ' + s[k].length + '</small></button>'; }).join('') + '</div>';
+        h += '<div class="days">' + days.map(k => { const d = dt(k); return '<button class="day" data-a="date" data-d="' + k + '" aria-pressed="' + (F.date === k) + '"><small>' + DOW[d.getDay()].slice(0, 3) + '</small><b>' + d.getDate() + '</b><small>' + MON[d.getMonth()].slice(0, 3) + '</small><em class="free">' + s[k].length + (s[k].length === 1 ? ' turno libre' : ' turnos libres') + '</em></button>'; }).join('') + '</div>';
         if (F.date && s[F.date]) {
           h += '<h2>Elegí el horario · ' + esc(longDay(F.date)) + '</h2>';
           const by = {}; s[F.date].forEach(x => { (by[x[0]] = by[x[0]] || []).push(x); });

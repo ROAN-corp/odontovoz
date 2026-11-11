@@ -7882,7 +7882,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.45.3';
+  A.VERSION = '1.45.4';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10396,7 +10396,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const DEF_TYPES = ['primera', 'control', 'limpieza', 'composite', 'endodoncia', 'extraccion', 'urgencia', 'corona', 'ortodoncia', 'implante', 'blanq'];
   const PUB_LABEL = { primera: 'Primera consulta', control: 'Control', limpieza: 'Limpieza y control', composite: 'Arreglo de caries / restauración', endodoncia: 'Tratamiento de conducto (endodoncia)', extraccion: 'Extracción', urgencia: 'Urgencia · dolor', corona: 'Corona (prueba o cementado)', ortodoncia: 'Control de ortodoncia', implante: 'Control de implante', blanq: 'Blanqueamiento' };
   A.PUB_TYPES = DEF_TYPES;
-  const typeDur = (k, p) => { const s = A.slotOf(p), d = (A.TYPES[k] || ['', 30])[1]; return Math.max(s, Math.ceil(d / s) * s); };
+  /* por internet se reservan como máximo 30 minutos (si el motivo lleva más, el consultorio lo alarga después) */
+  const ONLINE_MAX = 30;
+  const capDur = (d, s) => Math.min(d, Math.max(s, Math.floor(ONLINE_MAX / s) * s));
+  const typeDur = (k, p) => { const s = A.slotOf(p), d = (A.TYPES[k] || ['', 30])[1]; return capDur(Math.max(s, Math.ceil(d / s) * s), s); };
   function pubData() {
     const o = O(), pros = proList(), slots = {}, today = A.today();
     /* si nunca se tocaron los motivos, se ofrecen todos los habituales (antes eran solo 4) */
@@ -10410,7 +10413,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         const d = A.add(today, i);
         if (A.closedOn && A.closedOn(d)) continue;
         const l = [];
-        pros.forEach(p => { const dur = k === 'otro' ? Math.max(A.slotOf(p), 30) : typeDur(k, p); A.freeSlots(p, d, dur, { minMin: (o.minHours || 0) * 60 }).forEach(t => l.push([p.id, t, dur])); });
+        pros.forEach(p => { const dur = k === 'otro' ? capDur(Math.max(A.slotOf(p), 30), A.slotOf(p)) : typeDur(k, p); A.freeSlots(p, d, dur, { minMin: (o.minHours || 0) * 60 }).forEach(t => l.push([p.id, t, dur])); });
         if (l.length) { byD[d] = l.sort((a, b) => a[1] - b[1]); n += l.length; }
       }
       slots[k] = byD;
@@ -17937,6 +17940,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.45.4', d: '2026-11-11', items: [
+      { t: 'Turnero online: los pacientes reservan como máximo 30 minutos, y cada día dice claro cuántos «turnos libres» quedan.', top: 1 }] },
     { v: '1.45.3', d: '2026-11-11', items: [
       { t: 'Los equipos se enteran al instante de lo que hace otro (por ejemplo, cuando recepción marca que llegó un paciente).', top: 1 }] },
     { v: '1.45.2', d: '2026-11-11', items: [

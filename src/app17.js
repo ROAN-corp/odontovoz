@@ -237,7 +237,10 @@
   const DEF_TYPES = ['primera', 'control', 'limpieza', 'composite', 'endodoncia', 'extraccion', 'urgencia', 'corona', 'ortodoncia', 'implante', 'blanq'];
   const PUB_LABEL = { primera: 'Primera consulta', control: 'Control', limpieza: 'Limpieza y control', composite: 'Arreglo de caries / restauración', endodoncia: 'Tratamiento de conducto (endodoncia)', extraccion: 'Extracción', urgencia: 'Urgencia · dolor', corona: 'Corona (prueba o cementado)', ortodoncia: 'Control de ortodoncia', implante: 'Control de implante', blanq: 'Blanqueamiento' };
   A.PUB_TYPES = DEF_TYPES;
-  const typeDur = (k, p) => { const s = A.slotOf(p), d = (A.TYPES[k] || ['', 30])[1]; return Math.max(s, Math.ceil(d / s) * s); };
+  /* por internet se reservan como máximo 30 minutos (si el motivo lleva más, el consultorio lo alarga después) */
+  const ONLINE_MAX = 30;
+  const capDur = (d, s) => Math.min(d, Math.max(s, Math.floor(ONLINE_MAX / s) * s));
+  const typeDur = (k, p) => { const s = A.slotOf(p), d = (A.TYPES[k] || ['', 30])[1]; return capDur(Math.max(s, Math.ceil(d / s) * s), s); };
   function pubData() {
     const o = O(), pros = proList(), slots = {}, today = A.today();
     /* si nunca se tocaron los motivos, se ofrecen todos los habituales (antes eran solo 4) */
@@ -251,7 +254,7 @@
         const d = A.add(today, i);
         if (A.closedOn && A.closedOn(d)) continue;
         const l = [];
-        pros.forEach(p => { const dur = k === 'otro' ? Math.max(A.slotOf(p), 30) : typeDur(k, p); A.freeSlots(p, d, dur, { minMin: (o.minHours || 0) * 60 }).forEach(t => l.push([p.id, t, dur])); });
+        pros.forEach(p => { const dur = k === 'otro' ? capDur(Math.max(A.slotOf(p), 30), A.slotOf(p)) : typeDur(k, p); A.freeSlots(p, d, dur, { minMin: (o.minHours || 0) * 60 }).forEach(t => l.push([p.id, t, dur])); });
         if (l.length) { byD[d] = l.sort((a, b) => a[1] - b[1]); n += l.length; }
       }
       slots[k] = byD;
