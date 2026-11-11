@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.46.3', d: '2026-11-11', items: [
+      { t: 'Si escribís un pago en la evolución («hoy paga 130.000 de 150.000 que debía»), la app te ofrece registrar el cobro con un toque y te dice cuánto queda debiendo.', top: 1 },
+      { t: 'Si alguien después carga el mismo cobro a mano, la app avisa que ya está y no se duplica.', top: 1 }] },
     { v: '1.46.2', d: '2026-11-11', items: [
       { t: 'En un centro, cada odontólogo del equipo ve todas las agendas pero solo cambia la suya, y le llegan solo los avisos de sus pacientes.', top: 1 }] },
     { v: '1.46.1', d: '2026-11-11', items: [

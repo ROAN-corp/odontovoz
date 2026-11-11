@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.46.3 · Pagos escritos en la evolución, sin duplicados
+- `src/app62.js`: `A.payParse(texto)` entiende pagos en la evolución («hoy paga 130.000 de 150.000 que debía», «abonó $50.000 en efectivo», «dejó 20 mil por transferencia, debía 80 mil», «me dejó 100k», «1,5 millones»); no toma futuros ni negaciones («va a pagar», «no pagó», «próx…»), ni números chicos (piezas). Al guardar la nota (`addNote`/`qnSave`, después de «Prácticas de hoy» si hubo) aparece `MF.evPay`: importe, medio de pago, y si dice cuánto debía y en la app figura menos, ofrece cargar la deuda anterior que falta; muestra cuánto queda debiendo. El cobro queda con `fromNote` y la nota con `payId`; si había prácticas del día «para cobrar» y el pago las cubre, salen de la cola.
+- **Sin duplicados** (`A.payTwin(pid, importe, fecha)`): si al escribir la nota ya hay un cobro igual de hoy, no ofrece cargarlo; si alguien carga a mano (`cobroSave`, `ltPaySave`) un cobro igual a uno de hoy, avisa «Ya hay un cobro de $… (anotado desde la evolución por …). ¿Es el mismo?» con «Es el mismo: no cargar» / «Es otro pago: cargar igual».
+
 ## OdontoVoz 1.46.2 · Cada odontólogo, su agenda
 - `src/app61.js`: un usuario del equipo con puesto profesional o asistente y agenda asignada (`ov_members.pro`) **ve** todas las agendas del centro pero **solo modifica** los turnos de la suya. `A.mutate` envuelto: si un cambio toca turnos de otro profesional (crear, mover, cancelar, estado, borrar, pasarle un turno propio), esos turnos vuelven a como estaban y aparece «Ese turno es de la agenda de X…». La ventanita del turno de otro queda en solo lectura (se puede abrir la ficha: los pacientes son del centro). `naSave` no deja dar turnos en otra agenda. `A.myProOnly()`, `A.canEditAppt(a)`.
 - Avisos de «Llegó…» (cartel y notificación del teléfono, `src/app12.js`): solo de los pacientes de su agenda.
