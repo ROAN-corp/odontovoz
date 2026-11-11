@@ -16,7 +16,7 @@ name: Copia de seguridad nocturna (Google Drive)
 #   BACKUP_PASSPHRASE    frase larga para encriptar
 #   BACKUP_DRIVE_TOKEN   lo que devuelve «rclone authorize drive» con la cuenta de somosroan
 #   BACKUP_S3_KEY_ID / BACKUP_S3_SECRET   claves S3 de Supabase Storage (opcional: sin ellas no copia fotos)
-# Variable opcional: BACKUP_S3_REGION (la región del proyecto, por ejemplo sa-east-1).
+# Variable opcional: BACKUP_S3_REGION (la región del proyecto; si falta, eu-west-1 = Irlanda).
 # Si falta lo básico, el trabajo avisa y termina sin hacer nada.
 
 on:
@@ -39,7 +39,7 @@ concurrency:
 
 jobs:
   respaldo:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
       DB_URL: ${{ secrets.BACKUP_DB_URL }}
@@ -108,7 +108,7 @@ jobs:
               echo "access_key_id = $S3_ID"
               echo "secret_access_key = $S3_SECRET"
               echo "endpoint = https://$REF.storage.supabase.co/storage/v1/s3"
-              echo "region = ${S3_REGION:-sa-east-1}"
+              echo "region = ${S3_REGION:-eu-west-1}"
               echo "force_path_style = true"
             } >> ~/.config/rclone/rclone.conf
           fi

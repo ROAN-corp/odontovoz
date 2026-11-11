@@ -42,7 +42,7 @@ Inventá una frase larga, fácil de escribir y difícil de adivinar, por ejemplo
 ### 5. Fotos: `BACKUP_S3_KEY_ID` y `BACKUP_S3_SECRET` (opcional pero recomendado)
 1. Supabase › **Storage › S3 Configuration** (o Settings › Storage) › **New access key**.
 2. Pegá el *Access key ID* como `BACKUP_S3_KEY_ID` y el *Secret access key* como `BACKUP_S3_SECRET`.
-3. En la misma pantalla figura la **región** (por ejemplo `sa-east-1`). Cargala en la pestaña **Variables** (no Secrets) como `BACKUP_S3_REGION`.
+3. En la misma pantalla figura la **región** (el proyecto está en Irlanda: `eu-west-1`). Cargala en la pestaña **Variables** (no Secrets) como `BACKUP_S3_REGION`.
 
 Sin estas claves la copia nocturna igual guarda toda la base, pero no las fotos.
 
