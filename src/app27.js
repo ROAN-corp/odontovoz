@@ -86,7 +86,7 @@
     const K = KINDS[m.k];
     if (m.done) return A.modalShell('Pedido recibido', '<p>Tu código de constancia:</p><div class="req-code">' + esc(m.done.code) + '</div><p class="hint">' + esc(K.t) + ' · ' + new Date(m.done.at || Date.now()).toLocaleString('es-AR') + '. Guardalo: te escribimos al correo de la cuenta dentro de las 24 horas para confirmarlo.</p>' + (m.k === 'eliminar' && m.media != null ? '<p class="hint">Se borraron ' + m.media + ' fotos de la nube.</p>' : ''),
       '<button class="btn primary" data-act="closeModal">Listo</button>');
-    return A.modalShell(K.t, '<p>' + K.p + '</p>' + (m.k === 'eliminar' ? '<div class="row-btns"><button class="btn small" data-act="exportAll">Descargar mi copia ahora</button></div>' : '') +
+    return A.modalShell(K.t, '<p>' + K.p + '</p>' + (m.k === 'eliminar' ? '<div class="row-btns"><button class="btn small" data-act="cfgBackup">Descargar mi copia ahora</button></div>' : '') +
       '<div class="field"><label for="rqDt">Comentario (opcional)</label><textarea id="rqDt" rows="2" maxlength="1000"></textarea></div>' +
       (m.k === 'eliminar' ? '<div class="field"><label for="rqTy">Para confirmar, escribí ELIMINAR</label><input id="rqTy" autocomplete="off"></div>' : '') +
       '<label class="chk"><input type="checkbox" id="rqOk"> ' + esc(K.ok) + '</label><div class="hint bad" id="rqMsg"></div>',

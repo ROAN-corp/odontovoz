@@ -1,6 +1,6 @@
 {
   "name": "odontovoz",
-  "version": "1.45.4",
+  "version": "1.46.0",
   "private": true,
   "description": "Odonto Voz: gestión odontológica con odontograma por voz",
   "scripts": {
@@ -17,7 +17,8 @@
     "@capacitor/app": "^7.0.0",
     "@capacitor-community/text-to-speech": "^6.0.0",
     "@capacitor-community/keep-awake": "~7.1.0",
-    "@capacitor/local-notifications": "^7.0.0"
+    "@capacitor/local-notifications": "^7.0.0",
+    "@capacitor/push-notifications": "^7.0.0"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

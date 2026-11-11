@@ -580,7 +580,7 @@
   const FAQ = [
     ['El micrófono no anda', 'En la app instalada, aceptá el permiso de micrófono (Ajustes del teléfono → Apps → OdontoVoz → Permisos). En la computadora usá Chrome. En la vista previa dentro de Claude el micrófono está bloqueado.'],
     ['El dictado se corta', 'El micrófono sigue escuchando hasta que lo apagás. Si el teléfono bloquea la pantalla, se detiene: dejá la pantalla encendida mientras atendés.'],
-    ['¿Dónde quedan mis datos?', 'Por ahora, en este dispositivo. Hacé copias seguido desde el menú → «Copia de seguridad». La copia automática en la nube viene en la próxima versión.'],
+    ['¿Dónde quedan mis datos?', 'Con cuenta, en la nube y en tus equipos, con copias en tres lugares (Ajustes › Copia de seguridad › «Cómo cuidamos tus datos»). En modo prueba, solo en este dispositivo.'],
     ['Cambié de teléfono', 'En el teléfono viejo: menú → Copia de seguridad → Descargar. En el nuevo: instalá la app y usá «Restaurar desde una copia».'],
     ['¿Cómo empiezo con mis pacientes reales?', 'Menú → «Modo prueba y uso real» → «Empezar a usarla de verdad». Los datos de ejemplo quedan aparte para mostrarle la app a otros colegas.']
   ];

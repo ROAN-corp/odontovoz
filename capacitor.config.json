@@ -16,6 +16,9 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_ov",
       "iconColor": "#0B6B6F"
+    },
+    "PushNotifications": {
+      "presentationOptions": []
     }
   }
 }

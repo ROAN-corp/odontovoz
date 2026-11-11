@@ -61,6 +61,20 @@ jobs:
       - name: Permisos (micrófono) y versión
         run: node scripts/patch-android.js
 
+      - name: Firebase (notificaciones con la app cerrada)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          # Sin el secreto GOOGLE_SERVICES_JSON el APK sale igual, sin push (los avisos llegan con la app abierta o en segundo plano)
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            node -e "JSON.parse(require('fs').readFileSync('android/app/google-services.json','utf8'))" || { echo "::error::GOOGLE_SERVICES_JSON no es un JSON válido"; exit 1; }
+            node -e "const f='www/index.html',fs=require('fs');fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('<head>','<head><script>window.OV_PUSH=1</script>'))"
+            echo "Push activado"
+          else
+            echo "::notice::Sin GOOGLE_SERVICES_JSON: el APK sale sin notificaciones push"
+          fi
+
       - name: Copiar la app al proyecto Android
         run: npx cap sync android
 
@@ -111,8 +125,8 @@ jobs:
       - name: Publicar para descargar desde el teléfono
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.45.4.${{ github.run_number }}
-          name: OdontoVoz 1.45.4 (compilación ${{ github.run_number }})
+          tag_name: v1.46.0.${{ github.run_number }}
+          name: OdontoVoz 1.46.0 (compilación ${{ github.run_number }})
           body: |
             Teléfono: descargá **OdontoVoz.apk** e instalalo.
             PC: descargá **OdontoVoz-web.html** y abrilo con doble clic (Chrome o Edge).
