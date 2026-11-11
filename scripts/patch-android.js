@@ -19,6 +19,14 @@ if (!m.includes('android.speech.RecognitionService')) {
 }
 fs.writeFileSync(manifestPath, m);
 
+// ícono chico (blanco) para la barra de notificaciones: el diente del logo
+const drawDir = path.join(root, 'android', 'app', 'src', 'main', 'res', 'drawable');
+fs.mkdirSync(drawDir, { recursive: true });
+fs.writeFileSync(path.join(drawDir, 'ic_stat_ov.xml'), `<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="32" android:viewportHeight="32">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M9,4c-3.2,0 -5.5,2.6 -5.5,6 0,2.6 1,4.4 1.8,6.6 0.9,2.5 0.9,5.4 1.9,8.5 0.5,1.6 2.4,1.7 3,0.1 0.9,-2.4 1.1,-5.2 2.4,-5.2h2.8c1.3,0 1.5,2.8 2.4,5.2 0.6,1.6 2.5,1.5 3,-0.1 1,-3.1 1,-6 1.9,-8.5 0.8,-2.2 1.8,-4 1.8,-6.6 0,-3.4 -2.3,-6 -5.5,-6 -2.1,0 -3.2,1.1 -5.2,1.1S11.1,4 9,4z"/>
+</vector>
+`);
+
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 const gradlePath = path.join(root, 'android', 'app', 'build.gradle');
 let g = fs.readFileSync(gradlePath, 'utf8');

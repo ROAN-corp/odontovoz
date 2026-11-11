@@ -19,8 +19,27 @@
   };
   const CL = A.cloud = { state: 'off', msg: '', last: 0, busy: false, session: null };
   CL.configured = () => !!conf();
-  try { CL.session = JSON.parse(LS.get('odontovoz.session', 'null')); } catch (e) { CL.session = null; }
-  const saveSession = s => { CL.session = s; LS.set('odontovoz.session', s ? JSON.stringify(s) : null); };
+  /* sesión: queda abierta hasta «Cerrar sesión» (salvo que al ingresar se destilde «Mantener la sesión iniciada»: ahí dura hasta cerrar el navegador) */
+  const SS = {
+    get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+    set: (k, v) => { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) { /* nada */ } }
+  };
+  const keep = () => LS.get('odontovoz.keep', '1') !== '0';
+  const readStored = () => { try { return JSON.parse(LS.get('odontovoz.session', null) || SS.get('odontovoz.session') || 'null'); } catch (e) { return null; } };
+  CL.session = readStored();
+  const saveSession = s => {
+    const k = $('#lgKeep'); if (k) LS.set('odontovoz.keep', k.checked ? '1' : '0');
+    CL.session = s; const v = s ? JSON.stringify(s) : null;
+    if (!s || keep()) { LS.set('odontovoz.session', v); SS.set('odontovoz.session', null); } else { SS.set('odontovoz.session', v); LS.set('odontovoz.session', null); }
+  };
+  CL.keepSession = keep;
+  CL.keepBox = () => '<label class="chk lg-keep"><input type="checkbox" id="lgKeep"' + (keep() ? ' checked' : '') + '> Mantener la sesión iniciada en este equipo (queda abierta hasta que toques «Cerrar sesión»)</label>';
+  /* otra pestaña o ventana de este equipo renovó la sesión: se usa la nueva (antes cada una renovaba con la vieja y el servidor la daba por robada) */
+  window.addEventListener('storage', e => {
+    if (e.key !== 'odontovoz.session') return;
+    if (e.newValue) { try { const n = JSON.parse(e.newValue); if (n && n.user && CL.session && n.user.id === CL.session.user.id) CL.session = n; } catch (x) { /* nada */ } }
+    else if (CL.session && !SS.get('odontovoz.session') && !CL._signingOut) { CL.session = null; setTimeout(() => location.reload(), 300); }
+  });
   A.deviceLabel = () => LS.get('odontovoz.devname', '') || (window.OV_NATIVE ? 'Teléfono' : 'Computadora');
   /* cada equipo tiene un número propio: el servidor solo acepta los equipos registrados (límite del plan) */
   A.devId = () => { let d = LS.get('odontovoz.devid', ''); if (!/^[A-Za-z0-9_-]{12,64}$/.test(d || '')) { const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; d = ''; const r = (window.crypto && crypto.getRandomValues) ? crypto.getRandomValues(new Uint8Array(24)) : Array.from({ length: 24 }, () => Math.floor(Math.random() * 256)); for (let i = 0; i < 24; i++) d += al[r[i] % al.length]; LS.set('odontovoz.devid', d); } return d; };
@@ -52,11 +71,30 @@
     return m || ('Error del servidor (' + st + ').');
   }
   const asSession = d => ({ access_token: d.access_token, refresh_token: d.refresh_token, expires_at: Date.now() + ((d.expires_in || 3600) - 60) * 1000, user: { id: d.user && d.user.id, email: d.user && d.user.email } });
+  /* renovar la sesión: una sola renovación a la vez (en esta pestaña y entre pestañas), y si otra ya la renovó se usa esa */
+  let refreshing = null;
+  const adopt = () => { const st = readStored(); if (st && st.user && CL.session && st.user.id === CL.session.user.id && st.refresh_token !== CL.session.refresh_token && (st.expires_at || 0) >= (CL.session.expires_at || 0)) CL.session = st; };
+  async function doRefresh() {
+    adopt(); if (Date.now() < CL.session.expires_at) return;
+    const rt = CL.session.refresh_token;
+    try {
+      const d = await http('/auth/v1/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: rt } });
+      saveSession(Object.assign(asSession(d), { user: { id: (d.user && d.user.id) || CL.session.user.id, email: (d.user && d.user.email) || CL.session.user.email } }));
+    } catch (e) {
+      adopt(); if (CL.session.refresh_token !== rt) return; /* otra pestaña ganó: seguimos con la suya */
+      /* solo se da por vencida si el servidor rechaza la llave de renovación; sin internet o con el servidor caído, la sesión sigue */
+      if (!e.offline && (e.status === 400 || e.status === 401) && /refresh|token|session|jwt/i.test(JSON.stringify(e.data || '') + ' ' + e.message)) e.authDead = true;
+      throw e;
+    }
+  }
   async function fresh() {
-    const s = CL.session; if (!s) throw new Error('No hay sesión.');
-    if (Date.now() < s.expires_at) return s;
-    const d = await http('/auth/v1/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: s.refresh_token } });
-    saveSession(asSession(d)); return CL.session;
+    if (!CL.session) throw new Error('No hay sesión.');
+    adopt(); if (Date.now() < CL.session.expires_at) return CL.session;
+    if (!refreshing) {
+      const run = () => doRefresh();
+      refreshing = (navigator.locks && navigator.locks.request ? navigator.locks.request('odontovoz.refresh', run) : run()).finally(() => { refreshing = null; });
+    }
+    await refreshing; return CL.session;
   }
   CL.api = (path, opt) => api(path, opt);
   CL.http = (path, opt) => http(path, opt);
@@ -67,7 +105,7 @@
   async function api(path, opt) {
     await fresh();
     try { return await http(path, opt); }
-    catch (e) { if (e.status === 401) { CL.session.expires_at = 0; await fresh(); return http(path, opt); } throw e; }
+    catch (e) { if (e.status === 401 && !e.authDead && /jwt|expired|token/i.test(JSON.stringify(e.data || '') + ' ' + e.message)) { CL.session.expires_at = 0; await fresh(); return http(path, opt); } throw e; }
   }
 
   /* ---------- registro, ingreso, contraseña ---------- */
@@ -85,6 +123,7 @@
   /* los usuarios del equipo sin correo tienen un correo interno: usuario@codigo.equipo.odontovoz.app */
   CL.who = em => { const m = /^([^@]+)@([a-z0-9]+)\.equipo\.odontovoz\.app$/.exec(em || ''); return m ? m[1] + ' (cuenta ' + m[2] + ')' : (em || ''); };
   CL.signOut = async wipe => {
+    CL._signingOut = true;
     try { if (CL.session) await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
     saveSession(null); stopLoop(); await baseClear();
     LS.set('odontovoz.member', null); CL.member = null; CL.ownerId = null;
@@ -305,7 +344,7 @@
         if (CL.onDenied) { CL.onDenied(); setState('ok'); return; }
       }
       setState(e.offline ? 'offline' : 'err', e.message);
-      if (e.status === 401 || e.status === 400 && /refresh/i.test(e.message)) { saveSession(null); setState('err', 'La sesión venció. Volvé a ingresar.'); }
+      if (e.authDead) sessionDead();
       if (A.logError && !e.offline) A.logError('nube', e);
     } finally { running = false; if (again) { again = false; setTimeout(CL.sync, 300); } }
   };
@@ -334,6 +373,14 @@
   }
   function setState(st, msg) { CL.state = st; CL.msg = msg || ''; if (A.cloudChrome) A.cloudChrome(); }
   function startLoop() { stopLoop(); let tick = 0; loopT = setInterval(() => { tick++; if (navigator.onLine === false) return; if (!document.hidden) CL.sync(); else if (A.notifBg && A.notifBg() && tick % 2 === 0) CL.sync(); }, 8000); CL.sync(); }
+  /* la llave de la sesión ya no sirve en el servidor (por ejemplo, la cerraron desde otro lado): se pide la contraseña de nuevo, sin borrar nada de este equipo */
+  let deadShown = false;
+  function sessionDead() {
+    stopLoop(); setState('err', 'La sesión de este equipo se cerró. Ingresá de nuevo.');
+    if (deadShown) return; deadShown = true;
+    const em = (CL.session && CL.session.user && CL.session.user.email) || ''; CL._mail = /\.equipo\.odontovoz\.app$/.test(em) ? '' : em;
+    CL.showLogin('in', 'La sesión de este equipo se cerró en el servidor. Ingresá de nuevo con tu contraseña: no se pierde nada de lo cargado.');
+  }
   function stopLoop() { if (loopT) clearInterval(loopT); loopT = null; }
   /* cada vez que la app guarda, sube los cambios a los pocos segundos */
   const origSaveNow = A.saveNow;
@@ -366,6 +413,7 @@
     if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
     if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
+    if (!up && !rec && !np) h += CL.keepBox();
     h += '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
     if (np && CL.session && CL.session.user) h += '<p class="hint" style="margin:0">Cuenta: <b>' + esc(CL.who(CL.session.user.email)) + '</b>. Elegí la contraseña nueva y guardala.</p>';
     if (rec) h += '<p class="hint" style="margin:0">Te mandamos un correo con un botón para elegir una contraseña nueva. Abrí <b>solo el último</b> que te llegue y tocá el botón una vez.</p>';
@@ -457,7 +505,7 @@
     const uid = CL.session.user.id, prev = LS.get('odontovoz.cloud.uid', '');
     let clr = Promise.resolve();
     if (prev && prev !== uid) { /* otra cuenta en este equipo: se empieza de cero para no mezclar consultorios */ LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.since', null); clr = baseClear(); }
-    LS.set('odontovoz.cloud.uid', uid); LS.set('odontovoz.localOnly', null);
+    LS.set('odontovoz.cloud.uid', uid); LS.set('odontovoz.localOnly', null); deadShown = false;
     CL.hideLogin();
     if (A.DEMO || (prev && prev !== uid)) { LS.set('odontovoz.mode', 'real'); A.noSave = true; clr.then(() => setTimeout(() => location.reload(), 60)); return; }
     A.toast('Ingresaste como ' + CL.who(CL.session.user.email) + '. Sincronizando…'); startLoop(); A.afterRefresh();

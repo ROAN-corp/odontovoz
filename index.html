@@ -6418,8 +6418,27 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   const CL = A.cloud = { state: 'off', msg: '', last: 0, busy: false, session: null };
   CL.configured = () => !!conf();
-  try { CL.session = JSON.parse(LS.get('odontovoz.session', 'null')); } catch (e) { CL.session = null; }
-  const saveSession = s => { CL.session = s; LS.set('odontovoz.session', s ? JSON.stringify(s) : null); };
+  /* sesión: queda abierta hasta «Cerrar sesión» (salvo que al ingresar se destilde «Mantener la sesión iniciada»: ahí dura hasta cerrar el navegador) */
+  const SS = {
+    get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
+    set: (k, v) => { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) { /* nada */ } }
+  };
+  const keep = () => LS.get('odontovoz.keep', '1') !== '0';
+  const readStored = () => { try { return JSON.parse(LS.get('odontovoz.session', null) || SS.get('odontovoz.session') || 'null'); } catch (e) { return null; } };
+  CL.session = readStored();
+  const saveSession = s => {
+    const k = $('#lgKeep'); if (k) LS.set('odontovoz.keep', k.checked ? '1' : '0');
+    CL.session = s; const v = s ? JSON.stringify(s) : null;
+    if (!s || keep()) { LS.set('odontovoz.session', v); SS.set('odontovoz.session', null); } else { SS.set('odontovoz.session', v); LS.set('odontovoz.session', null); }
+  };
+  CL.keepSession = keep;
+  CL.keepBox = () => '<label class="chk lg-keep"><input type="checkbox" id="lgKeep"' + (keep() ? ' checked' : '') + '> Mantener la sesión iniciada en este equipo (queda abierta hasta que toques «Cerrar sesión»)</label>';
+  /* otra pestaña o ventana de este equipo renovó la sesión: se usa la nueva (antes cada una renovaba con la vieja y el servidor la daba por robada) */
+  window.addEventListener('storage', e => {
+    if (e.key !== 'odontovoz.session') return;
+    if (e.newValue) { try { const n = JSON.parse(e.newValue); if (n && n.user && CL.session && n.user.id === CL.session.user.id) CL.session = n; } catch (x) { /* nada */ } }
+    else if (CL.session && !SS.get('odontovoz.session') && !CL._signingOut) { CL.session = null; setTimeout(() => location.reload(), 300); }
+  });
   A.deviceLabel = () => LS.get('odontovoz.devname', '') || (window.OV_NATIVE ? 'Teléfono' : 'Computadora');
   /* cada equipo tiene un número propio: el servidor solo acepta los equipos registrados (límite del plan) */
   A.devId = () => { let d = LS.get('odontovoz.devid', ''); if (!/^[A-Za-z0-9_-]{12,64}$/.test(d || '')) { const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; d = ''; const r = (window.crypto && crypto.getRandomValues) ? crypto.getRandomValues(new Uint8Array(24)) : Array.from({ length: 24 }, () => Math.floor(Math.random() * 256)); for (let i = 0; i < 24; i++) d += al[r[i] % al.length]; LS.set('odontovoz.devid', d); } return d; };
@@ -6451,11 +6470,30 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return m || ('Error del servidor (' + st + ').');
   }
   const asSession = d => ({ access_token: d.access_token, refresh_token: d.refresh_token, expires_at: Date.now() + ((d.expires_in || 3600) - 60) * 1000, user: { id: d.user && d.user.id, email: d.user && d.user.email } });
+  /* renovar la sesión: una sola renovación a la vez (en esta pestaña y entre pestañas), y si otra ya la renovó se usa esa */
+  let refreshing = null;
+  const adopt = () => { const st = readStored(); if (st && st.user && CL.session && st.user.id === CL.session.user.id && st.refresh_token !== CL.session.refresh_token && (st.expires_at || 0) >= (CL.session.expires_at || 0)) CL.session = st; };
+  async function doRefresh() {
+    adopt(); if (Date.now() < CL.session.expires_at) return;
+    const rt = CL.session.refresh_token;
+    try {
+      const d = await http('/auth/v1/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: rt } });
+      saveSession(Object.assign(asSession(d), { user: { id: (d.user && d.user.id) || CL.session.user.id, email: (d.user && d.user.email) || CL.session.user.email } }));
+    } catch (e) {
+      adopt(); if (CL.session.refresh_token !== rt) return; /* otra pestaña ganó: seguimos con la suya */
+      /* solo se da por vencida si el servidor rechaza la llave de renovación; sin internet o con el servidor caído, la sesión sigue */
+      if (!e.offline && (e.status === 400 || e.status === 401) && /refresh|token|session|jwt/i.test(JSON.stringify(e.data || '') + ' ' + e.message)) e.authDead = true;
+      throw e;
+    }
+  }
   async function fresh() {
-    const s = CL.session; if (!s) throw new Error('No hay sesión.');
-    if (Date.now() < s.expires_at) return s;
-    const d = await http('/auth/v1/token?grant_type=refresh_token', { method: 'POST', auth: false, body: { refresh_token: s.refresh_token } });
-    saveSession(asSession(d)); return CL.session;
+    if (!CL.session) throw new Error('No hay sesión.');
+    adopt(); if (Date.now() < CL.session.expires_at) return CL.session;
+    if (!refreshing) {
+      const run = () => doRefresh();
+      refreshing = (navigator.locks && navigator.locks.request ? navigator.locks.request('odontovoz.refresh', run) : run()).finally(() => { refreshing = null; });
+    }
+    await refreshing; return CL.session;
   }
   CL.api = (path, opt) => api(path, opt);
   CL.http = (path, opt) => http(path, opt);
@@ -6466,7 +6504,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   async function api(path, opt) {
     await fresh();
     try { return await http(path, opt); }
-    catch (e) { if (e.status === 401) { CL.session.expires_at = 0; await fresh(); return http(path, opt); } throw e; }
+    catch (e) { if (e.status === 401 && !e.authDead && /jwt|expired|token/i.test(JSON.stringify(e.data || '') + ' ' + e.message)) { CL.session.expires_at = 0; await fresh(); return http(path, opt); } throw e; }
   }
 
   /* ---------- registro, ingreso, contraseña ---------- */
@@ -6484,6 +6522,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* los usuarios del equipo sin correo tienen un correo interno: usuario@codigo.equipo.odontovoz.app */
   CL.who = em => { const m = /^([^@]+)@([a-z0-9]+)\.equipo\.odontovoz\.app$/.exec(em || ''); return m ? m[1] + ' (cuenta ' + m[2] + ')' : (em || ''); };
   CL.signOut = async wipe => {
+    CL._signingOut = true;
     try { if (CL.session) await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
     saveSession(null); stopLoop(); await baseClear();
     LS.set('odontovoz.member', null); CL.member = null; CL.ownerId = null;
@@ -6704,7 +6743,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         if (CL.onDenied) { CL.onDenied(); setState('ok'); return; }
       }
       setState(e.offline ? 'offline' : 'err', e.message);
-      if (e.status === 401 || e.status === 400 && /refresh/i.test(e.message)) { saveSession(null); setState('err', 'La sesión venció. Volvé a ingresar.'); }
+      if (e.authDead) sessionDead();
       if (A.logError && !e.offline) A.logError('nube', e);
     } finally { running = false; if (again) { again = false; setTimeout(CL.sync, 300); } }
   };
@@ -6733,6 +6772,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
   function setState(st, msg) { CL.state = st; CL.msg = msg || ''; if (A.cloudChrome) A.cloudChrome(); }
   function startLoop() { stopLoop(); let tick = 0; loopT = setInterval(() => { tick++; if (navigator.onLine === false) return; if (!document.hidden) CL.sync(); else if (A.notifBg && A.notifBg() && tick % 2 === 0) CL.sync(); }, 8000); CL.sync(); }
+  /* la llave de la sesión ya no sirve en el servidor (por ejemplo, la cerraron desde otro lado): se pide la contraseña de nuevo, sin borrar nada de este equipo */
+  let deadShown = false;
+  function sessionDead() {
+    stopLoop(); setState('err', 'La sesión de este equipo se cerró. Ingresá de nuevo.');
+    if (deadShown) return; deadShown = true;
+    const em = (CL.session && CL.session.user && CL.session.user.email) || ''; CL._mail = /\.equipo\.odontovoz\.app$/.test(em) ? '' : em;
+    CL.showLogin('in', 'La sesión de este equipo se cerró en el servidor. Ingresá de nuevo con tu contraseña: no se pierde nada de lo cargado.');
+  }
   function stopLoop() { if (loopT) clearInterval(loopT); loopT = null; }
   /* cada vez que la app guarda, sube los cambios a los pocos segundos */
   const origSaveNow = A.saveNow;
@@ -6765,6 +6812,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
     if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
+    if (!up && !rec && !np) h += CL.keepBox();
     h += '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
     if (np && CL.session && CL.session.user) h += '<p class="hint" style="margin:0">Cuenta: <b>' + esc(CL.who(CL.session.user.email)) + '</b>. Elegí la contraseña nueva y guardala.</p>';
     if (rec) h += '<p class="hint" style="margin:0">Te mandamos un correo con un botón para elegir una contraseña nueva. Abrí <b>solo el último</b> que te llegue y tocá el botón una vez.</p>';
@@ -6856,7 +6904,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const uid = CL.session.user.id, prev = LS.get('odontovoz.cloud.uid', '');
     let clr = Promise.resolve();
     if (prev && prev !== uid) { /* otra cuenta en este equipo: se empieza de cero para no mezclar consultorios */ LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.since', null); clr = baseClear(); }
-    LS.set('odontovoz.cloud.uid', uid); LS.set('odontovoz.localOnly', null);
+    LS.set('odontovoz.cloud.uid', uid); LS.set('odontovoz.localOnly', null); deadShown = false;
     CL.hideLogin();
     if (A.DEMO || (prev && prev !== uid)) { LS.set('odontovoz.mode', 'real'); A.noSave = true; clr.then(() => setTimeout(() => location.reload(), 60)); return; }
     A.toast('Ingresaste como ' + CL.who(CL.session.user.email) + '. Sincronizando…'); startLoop(); A.afterRefresh();
@@ -7834,7 +7882,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.45.1';
+  A.VERSION = '1.45.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -8273,7 +8321,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* =====================================================================
      LOGO ANIMADO CADA VEZ QUE SE ABRE LA APP
      ===================================================================== */
-  const PREF = () => { try { return Object.assign({ splash: true, splashSound: true, sound: true, vibrate: true, system: false, pro: '' }, JSON.parse(LS.get('odontovoz.notif', '{}'))); } catch (e) { return { splash: true, splashSound: true, sound: true, vibrate: true, system: false, pro: '' }; } };
+  const PREF = () => { try { return Object.assign({ splash: true, splashSound: true, sound: true, vibrate: true, system: !!window.OV_NATIVE, pro: '' }, JSON.parse(LS.get('odontovoz.notif', '{}'))); } catch (e) { return { splash: true, splashSound: true, sound: true, vibrate: true, system: !!window.OV_NATIVE, pro: '' }; } };
   const savePref = p => LS.set('odontovoz.notif', JSON.stringify(p));
   A.notifPref = PREF;
   const LOGO = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path class="sp-tooth" d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path class="sp-wave" d="M11 11.5v2M13.5 10v5M16 9v7M18.5 10v5M21 11.5v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
@@ -8555,11 +8603,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
      ===================================================================== */
   const NL = () => window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
   let nid = 1;
-  async function sysNotify(title, body) {
+  /* en el teléfono: canal de importancia alta (aparece arriba como un mensaje de WhatsApp, con sonido y vibración) */
+  let chanOk = null;
+  const chan = ln => chanOk || (chanOk = Promise.resolve(ln.createChannel ? ln.createChannel({ id: 'ov-avisos', name: 'Avisos de OdontoVoz', description: 'Llegó un paciente, turnos online, stock, laboratorio y otros avisos', importance: 5, visibility: 1, vibration: true, lights: true, lightColor: '#0B6B6F' }) : null).catch(() => null));
+  async function sysNotify(title, body, extra) {
     const p = PREF(); if (!p.system) return;
     try {
       const ln = NL();
-      if (ln) { await ln.schedule({ notifications: [{ id: (Date.now() % 100000) + (nid++), title, body }] }); return; }
+      if (ln) { await chan(ln); await ln.schedule({ notifications: [{ id: (Date.now() % 100000) + (nid++), title, body, largeBody: body, channelId: 'ov-avisos', smallIcon: 'ic_stat_ov', iconColor: '#0B6B6F', extra: extra || {}, group: 'odontovoz' }] }); return; }
       if ('Notification' in window && Notification.permission === 'granted') {
         const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
         if (reg && reg.showNotification) reg.showNotification(title, { body, icon: 'icon-192.png', tag: 'ov-llego', renotify: true });
@@ -8583,7 +8634,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (p.sound) A.soundArrive();
     if (p.vibrate) { try { navigator.vibrate && navigator.vibrate([90, 70, 90]); } catch (e) { /* nada */ } }
     banner(mine);
-    if (document.hidden || !document.hasFocus()) mine.forEach(x => { const pt = A.PAT(x.pid); sysNotify('Llegó ' + (pt ? pt.name : 'un paciente'), 'Turno de las ' + A.mm(x.start) + '. Está en la sala de espera.'); });
+    if (document.hidden || !document.hasFocus()) mine.forEach(x => { const pt = A.PAT(x.pid); sysNotify('Llegó ' + (pt ? pt.name : 'un paciente'), 'Turno de las ' + A.mm(x.start) + '. Está en la sala de espera.', { appt: x.id }); });
   };
   A.notifBg = () => { const p = PREF(); return !!(p.system || p.sound); };
   A.sysNotify = sysNotify; A.notifPref = PREF; A.notifPrefSave = savePref;
@@ -13955,7 +14006,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       host.appendChild(d);
     });
     if (list.length > 4) A.toast('Y ' + (list.length - 4) + ' turnos online más: mirálos en el inicio.');
-    if (A.sysNotify && (document.hidden || !document.hasFocus())) list.slice(0, 5).forEach(a => { const L = line(a); A.sysNotify('Nuevo turno online: ' + L.name, L.when + (L.pro ? ' · ' + L.pro : '') + (L.loc ? ' · ' + L.loc : '')); });
+    if (A.sysNotify && (document.hidden || !document.hasFocus())) list.slice(0, 5).forEach(a => { const L = line(a); A.sysNotify('Nuevo turno online: ' + L.name, L.when + (L.pro ? ' · ' + L.pro : '') + (L.loc ? ' · ' + L.loc : ''), { nf: 'onl:' + a.id }); });
     if (A.voice && A.voice.on && A.voice.speak && list.length === 1) { const L = line(list[0]); try { A.voice.speak('Nuevo turno online de ' + L.name + ', ' + L.when + '.'); } catch (e) { /* nada */ } }
   }
   A.acts.onlOpen = el => {
@@ -15152,6 +15203,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       '<div class="field"><label for="lgUser">Usuario</label><input id="lgUser" autocapitalize="none" autocomplete="username" spellcheck="false" placeholder="Ej.: marta.gomez" value="' + esc(last.user || '') + '"></div>' +
       '<div class="field"><label for="lgPass">Contraseña</label><input id="lgPass" type="password" autocomplete="current-password"></div>' +
       '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>' +
+      (CL.keepBox ? CL.keepBox() : '') +
       '<button class="btn primary" type="submit" style="min-height:48px">Ingresar</button>' +
       '<p class="hint" style="margin:0">¿Te olvidaste la contraseña? Pedile al dueño que te ponga una nueva desde Ajustes › Equipo e invitaciones.</p>' +
       '<button type="button" class="btn ghost" data-act="lgMail">Ingresar con correo (dueño de la cuenta)</button>' +
@@ -17885,6 +17937,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.45.2', d: '2026-11-11', items: [
+      { t: 'La sesión ya no se cierra sola: queda abierta hasta que toques «Cerrar sesión» (al ingresar podés elegirlo).', top: 1 },
+      { t: 'En el celular, los avisos (llegó un paciente, stock, laboratorio, turnos online…) aparecen arriba, en la barra de notificaciones, como un mensaje de WhatsApp.', top: 1 }] },
     { v: '1.45.1', d: '2026-11-11', items: [
       { t: 'Si hiciste la mudanza desde Bilog: Ajustes › Mudanza › «Revisar una mudanza ya hecha» comprueba que cada evolución esté en la ficha correcta y corrige lo que no.', top: 1 }] },
     { v: '1.45', d: '2026-11-11', items: [
@@ -18299,6 +18354,59 @@ const OVMenu = (function () {
     '.au-list{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}.au-list>li{border:1px solid var(--line,#dde);border-radius:12px;padding:8px 10px}.au-h{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}.au-r{font-size:11px;background:#e6f4f3;color:#0b4f52;border-radius:999px;padding:1px 7px}.au-d{margin-left:auto;font-size:12px;color:var(--muted,#567)}.au-list ul{margin:4px 0 0;padding-left:18px;font-size:13.5px}' +
     '@media (max-width:520px){.mg-two{grid-template-columns:1fr}}';
   document.head.appendChild(css);
+})();
+/* ===== 1.45.2: los avisos de la casilla también llegan a la barra de notificaciones del teléfono; tocar la notificación abre el aviso ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S;
+  const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
+  const NL = () => window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+  /* ya avisan solos (llegó, turno online) o no hace falta molestar (novedades, versión nueva, sugerencia de copia) */
+  const SKIP = /^(llego|online|news|update|info)$/;
+  const pref = () => (A.notifPref ? A.notifPref() : {});
+  const away = () => document.hidden || !document.hasFocus();
+
+  const prevAdd = A.nfAdd;
+  if (prevAdd) {
+    A.nfAdd = n => {
+      const isNew = prevAdd(n);
+      try {
+        if (isNew && A.sysNotify && !SKIP.test(n.k || 'info') && pref().system && away()) {
+          const fresh = !n.at || Date.now() - new Date(n.at).getTime() < 6 * 3600e3;
+          if (fresh) A.sysNotify(n.t, n.b || 'Tocá para ver el aviso en OdontoVoz.', { nf: n.id });
+        }
+      } catch (e) { /* nada */ }
+      return isNew;
+    };
+  }
+
+  /* tocar la notificación: se abre la app en ese aviso */
+  function onTap(x) {
+    const ex = (x && x.notification && x.notification.extra) || {};
+    setTimeout(() => {
+      try {
+        if (ex.appt && A.acts.arrOpen) { S.modal = null; A.renderModal(); S.panel = { type: 'appt', id: ex.appt }; A.renderPanel(); return; }
+        if (ex.nf && A.acts.nfGo) { A.acts.nfGo({ getAttribute: () => ex.nf }); return; }
+        if (A.acts.nfToggle) A.acts.nfToggle();
+      } catch (e) { /* nada */ }
+    }, 400);
+  }
+  const ln = NL();
+  if (ln && ln.addListener) { try { ln.addListener('localNotificationActionPerformed', onTap); } catch (e) { /* nada */ } }
+
+  /* en el teléfono, con cuenta: pedir el permiso de notificaciones una sola vez (Android 13+ lo exige) */
+  let asked = false;
+  const ask = async () => {
+    if (asked || !ln || !A.cloud || !A.cloud.session || A.DEMO) return; asked = true;
+    if (LS.get('odontovoz.notifAsked', '') === '1') return;
+    LS.set('odontovoz.notifAsked', '1');
+    try {
+      const c = ln.checkPermissions ? await ln.checkPermissions() : null;
+      if (!c || c.display !== 'granted') { const r = await ln.requestPermissions(); if (r && r.display !== 'granted') A.toast('Las notificaciones quedaron apagadas. Podés activarlas en Ajustes › Avisos y sonidos.'); }
+    } catch (e) { /* nada */ }
+  };
+  const prevAR = A.afterRefresh;
+  A.afterRefresh = function () { const r = prevAR && prevAR.apply(this, arguments); setTimeout(ask, 3000); return r; };
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

@@ -548,6 +548,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.45.2 · La sesión no se cierra sola y avisos en la barra del teléfono
+- **Error encontrado:** con la app abierta en dos ventanas o pestañas del mismo equipo, una renovaba la sesión y la otra seguía con la llave vieja; el servidor la tomaba como robada y la app cerraba la sesión (se dejaba de sincronizar: por ejemplo, no llegaba el «llegó» de recepción). Ahora la renovación es una sola a la vez (también entre pestañas, con `navigator.locks`), cada pestaña toma la sesión nueva de las otras, y la sesión solo se da por vencida si el servidor rechaza la llave: en ese caso se pide la contraseña sin borrar nada. Sin internet la sesión sigue.
+- **«Mantener la sesión iniciada en este equipo»** al ingresar (tildado de fábrica). Destildado, la sesión dura hasta cerrar el navegador.
+- **Barra de notificaciones del teléfono (APK):** canal «Avisos de OdontoVoz» de prioridad alta (aparece arriba como un mensaje de WhatsApp), ícono propio, y todo lo que entra a la casilla (stock, laboratorio, notas de otros, recordatorios, cobros…) también sale como notificación cuando la app no está a la vista. Tocar la notificación abre ese aviso. En el teléfono las notificaciones vienen activadas y se pide el permiso una vez. Con la app cerrada del todo no llegan: para eso falta push (Firebase).
+
 ## OdontoVoz 1.45.1 · Arreglo de la mudanza
 - **Error encontrado:** al importar, un paciente con el mismo DNI que otro (por ejemplo, una hija con el de la madre) se tomaba como el mismo: no se creaba su ficha y sus evoluciones y turnos iban a la del otro. Ahora el DNI solo une si el nombre también coincide; las evoluciones y turnos se ubican primero por el número de paciente del sistema anterior.
 - **«Revisar una mudanza ya hecha»** (Ajustes › Mudanza desde otro sistema): con el mismo archivo .json compara cada evolución y turno con su paciente original, crea los pacientes que faltan y pasa a su ficha lo que quedó en otra (con registro en cada ficha y aviso si ya se había pasado al odontograma).

@@ -27,7 +27,7 @@
   /* =====================================================================
      LOGO ANIMADO CADA VEZ QUE SE ABRE LA APP
      ===================================================================== */
-  const PREF = () => { try { return Object.assign({ splash: true, splashSound: true, sound: true, vibrate: true, system: false, pro: '' }, JSON.parse(LS.get('odontovoz.notif', '{}'))); } catch (e) { return { splash: true, splashSound: true, sound: true, vibrate: true, system: false, pro: '' }; } };
+  const PREF = () => { try { return Object.assign({ splash: true, splashSound: true, sound: true, vibrate: true, system: !!window.OV_NATIVE, pro: '' }, JSON.parse(LS.get('odontovoz.notif', '{}'))); } catch (e) { return { splash: true, splashSound: true, sound: true, vibrate: true, system: !!window.OV_NATIVE, pro: '' }; } };
   const savePref = p => LS.set('odontovoz.notif', JSON.stringify(p));
   A.notifPref = PREF;
   const LOGO = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path class="sp-tooth" d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path class="sp-wave" d="M11 11.5v2M13.5 10v5M16 9v7M18.5 10v5M21 11.5v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
@@ -309,11 +309,14 @@
      ===================================================================== */
   const NL = () => window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
   let nid = 1;
-  async function sysNotify(title, body) {
+  /* en el teléfono: canal de importancia alta (aparece arriba como un mensaje de WhatsApp, con sonido y vibración) */
+  let chanOk = null;
+  const chan = ln => chanOk || (chanOk = Promise.resolve(ln.createChannel ? ln.createChannel({ id: 'ov-avisos', name: 'Avisos de OdontoVoz', description: 'Llegó un paciente, turnos online, stock, laboratorio y otros avisos', importance: 5, visibility: 1, vibration: true, lights: true, lightColor: '#0B6B6F' }) : null).catch(() => null));
+  async function sysNotify(title, body, extra) {
     const p = PREF(); if (!p.system) return;
     try {
       const ln = NL();
-      if (ln) { await ln.schedule({ notifications: [{ id: (Date.now() % 100000) + (nid++), title, body }] }); return; }
+      if (ln) { await chan(ln); await ln.schedule({ notifications: [{ id: (Date.now() % 100000) + (nid++), title, body, largeBody: body, channelId: 'ov-avisos', smallIcon: 'ic_stat_ov', iconColor: '#0B6B6F', extra: extra || {}, group: 'odontovoz' }] }); return; }
       if ('Notification' in window && Notification.permission === 'granted') {
         const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
         if (reg && reg.showNotification) reg.showNotification(title, { body, icon: 'icon-192.png', tag: 'ov-llego', renotify: true });
@@ -337,7 +340,7 @@
     if (p.sound) A.soundArrive();
     if (p.vibrate) { try { navigator.vibrate && navigator.vibrate([90, 70, 90]); } catch (e) { /* nada */ } }
     banner(mine);
-    if (document.hidden || !document.hasFocus()) mine.forEach(x => { const pt = A.PAT(x.pid); sysNotify('Llegó ' + (pt ? pt.name : 'un paciente'), 'Turno de las ' + A.mm(x.start) + '. Está en la sala de espera.'); });
+    if (document.hidden || !document.hasFocus()) mine.forEach(x => { const pt = A.PAT(x.pid); sysNotify('Llegó ' + (pt ? pt.name : 'un paciente'), 'Turno de las ' + A.mm(x.start) + '. Está en la sala de espera.', { appt: x.id }); });
   };
   A.notifBg = () => { const p = PREF(); return !!(p.system || p.sound); };
   A.sysNotify = sysNotify; A.notifPref = PREF; A.notifPrefSave = savePref;

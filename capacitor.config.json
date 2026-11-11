@@ -12,6 +12,10 @@
     "SplashScreen": {
       "launchShowDuration": 800,
       "backgroundColor": "#0b6b6f"
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_ov",
+      "iconColor": "#0B6B6F"
     }
   }
 }

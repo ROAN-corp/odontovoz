@@ -60,7 +60,7 @@
       host.appendChild(d);
     });
     if (list.length > 4) A.toast('Y ' + (list.length - 4) + ' turnos online más: mirálos en el inicio.');
-    if (A.sysNotify && (document.hidden || !document.hasFocus())) list.slice(0, 5).forEach(a => { const L = line(a); A.sysNotify('Nuevo turno online: ' + L.name, L.when + (L.pro ? ' · ' + L.pro : '') + (L.loc ? ' · ' + L.loc : '')); });
+    if (A.sysNotify && (document.hidden || !document.hasFocus())) list.slice(0, 5).forEach(a => { const L = line(a); A.sysNotify('Nuevo turno online: ' + L.name, L.when + (L.pro ? ' · ' + L.pro : '') + (L.loc ? ' · ' + L.loc : ''), { nf: 'onl:' + a.id }); });
     if (A.voice && A.voice.on && A.voice.speak && list.length === 1) { const L = line(list[0]); try { A.voice.speak('Nuevo turno online de ' + L.name + ', ' + L.when + '.'); } catch (e) { /* nada */ } }
   }
   A.acts.onlOpen = el => {

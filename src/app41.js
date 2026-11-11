@@ -34,6 +34,7 @@
       '<div class="field"><label for="lgUser">Usuario</label><input id="lgUser" autocapitalize="none" autocomplete="username" spellcheck="false" placeholder="Ej.: marta.gomez" value="' + esc(last.user || '') + '"></div>' +
       '<div class="field"><label for="lgPass">Contraseña</label><input id="lgPass" type="password" autocomplete="current-password"></div>' +
       '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>' +
+      (CL.keepBox ? CL.keepBox() : '') +
       '<button class="btn primary" type="submit" style="min-height:48px">Ingresar</button>' +
       '<p class="hint" style="margin:0">¿Te olvidaste la contraseña? Pedile al dueño que te ponga una nueva desde Ajustes › Equipo e invitaciones.</p>' +
       '<button type="button" class="btn ghost" data-act="lgMail">Ingresar con correo (dueño de la cuenta)</button>' +
