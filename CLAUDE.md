@@ -104,7 +104,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.35 (noviem
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
 ## Pendiente
-- **Correr `supabase/auditoria.sql`** en Supabase › SQL Editor (registro de cambios por usuario). Hasta entonces el «Historial de cambios» avisa que falta activarlo.
+- (Hecho 11/11/2026) `supabase/auditoria.sql` corrido en Supabase: triggers `ov_stamp_trg` y `ov_history_trg`, `ov_audit`, limpieza diaria con `pg_cron`, `ov_history` sin permisos de escritura para la app.
 - (Hecho 6/11/2026) SMTP con somosroan@gmail.com (smtp.gmail.com:465, remitente «OdontoVoz»), 30 correos/hora y las 5 plantillas en castellano de `supabase/correos/` cargadas en Supabase. Si se cambian las plantillas, volver a pegarlas en Auth › Emails › Templates. Gmail manda ~500 por día: si crece, pasar a un servicio de envío.
 - Página de la empresa: crear el repo `roan-corp.github.io` en ROAN-corp y subir su `index.html` (diseño ya hecho, con la cordillera).
 - Publicar en Play Store y App Store (hoy el APK se instala desde la web).
