@@ -337,7 +337,7 @@
   A.acts.arrClose = el => { const d = el.closest('.arr'); if (d) d.remove(); };
   A.acts.arrOpen = el => { const d = el.closest('.arr'); if (d) d.remove(); S.modal = null; A.renderModal(); S.panel = { type: 'appt', id: el.getAttribute('data-id') }; A.renderPanel(); };
   A.onArrivals = list => {
-    const p = PREF(), mine = list.filter(x => !p.pro || x.pro === p.pro); if (!mine.length) return;
+    const p = PREF(), mp = A.myProOnly ? A.myProOnly() : null, mine = list.filter(x => (!p.pro || x.pro === p.pro) && (!mp || x.pro === mp)); if (!mine.length) return; /* el odontólogo del equipo: solo sus pacientes */
     if (p.sound) A.soundArrive();
     if (p.vibrate) { try { navigator.vibrate && navigator.vibrate([90, 70, 90]); } catch (e) { /* nada */ } }
     banner(mine);

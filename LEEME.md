@@ -548,6 +548,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.46.2 · Cada odontólogo, su agenda
+- `src/app61.js`: un usuario del equipo con puesto profesional o asistente y agenda asignada (`ov_members.pro`) **ve** todas las agendas del centro pero **solo modifica** los turnos de la suya. `A.mutate` envuelto: si un cambio toca turnos de otro profesional (crear, mover, cancelar, estado, borrar, pasarle un turno propio), esos turnos vuelven a como estaban y aparece «Ese turno es de la agenda de X…». La ventanita del turno de otro queda en solo lectura (se puede abrir la ficha: los pacientes son del centro). `naSave` no deja dar turnos en otra agenda. `A.myProOnly()`, `A.canEditAppt(a)`.
+- Avisos de «Llegó…» (cartel y notificación del teléfono, `src/app12.js`): solo de los pacientes de su agenda.
+- Servidor (`supabase/agenda_pro.sql`, trigger `ov_day_guard_trg`): misma regla como red de seguridad (si llega un día con cambios en turnos de otro, el servidor los deja como estaban).
+
 ## OdontoVoz 1.46.1 · Sin parpadeo ni sincronización de más
 - **Error encontrado en la prueba con 4 equipos:** la base (jsonb) devuelve las claves de los objetos en otro orden que el equipo; `push()` comparaba con `JSON.stringify` y creía que `aran` y `cfg` habían cambiado, así que cada sincronización volvía a subirlos. Con Realtime los equipos se avisaban entre sí y quedaban en un ida y vuelta de ~1 s (parpadeo del inicio y cientos de pedidos). Ahora `J()` en `src/cloud.js` compara con las claves ordenadas (`canon`). Medido con una nube simulada que reordena como Postgres: versión vieja 82 subidas en 20 s en reposo, nueva 0.
 - `src/app60.js`: freno de seguridad, como mucho una sincronización por aviso y un aviso enviado cada 2 s (el último se manda igual, un poco después).
