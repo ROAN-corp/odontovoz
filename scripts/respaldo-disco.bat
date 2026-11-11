@@ -42,6 +42,22 @@ if errorlevel 1 (
   exit /b 1
 )
 
+rem Limpieza para que no crezca sin fin: diarias de mas de 90 dias, mensuales de mas de 2 anos
+rem y fotos borradas de mas de 2 anos. Las copias anuales NO se borran nunca.
+"%RCLONE%" delete --min-age 90d "%DESTINO%\base\diario" 2>nul
+"%RCLONE%" delete --min-age 730d "%DESTINO%\base\mensual" 2>nul
+"%RCLONE%" delete --min-age 730d "%DESTINO%\fotos\borradas" 2>nul
+"%RCLONE%" rmdirs --leave-root "%DESTINO%\fotos\borradas" 2>nul
+
+for /f %%a in ('powershell -NoProfile -Command "[math]::Floor((Get-PSDrive %DISCO:~0,1%).Free/1GB)"') do set LIBRE=%%a
+echo.
+echo  Lo que ocupa la carpeta de copias:
+"%RCLONE%" size "%DESTINO%"
+echo  Quedan %LIBRE% GB libres en el disco %DISCO%.
+if %LIBRE% LSS 10 (
+  echo  ATENCION: queda poco lugar en el disco. Hace espacio o usa otro disco para las copias.
+  pause
+)
 echo %date% %time% > "%DESTINO%\ultima-copia-en-disco.txt"
 echo.
 echo  Listo. Copia en el disco al dia.

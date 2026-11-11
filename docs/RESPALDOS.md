@@ -63,7 +63,7 @@ GitHub › **Actions › Copia de seguridad nocturna (Google Drive) › Run work
 3. Cada semana: enchufá el disco y hacé doble clic en el archivo. Termina con «Listo».
 4. Para que lo haga solo: **Programador de tareas** de Windows › Crear tarea básica › «Respaldo OdontoVoz» › Semanalmente (por ejemplo lunes 9:00) › Iniciar un programa › el `.bat`. Si el disco no está enchufado, avisa y no hace nada.
 
-El disco guarda todas las copias que baja (no borra nada). Un disco de 1 TB alcanza para muchos años. Guardalo en un lugar distinto del consultorio cuando no lo uses, y cambiá el disco cada 4 o 5 años.
+Todo queda dentro de la carpeta `OdontoVoz-respaldos` del disco (no toca nada más). Para que no crezca sin fin, el disco guarda las diarias de los últimos 90 días, las mensuales de 2 años y **las anuales para siempre**; al terminar muestra cuánto ocupa la carpeta y avisa si quedan menos de 10 GB libres. Guardalo en un lugar distinto del consultorio cuando no lo uses, y cambiá el disco cada 4 o 5 años.
 
 En Mac: `sh scripts/respaldo-disco.sh /Volumes/NombreDelDisco`.
 
