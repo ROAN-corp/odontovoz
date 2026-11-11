@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.45.3', d: '2026-11-11', items: [
+      { t: 'Los equipos se enteran al instante de lo que hace otro (por ejemplo, cuando recepción marca que llegó un paciente).', top: 1 }] },
     { v: '1.45.2', d: '2026-11-11', items: [
       { t: 'La sesión ya no se cierra sola: queda abierta hasta que toques «Cerrar sesión» (al ingresar podés elegirlo).', top: 1 },
       { t: 'En el celular, los avisos (llegó un paciente, stock, laboratorio, turnos online…) aparecen arriba, en la barra de notificaciones, como un mensaje de WhatsApp.', top: 1 }] },

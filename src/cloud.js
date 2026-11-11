@@ -384,7 +384,7 @@
   function stopLoop() { if (loopT) clearInterval(loopT); loopT = null; }
   /* cada vez que la app guarda, sube los cambios a los pocos segundos */
   const origSaveNow = A.saveNow;
-  A.saveNow = () => { origSaveNow(); if (!A.noCloudPush && CL.session && !A.DEMO) { clearTimeout(pushT); pushT = setTimeout(CL.sync, 1500); } };
+  A.saveNow = () => { origSaveNow(); if (!A.noCloudPush && CL.session && !A.DEMO) { clearTimeout(pushT); pushT = setTimeout(CL.sync, 800); } };
   document.addEventListener('visibilitychange', () => { if (!document.hidden && CL.session) CL.sync(); });
   window.addEventListener('online', () => { if (CL.session) CL.sync(); });
 

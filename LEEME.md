@@ -548,6 +548,9 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.45.3 · Sincronización al instante
+- `src/app60.js`: cada equipo se conecta al canal de avisos del lugar (Supabase Realtime, canal público `ov-<dueño>`, solo un «toc toc» sin datos). Al subir cambios avisa, y los demás equipos abiertos sincronizan en el momento (unos 2 segundos de punta a punta) en vez de esperar la vuelta de 8 segundos (más en segundo plano). Sin canal, todo sigue igual que antes. El guardado sube a los 0,8 s (antes 1,5 s).
+
 ## OdontoVoz 1.45.2 · La sesión no se cierra sola y avisos en la barra del teléfono
 - **Error encontrado:** con la app abierta en dos ventanas o pestañas del mismo equipo, una renovaba la sesión y la otra seguía con la llave vieja; el servidor la tomaba como robada y la app cerraba la sesión (se dejaba de sincronizar: por ejemplo, no llegaba el «llegó» de recepción). Ahora la renovación es una sola a la vez (también entre pestañas, con `navigator.locks`), cada pestaña toma la sesión nueva de las otras, y la sesión solo se da por vencida si el servidor rechaza la llave: en ese caso se pide la contraseña sin borrar nada. Sin internet la sesión sigue.
 - **«Mantener la sesión iniciada en este equipo»** al ingresar (tildado de fábrica). Destildado, la sesión dura hasta cerrar el navegador.
