@@ -24,19 +24,20 @@ if not exist %DISCO%\ (
   exit /b 1
 )
 
-echo Copiando las copias de OdontoVoz al disco %DISCO% ...
-"%RCLONE%" copy drive:OdontoVoz-respaldos "%DESTINO%" --progress --log-file "%DESTINO%-registro.txt" --log-level INFO
+if not exist "%DESTINO%" mkdir "%DESTINO%"
+echo Copiando las copias de OdontoVoz a %DESTINO% (todo queda dentro de esa carpeta, encriptado) ...
+"%RCLONE%" copy drive:OdontoVoz-respaldos "%DESTINO%" --progress --log-file "%DESTINO%\registro.txt" --log-level INFO
 if errorlevel 1 (
   echo.
-  echo  ATENCION: la copia no termino bien. Mira el archivo %DESTINO%-registro.txt
+  echo  ATENCION: la copia no termino bien. Mira el archivo %DESTINO%\registro.txt
   pause
   exit /b 1
 )
 
 echo Revisando que este todo igual que en el Drive ...
-"%RCLONE%" check drive:OdontoVoz-respaldos "%DESTINO%" --one-way --log-file "%DESTINO%-registro.txt" --log-level NOTICE
+"%RCLONE%" check drive:OdontoVoz-respaldos "%DESTINO%" --one-way --log-file "%DESTINO%\registro.txt" --log-level NOTICE
 if errorlevel 1 (
-  echo  ATENCION: hay diferencias entre el Drive y el disco. Mira %DESTINO%-registro.txt
+  echo  ATENCION: hay diferencias entre el Drive y el disco. Mira %DESTINO%\registro.txt
   pause
   exit /b 1
 )

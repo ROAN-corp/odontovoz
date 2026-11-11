@@ -5,8 +5,8 @@
 set -e
 DISCO="${1:-/Volumes/RESPALDO}"
 [ -d "$DISCO" ] || { echo "No encuentro el disco $DISCO"; exit 1; }
-DEST="$DISCO/OdontoVoz-respaldos"
-rclone copy drive:OdontoVoz-respaldos "$DEST" --progress --log-file "$DEST-registro.txt" --log-level INFO
-rclone check drive:OdontoVoz-respaldos "$DEST" --one-way --log-file "$DEST-registro.txt" --log-level NOTICE
+DEST="$DISCO/OdontoVoz-respaldos"; mkdir -p "$DEST"
+rclone copy drive:OdontoVoz-respaldos "$DEST" --progress --log-file "$DEST/registro.txt" --log-level INFO
+rclone check drive:OdontoVoz-respaldos "$DEST" --one-way --log-file "$DEST/registro.txt" --log-level NOTICE
 date > "$DEST/ultima-copia-en-disco.txt"
 echo "Listo. Copia en el disco al día."
