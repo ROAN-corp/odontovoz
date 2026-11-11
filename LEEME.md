@@ -537,3 +537,17 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## OdontoVoz 1.44
 - **Odontograma: «ya lo tenía» vs. «lo hice yo hoy».** Lo que se pinta o dicta en rojo en el odontograma queda como preexistente (`pre: true`): no crea práctica hecha ni cargo. Es «hecho hoy» (con cobro) si la frase dice «hice/realicé/terminé…», si esa pieza estaba planificada, o si se elige «Lo hice yo hoy». Antes todo lo rojo se cobraba como hecho por el profesional.
+
+## OdontoVoz 1.45 · Responsabilidad sobre la historia clínica
+- **Registro de cambios en el servidor** (`supabase/auditoria.sql`, a correr en Supabase): `ov_records.updated_by` (lo pone el servidor), `ov_history` guarda la versión anterior de todo (`pd:*` siempre; el resto 90 días; `pats`/`cfg` una copia cada 10 min por persona), `changed_by`/`old_by`, solo lectura para todos, limpieza diaria con `pg_cron`, `ov_audit(clave)` para dueño/admin.
+- **Nada clínico se borra**: las evoluciones escritas se anulan con motivo aunque sean del día; quitar una anulación queda registrado; cada nota y anulación guarda el usuario.
+- **Archivar en vez de eliminar** (dueño/admin, con motivo; cancela turnos futuros; Ajustes › Pacientes archivados para volverlos).
+- **Pacientes de prueba**: casilla «Es de prueba» solo al crear la ficha (se sugiere si el nombre dice prueba/test/ejemplo); esos sí se borran; Ajustes › Borrar los pacientes de prueba.
+- **Unir fichas duplicadas** (menú ⋮ del paciente): turnos, evoluciones, odontograma, pagos, fotos y datos faltantes pasan a la ficha que se elige.
+- **Historial de cambios** de cada ficha (dueño/admin).
+- Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
+- `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
+
+## OdontoVoz 1.45.1 · Arreglo de la mudanza
+- **Error encontrado:** al importar, un paciente con el mismo DNI que otro (por ejemplo, una hija con el de la madre) se tomaba como el mismo: no se creaba su ficha y sus evoluciones y turnos iban a la del otro. Ahora el DNI solo une si el nombre también coincide; las evoluciones y turnos se ubican primero por el número de paciente del sistema anterior.
+- **«Revisar una mudanza ya hecha»** (Ajustes › Mudanza desde otro sistema): con el mismo archivo .json compara cada evolución y turno con su paciente original, crea los pacientes que faltan y pasa a su ficha lo que quedó en otra (con registro en cada ficha y aviso si ya se había pasado al odontograma).

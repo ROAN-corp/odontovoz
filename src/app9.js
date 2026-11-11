@@ -110,7 +110,10 @@
     const m = S.modal, list = m.rows.slice(1).map(r => toPat(r, m.map)).filter(Boolean);
     let nw = 0, upd = 0, skip = 0;
     list.forEach(d => {
-      const ex = d.dni ? A.PATS.filter(p => String(p.dni) === d.dni)[0] : A.PATS.filter(p => N(p.first) === N(d.first) && N(p.last) === N(d.last))[0];
+      /* 1.45.1: mismo DNI no alcanza (madre e hija, DNI de relleno): también tiene que parecerse el nombre */
+      const W = x => N(x).split(/\s+/).filter(w => w.length > 1);
+      const like = (p) => { const a = W(p.first + ' ' + p.last), b = W(d.first + ' ' + d.last); const [s1, l1] = a.length <= b.length ? [a, b] : [b, a]; return s1.length && s1.filter(w => l1.indexOf(w) >= 0).length >= Math.min(2, s1.length); };
+      const ex = (d.dni ? A.PATS.filter(p => String(p.dni) === d.dni && like(p))[0] : null) || A.PATS.filter(p => N(p.first) === N(d.first) && N(p.last) === N(d.last) && (!d.dni || !p.dni || String(p.dni) === d.dni))[0];
       if (ex) {
         const ch = {}; ['phone', 'email', 'afil', 'addr', 'birth'].forEach(k => { if (d[k] && !ex[k]) ch[k] = d[k]; }); if (d.cov && (!ex.cov || ex.cov === 'Particular') && d.cov !== 'Particular') ch.cov = d.cov;
         if (Object.keys(ch).length) { A.setProfile(ex.id, ch); upd++; } else skip++;

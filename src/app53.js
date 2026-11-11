@@ -131,12 +131,23 @@
     S.modal = Object.assign(done, res); A.saveNow(); A.renderModal(); A.refresh();
   };
 
+  /* 1.45.1: antes el DNI mandaba sobre todo; si dos pacientes compartían DNI (una hija con el de la madre, un DNI de relleno),
+     las evoluciones de una iban a la otra. Ahora: primero el número de paciente del sistema anterior; el DNI solo si
+     es de un único paciente y el nombre se parece; si no, el nombre completo. */
+  const words = s => N(String(s || '').replace(',', ' ')).split(' ').filter(w => w.length > 1);
+  const sameName = (a, b) => { const x = words(a), y = words(b); if (!x.length || !y.length) return false; const [s1, l1] = x.length <= y.length ? [x, y] : [y, x]; return s1.filter(w => l1.indexOf(w) >= 0).length >= Math.min(2, s1.length); };
+  const fullName = x => x.last + ' ' + x.first;
   function findPat(k, byRid) {
-    if (k.dni) { const p = A.PATS.find(x => String(x.dni) === k.dni); if (p) return p; }
     if (k.rid && byRid[k.rid]) return byRid[k.rid];
-    if (k.name) { const nk = nameKey(k.name); const p = A.PATS.find(x => nameKey(x.last + ' ' + x.first) === nk); if (p) return p; }
+    if (k.dni && k.dni.length >= 6) {
+      const l = A.PATS.filter(x => String(x.dni).replace(/\D/g, '') === k.dni);
+      if (l.length === 1 && (!k.name || sameName(k.name, fullName(l[0])))) return l[0];
+      if (l.length > 1 && k.name) { const m = l.filter(x => nameKey(fullName(x)) === nameKey(k.name)); if (m.length === 1) return m[0]; const f = l.filter(x => sameName(k.name, fullName(x))); if (f.length === 1) return f[0]; }
+    }
+    if (k.name) { const nk = nameKey(k.name); const l = A.PATS.filter(x => nameKey(fullName(x)) === nk); if (l.length === 1) return l[0]; if (l.length > 1 && k.dni) { const d = l.filter(x => String(x.dni).replace(/\D/g, '') === k.dni); if (d.length === 1) return d[0]; } if (l.length) return l[0]; }
     return null;
   }
+  A._mudFind = findPat; A._mudPatKey = o => patKey(o); A._mudVal = (o, re) => val(o, re); A._mudRE = RE; A._mudDate = v => parseDate(v); A._mudNameKey = nameKey; A._mudSame = sameName;
   function proFor(name) {
     const pros = A.PROS || []; if (!pros.length) return null;
     const nk = N(name); if (!nk) return pros[0];
@@ -223,4 +234,112 @@
     '.mu-chk { display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; font-size: 14px; } .mu-chk input { width: 18px; height: 18px; margin-top: 2px; flex: none; }'
   ].join('\n');
   document.head.appendChild(css);
+
+  /* =====================================================================
+     1.45.1: «Revisar una mudanza ya hecha». Se vuelve a elegir el mismo archivo y se compara, evolución por evolución
+     y turno por turno, en qué ficha quedó y en cuál tendría que estar (por el número de paciente del sistema anterior).
+     Lo que quedó en otra ficha se muestra y, si se confirma, se pasa a la correcta. Los pacientes que faltan se crean.
+     ===================================================================== */
+  const TX = t => N(String(t || '').replace(/^\[Sistema anterior\]\s*/, '')).slice(0, 160);
+  function review(j) {
+    const pats = Array.isArray(j.patients) ? j.patients : [], notes = Array.isArray(j.notes) ? j.notes : [], appts = Array.isArray(j.appts) ? j.appts : [];
+    /* 1) cada paciente del archivo → su ficha en OdontoVoz (o «falta») */
+    const byRid = {}, missing = [];
+    pats.forEach(p => {
+      const rid = val(p, /^(id|id paciente|codigo)$/), k = { dni: val(p, RE.dni).replace(/\D/g, ''), name: (() => { const n = val(p, /^(apellido y nombre|nombre completo|paciente|nombre y apellido)$/); return n; })(), rid: '' };
+      const f = findPat(k, {});
+      if (f && (!k.name || sameName(k.name, fullName(f)))) { if (rid) byRid[rid] = f; }
+      else missing.push({ rid, k, p });
+    });
+    /* 2) dónde está hoy cada evolución importada */
+    const where = {};   // clave → [{pid, note}]
+    A.PATS.forEach(p => { const pd = A.S.pd && A.S.pd[p.id]; ((pd && pd.notes) || []).forEach(n => { if (n && n.imp && !n.void) { const key = n.date + '|' + TX(n.text); (where[key] = where[key] || []).push({ pid: p.id, n }); } }); });
+    /* 3) evoluciones del archivo agrupadas por clave y por ficha correcta */
+    const want = {};    // clave → { pidCorrecto: cantidad }
+    let unknown = 0;
+    notes.forEach(o => {
+      const text = val(o, RE.text); if (!text) return;
+      const k = patKey(o), d = parseDate(val(o, RE.date)) || A.today(), key = d + '|' + TX(text);
+      const p = (k.rid && byRid[k.rid]) || null; if (!p) { if (!k.rid) unknown++; return; }   /* con número pero sin ficha: es de un paciente que falta crear */
+      const w = want[key] = want[key] || {}; w[p.id] = (w[p.id] || 0) + 1;
+    });
+    const moves = [];   // {n, from, to}
+    Object.keys(want).forEach(key => {
+      const have = (where[key] || []).slice(), need = Object.assign({}, want[key]);
+      have.forEach(h => { if (need[h.pid] > 0) { need[h.pid]--; h.ok = true; } });
+      const extra = have.filter(h => !h.ok && !want[key][h.pid]);
+      Object.keys(need).forEach(pid => { while (need[pid] > 0 && extra.length) { const h = extra.shift(); moves.push({ n: h.n, from: h.pid, to: pid }); need[pid]--; } });
+    });
+    /* 4) turnos importados en la ficha equivocada */
+    const amoves = [];
+    appts.forEach(o => {
+      const k = patKey(o), p = (k.rid && byRid[k.rid]) || null; if (!p) return;
+      const d = parseDate(val(o, RE.date)), t = parseTime(val(o, RE.time)) ?? parseTime(val(o, RE.date)); if (!d || t == null) return;
+      (A.S.days[d] || []).forEach(a => { if (a.imp && a.start === t && a.pid !== p.id && !(A.S.days[d] || []).some(b => b.imp && b.start === t && b.pid === p.id)) { const cur = A.PAT(a.pid); if (cur && k.name && !sameName(k.name, fullName(cur))) amoves.push({ d, a, to: p.id }); } });
+    });
+    return { moves, amoves, missing, unknown, total: notes.length };
+  }
+  const pl = (n, a, b) => n + ' ' + (n === 1 ? a : b);
+  MF.mudReview = m => {
+    const r = m.r;
+    let b;
+    if (!r) b = '<p>Elegí el <b>mismo archivo</b> de la mudanza (el .json que bajó el asistente). Comparo cada evolución y cada turno con el paciente al que pertenecía en el sistema anterior y te muestro si alguno quedó en otra ficha.</p><p class="hint">No cambia nada hasta que confirmes.</p><input type="file" accept=".json,application/json" data-chg="mudRevFile" class="inp">';
+    else {
+      const byPair = {}; r.moves.forEach(x => { const k = x.from + '>' + x.to; (byPair[k] = byPair[k] || { from: x.from, to: x.to, n: 0, odon: false }).n++; if (x.n.odon) byPair[k].odon = true; });
+      const pairs = Object.keys(byPair).map(k => byPair[k]);
+      const nm = pid => esc((A.PAT(pid) || {}).name || '?');
+      b = '<div class="stats"><div class="stat"><b>' + r.moves.length + '</b>evoluciones en otra ficha</div><div class="stat"><b>' + r.amoves.length + '</b>turnos en otra ficha</div><div class="stat"><b>' + r.missing.length + '</b>pacientes que faltan</div></div>';
+      if (!r.moves.length && !r.amoves.length && !r.missing.length) b += '<p><b>Todo en orden:</b> cada evolución y cada turno está en la ficha que corresponde.</p>';
+      if (pairs.length) b += '<h4 class="ev-h">Se van a pasar</h4><ul class="pd-list">' + pairs.slice(0, 40).map(x => '<li>' + x.n + ' de <b>' + nm(x.from) + '</b> a <b>' + nm(x.to) + '</b>' + (x.odon ? ' · <span class="bad">ya se habían pasado al odontograma: revisalo</span>' : '') + '</li>').join('') + (pairs.length > 40 ? '<li>y ' + (pairs.length - 40) + ' más</li>' : '') + '</ul>';
+      if (r.missing.length) b += '<h4 class="ev-h">Pacientes que no se habían creado (se crean ahora)</h4><ul class="pd-list">' + r.missing.slice(0, 30).map(x => '<li>' + esc(x.k.name || '?') + (x.k.dni ? ' · DNI ' + esc(x.k.dni) : '') + '</li>').join('') + (r.missing.length > 30 ? '<li>y ' + (r.missing.length - 30) + ' más</li>' : '') + '</ul><p class="hint">Suelen ser pacientes que compartían el DNI con otro (por ejemplo, una hija con el de la madre).</p>';
+      if (r.unknown) b += '<p class="hint">' + pl(r.unknown, 'evolución', 'evoluciones') + ' del archivo no traen el número de paciente; esas no se pueden comprobar.</p>';
+    }
+    const fix = r && (r.moves.length || r.amoves.length || r.missing.length);
+    return A.modalShell('Revisar la mudanza', b, '<button class="btn" data-act="closeModal">' + (fix ? 'Cancelar' : 'Cerrar') + '</button>' + (fix ? '<button class="btn primary" data-act="mudRevGo">Corregir</button>' : ''));
+  };
+  A.acts.mudRevOpen = () => { if (A.hideDrawer) A.hideDrawer(); S.modal = { type: 'mudReview' }; A.renderModal(); };
+  A.chg.mudRevFile = async el => {
+    const f = el.files && el.files[0]; if (!f) return;
+    try { const j = JSON.parse(await f.text()); if (!j || !Array.isArray(j.patients)) throw new Error('x'); S.modal = { type: 'mudReview', j, r: review(j) }; }
+    catch (e) { A.toast('Ese archivo no es el de la mudanza (.json del asistente).'); return; }
+    A.renderModal();
+  };
+  A.acts.mudRevGo = () => {
+    const m = S.modal; if (!m || !m.j) return;
+    /* primero los pacientes que faltaban (después se vuelve a revisar, para mover sus evoluciones y turnos) */
+    m.r.missing.forEach(x => {
+      const nmv = x.k.name || ''; const parts = nmv.indexOf(',') >= 0 ? { last: nmv.split(',')[0], first: nmv.split(',').slice(1).join(' ') } : { last: nmv.split(/\s+/)[0], first: nmv.split(/\s+/).slice(1).join(' ') || '-' };
+      const T = s2 => String(s2 || '').toLowerCase().replace(/(^|[\s'-])([a-zñáéíóúü])/g, (y, a, b2) => a + b2.toUpperCase()).trim();
+      const p = A.addPatient({ first: T(parts.first) || '-', last: T(parts.last) || '-', dni: x.k.dni || '', cov: val(x.p, /^obra social$/) || 'Particular', age: 0 });
+      const ex = {}; const ph = val(x.p, /^celular$/); if (ph) ex.phone = ph; const bd = val(x.p, /^fecha de nacimiento$/); if (bd) ex.birth = bd; if (Object.keys(ex).length) A.setProfile(p.id, ex);
+      if (A.alog) A.alog(p.id, 'mudanza', 'Creado al revisar la mudanza (en la importación había quedado unido a otra ficha por compartir DNI).');
+    });
+    const r = m.r.missing.length ? review(m.j) : m.r;
+    let nN = 0, nA = 0; const odonPids = {};
+    r.moves.forEach(x => {
+      const a = A.pd(x.from), b = A.pd(x.to);
+      a.notes = a.notes.filter(n => n !== x.n); b.notes.push(x.n); nN++;
+      if (x.n.odon) { odonPids[x.from] = 1; odonPids[x.to] = 1; delete x.n.odon; }
+      if (A.alog) { A.alog(x.from, 'mudanza', 'Revisión de la mudanza: una evolución del ' + A.fmtDMY(x.n.date) + ' pasó a la ficha de ' + ((A.PAT(x.to) || {}).name || '') + ' (era suya).'); A.alog(x.to, 'mudanza', 'Revisión de la mudanza: llegó una evolución del ' + A.fmtDMY(x.n.date) + ' que había quedado en la ficha de ' + ((A.PAT(x.from) || {}).name || '') + '.'); }
+    });
+    const days = {}; r.amoves.forEach(x => { x.a.pid = x.to; days[x.d] = 1; nA++; });
+    Object.keys(days).forEach(d => { A.S.dirtyDays = A.S.dirtyDays || {}; A.S.dirtyDays[d] = 1; });
+    const pids = {}; r.moves.forEach(x => { pids[x.from] = 1; pids[x.to] = 1; });
+    Object.keys(pids).forEach(pid => { const pd = A.pd(pid); pd.notes.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)); A.touchPd(pid); });
+    A.saveNow(); A.refresh();
+    const op = Object.keys(odonPids).map(pid => (A.PAT(pid) || {}).name).filter(Boolean);
+    S.modal = { type: 'mudRevDone', nN, nA, nP: m.r.missing.length, op };
+    A.renderModal();
+  };
+  MF.mudRevDone = m => A.modalShell('Mudanza corregida',
+    '<p>Listo: ' + pl(m.nN, 'evolución', 'evoluciones') + ' y ' + pl(m.nA, 'turno', 'turnos') + ' pasaron a su ficha' + (m.nP ? ', y ' + (m.nP === 1 ? 'se creó 1 paciente que faltaba' : 'se crearon ' + m.nP + ' pacientes que faltaban') : '') + '. Queda registrado en el historial de cada ficha.</p>' +
+    (m.op.length ? '<div class="pd-warn"><b>Revisá el odontograma de:</b> ' + m.op.map(esc).join(', ') + '. Algunas de esas evoluciones ya se habían pasado al odontograma en la ficha equivocada. En la ficha correcta te aparece «Ver y pasar» para marcarlas donde van; en la otra, corregí las marcas que no son suyas.</div>' : ''),
+    '<button class="btn primary" data-act="closeModal">Listo</button>');
+  /* botón en la ventana de la mudanza */
+  const prevImpPats = MF.importPats;
+  if (prevImpPats) MF.importPats = function (m) {
+    let h = prevImpPats.apply(this, arguments);
+    if (m && !m.rows && !A.DEMO) h = h.replace(/(<\/p>)/, '$1<p><button class="btn small" data-act="mudRevOpen">Revisar una mudanza ya hecha</button></p>');
+    return h;
+  };
 })();

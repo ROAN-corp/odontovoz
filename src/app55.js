@@ -6,6 +6,12 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.45.1', d: '2026-11-11', items: [
+      { t: 'Si hiciste la mudanza desde Bilog: Ajustes › Mudanza › «Revisar una mudanza ya hecha» comprueba que cada evolución esté en la ficha correcta y corrige lo que no.', top: 1 }] },
+    { v: '1.45', d: '2026-11-11', items: [
+      { t: 'Queda registrado qué usuario cargó, cambió o anuló cada cosa (Historial de cambios en el menú ⋮ del paciente).', top: 1 },
+      { t: '¿Paciente repetido? Menú ⋮ › «Unir con otra ficha»: junta todo en una sola, sin perder nada.', top: 1 },
+      { t: 'Al crear un paciente podés tildar «Es de prueba»: esos se borran del todo. Los reales se archivan.' }] },
     { v: '1.44', d: '2026-11-09', items: [
       { t: 'Odontograma: lo que marcás en rojo al revisar al paciente queda como «ya lo tenía» y no se cobra. Si lo hiciste vos hoy, elegí «Lo hice yo hoy» o decí «hice…».', top: 1 }] },
     { v: '1.43', d: '2026-11-09', items: [
