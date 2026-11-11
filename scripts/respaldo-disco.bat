@@ -51,6 +51,7 @@ rem y fotos borradas de mas de 2 anos. Las copias anuales NO se borran nunca.
 
 for /f %%a in ('powershell -NoProfile -Command "[math]::Floor((Get-PSDrive %DISCO:~0,1%).Free/1GB)"') do set LIBRE=%%a
 echo.
+if not defined LIBRE set LIBRE=999
 echo  Lo que ocupa la carpeta de copias:
 "%RCLONE%" size "%DESTINO%"
 echo  Quedan %LIBRE% GB libres en el disco %DISCO%.
