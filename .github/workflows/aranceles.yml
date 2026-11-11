@@ -17,6 +17,9 @@ jobs:
       - run: sudo apt-get install -y poppler-utils >/dev/null
       - name: Bajar PDF de la Federación
         run: node scripts/forn/fetch.mjs forn-out
+      - name: Mostrar textos (solo en la rama de prueba)
+        if: github.ref_name == 'forn-fetch'
+        run: for f in forn-out/txt/*.txt; do echo "=====FILE $f"; cat "$f"; done; cat forn-out/index.json
       - name: Pasar a datos para la app
         run: node scripts/forn/parse.mjs forn-out sitio/aranceles/forn.json
       - uses: actions/upload-artifact@v4
