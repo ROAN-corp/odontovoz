@@ -1,0 +1,215 @@
+name: Copia de seguridad nocturna (Google Drive)
+
+# Todas las noches (03:40 de Argentina) copia la base de datos de Supabase y las fotos del bucket ov-media
+# a la carpeta OdontoVoz-respaldos del Google Drive de ROAN, ENCRIPTADO con la frase de respaldo.
+# Sin la frase nadie puede leer las copias (ni Google ni quien entre al Drive): guardala en papel, en dos lugares.
+#
+# Estructura en el Drive:
+#   OdontoVoz-respaldos/base/diario/odontovoz-AAAA-MM-DD.dump.gpg   (se guardan 35 días)
+#   OdontoVoz-respaldos/base/mensual/odontovoz-AAAA-MM.dump.gpg     (el del día 1, se guardan 13 meses)
+#   OdontoVoz-respaldos/base/anual/odontovoz-AAAA.dump.gpg          (el del 1 de enero, para siempre)
+#   OdontoVoz-respaldos/fotos/actual/...                            (espejo encriptado del bucket)
+#   OdontoVoz-respaldos/fotos/borradas/AAAA-MM-DD/...               (lo que se borró o cambió ese día, 2 años)
+#
+# Secretos que tiene que pegar el usuario en GitHub › Settings › Secrets and variables › Actions (ver docs/RESPALDOS.md):
+#   BACKUP_DB_URL        cadena de conexión «Session pooler» de Supabase (con la contraseña de la base)
+#   BACKUP_PASSPHRASE    frase larga para encriptar
+#   BACKUP_DRIVE_TOKEN   lo que devuelve «rclone authorize drive» con la cuenta de somosroan
+#   BACKUP_S3_KEY_ID / BACKUP_S3_SECRET   claves S3 de Supabase Storage (opcional: sin ellas no copia fotos)
+# Variable opcional: BACKUP_S3_REGION (la región del proyecto, por ejemplo sa-east-1).
+# Si falta lo básico, el trabajo avisa y termina sin hacer nada.
+
+on:
+  schedule:
+    - cron: '40 6 * * *'
+  workflow_dispatch:
+    inputs:
+      probar:
+        description: 'Además, restaurar la copia en una base vacía para comprobarla'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: respaldo
+  cancel-in-progress: false
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DB_URL: ${{ secrets.BACKUP_DB_URL }}
+      PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+      DRIVE_TOKEN: ${{ secrets.BACKUP_DRIVE_TOKEN }}
+      S3_ID: ${{ secrets.BACKUP_S3_KEY_ID }}
+      S3_SECRET: ${{ secrets.BACKUP_S3_SECRET }}
+      S3_REGION: ${{ vars.BACKUP_S3_REGION }}
+      REF: hcppfvioiaaejayzzhpa
+      ROOT: OdontoVoz-respaldos
+    services:
+      pg:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: prueba
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - name: Revisar que estén los secretos
+        id: ok
+        run: |
+          if [ -z "$DB_URL" ] || [ -z "$PASS" ] || [ -z "$DRIVE_TOKEN" ]; then
+            echo "::warning::Faltan secretos (BACKUP_DB_URL, BACKUP_PASSPHRASE o BACKUP_DRIVE_TOKEN): no se hace la copia. Ver docs/RESPALDOS.md"
+            echo "go=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=si" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar herramientas (pg_dump 17, rclone)
+        if: steps.ok.outputs.go == 'si'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common gnupg rclone > /dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y > /dev/null
+          sudo apt-get install -y -qq postgresql-client-17 > /dev/null
+          /usr/lib/postgresql/17/bin/pg_dump --version
+          rclone version | head -1
+
+      - name: Configurar Google Drive (encriptado)
+        if: steps.ok.outputs.go == 'si'
+        run: |
+          mkdir -p ~/.config/rclone
+          OBS=$(rclone obscure "$PASS")
+          OBS2=$(rclone obscure "odontovoz-sal-$PASS")
+          umask 077
+          {
+            echo "[drive]"
+            echo "type = drive"
+            echo "scope = drive"
+            echo "token = $DRIVE_TOKEN"
+            echo ""
+            echo "[fotos]"
+            echo "type = crypt"
+            echo "remote = drive:$ROOT/fotos"
+            echo "filename_encryption = off"
+            echo "directory_name_encryption = false"
+            echo "password = $OBS"
+            echo "password2 = $OBS2"
+          } > ~/.config/rclone/rclone.conf
+          if [ -n "$S3_ID" ] && [ -n "$S3_SECRET" ]; then
+            {
+              echo ""
+              echo "[supa]"
+              echo "type = s3"
+              echo "provider = Other"
+              echo "access_key_id = $S3_ID"
+              echo "secret_access_key = $S3_SECRET"
+              echo "endpoint = https://$REF.storage.supabase.co/storage/v1/s3"
+              echo "region = ${S3_REGION:-sa-east-1}"
+              echo "force_path_style = true"
+            } >> ~/.config/rclone/rclone.conf
+          fi
+          rclone mkdir "drive:$ROOT/base/diario"
+
+      - name: Copiar la base de datos
+        if: steps.ok.outputs.go == 'si'
+        run: |
+          set -o pipefail
+          export PATH=/usr/lib/postgresql/17/bin:$PATH
+          HOY=$(TZ=America/Argentina/Buenos_Aires date +%F)
+          echo "HOY=$HOY" >> "$GITHUB_ENV"
+          mkdir -p /tmp/r && cd /tmp/r
+          # public (todos los datos de la app), auth (usuarios, para no perder las cuentas) y storage (lista de fotos)
+          if ! pg_dump "$DB_URL" -Fc -Z 9 \
+               --schema=public --schema=auth --schema=storage -f odontovoz.dump 2> dump-err.txt; then
+            echo "::warning::No se pudieron copiar los usuarios (auth): se copia solo public. $(head -c 300 dump-err.txt)"
+            pg_dump "$DB_URL" -Fc -Z 9 --schema=public -f odontovoz.dump
+          fi
+          # controles: que el archivo se pueda leer y que tenga las tablas importantes con datos
+          pg_restore --list odontovoz.dump > lista.txt
+          for t in ov_records ov_accounts ov_history; do grep -q "TABLE DATA public $t " lista.txt || { echo "::error::La copia no tiene la tabla $t"; exit 1; }; done
+          N=$(psql "$DB_URL" -Atc "select count(*) from public.ov_records")
+          P=$(psql "$DB_URL" -Atc "select count(*) from public.ov_records where k like 'pd:%'")
+          C=$(psql "$DB_URL" -Atc "select count(*) from public.ov_accounts")
+          SZ=$(stat -c %s odontovoz.dump)
+          echo "N=$N" >> "$GITHUB_ENV"
+          echo "Registros: $N · fichas: $P · cuentas: $C · tamaño: $((SZ/1024)) KB"
+          { echo "fecha=$HOY"; echo "registros=$N"; echo "fichas=$P"; echo "cuentas=$C"; echo "bytes=$SZ"; } > resumen.txt
+          # encriptar (AES-256) con la frase
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 --symmetric --cipher-algo AES256 \
+            -o "odontovoz-$HOY.dump.gpg" odontovoz.dump 3<<<"$PASS"
+          rm -f odontovoz.dump
+          # comparar con la copia anterior: si cae a menos de la mitad, avisar (puede ser un borrado masivo)
+          rclone copyto "drive:$ROOT/base/ultimo.txt" ultimo.txt 2>/dev/null || true
+          if [ -f ultimo.txt ]; then
+            PREV=$(grep '^fichas=' ultimo.txt | cut -d= -f2)
+            if [ -n "$PREV" ] && [ "$PREV" -ge 20 ] && [ $((P * 2)) -lt "$PREV" ]; then
+              echo "CAIDA=$PREV→$P" >> "$GITHUB_ENV"
+              echo "::warning::Las fichas bajaron de $PREV a $P desde la copia anterior"
+            fi
+          fi
+
+      - name: Subir la copia al Drive y rotar
+        if: steps.ok.outputs.go == 'si'
+        run: |
+          cd /tmp/r
+          F="odontovoz-$HOY.dump.gpg"
+          rclone copyto "$F" "drive:$ROOT/base/diario/$F"
+          # comprobar que llegó entera
+          L=$(stat -c %s "$F"); R=$(rclone size --json "drive:$ROOT/base/diario/$F" | python3 -c 'import json,sys; print(json.load(sys.stdin)["bytes"])')
+          [ "$L" = "$R" ] || { echo "::error::La copia en el Drive no tiene el mismo tamaño ($L / $R)"; exit 1; }
+          DIA=${HOY:8:2}; MES=${HOY:5:2}
+          if [ "$DIA" = "01" ] || ! rclone lsf "drive:$ROOT/base/mensual/" 2>/dev/null | grep -q "odontovoz-${HOY:0:7}"; then
+            rclone copyto "$F" "drive:$ROOT/base/mensual/odontovoz-${HOY:0:7}.dump.gpg"
+          fi
+          if { [ "$DIA" = "01" ] && [ "$MES" = "01" ]; } || ! rclone lsf "drive:$ROOT/base/anual/" 2>/dev/null | grep -q "odontovoz-${HOY:0:4}"; then
+            rclone copyto "$F" "drive:$ROOT/base/anual/odontovoz-${HOY:0:4}.dump.gpg"
+          fi
+          # las diarias se guardan 35 días y las mensuales 13 meses; las anuales no se borran nunca
+          rclone delete --min-age 35d "drive:$ROOT/base/diario/"
+          rclone delete --min-age 400d "drive:$ROOT/base/mensual/"
+          rclone copyto resumen.txt "drive:$ROOT/base/ultimo.txt"
+
+      - name: Copiar las fotos (encriptadas)
+        if: steps.ok.outputs.go == 'si' && env.S3_ID != ''
+        run: |
+          # espejo del bucket: lo nuevo se sube, y lo borrado o cambiado no se pierde, va a fotos/borradas/<fecha>
+          rclone sync "supa:ov-media" "fotos:actual" --backup-dir "fotos:borradas/$HOY" --transfers 8 --fast-list --stats-one-line -v 2>&1 | tail -3
+          rclone delete --min-age 730d "drive:$ROOT/fotos/borradas/" || true
+          rclone rmdirs --leave-root "drive:$ROOT/fotos/borradas/" || true
+
+      - name: Probar que la copia se puede restaurar
+        if: steps.ok.outputs.go == 'si' && (github.event_name == 'schedule' || inputs.probar)
+        env:
+          PGPASSWORD: prueba
+        run: |
+          # restaura en una base vacía (dentro de GitHub, se borra al terminar) y cuenta los registros
+          export PATH=/usr/lib/postgresql/17/bin:$PATH
+          cd /tmp/r
+          rclone copyto "drive:$ROOT/base/diario/odontovoz-$HOY.dump.gpg" bajada.gpg
+          gpg --batch --pinentry-mode loopback --passphrase-fd 3 -d -o prueba.dump bajada.gpg 3<<<"$PASS" 2>/dev/null
+          psql -h localhost -U postgres -qc "create role authenticated; create role anon; create role service_role; create schema auth; create function auth.uid() returns uuid language sql as 'select null::uuid';" postgres > /dev/null
+          pg_restore -h localhost -U postgres -d postgres --no-owner --no-privileges --schema=public prueba.dump 2> errores.txt || true
+          M=$(psql -h localhost -U postgres -Atc "select count(*) from public.ov_records" postgres)
+          echo "Restaurado: $M registros (en la nube había $N)"
+          if [ "$M" -eq 0 ] || [ $((M * 100)) -lt $((N * 99)) ]; then echo "::error::La copia restaurada tiene $M registros y en la nube hay $N"; exit 1; fi
+          rm -f prueba.dump bajada.gpg
+
+      - name: Avisar si las fichas bajaron mucho
+        if: steps.ok.outputs.go == 'si' && env.CAIDA != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create -R "$GITHUB_REPOSITORY" --title "Respaldo $HOY: las fichas bajaron ($CAIDA)" \
+            --body "La copia de esta noche tiene muchas menos fichas que la anterior. Puede ser un borrado masivo. Las copias anteriores siguen en el Drive (base/diario). Revisar antes de que pasen 35 días." || true
+
+      - name: Avisar si falló
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create -R "$GITHUB_REPOSITORY" --title "Falló la copia de seguridad del $(date +%F)" \
+            --body "La copia nocturna no se completó. Ver el detalle: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" || true
