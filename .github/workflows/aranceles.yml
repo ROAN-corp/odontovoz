@@ -1,0 +1,26 @@
+name: Aranceles de la Federación Odontológica de Río Negro
+on:
+  schedule:
+    - cron: '17 11 2 * *'   # el día 2 de cada mes, 8:17 de Argentina
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  forn:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: sudo apt-get install -y poppler-utils >/dev/null
+      - name: Bajar PDF de la Federación
+        run: node scripts/forn/fetch.mjs forn-out
+      - name: Pasar a datos para la app
+        run: node scripts/forn/parse.mjs forn-out sitio/aranceles/forn.json
+      - uses: actions/upload-artifact@v4
+        with: { name: forn-txt, path: forn-out/txt, retention-days: 30 }
+      - name: Guardar si cambió
+        run: |
+          git config user.name "OdontoVoz aranceles"; git config user.email "somosroan@gmail.com"
+          git add sitio/aranceles/forn.json
+          git diff --cached --quiet || (git commit -m "Aranceles FORN $(date +%Y-%m)" && git push)
