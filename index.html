@@ -3609,7 +3609,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       body += '<div class="block"><h3>' + esc(c) + '</h3><table class="tbl"><tbody>' + A.CAT.filter(x => x.cat === c).map(x => '<tr><td><input class="inp" data-chg="catEdit" data-k="' + x.k + '" data-f="label" value="' + esc(x.label) + '" aria-label="Nombre de la práctica"></td><td class="num"><input class="p" inputmode="numeric" data-chg="catEdit" data-k="' + x.k + '" data-f="price" value="' + x.price + '" aria-label="Precio"></td><td class="num"><button class="btn small ghost" data-act="catDel" data-k="' + x.k + '" aria-label="Quitar">Quitar</button></td></tr>').join('') + '</tbody></table></div>';
     });
     body += '<div class="block"><h3>Agregar práctica</h3><div class="row3"><div class="field"><label for="ncCat">Categoría</label><input id="ncCat" list="ncCats" placeholder="Elegí o escribí una nueva"><datalist id="ncCats">' + cats.map(c => '<option>' + esc(c) + '</option>').join('') + '</datalist></div><div class="field"><label for="ncLab">Práctica</label><input id="ncLab" placeholder="Ej.: Prótesis fija sobre implante"></div><div class="field"><label for="ncPrice">Precio</label><input id="ncPrice" inputmode="numeric"></div></div><div class="row-btns"><button class="btn primary small" data-act="catAdd">Agregar al catálogo</button></div><div id="ncMsg" class="hint bad"></div></div>';
-    body += '<div class="block"><h3>Valores por pieza del odontograma</h3><div class="hint">Se usan al planificar desde el odontograma o por voz (primera cara + cada cara extra).</div><table class="tbl"><thead><tr><th>Tratamiento</th><th class="num">Base</th><th class="num">Cara extra</th></tr></thead><tbody>' + Object.keys(A.ARANCEL).filter(k => ARAN_LABEL[k] && k !== 'extraido').map(k => '<tr><td>' + esc(ARAN_LABEL[k]) + '</td><td class="num"><input class="p" inputmode="numeric" data-chg="aranEdit" data-k="' + k + '" data-i="0" value="' + A.ARANCEL[k][0] + '"></td><td class="num"><input class="p" inputmode="numeric" data-chg="aranEdit" data-k="' + k + '" data-i="1" value="' + (A.ARANCEL[k][1] || 0) + '"></td></tr>').join('') + '</tbody></table></div>';
+    body += '<div class="block"><h3>Valores por pieza del odontograma</h3><div class="hint">Solo para lo que no está en la lista de arriba. Restauraciones (composite por cantidad de caras), amalgamas, extracciones, endodoncias, coronas, pernos e implantes toman el precio de la lista.</div><table class="tbl"><thead><tr><th>Tratamiento</th><th class="num">Base</th><th class="num">Cara extra</th></tr></thead><tbody>' + Object.keys(A.ARANCEL).filter(k => ARAN_LABEL[k] && k !== 'extraido').map(k => '<tr><td>' + esc(ARAN_LABEL[k]) + '</td><td class="num"><input class="p" inputmode="numeric" data-chg="aranEdit" data-k="' + k + '" data-i="0" value="' + A.ARANCEL[k][0] + '"></td><td class="num"><input class="p" inputmode="numeric" data-chg="aranEdit" data-k="' + k + '" data-i="1" value="' + (A.ARANCEL[k][1] || 0) + '"></td></tr>').join('') + '</tbody></table></div>';
     return A.modalShell('Prácticas y aranceles', body, '<button class="btn danger" data-act="catReset">Restaurar catálogo original</button><button class="btn primary" data-act="catClose">Listo</button>', true);
   };
   A.chg.catEdit = el => {
@@ -6523,7 +6523,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   CL.who = em => { const m = /^([^@]+)@([a-z0-9]+)\.equipo\.odontovoz\.app$/.exec(em || ''); return m ? m[1] + ' (cuenta ' + m[2] + ')' : (em || ''); };
   CL.signOut = async wipe => {
     CL._signingOut = true;
-    try { if (CL.session) await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
+    /* scope=local: cierra solo ESTE equipo (antes cerraba la sesión de esa persona en todos sus equipos) */
+    try { if (CL.session) await http('/auth/v1/logout?scope=local', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
     saveSession(null); stopLoop(); await baseClear();
     LS.set('odontovoz.member', null); CL.member = null; CL.ownerId = null;
     if (wipe) { A.noSave = true; LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.uid', null); try { indexedDB.deleteDatabase('odontovoz.media'); } catch (e) { /* nada */ } }
@@ -7886,7 +7887,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.46.3';
+  A.VERSION = '1.46.4';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -17945,6 +17946,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.46.4', d: '2026-11-11', items: [
+      { t: 'Cerrar sesión en un equipo ya no cierra la sesión de esa persona en sus otros equipos.', top: 1 },
+      { t: 'Lo que se cobra desde la evolución usa tus precios de «Prácticas y aranceles» (por ejemplo, composite por cantidad de caras).', top: 1 }] },
     { v: '1.46.3', d: '2026-11-11', items: [
       { t: 'Si escribís un pago en la evolución («hoy paga 130.000 de 150.000 que debía»), la app te ofrece registrar el cobro con un toque y te dice cuánto queda debiendo.', top: 1 },
       { t: 'Si alguien después carga el mismo cobro a mano, la app avisa que ya está y no se duplica.', top: 1 }] },
@@ -18830,6 +18834,41 @@ const OVMenu = (function () {
     '.evp-box .field{flex:1;min-width:150px;margin:0}.evp-rest{margin:10px 0 0;font-size:1rem}' +
     '.evp-twin{margin-top:8px;padding:10px 12px;border-radius:10px;background:#fff6e0;color:#5c4400;font-size:.92rem;line-height:1.35}.evp-twin .row-btns{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}';
   document.head.appendChild(css);
+})();
+/* ===== 1.46.4: el precio de lo que se cobra desde la evolución y el odontograma sale de «Prácticas y aranceles» ===== */
+(function () {
+  'use strict';
+  const A = window.App;
+  const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  /* qué ítems de la lista corresponden a cada marca del odontograma */
+  const FIND = {
+    obturacion: /composite|resina|restauraci|obturaci/, composite: /composite|resina|restauraci|obturaci/,
+    amalgama: /amalgama/, ionomero: /ionomero/, sellador: /sellador/,
+    extraccion: /extracci/, extraido: /extracci/, endodoncia: /endodoncia(?! *retrat)/, corona: /^corona(?! provisoria| sobre implante)/,
+    perno: /perno/, implante: /^implante/
+  };
+  const AVOID = /incrustaci|inlay|onlay|retratamiento|complej|quirurg|cordal|provisori/;
+  const byFaces = (list, n) => {
+    const one = list.filter(c => /\b1 cara|simple|una cara/.test(norm(c.label)));
+    const two = list.filter(c => /\b2 caras|compuest|dos caras/.test(norm(c.label)));
+    const three = list.filter(c => /\b3|mas caras|complej|tres caras/.test(norm(c.label)));
+    if (n >= 3 && three.length) return three[0];
+    if (n === 2 && two.length) return two[0];
+    if (one.length) return one[0];
+    return list.length === 1 ? list[0] : null;
+  };
+  A.catItemFor = (cond, nFaces) => {
+    const re = FIND[cond]; if (!re || !A.CAT) return null;
+    let list = A.CAT.filter(c => re.test(norm(c.label)) && c.price > 0);
+    const plain = list.filter(c => !AVOID.test(norm(c.label)));
+    if (plain.length) list = plain;
+    if (!list.length) return null;
+    if (/obturacion|composite|amalgama/.test(cond)) return byFaces(list, nFaces || 1);
+    if (cond === 'extraccion' || cond === 'extraido') return list.filter(c => /simple/.test(norm(c.label)))[0] || list[0];
+    return list.length === 1 ? list[0] : list.filter(c => /unirradicular/.test(norm(c.label)))[0] || list[0];
+  };
+  const prev = A.priceOf;
+  A.priceOf = (cond, nFaces) => { const it = A.catItemFor(cond, nFaces); return it ? it.price : prev(cond, nFaces); };
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

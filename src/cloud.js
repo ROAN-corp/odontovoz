@@ -124,7 +124,8 @@
   CL.who = em => { const m = /^([^@]+)@([a-z0-9]+)\.equipo\.odontovoz\.app$/.exec(em || ''); return m ? m[1] + ' (cuenta ' + m[2] + ')' : (em || ''); };
   CL.signOut = async wipe => {
     CL._signingOut = true;
-    try { if (CL.session) await http('/auth/v1/logout', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
+    /* scope=local: cierra solo ESTE equipo (antes cerraba la sesión de esa persona en todos sus equipos) */
+    try { if (CL.session) await http('/auth/v1/logout?scope=local', { method: 'POST' }); } catch (e) { /* igual se cierra */ }
     saveSession(null); stopLoop(); await baseClear();
     LS.set('odontovoz.member', null); CL.member = null; CL.ownerId = null;
     if (wipe) { A.noSave = true; LS.set('odontovoz.real.v1', null); LS.set('odontovoz.cloud.uid', null); try { indexedDB.deleteDatabase('odontovoz.media'); } catch (e) { /* nada */ } }
