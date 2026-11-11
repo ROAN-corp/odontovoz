@@ -179,7 +179,11 @@
     if (A.cloudExtraKeys) A.cloudExtraKeys().forEach(k => { const X = A.cloudExtra(k), v = X && X.get(); if (v != null) out[k] = v; });
     return out;
   }
-  const J = x => JSON.stringify(x === undefined ? null : x);
+  /* comparar sin importar el orden de las claves: la base (jsonb) las devuelve ordenadas a su manera y el equipo las tiene en otro orden;
+     antes eso hacía creer que había cambios y se subía lo mismo una y otra vez (con Realtime, cada segundo entre equipos) */
+  const canon = x => Array.isArray(x) ? x.map(canon) : (x && typeof x === 'object') ? Object.keys(x).sort().reduce((o, k) => { o[k] = canon(x[k]); return o; }, {}) : x;
+  const J = x => JSON.stringify(x === undefined ? null : canon(x));
+  CL._J = J;
   const isObj = x => x && typeof x === 'object' && !Array.isArray(x);
   const isIdArr = x => Array.isArray(x) && x.every(o => isObj(o) && o.id != null);
   /* unión de tres vías: lo que cambió de un lado se respeta; si cambiaron los dos, se unen las listas por código */

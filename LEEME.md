@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.46.1 · Sin parpadeo ni sincronización de más
+- **Error encontrado en la prueba con 4 equipos:** la base (jsonb) devuelve las claves de los objetos en otro orden que el equipo; `push()` comparaba con `JSON.stringify` y creía que `aran` y `cfg` habían cambiado, así que cada sincronización volvía a subirlos. Con Realtime los equipos se avisaban entre sí y quedaban en un ida y vuelta de ~1 s (parpadeo del inicio y cientos de pedidos). Ahora `J()` en `src/cloud.js` compara con las claves ordenadas (`canon`). Medido con una nube simulada que reordena como Postgres: versión vieja 82 subidas en 20 s en reposo, nueva 0.
+- `src/app60.js`: freno de seguridad, como mucho una sincronización por aviso y un aviso enviado cada 2 s (el último se manda igual, un poco después).
+
 ## OdontoVoz 1.46 · Copias de seguridad en tres lugares
 - **Copia nocturna cifrada** (`.github/workflows/backup.yml`): todas las noches copia la base (public, auth, storage) y las fotos del bucket `ov-media` al Google Drive de somosroan (`OdontoVoz-respaldos`), cifrado con la frase de respaldo. Diarias 35 días, mensuales 13 meses, anuales para siempre. Restaura la copia en una base vacía y cuenta los registros; abre un issue si falla o si las fichas caen a menos de la mitad. Necesita los secretos `BACKUP_DB_URL`, `BACKUP_PASSPHRASE`, `BACKUP_DRIVE_TOKEN` (y `BACKUP_S3_KEY_ID`/`BACKUP_S3_SECRET` para fotos); sin ellos no hace nada.
 - **Copia a disco**: `scripts/respaldo-disco.bat` (Windows) y `respaldo-disco.sh` (Mac/Linux). Guía, cómo abrir una copia y **plan de salida**: `docs/RESPALDOS.md`.

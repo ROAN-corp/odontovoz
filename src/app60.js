@@ -13,10 +13,14 @@
   function close() { joined = false; clearInterval(hb); hb = null; if (ws) { try { ws.onclose = null; ws.close(); } catch (e) { /* nada */ } } ws = null; }
   function later() { clearTimeout(retryT); retry = Math.min(retry + 1, 6); retryT = setTimeout(connect, Math.min(60e3, 1500 * Math.pow(2, retry))); }
   let pend = null;
+  /* freno de seguridad: como mucho una sincronización por aviso cada 2 s, y un aviso enviado cada 2 s */
+  let lastRun = 0, lastSent = 0;
   function onPing(p) {
     if (!p || p.dev === me()) return;
     A.rt.got++; A.rt.last = Date.now();
-    clearTimeout(pend); pend = setTimeout(() => { if (CL.sync) CL.sync(); }, 250 + Math.floor(Math.random() * 400));
+    if (pend) return;
+    const wait = Math.max(250 + Math.floor(Math.random() * 400), lastRun + 2000 - Date.now());
+    pend = setTimeout(() => { pend = null; lastRun = Date.now(); if (CL.sync) CL.sync(); }, wait);
   }
   function connect() {
     const c = CL.conf && CL.conf(), owner = A.ownerId ? A.ownerId() : null;
@@ -38,8 +42,12 @@
     ws.onclose = () => { ws = null; joined = false; clearInterval(hb); later(); };
     ws.onerror = () => { /* onclose reintenta */ };
   }
+  let trail = null;
   A.rtPing = keys => {
     if (!joined) return false;
+    const gap = Date.now() - lastSent;
+    if (gap < 2000) { if (!trail) trail = setTimeout(() => { trail = null; A.rtPing(keys); }, 2000 - gap); return false; }
+    lastSent = Date.now();
     const ok = send({ topic, event: 'broadcast', payload: { type: 'broadcast', event: 'chg', payload: { dev: me(), n: keys || 1, at: Date.now() } }, ref: String(++ref), join_ref: joinRef });
     if (ok) A.rt.sent++;
     return ok;

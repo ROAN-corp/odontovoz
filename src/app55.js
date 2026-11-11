@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.46.1', d: '2026-11-11', items: [
+      { t: 'Arreglado: con varios equipos abiertos la pantalla parpadeaba y se sincronizaba de más.', top: 1 }] },
     { v: '1.46', d: '2026-11-11', items: [
       { t: 'Tus datos se respaldan en tres lugares: la nube, una copia cifrada cada noche en otra empresa y un disco nuestro. Lo ves en Ajustes › Copia de seguridad.', top: 1 },
       { t: 'En el celular, los avisos llegan aunque la app esté cerrada (llegó un paciente, cancelaciones, notas, stock bajo y turnos online).', top: 1 }] },
