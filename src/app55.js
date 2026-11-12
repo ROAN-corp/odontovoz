@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.49', d: '2026-11-12', items: [
+      { t: 'Al cobrar: descuento o recargo libre según cómo paga (efectivo, débito, transferencia…), y cuotas con tarjeta o del consultorio. Queda asentado quién lo aplicó y cuándo.', top: 1 },
+      { t: 'Presupuestos en pesos, dólares, euros o reales (también mezclados), con precio por ítem e ítems libres. Lista de precios para compartir por WhatsApp o PDF.', top: 1 },
+      { t: 'Turnos de 15 minutos a 8 horas. Receta electrónica (RCTA u otra) desde la ficha, con los datos del paciente listos para pegar. Insumos: aumento contra la primera compra.', top: 1 }] },
     { v: '1.48.1', d: '2026-11-12', items: [
       { t: 'Porcentaje de cada profesional a elección, del 5% al 100% (por ejemplo 30% o 50%), también al sumarlo al centro y en cada excepción.', top: 1 }] },
     { v: '1.48', d: '2026-11-11', items: [

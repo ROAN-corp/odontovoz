@@ -548,6 +548,14 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.49 · Ajustes al cobrar, presupuestos en otras monedas, turnos largos y receta electrónica
+
+- **Al cobrar** (recepción y «Registrar cobro»): precio de lista, descuento %, recargo/interés % (sin tope) o cuotas (tarjeta: se cobra todo hoy; del consultorio: hoy la primera y queda el plan en la cuenta). Se asienta un «ajuste» con quién, cuándo, el % y el medio de pago. El dueño puede dejar un % predeterminado por medio.
+- **Presupuestos**: moneda del presupuesto y de cada prestación (pesos, dólares, euros, reales), precio editable solo para ese presupuesto, ítems libres y cotización de referencia. Los totales salen por moneda y su equivalente en pesos. **Lista de precios** para compartir (copiar, WhatsApp, PDF) con descuento en efectivo y cuotas.
+- **Turnos** de 15 minutos a 8 horas.
+- **Receta electrónica**: cada profesional configura su plataforma (RCTA u otra); en la ficha › Documentos «Recetar en RCTA» copia los datos del paciente y abre la plataforma.
+- **Insumos**: la primera compra queda como referencia; al cargar una compra nueva se ve el aumento de cada insumo, el promedio (ponderado por uso en las prácticas) y un botón para subir las prácticas ese %.
+
 ## OdontoVoz 1.48.1 · Porcentajes a elección
 
 - El porcentaje del profesional (general y excepciones) se elige de una lista del 5% al 100%, de 5 en 5, en su ficha y en Liquidaciones. Al sumar un profesional (alta guiada, paso 1) ya se elige cómo trabaja y su porcentaje.
