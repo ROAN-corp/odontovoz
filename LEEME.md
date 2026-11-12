@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.48.1 · Porcentajes a elección
+
+- El porcentaje del profesional (general y excepciones) se elige de una lista del 5% al 100%, de 5 en 5, en su ficha y en Liquidaciones. Al sumar un profesional (alta guiada, paso 1) ya se elige cómo trabaja y su porcentaje.
+
 ## OdontoVoz 1.48 · Aranceles de la Federación, permisos, costos y consentimiento en papel
 
 - **Aranceles de la Federación Odontológica de Río Negro**: el día 2 de cada mes el workflow `aranceles.yml` baja los PDF de odontorionegro.com (aranceles de 44 obras sociales y aranceles éticos), los pasa a `sitio/aranceles/forn.json` y publica la web. En la app: Obras sociales › «Federación RN» (agregar o actualizar varias) y, dentro de cada obra social, «Traer aranceles» (elegir tabla, columna de lo que paga y coseguro; «Una por plan» crea una obra social por plan). Los coseguros propios se respetan. Aviso en la casilla cuando hay valores nuevos.

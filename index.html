@@ -7887,7 +7887,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.48.0';
+  A.VERSION = '1.48.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -17947,6 +17947,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.48.1', d: '2026-11-12', items: [
+      { t: 'Porcentaje de cada profesional a elección, del 5% al 100% (por ejemplo 30% o 50%), también al sumarlo al centro y en cada excepción.', top: 1 }] },
     { v: '1.48', d: '2026-11-11', items: [
       { t: 'Aranceles de la Federación Odontológica de Río Negro: en Obras sociales tocá «Federación RN» y se cargan solos. Cada mes te avisamos cuando haya valores nuevos; tus coseguros los decidís vos.', top: 1 },
       { t: 'Subir precios por porcentaje (todos o por categoría) y «Costos y rentabilidad»: precios de insumos mes a mes, gastos fijos y precio sugerido para no perder margen.', top: 1 },
@@ -19086,6 +19088,10 @@ const OVMenu = (function () {
   const cfgOf = pid => { const c = A.liqCfg(pid); c.rules = c.rules || []; return c; };
   const baseOf = c => c.base || 'cobrado';
   const num = v => parseInt(String(v || '').replace(/\D/g, ''), 10) || 0;
+  /* lista de porcentajes: de 5 en 5, del 5% al 100% (y el valor actual si es otro, por ejemplo 37,5) */
+  const pctSel = (attrs, val) => { const v = val == null ? '' : +val, L = []; for (let i = 5; i <= 100; i += 5) L.push(i); if (v !== '' && L.indexOf(v) < 0) { L.push(v); L.sort((a, b) => a - b); }
+    return '<select ' + attrs + '>' + (v === '' ? '<option value="" selected>Elegí…</option>' : '') + L.map(n => '<option value="' + n + '"' + (n === v ? ' selected' : '') + '>' + String(n).replace('.', ',') + '%</option>').join('') + '</select>'; };
+  A.pctSel = pctSel;
   const pctNum = v => Math.min(100, Math.max(0, parseFloat(String(v).replace(',', '.')) || 0));
 
   /* ---------- el acuerdo, en palabras (para la lista y la liquidación) ---------- */
@@ -19105,11 +19111,11 @@ const OVMenu = (function () {
     let h = '<div class="dl-box"><div class="field"><label for="dlMode">Cómo trabaja con el centro</label><select id="dlMode" data-chg="dlSet" data-f="mode" ' + D + '>' +
       MODES.map(x => '<option value="' + x[0] + '"' + (x[0] === mode ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>';
     if (mode === 'pct' || mode === 'pctmod' || mode === 'otro') {
-      h += '<div class="row2"><div class="field"><label for="dlPct">Porcentaje para el profesional</label><div class="pct-in"><input id="dlPct" inputmode="decimal" data-chg="dlSet" data-f="pct" ' + D + ' value="' + (c.pct != null ? c.pct : 40) + '"><span>%</span></div></div>' +
+      h += '<div class="row2"><div class="field"><label for="dlPct">Porcentaje para el profesional</label>' + pctSel('id="dlPct" class="pct-sel" data-chg="dlSet" data-f="pct" ' + D, c.pct != null ? c.pct : 40) + '</div>' +
         '<div class="field"><label>Sobre qué se calcula</label><div class="seg" role="group"><button data-act="dlBase" data-v="cobrado" ' + D + ' aria-pressed="' + (baseOf(c) === 'cobrado') + '">Lo cobrado</button><button data-act="dlBase" data-v="facturado" ' + D + ' aria-pressed="' + (baseOf(c) === 'facturado') + '">Lo facturado</button></div></div></div>';
-      h += '<div class="dl-ex"><b>Excepciones</b>' + (c.rules.length ? '<ul>' + c.rules.map((r, i) => '<li><span>' + esc(r.key) + (r.t === 'pr' ? ' (práctica)' : '') + '</span><div class="pct-in sm"><input inputmode="decimal" data-chg="dlRulePct" data-i="' + i + '" ' + D + ' value="' + r.pct + '" aria-label="Porcentaje para ' + esc(r.key) + '"><span>%</span></div><button class="btn small ghost" data-act="dlRuleDel" data-i="' + i + '" ' + D + ' aria-label="Quitar">✕</button></li>').join('') + '</ul>' : '<div class="hint">Sin excepciones: todas las prácticas al mismo porcentaje.</div>') +
-        '<div class="dl-add"><select id="dlCat" aria-label="Categoría">' + cats.map(k => '<option>' + esc(k) + '</option>').join('') + '</select><div class="pct-in sm"><input id="dlCatPct" inputmode="decimal" placeholder="60" aria-label="Porcentaje"><span>%</span></div><button class="btn small" data-act="dlRuleAdd" ' + D + '>+ Excepción</button></div>' +
-        '<div class="hint">Ejemplo: 40% de todo y Ortodoncia al 60% (porque pone los materiales).</div></div>';
+      h += '<div class="dl-ex"><b>Excepciones</b>' + (c.rules.length ? '<ul>' + c.rules.map((r, i) => '<li><span>' + esc(r.key) + (r.t === 'pr' ? ' (práctica)' : '') + '</span>' + pctSel('class="pct-sel sm" data-chg="dlRulePct" data-i="' + i + '" ' + D + ' aria-label="Porcentaje para ' + esc(r.key) + '"', r.pct) + '<button class="btn small ghost" data-act="dlRuleDel" data-i="' + i + '" ' + D + ' aria-label="Quitar">✕</button></li>').join('') + '</ul>' : '<div class="hint">Sin excepciones: todas las prácticas al mismo porcentaje.</div>') +
+        '<div class="dl-add"><select id="dlCat" aria-label="Categoría">' + cats.map(k => '<option>' + esc(k) + '</option>').join('') + '</select>' + pctSel('id="dlCatPct" class="pct-sel sm" aria-label="Porcentaje"', 60) + '<button class="btn small" data-act="dlRuleAdd" ' + D + '>+ Excepción</button></div>' +
+        '<div class="hint">El porcentaje es lo que se lleva el profesional (del 5% al 100%). Ejemplo: 30% de todo y Ortodoncia al 50%.</div></div>';
     }
     if (mode === 'mod' || mode === 'pctmod') {
       h += '<div class="row2"><div class="field"><label for="dlModBy">El módulo se paga</label><select id="dlModBy" data-chg="dlSet" data-f="modBy" ' + D + '>' + BY.map(x => '<option value="' + x[0] + '"' + (x[0] === mod.by ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
@@ -19152,10 +19158,26 @@ const OVMenu = (function () {
     if (i >= 0) c.rules[i] = r; else c.rules.push(r); redraw();
   };
 
+  /* al sumar un profesional (alta guiada, paso 1): cómo trabaja y qué porcentaje */
+  const wizOk = () => canCfg() && !(A.liteOn && A.liteOn()) && !(S.setup && S.setup.type === 'solo');
+  A.chg.wzDeal = el => { const w = S.modal && S.modal.wiz; if (!w) return; const d = w.f.deal || (w.f.deal = { mode: 'pct', pct: 40 }); const f = el.getAttribute('data-f'); d[f] = f === 'pct' ? pctNum(el.value) : el.value; };
+  const wizHTML = w => { const d = w.f.deal || (w.f.deal = { mode: 'pct', pct: 40 });
+    return '<div class="block wz-deal"><h3>Acuerdo con el centro</h3><div class="row2"><div class="field"><label for="wzMode">Cómo trabaja</label><select id="wzMode" data-chg="wzDeal" data-f="mode">' + MODES.map(x => '<option value="' + x[0] + '"' + (x[0] === d.mode ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="wzPct">Porcentaje para el profesional</label>' + pctSel('id="wzPct" class="pct-sel" data-chg="wzDeal" data-f="pct"', d.pct) + '</div></div><div class="hint">Si es porcentaje, elegilo acá (del 5% al 100%). Las excepciones por práctica, el módulo o el alquiler se completan después en su ficha.</div></div>'; };
+  const wizDonePrev = A.acts.cfgWizDone;
+  if (wizDonePrev) A.acts.cfgWizDone = function () {
+    const w = S.modal && S.modal.wiz, d = w && w.f.deal, before = A.PROS.map(p => p.id);
+    const r = wizDonePrev.apply(this, arguments);
+    const nw = A.PROS.filter(p => before.indexOf(p.id) < 0)[0];
+    if (nw && d && wizOk()) { const c = cfgOf(nw.id); c.mode = d.mode || 'pct'; if (d.pct != null) c.pct = d.pct; if ((c.mode === 'mod' || c.mode === 'pctmod') && !c.mod) c.mod = { by: 'hora', price: 0 }; try { nw.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode, mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado' })); } catch (e) { /* nada */ } A.save(); }
+    return r;
+  };
+
   /* en el editor del profesional (Ajustes › Profesionales), antes de los horarios */
   const cfgPrev = MF.cfg;
   if (cfgPrev) MF.cfg = m => {
     const h = cfgPrev(m);
+    if (m && m.tab === 'pros' && m.wiz && m.wiz.step === 1 && wizOk() && typeof h === 'string') { const at = h.indexOf('<div class="row-btns">'); return at >= 0 ? h.slice(0, at) + wizHTML(m.wiz) + h.slice(at) : h; }
     if (!m || m.tab !== 'pros' || !m.sel || m.wiz || m.rm || !canCfg() || (A.liteOn && A.liteOn()) || !A.PRO(m.sel)) return h;
     const mark = '<div class="block"><h3>Días y horarios de atención</h3>';
     if (typeof h !== 'string' || h.indexOf(mark) < 0) return h;
@@ -19246,7 +19268,7 @@ const OVMenu = (function () {
 
   const css = document.createElement('style');
   css.textContent = '.dl-box{display:flex;flex-direction:column;gap:8px}.dl-ex{border:1px solid var(--line);border-radius:12px;padding:10px}.dl-ex ul{list-style:none;margin:6px 0;padding:0}' +
-    '.dl-ex li{display:flex;align-items:center;gap:8px;padding:4px 0}.dl-ex li>span{flex:1}.pct-in{display:flex;align-items:center;gap:4px}.pct-in input{width:80px}.pct-in.sm input{width:64px}' +
+    '.dl-ex li{display:flex;align-items:center;gap:8px;padding:4px 0}.dl-ex li>span{flex:1}.pct-in{display:flex;align-items:center;gap:4px}.pct-in input{width:80px}.pct-in.sm input{width:64px}.pct-sel{width:auto;min-width:96px}.pct-sel.sm{min-width:84px}' +
     '.dl-add{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0}.dl-add select{flex:1 1 140px;min-width:0}.dl-sum{display:block;font-size:.85rem;color:var(--muted,#667);font-weight:400}';
   document.head.appendChild(css);
 })();
