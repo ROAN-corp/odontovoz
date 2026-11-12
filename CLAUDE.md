@@ -120,6 +120,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.35 (noviem
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
 ## Pendiente
+- (Hecho 11/11/2026) Push con la app cerrada: proyecto Firebase `odontovoz-7b856` (cuenta somosroan, sin Analytics, app Android `ar.odontovoz.app`), secretos `GOOGLE_SERVICES_JSON` y `SUPABASE_ACCESS_TOKEN` (token con alcance al proyecto: lectura + Edge Functions escritura) en GitHub, `FCM_SERVICE_ACCOUNT` en Supabase, `supabase/push.sql` y `supabase/permisos.sql` corridos, `push-hook` publicado, APK v1.48.0.157 con push. Falta probar en dos celulares.
 - (Hecho 11/11/2026) `supabase/auditoria.sql` corrido en Supabase: triggers `ov_stamp_trg` y `ov_history_trg`, `ov_audit`, limpieza diaria con `pg_cron`, `ov_history` sin permisos de escritura para la app.
 - (Hecho 6/11/2026) SMTP con somosroan@gmail.com (smtp.gmail.com:465, remitente «OdontoVoz»), 30 correos/hora y las 5 plantillas en castellano de `supabase/correos/` cargadas en Supabase. Si se cambian las plantillas, volver a pegarlas en Auth › Emails › Templates. Gmail manda ~500 por día: si crece, pasar a un servicio de envío.
 - Página de la empresa: crear el repo `roan-corp.github.io` en ROAN-corp y subir su `index.html` (diseño ya hecho, con la cordillera).
