@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.49.1 · App de RCTA
+
+- «Recetar en RCTA» abre la app de RCTA (`com.innovamed.rcta`) si está instalada en Android: en el APK con `ovapp:` (MainActivity › `getLaunchIntentForPackage`, `<queries>` del paquete) y en Chrome con `intent://` (si no abre, la web a los 1,5 s). En iPhone se abre la web de RCTA. Casilla «Abrir la app de RCTA» en la configuración.
+
 ## OdontoVoz 1.49 · Ajustes al cobrar, presupuestos en otras monedas, turnos largos y receta electrónica
 
 - **Al cobrar** (recepción y «Registrar cobro»): precio de lista, descuento %, recargo/interés % (sin tope) o cuotas (tarjeta: se cobra todo hoy; del consultorio: hoy la primera y queda el plan en la cuenta). Se asienta un «ajuste» con quién, cuándo, el % y el medio de pago. El dueño puede dejar un % predeterminado por medio.

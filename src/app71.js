@@ -22,6 +22,7 @@
   new MutationObserver(() => fixAll()).observe(document.body, { childList: true, subtree: true });
 
   /* ---------- 2) receta electrónica: acceso directo con los datos del paciente ---------- */
+  const RCTA_PKG = 'com.innovamed.rcta';
   const PLAT = [
     { k: 'rcta', name: 'RCTA', url: 'https://rcta.me' },
     { k: 'otra', name: 'Otra plataforma', url: '' }
@@ -42,7 +43,16 @@
     const pid = S.fichaPid, pro = el.getAttribute('data-pro') || proOfFicha(pid), rx = rxOf(pro);
     if (!rx) { S.modal = { type: 'rxCfg', pro, back: null }; A.renderModal(); return; }
     const txt = patText(pid);
-    const go = () => { try { window.open(rx.url, '_blank', 'noopener'); } catch (e) { location.href = rx.url; } };
+    /* la app de RCTA si está instalada (Android); en iPhone la web de RCTA abre la app si la tenés */
+    const android = /Android/i.test(navigator.userAgent), useApp = rx.k === 'rcta' && rx.app !== false && android;
+    const go = () => {
+      if (useApp && window.OV_NATIVE) { location.href = 'ovapp:' + RCTA_PKG + '?f=' + encodeURIComponent(rx.url); return; }
+      if (useApp) { /* Chrome en Android: intenta la app; si en 1,5 s seguimos acá, abre la web en otra pestaña */
+        location.href = 'intent://rcta.me/#Intent;scheme=https;package=' + RCTA_PKG + ';end';
+        setTimeout(() => { if (document.visibilityState === 'visible') { try { window.open(rx.url, '_blank', 'noopener'); } catch (e) { /* nada */ } } }, 1500); return;
+      }
+      try { window.open(rx.url, '_blank', 'noopener'); } catch (e) { location.href = rx.url; }
+    };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => { A.toast('Datos del paciente copiados: pegalos en ' + rx.name + '.'); go(); }, () => go()); else go();
     if (A.alog) A.alog(pid, 'receta', 'Abrió la receta electrónica (' + rx.name + ')');
   };
@@ -54,6 +64,7 @@
       '<div class="field"><label for="rxK">Plataforma</label><select id="rxK" data-chg="rxK">' + PLAT.map(x => '<option value="' + x.k + '"' + (x.k === k ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></div>' +
       (k === 'otra' ? '<div class="field"><label for="rxN">Nombre</label><input id="rxN" value="' + esc(cur.k === 'otra' ? cur.name : '') + '" placeholder="Ej.: receta del Colegio"></div>' : '') +
       '<div class="field"><label for="rxU">Dirección para entrar</label><input id="rxU" inputmode="url" value="' + esc(cur.url && cur.k === k ? cur.url : plat.url) + '" placeholder="https://…"></div>' +
+      (k === 'rcta' ? '<label class="chk"><input type="checkbox" id="rxApp"' + (cur.app !== false ? ' checked' : '') + '> Abrir la app de RCTA si está instalada (Android). En iPhone se abre la web, que pasa a la app si la tenés.</label>' : '') +
       '<div class="hint">El usuario y la contraseña de la plataforma no se guardan en OdontoVoz: cada profesional entra con los suyos.' + (boss ? ' Queda guardado para todos los equipos.' : ' Queda guardado en este equipo.') + '</div><div id="rxMsg" class="m-msg"></div>';
     return A.modalShell('Receta electrónica · ' + (p.short || p.name || ''), b, '<button class="btn" data-act="rxBack">Cancelar</button>' + (cur.url ? '<button class="btn ghost" data-act="rxDel">Quitar</button>' : '') + '<button class="btn primary" data-act="rxSave">Guardar</button>');
   };
@@ -63,6 +74,7 @@
     const m = S.modal, k = ($('#rxK') || {}).value || 'rcta', P = PLAT.filter(x => x.k === k)[0], url = String(($('#rxU') || {}).value || '').trim();
     if (!/^https?:\/\/\S+\.\S+/.test(url)) { const x = $('#rxMsg'); if (x) x.textContent = 'Poné la dirección completa (empieza con https://).'; return; }
     const rx = { k, name: k === 'otra' ? (String(($('#rxN') || {}).value || '').trim() || 'Receta electrónica') : P.name, url };
+    if (k === 'rcta') rx.app = !!(($('#rxApp') || {}).checked);
     if (!A.isBoss || A.isBoss()) { const p = A.PRO(m.pro); if (p) { p.rx = rx; A.save(); } LS.set('odontovoz.rx.' + m.pro, null); }
     else LS.set('odontovoz.rx.' + m.pro, JSON.stringify(rx));
     S.modal = m.back || null; A.renderModal(); A.refresh(); A.toast('Listo: ' + rx.name + ' configurada.');

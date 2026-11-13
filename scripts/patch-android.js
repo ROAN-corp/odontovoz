@@ -46,6 +46,11 @@ if (fs.existsSync(stylesPath)) {
   }
 }
 
+// Receta electrónica: la app de RCTA (para abrirla desde la ficha del paciente)
+if (!m.includes('com.innovamed.rcta')) {
+  m = m.replace('</manifest>', '    <queries>\n        <package android:name="com.innovamed.rcta" />\n    </queries>\n</manifest>');
+  fs.writeFileSync(manifestPath, m);
+}
 // WhatsApp y WhatsApp Business: abrir enlaces intent:// (con el paquete elegido) y whatsapp:// desde la app
 if (!m.includes('com.whatsapp.w4b')) {
   m = m.replace('</manifest>', '    <queries>\n        <package android:name="com.whatsapp" />\n        <package android:name="com.whatsapp.w4b" />\n    </queries>\n</manifest>');
@@ -88,6 +93,19 @@ public class MainActivity extends BridgeActivity {
         } catch (Exception e) { /* nada */ }
     }
 
+    /* ovapp:<paquete>?f=<web>: abre otra app instalada (por ejemplo RCTA); si no está, abre la web */
+    private void openApp(Uri u) {
+        String pkg = u.getSchemeSpecificPart();
+        int q = pkg.indexOf('?'); if (q >= 0) pkg = pkg.substring(0, q);
+        String f = null;
+        try { String ssp = u.getEncodedSchemeSpecificPart(); int k = ssp.indexOf("?f="); if (k >= 0) f = Uri.decode(ssp.substring(k + 3)); } catch (Exception e) { /* nada */ }
+        try {
+            Intent li = getPackageManager().getLaunchIntentForPackage(pkg);
+            if (li != null) { startActivity(li); return; }
+        } catch (Exception e) { /* nada */ }
+        if (f != null) { try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(f))); } catch (Exception e2) { /* nada */ } }
+    }
+
     private class OvClient extends BridgeWebViewClient {
         OvClient(Bridge b) { super(b); }
 
@@ -95,6 +113,7 @@ public class MainActivity extends BridgeActivity {
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             String u = request.getUrl().toString();
             if (u.startsWith("intent:")) { openIntent(u); return true; }
+            if (u.startsWith("ovapp:")) { openApp(Uri.parse(u)); return true; }
             if (u.startsWith("whatsapp:")) {
                 try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(u))); } catch (Exception e) { /* nada */ }
                 return true;
