@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.49.2 · Indicaciones y recetas
+
+- La pestaña «Indicaciones» de la historia clínica pasa a llamarse **«Indicaciones y recetas»**: arriba la receta electrónica (RCTA u otra plataforma de cada profesional) y abajo las «Indicaciones para el paciente». La receta ya no está en Documentos. Por voz: «ir a indicaciones y recetas».
+
 ## OdontoVoz 1.49.1 · App de RCTA
 
 - «Recetar en RCTA» abre la app de RCTA (`com.innovamed.rcta`) si está instalada en Android: en el APK con `ovapp:` (MainActivity › `getLaunchIntentForPackage`, `<queries>` del paquete) y en Chrome con `intent://` (si no abre, la web a los 1,5 s). En iPhone se abre la web de RCTA. Casilla «Abrir la app de RCTA» en la configuración.

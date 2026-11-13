@@ -235,7 +235,7 @@
     ['empresa', /^(?:la |el |mi )?(empresa|panel de la empresa|panel del dueno|resumen de la empresa|mis consultorios|todos los consultorios)$/]];
   const SUB = [['perio', /^(?:el |la )?(periodontograma|perio|sondaje|ficha periodontal|carta periodontal|registro periodontal|periodoncia|encias)$/], ['odon', /^(?:el |la )?(odontograma|dientes|piezas|dentadura|boca|carta dental)$/], ['datos', /^(?:la |el |los )?(historia(?: clinica)?|anamnesis|antecedentes|datos(?: personales)?|evolucion|ficha|hc)$/],
     ['plan', /^(?:el |la |los )?(plan(?: de tratamiento)?|tratamientos?(?: a realizar)?|a realizar|presupuestos?)$/], ['hecho', /^(?:lo )?(realizado|hecho|lo que se hizo|tratamientos (?:hechos|realizados))$/],
-    ['rx', /^(?:las |la )?(recetas?|medicacion|medicamentos)$/], ['img', /^(?:las |la |los )?(imagenes|radiografias?|rx|placas?|fotos?|panoramicas?)$/],
+    ['rx', /^(?:las |la )?(recetas?|medicacion|medicamentos|indicaciones(?: y recetas)?|recetas e indicaciones)$/], ['img', /^(?:las |la |los )?(imagenes|radiografias?|rx|placas?|fotos?|panoramicas?)$/],
     ['docs', /^(?:los |las |el )?(documentos|consentimientos?|firmas?|papeles)$/], ['cuenta', /^(?:la |el )?(cuenta(?: corriente)?|saldo|deuda|pagos|lo que debe|estado de cuenta)$/],
     ['lab', /^(?:el |la |los |las )?(laboratorios?|trabajos? de laboratorio|protesis|protesista|pedidos? al laboratorio)$/]];
 

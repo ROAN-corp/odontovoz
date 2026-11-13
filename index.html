@@ -1546,7 +1546,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     ['empresa', /^(?:la |el |mi )?(empresa|panel de la empresa|panel del dueno|resumen de la empresa|mis consultorios|todos los consultorios)$/]];
   const SUB = [['perio', /^(?:el |la )?(periodontograma|perio|sondaje|ficha periodontal|carta periodontal|registro periodontal|periodoncia|encias)$/], ['odon', /^(?:el |la )?(odontograma|dientes|piezas|dentadura|boca|carta dental)$/], ['datos', /^(?:la |el |los )?(historia(?: clinica)?|anamnesis|antecedentes|datos(?: personales)?|evolucion|ficha|hc)$/],
     ['plan', /^(?:el |la |los )?(plan(?: de tratamiento)?|tratamientos?(?: a realizar)?|a realizar|presupuestos?)$/], ['hecho', /^(?:lo )?(realizado|hecho|lo que se hizo|tratamientos (?:hechos|realizados))$/],
-    ['rx', /^(?:las |la )?(recetas?|medicacion|medicamentos)$/], ['img', /^(?:las |la |los )?(imagenes|radiografias?|rx|placas?|fotos?|panoramicas?)$/],
+    ['rx', /^(?:las |la )?(recetas?|medicacion|medicamentos|indicaciones(?: y recetas)?|recetas e indicaciones)$/], ['img', /^(?:las |la |los )?(imagenes|radiografias?|rx|placas?|fotos?|panoramicas?)$/],
     ['docs', /^(?:los |las |el )?(documentos|consentimientos?|firmas?|papeles)$/], ['cuenta', /^(?:la |el )?(cuenta(?: corriente)?|saldo|deuda|pagos|lo que debe|estado de cuenta)$/],
     ['lab', /^(?:el |la |los |las )?(laboratorios?|trabajos? de laboratorio|protesis|protesista|pedidos? al laboratorio)$/]];
 
@@ -3269,7 +3269,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   A.acts.fichaBack = () => { A.stopOd && A.stopOd(); S.tab = S.from && S.from !== 'ficha' ? S.from : 'pacientes'; A.refresh(); };
 
-  const TABS = [['datos', 'Datos e historia'], ['odon', 'Odontograma'], ['perio', 'Periodontograma'], ['plan', 'Plan y presupuesto'], ['hecho', 'Realizado'], ['lab', 'Laboratorios'], ['rx', 'Indicaciones'], ['img', 'Fotos y radiografías'], ['docs', 'Documentos y firmas'], ['cuenta', 'Cuenta']];
+  const TABS = [['datos', 'Datos e historia'], ['odon', 'Odontograma'], ['perio', 'Periodontograma'], ['plan', 'Plan y presupuesto'], ['hecho', 'Realizado'], ['lab', 'Laboratorios'], ['rx', 'Indicaciones y recetas'], ['img', 'Fotos y radiografías'], ['docs', 'Documentos y firmas'], ['cuenta', 'Cuenta']];
   A.render.ficha = () => {
     const pid = S.fichaPid, p = A.PAT(pid), pd = A.pd(pid), pro = role(), sal = A.saldo(pid), host = $('#view-ficha');
     const tabs = TABS.filter(t => (pro || ['datos', 'docs', 'cuenta'].indexOf(t[0]) >= 0) && !(S.uimode === 'atencion' && t[0] === 'cuenta'));
@@ -5703,7 +5703,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         A.openFicha(res.pid, pr.sub);
         if (pr.budget && A.pd(res.pid).tx.some(t => t.status === 'plan')) A.acts.budgetNew();
-        return ok(A.PAT(res.pid).name + ' · ' + ({ perio: 'periodontograma', odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'indicaciones', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
+        return ok(A.PAT(res.pid).name + ' · ' + ({ perio: 'periodontograma', odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'indicaciones y recetas', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
       case 'openPat':
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         if (pr.ficha || S.tab === 'ficha') A.openFicha(res.pid, 'datos'); else { S.panel = { type: 'pat', pid: res.pid }; A.renderPanel(); }
@@ -5798,7 +5798,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* barra superior, menú lateral y estado general después de cada cambio */
   const TITLES = { inicio: 'Inicio', agenda: 'Agenda', pacientes: 'Pacientes', caja: 'Caja', liq: 'Liquidaciones', empresa: 'Empresa' };
-  const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Indicaciones', img: 'Fotos y radiografías', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
+  const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Indicaciones y recetas', img: 'Fotos y radiografías', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
   A.afterRefresh = () => {
     const mh = $('#modalHost'); if (!S.modal && mh && mh.innerHTML) A.renderModal(); /* algunas acciones cerraban la ventana sin quitarla de la pantalla */
     const t = $('#abTitle'), sb = $('#abSub');
@@ -20089,14 +20089,17 @@ const OVMenu = (function () {
   };
   A.acts.rxDel = () => { const m = S.modal, p = A.PRO(m.pro); if (p && (!A.isBoss || A.isBoss())) { delete p.rx; A.save(); } LS.set('odontovoz.rx.' + m.pro, null); S.modal = m.back || null; A.renderModal(); A.refresh(); };
 
-  /* botón en la pestaña de documentos de la ficha */
-  const docsPrev = A.render.docsTab;
-  if (docsPrev) A.render.docsTab = pid => {
-    const h = docsPrev(pid), pro = proOfFicha(pid), rx = rxOf(pro), p = A.PRO(pro) || {};
-    const card = '<section class="card rx-card"><h2>Receta electrónica</h2>' + (rx
-      ? '<p class="hint" style="margin-top:0">Copia los datos de ' + esc((A.PAT(pid) || {}).name || 'el paciente') + ' y abre ' + esc(rx.name) + ' para que ' + esc(p.short || p.name || 'el profesional') + ' haga la receta. Las «Indicaciones para el paciente» de OdontoVoz no reemplazan a la receta (Ley 27.553).</p><div class="row-btns"><button class="btn primary" data-act="rxGo" data-pro="' + pro + '">Recetar en ' + esc(rx.name) + '</button><button class="btn small ghost" data-act="rxCfg" data-pro="' + pro + '">Cambiar plataforma</button></div>'
+  /* 1.49.2: la receta electrónica va en la pestaña «Indicaciones y recetas» de la historia clínica, arriba de las indicaciones */
+  const rxCard = pid => {
+    const pro = proOfFicha(pid), rx = rxOf(pro), p = A.PRO(pro) || {};
+    return '<section class="card rx-card"><h2>Receta electrónica</h2>' + (rx
+      ? '<p class="hint" style="margin-top:0">Copia los datos de ' + esc((A.PAT(pid) || {}).name || 'el paciente') + ' y abre ' + esc(rx.name) + ' para que ' + esc(p.short || p.name || 'el profesional') + ' haga la receta para la farmacia.</p><div class="row-btns"><button class="btn primary" data-act="rxGo" data-pro="' + pro + '">Recetar en ' + esc(rx.name) + '</button><button class="btn small ghost" data-act="rxCfg" data-pro="' + pro + '">Cambiar plataforma</button></div>'
       : '<p class="hint" style="margin-top:0">Configurá la plataforma de receta electrónica de ' + esc(p.name || 'cada profesional') + ' (por ejemplo RCTA) y desde acá se abre con los datos del paciente listos para pegar.</p><button class="btn" data-act="rxCfg" data-pro="' + pro + '">Configurar receta electrónica</button>') + '</section>';
-    return card + h;
+  };
+  const rxTabPrev = A.render.rxTab;
+  if (rxTabPrev) A.render.rxTab = pid => {
+    const h = String(rxTabPrev(pid)).replace('<h2>Indicaciones <span', '<h2>Indicaciones para el paciente <span');
+    return rxCard(pid) + h;
   };
   /* en la ficha del profesional (Ajustes › Profesionales) */
   const cfgPrev = MF.cfg;

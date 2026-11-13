@@ -81,14 +81,17 @@
   };
   A.acts.rxDel = () => { const m = S.modal, p = A.PRO(m.pro); if (p && (!A.isBoss || A.isBoss())) { delete p.rx; A.save(); } LS.set('odontovoz.rx.' + m.pro, null); S.modal = m.back || null; A.renderModal(); A.refresh(); };
 
-  /* botón en la pestaña de documentos de la ficha */
-  const docsPrev = A.render.docsTab;
-  if (docsPrev) A.render.docsTab = pid => {
-    const h = docsPrev(pid), pro = proOfFicha(pid), rx = rxOf(pro), p = A.PRO(pro) || {};
-    const card = '<section class="card rx-card"><h2>Receta electrónica</h2>' + (rx
-      ? '<p class="hint" style="margin-top:0">Copia los datos de ' + esc((A.PAT(pid) || {}).name || 'el paciente') + ' y abre ' + esc(rx.name) + ' para que ' + esc(p.short || p.name || 'el profesional') + ' haga la receta. Las «Indicaciones para el paciente» de OdontoVoz no reemplazan a la receta (Ley 27.553).</p><div class="row-btns"><button class="btn primary" data-act="rxGo" data-pro="' + pro + '">Recetar en ' + esc(rx.name) + '</button><button class="btn small ghost" data-act="rxCfg" data-pro="' + pro + '">Cambiar plataforma</button></div>'
+  /* 1.49.2: la receta electrónica va en la pestaña «Indicaciones y recetas» de la historia clínica, arriba de las indicaciones */
+  const rxCard = pid => {
+    const pro = proOfFicha(pid), rx = rxOf(pro), p = A.PRO(pro) || {};
+    return '<section class="card rx-card"><h2>Receta electrónica</h2>' + (rx
+      ? '<p class="hint" style="margin-top:0">Copia los datos de ' + esc((A.PAT(pid) || {}).name || 'el paciente') + ' y abre ' + esc(rx.name) + ' para que ' + esc(p.short || p.name || 'el profesional') + ' haga la receta para la farmacia.</p><div class="row-btns"><button class="btn primary" data-act="rxGo" data-pro="' + pro + '">Recetar en ' + esc(rx.name) + '</button><button class="btn small ghost" data-act="rxCfg" data-pro="' + pro + '">Cambiar plataforma</button></div>'
       : '<p class="hint" style="margin-top:0">Configurá la plataforma de receta electrónica de ' + esc(p.name || 'cada profesional') + ' (por ejemplo RCTA) y desde acá se abre con los datos del paciente listos para pegar.</p><button class="btn" data-act="rxCfg" data-pro="' + pro + '">Configurar receta electrónica</button>') + '</section>';
-    return card + h;
+  };
+  const rxTabPrev = A.render.rxTab;
+  if (rxTabPrev) A.render.rxTab = pid => {
+    const h = String(rxTabPrev(pid)).replace('<h2>Indicaciones <span', '<h2>Indicaciones para el paciente <span');
+    return rxCard(pid) + h;
   };
   /* en la ficha del profesional (Ajustes › Profesionales) */
   const cfgPrev = MF.cfg;

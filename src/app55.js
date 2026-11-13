@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.49.2', d: '2026-11-13', items: [
+      { t: 'En la historia clínica, «Indicaciones» ahora se llama «Indicaciones y recetas»: arriba está el botón para hacer la receta electrónica (RCTA) y abajo las indicaciones para el paciente.', top: 1 }] },
     { v: '1.49.1', d: '2026-11-13', items: [
       { t: 'Receta electrónica: en Android, «Recetar en RCTA» abre la app de RCTA si la tenés instalada (si no, la web). Los datos del paciente quedan copiados para pegar.', top: 1 }] },
     { v: '1.49', d: '2026-11-12', items: [

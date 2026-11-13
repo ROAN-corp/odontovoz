@@ -323,7 +323,7 @@
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         A.openFicha(res.pid, pr.sub);
         if (pr.budget && A.pd(res.pid).tx.some(t => t.status === 'plan')) A.acts.budgetNew();
-        return ok(A.PAT(res.pid).name + ' · ' + ({ perio: 'periodontograma', odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'indicaciones', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
+        return ok(A.PAT(res.pid).name + ' · ' + ({ perio: 'periodontograma', odon: 'odontograma', datos: 'historia clínica', plan: 'plan y presupuesto', hecho: 'realizado', rx: 'indicaciones y recetas', img: 'imágenes', docs: 'documentos', cuenta: 'cuenta', lab: 'laboratorio' }[pr.sub] || pr.sub) + '.');
       case 'openPat':
         res = findPat(pr.name); if (!res.pid) return no(noPat(res));
         if (pr.ficha || S.tab === 'ficha') A.openFicha(res.pid, 'datos'); else { S.panel = { type: 'pat', pid: res.pid }; A.renderPanel(); }
@@ -418,7 +418,7 @@
 
   /* barra superior, menú lateral y estado general después de cada cambio */
   const TITLES = { inicio: 'Inicio', agenda: 'Agenda', pacientes: 'Pacientes', caja: 'Caja', liq: 'Liquidaciones', empresa: 'Empresa' };
-  const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Indicaciones', img: 'Fotos y radiografías', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
+  const SUBT = { datos: 'Datos e historia', odon: 'Odontograma', plan: 'Plan y presupuesto', hecho: 'Realizado', rx: 'Indicaciones y recetas', img: 'Fotos y radiografías', docs: 'Documentos y firmas', cuenta: 'Cuenta' };
   A.afterRefresh = () => {
     const mh = $('#modalHost'); if (!S.modal && mh && mh.innerHTML) A.renderModal(); /* algunas acciones cerraban la ventana sin quitarla de la pantalla */
     const t = $('#abTitle'), sb = $('#abSub');
