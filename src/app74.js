@@ -88,6 +88,7 @@
     if (k === 'part') return 'Particular (no va a la obra social)';
     return (MODES.filter(x => x[0] === k)[0] || [k, k])[1];
   };
+  const isRef = o => { if (!A.fornIsRef || !A.fornIsRef() || !o || !o.code) return false; const os = A.osById(o.id), a = os && os.aran && os.aran[o.code]; return !!(a && a.forn && !a.man); };
   const totals = m => {
     const on = m.items.filter(i => i.on);
     const pay = on.reduce((s, i) => s + (i.pay || 0), 0);
@@ -114,7 +115,7 @@
         sub = o.mode === 'part' ? '<small>Particular · tu precio ' + money(it.price) + '</small>'
           : '<small class="po-osl">' + sig + ' paga ' + (o.noAran && !o.est
             ? '<span class="po-cov"><span aria-hidden="true">$</span><input inputmode="numeric" data-in="poCov" data-i="' + i + '" value="' + (o.cov || '') + '" placeholder="¿cuánto?" aria-label="Cuánto paga ' + sig + ' por ' + esc(it.label) + '"></span>'
-            : money(o.cov * q) + (o.est ? ' (estimado)' : '')) + (it.price ? ' · tu precio ' + money(it.price) : '') + '</small>';
+            : money(o.cov * q) + (o.est ? ' (estimado)' : '') + (isRef(o) ? ' <span class="os-ref">(ref. Río Negro)</span>' : '')) + (it.price ? ' · tu precio ' + money(it.price) : '') + '</small>';
         sub += '<label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poCm" data-i="' + i + '">' +
           MODES.filter(x => x[0] !== 'cos' || o.cos > 0 || o.mode === 'cos').map(x => '<option value="' + x[0] + '"' + (o.mode === x[0] ? ' selected' : '') + '>' + esc(modeTxt(x[0], it)) + '</option>').join('') + '</select></label>';
       } else sub = '<small>Particular</small>';

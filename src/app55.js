@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.50.4', d: '2026-11-14', items: [
+      { t: 'Consultorios de Neuquén: pueden precargar los aranceles de Río Negro como referencia y cambiarlos por los suyos (lo editado no se toca más).' }] },
     { v: '1.50.3', d: '2026-11-14', items: [
       { t: 'Elegís de dónde se precargan los aranceles de tus obras sociales: Federación de Río Negro (automático), Neuquén u otra provincia (a mano). Se cambia en Ajustes › Obras sociales.', top: 1 }] },
     { v: '1.50.2', d: '2026-11-14', items: [
