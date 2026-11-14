@@ -128,15 +128,13 @@
     if (t.osIt.length) b += '<div class="po-tot po-os"><span>Queda pendiente de cobro a ' + esc(po ? po.sigla : 'la obra social') + (t.osMiss ? ' · ' + t.osMiss + ' sin importe (lo podés completar después)' : '') + '</span><b id="poOsTot">' + money(t.osAmt) + '</b></div>';
     const learn = po && po.real && boss() && m.items.some(i => i.on && i.os && i.os.noAran && !i.os.est && i.os.cov > 0 && i.os.code);
     if (learn) b += '<label class="chk po-learn"><input type="checkbox" id="poLearn"' + (m.learn !== false ? ' checked' : '') + ' data-chg="poLearn"> Recordar estos importes como arancel de ' + esc(po.sigla) + ' para la próxima</label>';
-    if (!solo && canCfg() && t.pay > 0) b += '<label class="po-cfg">A ' + esc(proName(m.pro)) + ' le cobra <select data-chg="poCobra"><option value="rcp"' + (cob === 'rcp' ? ' selected' : '') + '>la recepción</option><option value="pro"' + (cob === 'pro' ? ' selected' : '') + '>el mismo profesional</option></select></label>';
     b += '<p class="hint" style="margin:6px 0 0">Las prácticas quedan en la historia clínica y en el odontograma (en rojo, realizadas).</p><div class="hint bad" id="poMsg"></div>';
     const osOnly = t.osIt.length && t.pay === 0;
     const mainRcp = !solo && cob === 'rcp';
+    if (m.step === 'who' && !osOnly) return whoView(m, p, t, cob);
     const f = '<button class="btn" data-act="closeModal">Volver</button>' + (m.only ? '' : '<button class="btn ghost" data-act="poGo" data-k="nota">Solo nota, sin cobrar</button>') +
       (osOnly ? '<button class="btn primary" data-act="poGo" data-k="os">Listo · pendiente de ' + esc(po ? po.sigla : 'la obra social') + '</button>'
-        : solo ? '<button class="btn" data-act="poGo" data-k="later">Cobrar después</button><button class="btn primary" data-act="poGo" data-k="pro">Cobrar ahora</button>'
-          : mainRcp ? '<button class="btn" data-act="poGo" data-k="pro">Cobrar yo</button><button class="btn primary" data-act="poGo" data-k="rcp">Mandar a recepción →</button>'
-            : '<button class="btn" data-act="poGo" data-k="rcp">Mandar a recepción</button><button class="btn primary" data-act="poGo" data-k="pro">Cobrar yo</button>');
+        : '<button class="btn" data-act="poGo" data-k="later">Cobrar después</button><button class="btn primary" data-act="poWho">Cobrar ' + money(t.pay) + ' →</button>');
     return A.modalShell('Prácticas de hoy', b, f);
   };
   const sync = () => {
@@ -238,6 +236,61 @@
     return rows.sort((a, b) => (a.month < b.month ? 1 : a.month > b.month ? -1 : String(a.sigla).localeCompare(String(b.sigla))));
   };
 
+  /* ---------- ¿quién cobra? el odontólogo en el momento o la secretaria (le aparece en su usuario) ---------- */
+  const whoBtns = (pre, last, extra) =>
+    '<div class="who-ops">' +
+      '<button class="who-op' + (last === 'pro' ? ' last' : '') + '" data-act="' + pre + '" data-k="pro"><b>Cobro yo ahora</b><span>Se abre el cobro: efectivo, tarjeta, transferencia, cuotas…</span></button>' +
+      '<button class="who-op' + (last === 'rcp' ? ' last' : '') + '" data-act="' + pre + '" data-k="rcp"><b>Lo cobra la secretaria</b><span>Le aparece en «Para cobrar» en su usuario (y en la recepción), con aviso. Vos seguís atendiendo.</span></button>' +
+    '</div>' + (extra || '');
+  function whoView(m, p, t, cob) {
+    const b = '<p class="who-q">¿Quién le cobra <b>' + money(t.pay) + '</b> a <b>' + esc(p.name || 'el paciente') + '</b>?</p>' + whoBtns('poGo', A.CFG.cobra && A.CFG.cobra[m.pro] ? cob : '');
+    return A.modalShell('Cobrar', b, '<button class="btn" data-act="poWhoBack">‹ Volver a las prácticas</button>');
+  }
+  A.acts.poWho = () => { sync(); S.modal.step = 'who'; A.renderModal(); };
+  A.acts.poWhoBack = () => { S.modal.step = null; A.renderModal(); };
+  /* recordar la elección (queda resaltada la próxima vez) */
+  const goPrev2 = A.acts.poGo;
+  A.acts.poGo = function (el) {
+    const m = S.modal, k = el.getAttribute('data-k');
+    if (m && m.type === 'pracOk' && (k === 'pro' || k === 'rcp') && m.pro) { A.CFG.cobra = A.CFG.cobra || {}; A.CFG.cobra[m.pro] = k; }
+    return goPrev2.apply(this, arguments);
+  };
+
+  /* en «Para cobrar» (inicio y caja): el odontólogo o el dueño eligen; la secretaria cobra directo */
+  const rcpRole = () => { const r = A.mbRole ? A.mbRole() : null; return (A.isMember && A.isMember() && r === 'recepcion'); };
+  const pcPrev = A.pcHTML;
+  if (pcPrev) A.pcHTML = function () {
+    const h = pcPrev.apply(this, arguments); if (typeof h !== 'string' || rcpRole()) return h;
+    const L = A.pcList();
+    return h.replace(/<button class="btn small primary" data-act="pcPay" data-pid="([^"]+)">Cobrar<\/button>/g, (all, pid) => {
+      const it = L.filter(x => x.pid === pid)[0], atRcp = it && it.items.every(e => e.cob === 'rcp');
+      return (atRcp ? '<small class="pc-rcp">en recepción</small>' : '') + '<button class="btn small primary" data-act="pcWho" data-pid="' + pid + '">Cobrar</button>';
+    });
+  };
+  A.acts.pcWho = el => { S.modal = { type: 'pcWho', pid: el.getAttribute('data-pid') }; A.renderModal(); };
+  MF.pcWho = m => {
+    const it = A.pcList().filter(x => x.pid === m.pid)[0], p = A.PAT(m.pid) || {};
+    if (!it) return A.modalShell('Cobrar', '<div class="empty">Ya no tiene nada para cobrar.</div>', '<button class="btn" data-act="closeModal">Cerrar</button>');
+    const atRcp = it.items.every(e => e.cob === 'rcp'), pro = it.pros[0], last = A.CFG.cobra && A.CFG.cobra[pro];
+    const b = '<p class="who-q">¿Quién le cobra <b>' + money(it.tot) + '</b> a <b>' + esc(p.name || it.name) + '</b>?</p>' +
+      (atRcp ? '<p class="hint">Ya está en «Para cobrar» de la secretaria. Si querés, lo cobrás vos igual.</p>' : '') + whoBtns('pcWhoGo', atRcp ? 'rcp' : last);
+    return A.modalShell('Cobrar', b, '<button class="btn" data-act="closeModal">Cancelar</button>');
+  };
+  A.acts.pcWhoGo = el => {
+    const k = el.getAttribute('data-k'), pid = S.modal.pid, it = A.pcList().filter(x => x.pid === pid)[0];
+    if (k === 'pro') { S.modal = null; A.renderModal(); A.acts.pcPay({ getAttribute: () => pid }); return; }
+    if (it) {
+      const pd = A.pd(pid), ids = it.items.map(e => e.id), now = new Date().toISOString(), w = (A.actor && A.actor().who) || '';
+      (pd.ledger || []).forEach(e => { if (ids.indexOf(e.id) >= 0) { e.cob = 'rcp'; e.cobAt = now; e.cobBy = w; } });
+      A.touchPd(pid);
+      const ap = it.ap; if (ap && A.mutate) A.mutate([ap.date], () => { ap.toRcp = now; });
+      if (it.pros[0]) { A.CFG.cobra = A.CFG.cobra || {}; A.CFG.cobra[it.pros[0]] = 'rcp'; }
+      A.save();
+    }
+    S.modal = null; A.renderModal(); A.refresh();
+    A.toast((A.PAT(pid) || {}).name + ' pasó a «Para cobrar» de la secretaria.');
+  };
+
   const css = document.createElement('style');
   css.textContent = '.po-mode{display:grid;gap:6px;margin:8px 0 10px;padding:10px 12px;border:1px solid var(--line,#d5e2e1);border-radius:14px;background:var(--soft,#f1f8f7)}' +
     '.po-mq{font-weight:700;font-size:.92rem}.po-mode small{color:var(--muted,#567);font-size:.82rem}' +
@@ -245,6 +298,7 @@
     '.po-sb.on{background:var(--teal,#0b6b6f);border-color:var(--teal,#0b6b6f);color:#fff;font-weight:700}' +
     '.po-cov{display:inline-flex;align-items:center;gap:2px}.po-cov input{width:96px;padding:3px 6px;border:1px solid var(--line,#ccd);border-radius:8px;font:inherit;font-size:.85rem}' +
     '.po-list li{flex-wrap:wrap}.po-l{flex:1 1 180px;min-width:0}.po-al{font-size:.72rem;color:var(--muted,#567);margin-right:4px}.po-amt input{width:90px}' +
+    '.who-q{margin:0 0 12px;font-size:1.02rem}.who-ops{display:grid;gap:10px}.who-op{display:grid;gap:3px;text-align:left;border:1.5px solid var(--line,#ccd);border-radius:16px;padding:14px 16px;background:var(--card,#fff);color:inherit;font:inherit;cursor:pointer}.who-op b{font-size:1.05rem}.who-op span{font-size:.86rem;color:var(--muted,#567)}.who-op:hover{border-color:var(--teal,#0b6b6f)}.who-op.last{border-color:var(--teal,#0b6b6f);box-shadow:0 0 0 3px rgba(11,107,111,.12)}.pc-rcp{display:block;font-size:.75rem;color:var(--teal,#0b6b6f);font-weight:700}' +
     '.po-learn{margin:8px 0 0;font-size:.86rem}.po-ask{display:grid;gap:4px;margin:8px 0;padding:10px 12px;border-radius:14px;background:#fff6e0;border:1px solid #f0c674;color:#4d3800}.po-ask span{font-size:.84rem}' +
     '@media (max-width:640px){.po-sb{padding:6px 10px;font-size:.84rem}.po-cov input{width:84px}.po-list li{align-items:flex-start}.po-amt{margin-left:30px;flex:1 1 100%;justify-content:flex-end}.po-cop select{width:100%}}';
   document.head.appendChild(css);

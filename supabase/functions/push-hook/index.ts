@@ -9,7 +9,7 @@ const env = (k: string) => (globalThis as any).Deno?.env.get(k) || '';
 /* ======================= lógica (sin red: se prueba en tests/push) ======================= */
 export type Tok = { member: string; owner: string; device: string; token: string; role?: string | null; pro?: string | null; sede?: string | null; filter_pro?: string | null };
 export type Ev = { owner: string; k: string; device?: string | null; by_uid?: string | null; old_v?: any; new_v?: any };
-export type Msg = { kind: 'llego' | 'cancel' | 'nota' | 'stock' | 'online'; title: string; body: string; pro?: string | null; sede?: string | null; data: Record<string, string>; tag: string };
+export type Msg = { kind: 'llego' | 'cancel' | 'nota' | 'stock' | 'online' | 'cobrar'; title: string; body: string; pro?: string | null; sede?: string | null; data: Record<string, string>; tag: string };
 export type Names = { pat: (id: string) => string; pro: (id: string) => string; sede: (id: string) => string };
 
 export const todayAR = (now = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(now);
@@ -35,6 +35,8 @@ export function events(ev: Ev, N: Names, today = todayAR()): Msg[] {
       const name = N.pat(a.pid) || 'un paciente';
       if (isToday && a.status === 'llego' && (!o || o.status !== 'llego'))
         out.push({ kind: 'llego', title: 'Llegó ' + name, body: 'Turno de las ' + hhmm(a.start) + withPro + ' · está en la sala de espera', pro: a.pro, sede: a.loc, data: { appt: a.id }, tag: 'llego:' + a.id });
+      if (isToday && a.toRcp && (!o || o.toRcp !== a.toRcp))
+        out.push({ kind: 'cobrar', title: 'Para cobrar: ' + name, body: 'Lo manda' + (a.pro && N.pro(a.pro) ? ' ' + N.pro(a.pro) : ' el odontólogo') + ' · cobralo en «Para cobrar»', pro: a.pro, sede: a.loc, data: { act: 'nfTab', appt: a.id }, tag: 'cobrar:' + a.id });
       if (o && a.status === 'cancelado' && o.status !== 'cancelado')
         out.push({ kind: 'cancel', title: 'Canceló ' + name, body: when + hhmm(a.start) + withPro, pro: a.pro, sede: a.loc, data: { appt: a.id }, tag: 'cancel:' + a.id });
     });
@@ -64,6 +66,7 @@ export function recipients(m: Msg, toks: Tok[], ev: Ev): Tok[] {
     if (t.sede && m.sede && t.sede !== m.sede) return false;              /* otro consultorio (Empresa) */
     const role = t.role || 'dueno';
     if (m.kind === 'stock') return role !== 'profesional';                /* el stock lo ve quien compra y ordena */
+    if (m.kind === 'cobrar') return role === 'recepcion' || role === 'dueno' || role === 'admin'; /* lo cobra la recepción */
     if ((role === 'profesional' || role === 'asistente') && t.pro && m.pro && t.pro !== m.pro) return false; /* pacientes de otro odontólogo */
     if (t.filter_pro && m.pro && t.filter_pro !== m.pro) return false;    /* «Avisarme de los pacientes de…» */
     return true;

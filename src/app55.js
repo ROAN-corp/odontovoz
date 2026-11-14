@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.51', d: '2026-11-14', items: [
+      { t: 'Al tocar «Cobrar» elegís: «Cobro yo ahora» o «Lo cobra la secretaria». Si la cobra ella, le aparece en «Para cobrar» de su usuario con aviso en el teléfono.', top: 1 }] },
     { v: '1.50.4', d: '2026-11-14', items: [
       { t: 'Consultorios de Neuquén: pueden precargar los aranceles de Río Negro como referencia y cambiarlos por los suyos (lo editado no se toca más).' }] },
     { v: '1.50.3', d: '2026-11-14', items: [

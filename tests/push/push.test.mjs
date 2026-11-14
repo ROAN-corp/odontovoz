@@ -23,6 +23,9 @@ m = P.events({ owner: 'o', k: 'day:' + add(today, 1), old_v: [], new_v: [{ id: '
 ok(m.length === 1 && m[0].kind === 'nota' && m[0].title === 'Nota de Marta: Llamar al lab', 'nota de otra persona');
 m = P.events({ owner: 'o', k: 'day:' + today, old_v: [], new_v: [ap('t9')] }, N);
 ok(m.length === 0, 'un turno nuevo común no molesta');
+m = P.events({ owner: 'o', k: 'day:' + today, old_v: [ap('t1', { status: 'atendido' })], new_v: [ap('t1', { status: 'atendido', toRcp: '2026-11-14T10:00:00Z' })] }, N);
+ok(m.length === 1 && m[0].kind === 'cobrar' && m[0].title === 'Para cobrar: Ana Pérez' && /Rodrigo/.test(m[0].body), 'el odontólogo lo manda a cobrar a la secretaria');
+ok(P.recipients(m[0], [{ token: 'a', role: 'recepcion' }, { token: 'b', role: 'profesional', pro: 'a' }, { token: 'c', role: 'asistente' }, { token: 'd' }], { owner: 'o', k: 'day:x' }).map(t => t.token).join() === 'a,d', 'el aviso de cobro le llega a la recepción y al dueño');
 const it = (id, qty, min, why = 'compra') => ({ id, name: 'Anestesia (caja)', qty, min, mv: [{ why }] });
 m = P.events({ owner: 'o', k: 'stock', old_v: { main: [it('i1', 5, 2)] }, new_v: { main: [it('i1', 2, 2)], _cfg: {} } }, N);
 ok(m.length === 1 && m[0].kind === 'stock' && m[0].title === 'Queda poco: Anestesia', 'stock que baja del mínimo');

@@ -548,6 +548,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.51 · ¿Quién cobra?
+
+- «Prácticas de hoy»: pie con «Cobrar después» y «Cobrar $X →», que abre «¿Quién le cobra?»: Cobro yo ahora (abre el cobro) / Lo cobra la secretaria (va a «Para cobrar» de la recepción). En todos los modos, también Profesional. Se resalta la última elección.
+- «Para cobrar» (inicio y caja): para el dueño o el odontólogo, «Cobrar» pregunta lo mismo (marca «en recepción» si ya está); la secretaria cobra directo.
+- Push: aviso «Para cobrar: <paciente>» a la recepción y al dueño cuando el turno de hoy pasa a recepción (`toRcp`).
+
 ## OdontoVoz 1.50.5 · Aumentos de la Federación al día
 
 - Los aranceles de la FORN se revisan también todos los lunes (además del día 2): si la Federación publica un aumento a mitad de mes, se aplica solo.
