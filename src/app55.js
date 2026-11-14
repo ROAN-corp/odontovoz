@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.50', d: '2026-11-14', items: [
+      { t: 'Al cargar prácticas a un paciente con obra social elegís qué le cobrás: «No le cobro nada», coseguro, diferencial (el monto que quieras) o todo particular.', top: 1 },
+      { t: 'Lo que paga la obra social queda pendiente en Caja › Obras sociales, aunque todavía no tengas su arancel cargado (lo podés escribir en el momento y se recuerda).', top: 1 }] },
     { v: '1.49.3', d: '2026-11-14', items: [
       { t: 'Cada celular y computadora guarda su copia de los datos en un espacio mucho más grande: ahora entran consultorios y centros con decenas de miles de pacientes, también sin internet.' }] },
     { v: '1.49.2', d: '2026-11-13', items: [
