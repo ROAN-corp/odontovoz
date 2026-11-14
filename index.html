@@ -7970,7 +7970,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.50.2';
+  A.VERSION = '1.50.3';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18030,6 +18030,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.50.3', d: '2026-11-14', items: [
+      { t: 'Elegís de dónde se precargan los aranceles de tus obras sociales: Federación de Río Negro (automático), Neuquén u otra provincia (a mano). Se cambia en Ajustes › Obras sociales.', top: 1 }] },
     { v: '1.50.2', d: '2026-11-14', items: [
       { t: 'Los aranceles de la Federación solo suben: si publican un valor más bajo que el que tenés o editaste, queda el tuyo. Lo editado se marca con ✎.', top: 1 },
       { t: 'En Obras sociales podés apagar la carga automática (por ejemplo, si tu consultorio está en Neuquén) o apagarla para una obra social sola.' }] },
@@ -20787,7 +20789,16 @@ const OVMenu = (function () {
     o.forn.at = DATA.at; o.forn.vig = t.vig || f.vig || o.forn.vig; if (n) o.upd = A.today();
     return n;
   };
-  const autoOn = () => A.CFG.fornAuto !== false;
+  /* de qué federación se toman los aranceles: se elige una vez (Río Negro automático; Neuquén u otra, a mano por ahora) */
+  const SRC = { rn: 'Federación Odontológica de Río Negro', nqn: 'Neuquén (Círculo Odontológico de Neuquén)', manual: 'Otra provincia · los cargo yo' };
+  const src = () => {
+    if (A.CFG.fornSrc) return A.CFG.fornSrc;
+    if (A.CFG.fornAuto === false) return 'manual';
+    if ((A.CFG.os || []).some(o => o.fornAuto || o.forn)) { A.CFG.fornSrc = 'rn'; return 'rn'; }
+    return '';
+  };
+  A.fornSrc = src;
+  const autoOn = () => src() === 'rn';
   /* carga (si no tenía) o actualiza (si la Federación publicó valores nuevos) una obra social */
   const loadOne = o => {
     if (!autoOn() || !o || !o.on || o.kind === 'particular' || o.fornOff) return '';
@@ -20825,7 +20836,35 @@ const OVMenu = (function () {
   const go = () => {
     if (!A.fornGet) return;
     A.fornGet().then(d => { if (!d) return; DATA = d; try { A.fornAuto(); } catch (e) { /* nada */ } });
+    /* todavía no eligió de dónde salen los aranceles: se pregunta una vez (si hay una ventana abierta, se espera) */
+    if (!src() && boss()) { let n = 0; const ask = () => { if (src()) return; if (S.modal || !S.setup || document.querySelector('#intro')) { if (++n < 40) setTimeout(ask, 3000); return; } S.modal = { type: 'fornSrc' }; A.renderModal(); }; setTimeout(ask, 1500); }
   };
+  A.modalFns.fornSrc = m => {
+    const opt = (k, t, d) => '<button class="fs-op' + (m.pick === k ? ' on' : '') + '" data-act="fornSrcPick" data-k="' + k + '"><b>' + t + '</b><span>' + d + '</span></button>';
+    const b = '<p class="m-lead">Para que al cargar prácticas aparezca lo que paga cada obra social, OdontoVoz puede precargar los aranceles. ¿Dónde está tu consultorio?</p><div class="fs-ops">' +
+      opt('rn', SRC.rn, 'Se cargan solos en tus obras sociales y se actualizan cada mes (solo suben: nunca bajan lo que edites).') +
+      opt('nqn', SRC.nqn, 'Todavía no se pueden bajar solos: cargás los valores de tus obras sociales a mano y te avisamos cuando estén disponibles.') +
+      opt('manual', SRC.manual, 'No se precarga nada: cargás vos lo que paga cada obra social.') + '</div><p class="hint">Lo podés cambiar cuando quieras en Ajustes › Obras sociales.</p>';
+    return A.modalShell('Aranceles de las obras sociales', b, '<button class="btn" data-act="closeModal">Después</button><button class="btn primary" data-act="fornSrcGo"' + (m.pick ? '' : ' disabled') + '>Listo</button>');
+  };
+  A.acts.fornSrcPick = el => { S.modal.pick = el.getAttribute('data-k'); A.renderModal(); };
+  A.acts.fornSrcGo = () => { const k = S.modal && S.modal.pick; if (!k) return; S.modal = null; A.renderModal(); setSrc(k); };
+  function setSrc(k) {
+    const was = src();
+    if (k === 'rn') {
+      A.CFG.fornSrc = 'rn'; delete A.CFG.fornAuto; A.save();
+      const fin = () => { const r = A.fornAuto(); A.toast(r.neu.length ? 'Listo: aranceles de la Federación cargados en ' + r.neu.join(', ') + '.' : 'Listo: los aranceles de la Federación se cargan y actualizan solos.'); A.renderModal(); };
+      if (DATA) fin(); else if (A.fornGet) A.fornGet().then(d => { if (d) { DATA = d; fin(); } });
+      return;
+    }
+    /* deja de usar Río Negro: se quitan los valores que se cargaron solos y no editaste (se puede deshacer) */
+    const snap = JSON.stringify(A.CFG.os || []); let q = 0;
+    A.CFG.fornSrc = k; delete A.CFG.fornAuto;
+    if (was === 'rn') A.osList().forEach(o => { if (!o.fornAuto) return; Object.keys(o.aran || {}).forEach(c => { const a = o.aran[c]; if (a.forn && !a.man) { delete o.aran[c]; q++; } }); delete o.forn; delete o.fornAuto; });
+    A.save(); A.renderModal();
+    A.toast((k === 'nqn' ? 'Listo: Neuquén. Cargá lo que paga cada obra social tocándola en Ajustes › Obras sociales.' : 'Listo: los aranceles los cargás vos.') + (q ? ' Quité ' + q + ' valores de Río Negro que no habías editado.' : ''), q ? () => { A.CFG.os = JSON.parse(snap); A.CFG.fornSrc = was; A.save(); A.renderModal(); } : null);
+  }
+  A.fornSetSrc = setSrc;
   const arPrev = A.afterRefresh;
   A.afterRefresh = function () {
     const r = arPrev ? arPrev.apply(this, arguments) : undefined;
@@ -20847,11 +20886,12 @@ const OVMenu = (function () {
   const listPrev = A.modalFns.osList;
   if (listPrev) A.modalFns.osList = m => {
     const h = listPrev(m); if (typeof h !== 'string' || !boss()) return h;
-    const on = autoOn(), n = A.osList().filter(o => o.forn).length;
-    const box = '<div class="fa-box"><label class="chk"><input type="checkbox" data-chg="fornAutoSet"' + (on ? ' checked' : '') + '> <b>Aranceles de la ' + RN + ': cargarlos y actualizarlos solos</b></label>' +
-      '<small>' + (on ? (n ? n + ' obras sociales con valores de la Federación. ' : '') + 'Cada mes se actualizan solos y <b>solo suben</b>: si la Federación publica un valor más bajo que el que tenés o editaste, queda el tuyo. Cualquier valor lo podés editar tocando la obra social.' : 'Apagado: los aranceles los cargás vos (tocá cada obra social). Recomendado si tu consultorio está en Neuquén u otra provincia.') + '</small></div>';
+    const k = src(), n = A.osList().filter(o => o.forn).length;
+    const box = '<div class="fa-box"><label for="faSrc"><b>Aranceles precargados de</b></label><select id="faSrc" data-chg="fornSrcSet"><option value=""' + (k ? '' : ' selected') + ' disabled>Elegí…</option>' + Object.keys(SRC).map(x => '<option value="' + x + '"' + (k === x ? ' selected' : '') + '>' + SRC[x] + '</option>').join('') + '</select>' +
+      '<small>' + (k === 'rn' ? (n ? n + ' obras sociales con valores de la Federación. ' : '') + 'Cada mes se actualizan solos y <b>solo suben</b>: si la Federación publica un valor más bajo que el que tenés o editaste, queda el tuyo. Cualquier valor lo podés editar tocando la obra social.' : k === 'nqn' ? 'Por ahora los valores de Neuquén se cargan a mano (tocá cada obra social). Te avisamos cuando se puedan bajar solos.' : k === 'manual' ? 'Los aranceles los cargás vos: tocá cada obra social.' : 'Elegí de dónde se precargan los aranceles de tus obras sociales.') + '</small></div>';
     return h.replace(/(<div class="m-body"[^>]*>)/, '$1' + box);
   };
+  A.chg.fornSrcSet = el => { if (el.value && el.value !== src()) setSrc(el.value); };
   A.chg.fornAutoSet = el => {
     if (el.checked) { A.CFG.fornAuto = true; A.save(); A.renderModal(); if (DATA) { const r = A.fornAuto(); A.toast(r.neu.length ? 'Cargados los aranceles de: ' + r.neu.join(', ') + '.' : 'Listo: se actualizan solos.'); A.renderModal(); } else go(); return; }
     /* se apaga: se quitan los valores que se cargaron solos y no editaste (se puede deshacer) */
@@ -20873,7 +20913,8 @@ const OVMenu = (function () {
   A.chg.fornOneSet = el => { const o = A.osById(el.getAttribute('data-os')); if (!o) return; o.fornOff = !el.checked; A.save(); A.renderModal(); };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const css = document.createElement('style');
-  css.textContent = '.fa-box{display:grid;gap:4px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#d5e2e1);border-radius:14px;background:var(--soft,#f1f8f7)}.fa-box small{color:var(--muted,#567);font-size:.83rem;line-height:1.35}.fa-man{font-style:normal;color:#b26a00;font-size:.85em}';
+  css.textContent = '.fs-ops{display:grid;gap:8px}.fs-op{display:grid;gap:3px;text-align:left;border:1.5px solid var(--line,#ccd);border-radius:14px;padding:12px 14px;background:var(--card,#fff);color:inherit;font:inherit;cursor:pointer}.fs-op span{font-size:.85rem;color:var(--muted,#567)}.fs-op.on{border-color:var(--teal,#0b6b6f);box-shadow:0 0 0 3px rgba(11,107,111,.15)}.fa-box select{padding:8px 10px;border-radius:10px;border:1px solid var(--line,#ccd);font:inherit;background:var(--card,#fff);color:inherit}' +
+    '.fa-box{display:grid;gap:4px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#d5e2e1);border-radius:14px;background:var(--soft,#f1f8f7)}.fa-box small{color:var(--muted,#567);font-size:.83rem;line-height:1.35}.fa-man{font-style:normal;color:#b26a00;font-size:.85em}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

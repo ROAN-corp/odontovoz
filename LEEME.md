@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.50.3 · Elegir la federación de los aranceles
+
+- Antes de precargar nada, el dueño elige una vez: Federación Odontológica de Río Negro (automático), Neuquén (Círculo Odontológico de Neuquén, por ahora a mano) u otra provincia. Se cambia en Ajustes › Obras sociales (al dejar Río Negro se quitan los valores cargados solos no editados, con Deshacer).
+
 ## OdontoVoz 1.50.2 · Aranceles: solo suben y se pueden apagar
 
 - La actualización mensual de la FORN solo sube valores (nunca baja lo que tenés o editaste); los editados a mano llevan ✎ (`a.man`).

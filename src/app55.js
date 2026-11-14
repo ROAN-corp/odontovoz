@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.50.3', d: '2026-11-14', items: [
+      { t: 'Elegís de dónde se precargan los aranceles de tus obras sociales: Federación de Río Negro (automático), Neuquén u otra provincia (a mano). Se cambia en Ajustes › Obras sociales.', top: 1 }] },
     { v: '1.50.2', d: '2026-11-14', items: [
       { t: 'Los aranceles de la Federación solo suben: si publican un valor más bajo que el que tenés o editaste, queda el tuyo. Lo editado se marca con ✎.', top: 1 },
       { t: 'En Obras sociales podés apagar la carga automática (por ejemplo, si tu consultorio está en Neuquén) o apagarla para una obra social sola.' }] },
