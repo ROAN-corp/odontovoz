@@ -6,14 +6,14 @@
   /* lo mismo que controla el servidor (supabase/limites.sql) */
   const PLAN = {
     prueba: { name: 'Prueba gratis', pros: 40, devices: 5, locs: 5, centros: 5 }, /* 1.17: la prueba trae todo, para conocer cualquier plan */
-    lite: { name: 'Profesional LITE', pros: 1, devices: 2, locs: 1 }, /* 1.36: versión simple, solo un profesional */
-    basico: { name: 'Profesional PRO', pros: 1, devices: 2, locs: 1 },
-    consultorio: { name: 'Consultorio PRO', pros: 3, devices: 5, locs: 1 },
-    centro: { name: 'Centro PRO', pros: 8, devices: 12, locs: 5 },
-    empresa: { name: 'Empresa PRO', pros: 40, devices: 60, locs: 5, centros: 5 },
-    red: { name: 'Empresa PRO', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */
+    lite: { name: 'Profesional', pros: 1, devices: 2, locs: 1 }, /* 1.52: LITE ya no existe; las cuentas viejas quedan como Profesional */
+    basico: { name: 'Profesional', pros: 1, devices: 2, locs: 1 },
+    consultorio: { name: 'Consultorio o Centro', pros: 3, devices: 5, locs: 1 },
+    centro: { name: 'Consultorio o Centro', pros: 8, devices: 12, locs: 5 }, /* plan anterior (se respetan sus límites) */
+    empresa: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 },
+    red: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */
   };
-  const NEXT = { prueba: null, lite: 'basico', basico: 'consultorio', consultorio: 'centro', centro: 'empresa', empresa: null, red: null };
+  const NEXT = { prueba: null, lite: 'consultorio', basico: 'consultorio', consultorio: 'empresa', centro: 'empresa', empresa: null, red: null };
   A.PLAN_INFO = PLAN;
   const lic = () => (CL && CL.lic) || null;
   const real = () => !!(CL && CL.session && !A.DEMO);
@@ -60,7 +60,7 @@
   /* los nombres de los tipos de cuenta, iguales a los planes de la web */
   const rename = h => h
     .replace('<b>Soy un odontólogo</b><span>Consultorio individual</span>', '<b>Profesional</b><span>Un odontólogo, en uno o varios consultorios</span>')
-    .replace('<b>Somos un centro odontológico</b><span>Dos o más odontólogos</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y recepción (planes Consultorio y Centro)</span>')
+    .replace('<b>Somos un centro odontológico</b><span>Dos o más odontólogos</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y recepción (plan Consultorio o Centro)</span>')
     .replace('<b>Odontólogo</b><span>Consultorio individual</span>', '<b>Profesional</b><span>Un odontólogo</span>')
     .replace('<b>Centro odontológico</b><span>Dos o más profesionales</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y recepción</span>');
   const limLine = () => { const L = A.limits(); return L ? '<div class="pl-line">Tu plan: <b>' + esc(L.name) + '</b> · hasta ' + L.pros + ' profesional' + (L.pros > 1 ? 'es' : '') + ' · ' + L.devices + ' equipos</div>' : ''; };

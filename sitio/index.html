@@ -161,7 +161,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 @media (max-width: 900px) { .wa-grid { grid-template-columns: 1fr 1fr; } .wa-plans { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .wa-grid { grid-template-columns: 1fr; } }
 .plans-sec { background: var(--white); border-block: 1px solid var(--line); }
-.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+.plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: stretch; }
 .plan { border: 1px solid var(--line); border-radius: 18px; padding: 24px 22px; display: flex; flex-direction: column; gap: 14px; background: var(--paper); }
 .plan.star { background: var(--deep); color: #fff; border-color: var(--deep); }
 .plan.star .who, .plan.star li { color: #cfe7e3; }
@@ -179,7 +179,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .plan li s { opacity: .7; }
 .promo { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; background: var(--sun); color: #2b2100; border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; font-size: 17px; }
 .promo b { font: 800 19px var(--display); }
-@media (max-width: 1000px) { .plans { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); } }
+@media (max-width: 1000px) { .plans { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .plans { grid-template-columns: 1fr; } }
 
 /* ---------- descargas ---------- */
@@ -242,7 +242,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .dyn-list span { color: var(--ink-2); font-size: 17px; }
 .reel { margin: 0; justify-self: center; width: min(340px, 100%); }
 .reel video { width: 100%; aspect-ratio: 9 / 16; border-radius: 28px; border: 8px solid #10282a; background: #08484b; display: block; }
-.tuts { padding: 56px 0; } .tut-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } .reel.tut video { aspect-ratio: 720 / 1558; border-width: 6px; border-radius: 22px; }
+.tuts { padding: 56px 0; } .tut-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 860px; margin: 0 auto; gap: 18px; } .reel.tut video { aspect-ratio: 720 / 1558; border-width: 6px; border-radius: 22px; }
 @media (max-width: 860px) { .tut-grid { grid-template-columns: 1fr 1fr; } }
 .reel figcaption { text-align: center; color: var(--ink-2); font-size: 15px; margin-top: 10px; }
 .firma { background: var(--deep); color: #fff; }
@@ -695,7 +695,7 @@ body.ix-lock { overflow: hidden; }
   <div class="wrap">
     <div class="sec-head">
       <h2 id="t-planes">Planes</h2>
-      <p class="lede">Todos traen el asistente por voz. <b>LITE</b> es la versión simple, con lo justo y botones grandes. Los planes <b>PRO</b> traen todas las funciones (y el modo LITE a un toque) y cambian en la cantidad de profesionales y de equipos.</p>
+      <p class="lede">Todos traen todas las funciones y el asistente por voz. Cambian en la cantidad de profesionales, consultorios y equipos, y podés sumar lo que necesites.</p>
     </div>
     <div class="plans" id="plans"></div>
     <p class="plans-note" id="plansNote"></p>
@@ -869,7 +869,6 @@ body.ix-lock { overflow: hidden; }
       <figure class="reel tut"><video src="video/tut-pro.mp4" poster="video/poster-tut-pro.jpg" playsinline controls preload="none" aria-label="Tutorial para profesional"></video><figcaption>Profesional</figcaption></figure>
       <figure class="reel tut"><video src="video/tut-centro.mp4" poster="video/poster-tut-centro.jpg" playsinline controls preload="none" aria-label="Tutorial para consultorio y centro"></video><figcaption>Consultorio y centro</figcaption></figure>
       <figure class="reel tut"><video src="video/tut-empresa.mp4" poster="video/poster-tut-empresa.jpg" playsinline controls preload="none" aria-label="Tutorial para empresa con varios centros"></video><figcaption>Empresa</figcaption></figure>
-      <figure class="reel tut"><video src="video/tut-lite.mp4" poster="video/poster-tut-lite.jpg" playsinline controls preload="none" aria-label="Tutorial del modo LITE"></video><figcaption>LITE</figcaption></figure>
     </div>
   </div>
 </section>
@@ -890,7 +889,6 @@ body.ix-lock { overflow: hidden; }
     <div class="sec-head"><h2 id="t-faq">Preguntas frecuentes</h2></div>
     <div class="faq">
       <details><summary>¿Funciona en iPhone y en Mac?</summary><p>Sí. En iPhone y iPad se usa la app web: desde Safari la agregás a la pantalla de inicio y queda con su ícono, a pantalla completa y con micrófono (en <a href="#instalar" data-tab="tb-ios">Cómo instalarla</a> hay un video de 24 segundos). En Mac funciona en Safari o Chrome, y se puede instalar como programa.</p></details>
-      <details><summary>Me cuesta la tecnología. ¿Hay algo más simple?</summary><p>Sí: el modo <b>LITE</b>. Tiene solo cuatro botones grandes (Agenda, Dar un turno, Pacientes y Recordatorios), las notas de cada visita y los cobros. Podés contratar solo LITE (USD 8 por mes) o, si tenés un plan PRO, pasar de una versión a la otra con un toque.</p></details>
       <details><summary>¿Necesito tarjeta para probarla?</summary><p>No. Creás tu cuenta con tu correo y tenés 7 días con todas las funciones (14 días para los primeros 50). Si te gusta, elegís un plan y nos escribís por WhatsApp.</p></details>
       <details><summary>Trabajo en varios consultorios. ¿Necesito varias cuentas?</summary><p>No. Con tu misma cuenta podés tener tu consultorio y sumarte a los centros donde atendés, aunque sean de otros dueños que también usan OdontoVoz. Pasás de uno a otro con un toque y ves todos tus turnos en tu agenda.</p></details>
       <details><summary>¿Mi secretaria necesita un correo?</summary><p>No. Le creás un usuario y una contraseña desde la app y entra con el código de tu cuenta. Ve solo lo que corresponde a la recepción.</p></details>
@@ -936,15 +934,13 @@ const DOLAR = 1570; /* pesos por dólar de referencia */
 document.querySelectorAll('[data-usd]').forEach(el => { el.textContent = '≈ $' + Math.round(+el.getAttribute('data-usd') * DOLAR).toLocaleString('es-AR') + ' por mes'; });
 const PLANES = [
   { nombre: 'Prueba', quien: 'Para conocerla con tus pacientes reales.', usd: 0, por: '7 días', items: ['Todas las funciones de todos los planes', 'Profesionales y consultorios sin límite de prueba', 'Hasta 5 equipos', 'Sin tarjeta de crédito', 'Lanzamiento: los primeros 50 tienen 14 días'], boton: 'Empezar gratis', link: 'app/' },
-  { nombre: 'Profesional LITE', quien: 'Para el que quiere lo justo, sin vueltas: botones grandes y pocos menús.', usd: 8, items: ['1 profesional, 1 consultorio', 'Agenda del día y turnos con un toque', 'Pacientes con teléfono, notas de cada visita y cobros', 'Recordatorios por WhatsApp listos para mandar', 'Asistente por voz y respaldo en la nube', 'Hasta 2 equipos (celular y PC)'], boton: 'Contratar' },
-  { nombre: 'Profesional PRO', quien: 'Un odontólogo, en uno o varios consultorios. Con LITE incluido.', usd: 17, items: ['1 profesional', '1 consultorio incluido', 'Consultorio adicional (hasta 5 en total): {3}', 'Hasta 2 equipos (celular y PC)', 'Asistente por voz y respaldo en la nube'], boton: 'Contratar' },
-  { nombre: 'Consultorio PRO', quien: 'Varios profesionales con recepción.', usd: 33, items: ['Hasta 3 profesionales', 'Recepción incluida', 'Hasta 5 equipos', 'Agenda compartida en vivo'], boton: 'Contratar', destacado: true },
-  { nombre: 'Centro PRO', quien: 'Clínicas y centros odontológicos.', usd: 57, items: ['Hasta 8 profesionales', 'Hasta 12 equipos', 'Liquidación por obra social', 'Ayuda para migrar los datos'], boton: 'Consultar' },
-  { nombre: 'Empresa PRO', quien: 'Dueños de 2 a 5 consultorios.', usd: 114, items: ['De 2 a 5 consultorios, cada uno con su agenda, su personal y su caja', 'Hasta 40 profesionales y 60 equipos', 'Inicio del dueño con el resumen de cada consultorio', 'Estadísticas, metas, liquidaciones y reporte para el contador', 'Personal con PIN y registro de quién hizo qué'], boton: 'Consultar' }
+  { nombre: 'Profesional', quien: 'Un odontólogo, en uno o varios consultorios.', usd: 17, items: ['1 profesional', '1 consultorio incluido', 'Hasta 2 equipos (celular y PC)', 'Consultorio adicional con un equipo más (hasta 5 en total): {3}', 'Asistente por voz y respaldo en la nube'], boton: 'Contratar' },
+  { nombre: 'Consultorio o Centro', quien: 'Varios profesionales con recepción: consultorios, clínicas y centros.', usd: 35, items: ['Hasta 3 profesionales', 'Hasta 5 equipos', 'Profesional adicional con un equipo más: {3}', 'Recepción incluida', 'Agenda compartida en vivo', 'Liquidación por obra social', 'Ayuda para migrar los datos'], boton: 'Contratar', destacado: true },
+  { nombre: 'Empresa', quien: 'Dueños de 2 a 5 consultorios.', usd: 82, items: ['De 2 a 5 consultorios, cada uno con su agenda, su personal y su caja', 'Hasta 40 profesionales y 60 equipos', 'Inicio del dueño con el resumen de cada consultorio', 'Estadísticas, metas, liquidaciones y reporte para el contador', 'Personal con PIN y registro de quién hizo qué'], boton: 'Consultar' }
 ];
 /* promoción: se muestra sola entre estas fechas (hora de Argentina) y desaparece después */
 const PROMO = { desde: '2026-11-01T00:00:00-03:00', hasta: '2026-12-01T00:00:00-03:00', descuento: 35, titulo: 'Noviembre: 35% de descuento en tu primer mes', texto: 'Si te sumás en noviembre, el primer mes de cualquier plan te sale 35% menos. Es por única vez: desde el segundo mes pagás el precio normal.' };
-const NOTA_PLANES = 'Los planes PRO traen todas las funciones y se pueden usar también en modo LITE con un toque. Precios en dólares estadounidenses con su equivalente en pesos argentinos (USD 1 = $' + DOLAR.toLocaleString('es-AR') + '), IVA incluido. En Argentina se cobra en pesos. Abono mensual, sin permanencia: podés cambiar de plan o sumar y quitar consultorios mes a mes. Ver términos y bases de las promociones.';
+const NOTA_PLANES = 'Todos los planes traen todas las funciones. Precios en dólares estadounidenses con su equivalente en pesos argentinos (USD 1 = $' + DOLAR.toLocaleString('es-AR') + '), IVA incluido. En Argentina se cobra en pesos. Abono mensual, sin permanencia: podés cambiar de plan o sumar y quitar consultorios o profesionales mes a mes. Ver términos y bases de las promociones.';
 
 (function () {
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

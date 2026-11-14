@@ -7,18 +7,18 @@
      MI PLAN Y MEJORAR PLAN
      --------------------------------------------------------------- */
   /* precios en dólares; en pesos se calculan con el dólar de referencia (mantener igual que en sitio/index.html y sitio/terminos.html) */
-  const DOLAR = 1570, USD = { lite: 8, basico: 17, consultorio: 33, centro: 57, empresa: 114, red: 114 }, USD_EXTRA = 3;
+  const DOLAR = 1570, USD = { lite: 17, basico: 17, consultorio: 35, centro: 35, empresa: 82, red: 82 }, USD_EXTRA = 3; /* 1.52: sin LITE; Consultorio y Centro unificados */
   const PRICE = {}; Object.keys(USD).forEach(k => { PRICE[k] = USD[k] * DOLAR; });
   A.PRICE_USD = USD; A.DOLAR = DOLAR;
   const DESC = {
-    lite: 'Versión simple: pacientes, agenda y recordatorios. 1 profesional',
+    lite: '1 profesional, en uno o varios consultorios',
     basico: '1 profesional, en uno o varios consultorios',
-    consultorio: 'Hasta 3 profesionales con recepción',
-    centro: 'Hasta 8 profesionales, liquidaciones y caja',
+    consultorio: 'Hasta 3 profesionales y 5 equipos, con recepción',
+    centro: 'Hasta 3 profesionales y 5 equipos, con recepción. Profesional adicional (con un equipo más): USD 3',
     empresa: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño',
     red: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño'
   };
-  const ORDER = ['lite', 'basico', 'consultorio', 'centro', 'empresa'];
+  const ORDER = ['basico', 'consultorio', 'empresa'];
   const pesos = n => '$' + Math.round(n).toLocaleString('es-AR');
   const myPlan = () => { const l = CL && CL.lic; return l && CL.session ? (l.plan || 'prueba') : null; };
   const planName = k => ((A.PLAN_INFO || {})[k] || {}).name || k;
@@ -37,7 +37,7 @@
     else b += '<div class="pl-now"><b>Tu plan: ' + esc(planName(cur)) + '</b><span>' + esc(DESC[cur] || '') + '</span></div>';
     b += '<div class="pl-list">' + ORDER.map(k => {
       const on = k === cur, lower = cur && cur !== 'prueba' && ORDER.indexOf(k) < ORDER.indexOf(cur);
-      return '<div class="pl-it' + (on ? ' on' : '') + '"><div><b>' + esc(planName(k)) + '</b><small>' + esc(DESC[k]) + '</small></div><div class="pl-pr">USD ' + USD[k] + '<small>≈ ' + pesos(PRICE[k]) + ' por mes</small>' + (k === 'basico' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por consultorio extra</small>' : '') + '</div>' +
+      return '<div class="pl-it' + (on ? ' on' : '') + '"><div><b>' + esc(planName(k)) + '</b><small>' + esc(DESC[k]) + '</small></div><div class="pl-pr">USD ' + USD[k] + '<small>≈ ' + pesos(PRICE[k]) + ' por mes</small>' + (k === 'basico' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por consultorio extra, con un equipo más</small>' : k === 'consultorio' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por profesional extra, con un equipo más</small>' : '') + '</div>' +
         (on ? '<span class="pl-tag">Tu plan</span>' : '<a class="btn small' + (lower ? '' : ' primary') + '" target="_blank" rel="noopener" href="' + esc(waLink(k)) + '">' + (lower ? 'Cambiar a este' : cur && cur !== 'prueba' ? 'Mejorar a este' : 'Quiero este') + '</a>') + '</div>';
     }).join('') + '</div><p class="hint">El cambio de plan lo hacemos nosotros por WhatsApp, en el momento. Precios en dólares, con su equivalente en pesos (USD 1 = ' + pesos(DOLAR) + '), IVA incluido. Abono mensual, sin permanencia.</p>';
     return A.modalShell('Mi plan', b, '<a class="btn" target="_blank" rel="noopener" href="' + esc(waLink(null)) + '">Consultar por WhatsApp</a><button class="btn primary" data-act="closeModal">Listo</button>');

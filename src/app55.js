@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.52', d: '2026-11-14', items: [
+      { t: 'Planes nuevos: Profesional, Consultorio o Centro y Empresa, todos con todas las funciones. Se pueden sumar consultorios o profesionales (con un equipo más) por USD 3.', top: 1 },
+      { t: 'El modo LITE ya no está: la app es una sola, completa.' }] },
     { v: '1.51', d: '2026-11-14', items: [
       { t: 'Al tocar «Cobrar» elegís: «Cobro yo ahora» o «Lo cobra la secretaria». Si la cobra ella, le aparece en «Para cobrar» de su usuario con aviso en el teléfono.', top: 1 }] },
     { v: '1.50.4', d: '2026-11-14', items: [

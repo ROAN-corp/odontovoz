@@ -37,7 +37,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.35 (noviem
 - No repetir credenciales en el chat.
 
 ## Planes (hechos en 1.7.1/1.8)
-- Prueba 7 días (14 para las primeras 50 cuentas, `promo = 'lanzamiento50'`, ya cargado en Supabase). Desde 1.35 los precios están en dólares (USD 1 = $1.570): Profesional LITE USD 8 (1.36); Profesional PRO USD 17 + USD 3 por consultorio adicional; Consultorio USD 33; Centro USD 57; Empresa USD 114; IVA incluido, abono mensual, se muestran también en pesos. Noviembre 2026: 35% solo el primer mes (`PROMO` en `sitio/index.html`, se apaga solo).
+- Prueba 7 días (14 para las primeras 50 cuentas, `promo = 'lanzamiento50'`, ya cargado en Supabase). Desde 1.35 los precios están en dólares (USD 1 = $1.570): (1.52) Profesional USD 17 + USD 3 por consultorio adicional con un equipo (hasta 5); Consultorio o Centro USD 35 (3 profesionales, 5 equipos) + USD 3 por profesional adicional con un equipo; Empresa USD 82; sin LITE; IVA incluido, abono mensual, se muestran también en pesos. Noviembre 2026: 35% solo el primer mes (`PROMO` en `sitio/index.html`, se apaga solo).
 - Soporte por WhatsApp: Rodrigo 5492984513279 y Angel 5492984764428 (`A.SUPPORT` en `src/app5.js`, `CONTACTO` en `sitio/index.html`).
 - La evolución clínica (`src/app15.js`) borra notas del día y automáticas; las manuales viejas se anulan (Ley 26.529). El plan de tratamiento está en `src/app16.js`.
 - 1.9 (`src/app17.js`): turnero online con link (`sitio/turnos.html`, tablas `ov_booking` y `ov_booking_req`, SQL `supabase/turnero.sql`), recordatorios en el inicio y «Cambios de hoy» para deshacer en el día.

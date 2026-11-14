@@ -548,6 +548,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.52 · Planes nuevos y sin LITE
+
+- Planes: Prueba (7 días), Profesional USD 17 (+ USD 3 por consultorio adicional con un equipo, hasta 5), Consultorio o Centro USD 35 (3 profesionales, 5 equipos; + USD 3 por profesional adicional con un equipo), Empresa USD 82. Sin «PRO» en los nombres.
+- Sin modo LITE en la web, la app y el APK (`src/app76.js`: `A.liteOn`/`A.liteForced` siempre falsos; cuentas con plan `lite` = Profesional).
+- Panel: campo «Adicionales» que completa profesionales/consultorios y equipos. Términos y privacidad versión 2026-11-14.
+
 ## OdontoVoz 1.51 · ¿Quién cobra?
 
 - «Prácticas de hoy»: pie con «Cobrar después» y «Cobrar $X →», que abre «¿Quién le cobra?»: Cobro yo ahora (abre el cobro) / Lo cobra la secretaria (va a «Para cobrar» de la recepción). En todos los modos, también Profesional. Se resalta la última elección.

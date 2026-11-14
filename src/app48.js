@@ -69,7 +69,7 @@
 
   /* ---------- videos tutoriales por modo ---------- */
   const VBASE = 'https://roan-corp.github.io/odontovoz/video/';
-  const VIDS = [['pro', 'Profesional'], ['centro', 'Consultorio y centro'], ['empresa', 'Empresa'], ['lite', 'LITE']];
+  const VIDS = [['pro', 'Profesional'], ['centro', 'Consultorio o centro'], ['empresa', 'Empresa']];
   const myVid = () => (A.liteOn && A.liteOn()) ? 'lite' : !S.setup ? 'centro' : S.setup.type === 'empresa' ? 'empresa' : S.setup.type === 'solo' ? 'pro' : 'centro';
   A.acts.tutVid = el => { if (A.hideDrawer) A.hideDrawer(); S.modal = { type: 'tutVid', v: (el && el.getAttribute && el.getAttribute('data-v')) || myVid() }; A.renderModal(); };
   MF.tutVid = m => {

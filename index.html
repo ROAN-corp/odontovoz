@@ -6488,7 +6488,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
     set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } }
   };
-  const PRIV_VER = '2026-11-11.2';
+  const PRIV_VER = '2026-11-14';
   A.TERMS_VER = PRIV_VER;
   const WEB = 'https://roan-corp.github.io/odontovoz/';
 
@@ -7970,7 +7970,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.51';
+  A.VERSION = '1.52';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -8081,7 +8081,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, CL = A.cloud;
   if (!CL) return;
-  const PLANES = { prueba: 'Prueba gratis', lite: 'Profesional LITE', basico: 'Profesional PRO', consultorio: 'Consultorio PRO', centro: 'Centro PRO', empresa: 'Empresa PRO', red: 'Empresa PRO' };
+  const PLANES = { prueba: 'Prueba gratis', lite: 'Profesional', basico: 'Profesional', consultorio: 'Consultorio o Centro', centro: 'Consultorio o Centro', empresa: 'Empresa', red: 'Empresa' };
   const ADMIN_URL = 'https://roan-corp.github.io/odontovoz/admin.html';
   CL.lic = null; CL.readonly = false; CL.isAdmin = false;
   const today = () => A.today();
@@ -10865,14 +10865,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* lo mismo que controla el servidor (supabase/limites.sql) */
   const PLAN = {
     prueba: { name: 'Prueba gratis', pros: 40, devices: 5, locs: 5, centros: 5 }, /* 1.17: la prueba trae todo, para conocer cualquier plan */
-    lite: { name: 'Profesional LITE', pros: 1, devices: 2, locs: 1 }, /* 1.36: versión simple, solo un profesional */
-    basico: { name: 'Profesional PRO', pros: 1, devices: 2, locs: 1 },
-    consultorio: { name: 'Consultorio PRO', pros: 3, devices: 5, locs: 1 },
-    centro: { name: 'Centro PRO', pros: 8, devices: 12, locs: 5 },
-    empresa: { name: 'Empresa PRO', pros: 40, devices: 60, locs: 5, centros: 5 },
-    red: { name: 'Empresa PRO', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */
+    lite: { name: 'Profesional', pros: 1, devices: 2, locs: 1 }, /* 1.52: LITE ya no existe; las cuentas viejas quedan como Profesional */
+    basico: { name: 'Profesional', pros: 1, devices: 2, locs: 1 },
+    consultorio: { name: 'Consultorio o Centro', pros: 3, devices: 5, locs: 1 },
+    centro: { name: 'Consultorio o Centro', pros: 8, devices: 12, locs: 5 }, /* plan anterior (se respetan sus límites) */
+    empresa: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 },
+    red: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */
   };
-  const NEXT = { prueba: null, lite: 'basico', basico: 'consultorio', consultorio: 'centro', centro: 'empresa', empresa: null, red: null };
+  const NEXT = { prueba: null, lite: 'consultorio', basico: 'consultorio', consultorio: 'empresa', centro: 'empresa', empresa: null, red: null };
   A.PLAN_INFO = PLAN;
   const lic = () => (CL && CL.lic) || null;
   const real = () => !!(CL && CL.session && !A.DEMO);
@@ -10919,7 +10919,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* los nombres de los tipos de cuenta, iguales a los planes de la web */
   const rename = h => h
     .replace('<b>Soy un odontólogo</b><span>Consultorio individual</span>', '<b>Profesional</b><span>Un odontólogo, en uno o varios consultorios</span>')
-    .replace('<b>Somos un centro odontológico</b><span>Dos o más odontólogos</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y recepción (planes Consultorio y Centro)</span>')
+    .replace('<b>Somos un centro odontológico</b><span>Dos o más odontólogos</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y recepción (plan Consultorio o Centro)</span>')
     .replace('<b>Odontólogo</b><span>Consultorio individual</span>', '<b>Profesional</b><span>Un odontólogo</span>')
     .replace('<b>Centro odontológico</b><span>Dos o más profesionales</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y recepción</span>');
   const limLine = () => { const L = A.limits(); return L ? '<div class="pl-line">Tu plan: <b>' + esc(L.name) + '</b> · hasta ' + L.pros + ' profesional' + (L.pros > 1 ? 'es' : '') + ' · ' + L.devices + ' equipos</div>' : ''; };
@@ -11512,18 +11512,18 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
      MI PLAN Y MEJORAR PLAN
      --------------------------------------------------------------- */
   /* precios en dólares; en pesos se calculan con el dólar de referencia (mantener igual que en sitio/index.html y sitio/terminos.html) */
-  const DOLAR = 1570, USD = { lite: 8, basico: 17, consultorio: 33, centro: 57, empresa: 114, red: 114 }, USD_EXTRA = 3;
+  const DOLAR = 1570, USD = { lite: 17, basico: 17, consultorio: 35, centro: 35, empresa: 82, red: 82 }, USD_EXTRA = 3; /* 1.52: sin LITE; Consultorio y Centro unificados */
   const PRICE = {}; Object.keys(USD).forEach(k => { PRICE[k] = USD[k] * DOLAR; });
   A.PRICE_USD = USD; A.DOLAR = DOLAR;
   const DESC = {
-    lite: 'Versión simple: pacientes, agenda y recordatorios. 1 profesional',
+    lite: '1 profesional, en uno o varios consultorios',
     basico: '1 profesional, en uno o varios consultorios',
-    consultorio: 'Hasta 3 profesionales con recepción',
-    centro: 'Hasta 8 profesionales, liquidaciones y caja',
+    consultorio: 'Hasta 3 profesionales y 5 equipos, con recepción',
+    centro: 'Hasta 3 profesionales y 5 equipos, con recepción. Profesional adicional (con un equipo más): USD 3',
     empresa: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño',
     red: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño'
   };
-  const ORDER = ['lite', 'basico', 'consultorio', 'centro', 'empresa'];
+  const ORDER = ['basico', 'consultorio', 'empresa'];
   const pesos = n => '$' + Math.round(n).toLocaleString('es-AR');
   const myPlan = () => { const l = CL && CL.lic; return l && CL.session ? (l.plan || 'prueba') : null; };
   const planName = k => ((A.PLAN_INFO || {})[k] || {}).name || k;
@@ -11542,7 +11542,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     else b += '<div class="pl-now"><b>Tu plan: ' + esc(planName(cur)) + '</b><span>' + esc(DESC[cur] || '') + '</span></div>';
     b += '<div class="pl-list">' + ORDER.map(k => {
       const on = k === cur, lower = cur && cur !== 'prueba' && ORDER.indexOf(k) < ORDER.indexOf(cur);
-      return '<div class="pl-it' + (on ? ' on' : '') + '"><div><b>' + esc(planName(k)) + '</b><small>' + esc(DESC[k]) + '</small></div><div class="pl-pr">USD ' + USD[k] + '<small>≈ ' + pesos(PRICE[k]) + ' por mes</small>' + (k === 'basico' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por consultorio extra</small>' : '') + '</div>' +
+      return '<div class="pl-it' + (on ? ' on' : '') + '"><div><b>' + esc(planName(k)) + '</b><small>' + esc(DESC[k]) + '</small></div><div class="pl-pr">USD ' + USD[k] + '<small>≈ ' + pesos(PRICE[k]) + ' por mes</small>' + (k === 'basico' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por consultorio extra, con un equipo más</small>' : k === 'consultorio' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por profesional extra, con un equipo más</small>' : '') + '</div>' +
         (on ? '<span class="pl-tag">Tu plan</span>' : '<a class="btn small' + (lower ? '' : ' primary') + '" target="_blank" rel="noopener" href="' + esc(waLink(k)) + '">' + (lower ? 'Cambiar a este' : cur && cur !== 'prueba' ? 'Mejorar a este' : 'Quiero este') + '</a>') + '</div>';
     }).join('') + '</div><p class="hint">El cambio de plan lo hacemos nosotros por WhatsApp, en el momento. Precios en dólares, con su equivalente en pesos (USD 1 = ' + pesos(DOLAR) + '), IVA incluido. Abono mensual, sin permanencia.</p>';
     return A.modalShell('Mi plan', b, '<a class="btn" target="_blank" rel="noopener" href="' + esc(waLink(null)) + '">Consultar por WhatsApp</a><button class="btn primary" data-act="closeModal">Listo</button>');
@@ -16541,7 +16541,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* ---------- videos tutoriales por modo ---------- */
   const VBASE = 'https://roan-corp.github.io/odontovoz/video/';
-  const VIDS = [['pro', 'Profesional'], ['centro', 'Consultorio y centro'], ['empresa', 'Empresa'], ['lite', 'LITE']];
+  const VIDS = [['pro', 'Profesional'], ['centro', 'Consultorio o centro'], ['empresa', 'Empresa']];
   const myVid = () => (A.liteOn && A.liteOn()) ? 'lite' : !S.setup ? 'centro' : S.setup.type === 'empresa' ? 'empresa' : S.setup.type === 'solo' ? 'pro' : 'centro';
   A.acts.tutVid = el => { if (A.hideDrawer) A.hideDrawer(); S.modal = { type: 'tutVid', v: (el && el.getAttribute && el.getAttribute('data-v')) || myVid() }; A.renderModal(); };
   MF.tutVid = m => {
@@ -18030,6 +18030,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.52', d: '2026-11-14', items: [
+      { t: 'Planes nuevos: Profesional, Consultorio o Centro y Empresa, todos con todas las funciones. Se pueden sumar consultorios o profesionales (con un equipo más) por USD 3.', top: 1 },
+      { t: 'El modo LITE ya no está: la app es una sola, completa.' }] },
     { v: '1.51', d: '2026-11-14', items: [
       { t: 'Al tocar «Cobrar» elegís: «Cobro yo ahora» o «Lo cobra la secretaria». Si la cobra ella, le aparece en «Para cobrar» de su usuario con aviso en el teléfono.', top: 1 }] },
     { v: '1.50.4', d: '2026-11-14', items: [
@@ -20978,6 +20981,25 @@ const OVMenu = (function () {
   const css = document.createElement('style');
   css.textContent = '.fs-ops{display:grid;gap:8px}.fs-ref{display:flex;gap:8px;align-items:flex-start;margin:-2px 4px 4px;padding:10px 12px;border-radius:12px;background:#fff6e0;font-size:.88rem}.fs-ref span{line-height:1.35}.os-ref{color:#8a5a00}.fs-op{display:grid;gap:3px;text-align:left;border:1.5px solid var(--line,#ccd);border-radius:14px;padding:12px 14px;background:var(--card,#fff);color:inherit;font:inherit;cursor:pointer}.fs-op span{font-size:.85rem;color:var(--muted,#567)}.fs-op.on{border-color:var(--teal,#0b6b6f);box-shadow:0 0 0 3px rgba(11,107,111,.15)}.fa-box select{padding:8px 10px;border-radius:10px;border:1px solid var(--line,#ccd);font:inherit;background:var(--card,#fff);color:inherit}' +
     '.fa-box{display:grid;gap:4px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#d5e2e1);border-radius:14px;background:var(--soft,#f1f8f7)}.fa-box small{color:var(--muted,#567);font-size:.83rem;line-height:1.35}.fa-man{font-style:normal;color:#b26a00;font-size:.85em}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.52: sin modo LITE (las cuentas con plan LITE quedan como Profesional) y planes: Profesional, Consultorio o Centro, Empresa ===== */
+(function () {
+  'use strict';
+  const A = window.App;
+  /* LITE ya no se ofrece: nunca se activa y se borra la preferencia guardada en el equipo */
+  try { localStorage.removeItem('odontovoz.lite'); } catch (e) { /* nada */ }
+  A.liteForced = () => false;
+  A.liteOn = () => false;
+  ['liteOn', 'liteToggle', 'liteUp'].forEach(k => { if (A.acts[k]) A.acts[k] = () => {}; });
+  const clean = () => {
+    document.body.classList.remove('lite');
+    document.querySelectorAll('#drLite, .lt-try').forEach(x => x.remove());
+  };
+  const arPrev = A.afterRefresh;
+  A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; try { clean(); } catch (e) { /* nada */ } return r; };
+  const css = document.createElement('style');
+  css.textContent = '#drLite,.lt-try{display:none!important}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

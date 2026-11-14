@@ -41,7 +41,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
 (function () {
   'use strict';
   const URL0 = 'https://hcppfvioiaaejayzzhpa.supabase.co', KEY = 'sb_publishable_N-Qc-l7kJc4A7rvX68ko7Q_CiTI2HtU';
-  const PLANES = { prueba: 'Prueba', lite: 'Profesional LITE', basico: 'Profesional PRO', consultorio: 'Consultorio PRO', centro: 'Centro PRO', empresa: 'Empresa PRO', red: 'Empresa (nombre viejo)' };
+  const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio o Centro', empresa: 'Empresa', lite: 'Profesional LITE (ya no se ofrece)', centro: 'Centro (plan anterior, 8 prof.)', red: 'Empresa (nombre viejo)' };
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let ses = null, rows = [], fb = null, rq = null, wa = null, q = '', filt = 'todas';
@@ -135,7 +135,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
   const DEF = { prueba: [40, 5, 5], lite: [1, 2, 1], basico: [1, 2, 1], consultorio: [3, 5, 1], centro: [8, 12, 5], empresa: [40, 60, 5], red: [40, 60, 5] };
   function edit(r, payTo) {
     const d = document.createElement('div'); d.className = 'drawer';
-    d.innerHTML = '<div class="card"><h2 style="margin:0">' + esc(r.email) + '</h2><div class="row2"><div><label>Plan</label><select id="ePl">' + Object.keys(PLANES).filter(k => k !== 'red' || r.plan === 'red').map(k => '<option value="' + k + '"' + (k === r.plan ? ' selected' : '') + '>' + PLANES[k] + '</option>').join('') + '</select></div><div><label>Estado</label><select id="eSt"><option value="activa"' + (r.status === 'activa' ? ' selected' : '') + '>activa</option><option value="suspendida"' + (r.status === 'suspendida' ? ' selected' : '') + '>suspendida</option></select></div></div>' +
+    d.innerHTML = '<div class="card"><h2 style="margin:0">' + esc(r.email) + '</h2><div class="row2"><div><label>Plan</label><select id="ePl">' + Object.keys(PLANES).filter(k => ['red', 'lite', 'centro'].indexOf(k) < 0 || r.plan === k).map(k => '<option value="' + k + '"' + (k === r.plan ? ' selected' : '') + '>' + PLANES[k] + '</option>').join('') + '</select></div><div><label>Estado</label><select id="eSt"><option value="activa"' + (r.status === 'activa' ? ' selected' : '') + '>activa</option><option value="suspendida"' + (r.status === 'suspendida' ? ' selected' : '') + '>suspendida</option></select></div></div>' +
       '<div class="row2"><div><label>Prueba hasta</label><input type="date" id="eTr" value="' + esc(r.trial_until || '') + '"></div><div><label>Pagado hasta</label><input type="date" id="ePa" value="' + esc(r.paid_until || '') + '"></div></div>' +
       '<p class="muted" id="eDef" style="margin:0"></p><div class="row2"><div><label>Profesionales (vacío = según el plan)</label><input type="number" min="1" max="50" id="ePr" value="' + (r.lim_pros || '') + '"></div><div><label>Equipos (vacío = según el plan)</label><input type="number" min="1" max="50" id="eDv" value="' + (r.lim_devices || '') + '"></div></div><div><label>Consultorios del modo profesional (1 a 5, vacío = según el plan)</label><input type="number" min="1" max="5" id="eLc" value="' + (r.max_locs || '') + '"></div>' + (r.flags ? '<div class="err" style="color:inherit"><b>Aviso:</b> ' + esc(r.flags) + ' <button class="small" id="eFl">Quitar aviso</button></div>' : '') + '<div><label>Notas (pagos, teléfono, acuerdos)</label><textarea id="eNo" rows="3">' + esc(r.notes || '') + '</textarea></div><div class="err" id="eEr"></div>' +
       '<div class="acts" style="justify-content:flex-end"><button id="eCa">Cancelar</button><button class="primary" id="eOk">Guardar</button></div></div>';
@@ -143,7 +143,24 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     d.onclick = e => { if (e.target === d) d.remove(); };
     $('#eCa').onclick = () => d.remove();
     const defs = () => { const v = DEF[$('#ePl').value] || DEF.prueba; $('#eDef').textContent = 'El plan ' + PLANES[$('#ePl').value] + ' incluye ' + v[0] + ' profesional' + (v[0] > 1 ? 'es' : '') + ', ' + v[1] + ' equipos y ' + v[2] + ' consultorio' + (v[2] > 1 ? 's' : '') + '. Completá un número solo para hacer una excepción.'; $('#ePr').placeholder = v[0]; $('#eDv').placeholder = v[1]; $('#eLc').placeholder = v[2]; };
-    $('#ePl').onchange = defs; defs();
+    $('#ePl').onchange = () => { defs(); addSync(); }; defs();
+    /* 1.52: adicionales de USD 3 (Profesional: consultorio + equipo; Consultorio o Centro: profesional + equipo) */
+    $('#eDef').insertAdjacentHTML('afterend', '<div id="eAddW"><label id="eAddL">Adicionales (USD 3 c/u)</label><input type="number" min="0" max="40" id="eAdd" placeholder="0"><p class="muted" id="eAddH" style="margin:2px 0 0"></p></div>');
+    const addSync = () => {
+      const pl = $('#ePl').value, v = DEF[pl] || DEF.prueba, w = $('#eAddW'), ok = pl === 'basico' || pl === 'consultorio';
+      w.style.display = ok ? '' : 'none'; if (!ok) return;
+      $('#eAddL').textContent = pl === 'basico' ? 'Consultorios adicionales (USD 3 c/u, cada uno suma un equipo; hasta 4)' : 'Profesionales adicionales (USD 3 c/u, cada uno suma un equipo)';
+      const cur = pl === 'basico' ? Math.max(0, (parseInt($('#eLc').value, 10) || v[2]) - v[2]) : Math.max(0, (parseInt($('#ePr').value, 10) || v[0]) - v[0]);
+      if (document.activeElement !== $('#eAdd')) $('#eAdd').value = cur || '';
+      $('#eAddH').textContent = cur ? 'Abono: USD ' + ((pl === 'basico' ? 17 : 35) + 3 * cur) + ' por mes.' : '';
+    };
+    $('#eAdd').oninput = () => {
+      const pl = $('#ePl').value, v = DEF[pl] || DEF.prueba; let n = Math.max(0, parseInt($('#eAdd').value, 10) || 0);
+      if (pl === 'basico') { n = Math.min(4, n); $('#eLc').value = n ? v[2] + n : ''; $('#eDv').value = n ? v[1] + n : ''; }
+      else if (pl === 'consultorio') { $('#ePr').value = n ? v[0] + n : ''; $('#eDv').value = n ? v[1] + n : ''; }
+      $('#eAddH').textContent = n ? 'Abono: USD ' + ((pl === 'basico' ? 17 : 35) + 3 * n) + ' por mes.' : '';
+    };
+    addSync();
     if (payTo) { $('#ePa').value = payTo; $('#eSt').value = 'activa'; if ($('#ePl').value === 'prueba') $('#ePl').value = 'basico'; defs(); $('#eEr').textContent = 'Elegí el plan que contrató y guardá.'; }
     if ($('#eFl')) $('#eFl').onclick = async () => { await patch(r.owner, { flags: null }); d.remove(); };
     $('#eOk').onclick = async () => {
