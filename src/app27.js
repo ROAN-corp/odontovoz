@@ -3,7 +3,7 @@
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, CL = A.cloud;
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
-  const WEB = 'https://roan-corp.github.io/odontovoz/';
+  const WEB = 'https://odontovoz.com.ar/';
   const VER = A.TERMS_VER || '2026-11-05', VOICE_VER = '2026-11-05';
   const real = () => !!(CL && CL.session && !A.DEMO);
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });

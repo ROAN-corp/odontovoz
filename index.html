@@ -6490,7 +6490,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   const PRIV_VER = '2026-11-14';
   A.TERMS_VER = PRIV_VER;
-  const WEB = 'https://roan-corp.github.io/odontovoz/';
+  const WEB = 'https://odontovoz.com.ar/';
 
   /* ---------- servidor (Supabase): dirección y clave pública del proyecto ---------- */
   const conf = () => {
@@ -6592,7 +6592,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* ---------- registro, ingreso, contraseña ---------- */
   /* a dónde vuelve el enlace del correo: siempre la app publicada (sin esto Supabase usaba la página de origen y daba 404) */
-  const BACK = '?redirect_to=' + encodeURIComponent('https://roan-corp.github.io/odontovoz/app/');
+  const BACK = '?redirect_to=' + encodeURIComponent('https://odontovoz.com.ar/app/');
   CL.signUp = async (email, pass, meta) => {
     const d = await http('/auth/v1/signup' + BACK, { method: 'POST', auth: false, body: { email, password: pass, data: meta } });
     if (d && d.access_token) { saveSession(asSession(d)); return { in: true }; }
@@ -6898,7 +6898,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (!np) h += '<div class="field"><label for="lgMail">Correo electrónico</label><input id="lgMail" type="email" autocomplete="email" inputmode="email" required value="' + esc(CL._mail || '') + '"></div>';
     if (!rec) h += '<div class="field"><label for="lgPass">' + (np ? 'Nueva contraseña' : 'Contraseña') + '</label><input id="lgPass" type="password" autocomplete="' + (up || np ? 'new-password' : 'current-password') + '" minlength="8" required></div>';
     if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
-    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
+    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://odontovoz.com.ar/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
     if (!up && !rec && !np) h += CL.keepBox();
     h += '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';
@@ -8082,7 +8082,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, CL = A.cloud;
   if (!CL) return;
   const PLANES = { prueba: 'Prueba gratis', lite: 'Profesional', basico: 'Profesional', consultorio: 'Consultorio o Centro', centro: 'Consultorio o Centro', empresa: 'Empresa', red: 'Empresa' };
-  const ADMIN_URL = 'https://roan-corp.github.io/odontovoz/admin.html';
+  const ADMIN_URL = 'https://odontovoz.com.ar/admin.html';
   CL.lic = null; CL.readonly = false; CL.isAdmin = false;
   const today = () => A.today();
   const until = l => (l ? [l.trial_until, l.paid_until].filter(Boolean).sort().pop() : null);
@@ -10253,7 +10253,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const N = s => A.norm(String(s || ''));
   const J = v => JSON.stringify(v === undefined ? null : v);
   const hhmm = (d) => { d = d || new Date(); return A.pad(d.getHours()) + ':' + A.pad(d.getMinutes()); };
-  const PUBLIC = 'https://roan-corp.github.io/odontovoz/';
+  const PUBLIC = 'https://odontovoz.com.ar/';
   const real = () => !!(CL && CL.session && CL.conf && CL.conf() && !A.DEMO);
 
   /* =====================================================================
@@ -11660,7 +11660,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, CL = A.cloud;
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
-  const WEB = 'https://roan-corp.github.io/odontovoz/';
+  const WEB = 'https://odontovoz.com.ar/';
   const VER = A.TERMS_VER || '2026-11-05', VOICE_VER = '2026-11-05';
   const real = () => !!(CL && CL.session && !A.DEMO);
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
@@ -13395,7 +13395,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const sedeName = id => { const l = sedes().filter(x => x.id === id)[0]; return l ? l.name : ''; };
   const proName = id => { const p = A.PROS.filter(x => x.id === id)[0]; return p ? p.name : ''; };
   /* el enlace siempre apunta a la app publicada (desde el APK la dirección propia es «localhost» y no sirve para otros) */
-  const PUB_APP = 'https://roan-corp.github.io/odontovoz/app/';
+  const PUB_APP = 'https://odontovoz.com.ar/app/';
   const appUrl = () => (/^https?:$/.test(location.protocol) && !/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname) && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? location.origin + location.pathname.replace(/index\.html$/, '') : PUB_APP);
   const fmtWhen = t => { if (!t) return 'nunca'; const d = new Date(t), s = (Date.now() - d) / 1000; return s < 120 ? 'recién' : s < 3600 ? 'hace ' + Math.round(s / 60) + ' min' : s < 86400 ? 'hace ' + Math.round(s / 3600) + ' h' : A.fmtDMY(d.toISOString().slice(0, 10)); };
 
@@ -14158,7 +14158,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const LSs = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* nada */ } };
   const KEY = () => 'odontovoz.nf.' + (A.DEMO ? 'demo' : (A.ownerId && A.ownerId()) || 'local');
   const APK_URL = 'https://github.com/ROAN-corp/odontovoz/releases/latest/download/OdontoVoz.apk';
-  const WEB_SW = 'https://roan-corp.github.io/odontovoz/app/sw.js';
+  const WEB_SW = 'https://odontovoz.com.ar/app/sw.js';
   const native = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   const mb = () => (A.memberNow && A.memberNow()) || null;
   const isOwner = () => !mb();
@@ -16540,7 +16540,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
 
   /* ---------- videos tutoriales por modo ---------- */
-  const VBASE = 'https://roan-corp.github.io/odontovoz/video/';
+  const VBASE = 'https://odontovoz.com.ar/video/';
   const VIDS = [['pro', 'Profesional'], ['centro', 'Consultorio o centro'], ['empresa', 'Empresa']];
   const myVid = () => (A.liteOn && A.liteOn()) ? 'lite' : !S.setup ? 'centro' : S.setup.type === 'empresa' ? 'empresa' : S.setup.type === 'solo' ? 'pro' : 'centro';
   A.acts.tutVid = el => { if (A.hideDrawer) A.hideDrawer(); S.modal = { type: 'tutVid', v: (el && el.getAttribute && el.getAttribute('data-v')) || myVid() }; A.renderModal(); };
@@ -17436,7 +17436,7 @@ const OVMenu = (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
   const N = s => A.norm(String(s == null ? '' : s).replace(/([a-z])([A-Z])/g, '$1 $2')).replace(/[_\-.:]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const PAGE = 'https://roan-corp.github.io/odontovoz/mudanza.html';
+  const PAGE = 'https://odontovoz.com.ar/mudanza.html';
   const MANY = 5000;   // hoy cada equipo guarda todo en el navegador: más de esto conviene traer solo los activos
 
   /* ---------- leer campos de registros de cualquier sistema ---------- */
@@ -19528,7 +19528,7 @@ const OVMenu = (function () {
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(n || 0);
   const N = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const URL = 'https://roan-corp.github.io/odontovoz/aranceles/forn.json';
+  const URL = 'https://odontovoz.com.ar/aranceles/forn.json';
   const RN = 'Federación Odontológica de Río Negro';
   const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
 

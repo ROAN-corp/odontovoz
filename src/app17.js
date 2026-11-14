@@ -5,7 +5,7 @@
   const N = s => A.norm(String(s || ''));
   const J = v => JSON.stringify(v === undefined ? null : v);
   const hhmm = (d) => { d = d || new Date(); return A.pad(d.getHours()) + ':' + A.pad(d.getMinutes()); };
-  const PUBLIC = 'https://roan-corp.github.io/odontovoz/';
+  const PUBLIC = 'https://odontovoz.com.ar/';
   const real = () => !!(CL && CL.session && CL.conf && CL.conf() && !A.DEMO);
 
   /* =====================================================================

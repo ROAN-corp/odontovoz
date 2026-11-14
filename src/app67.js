@@ -6,7 +6,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(n || 0);
   const N = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const URL = 'https://roan-corp.github.io/odontovoz/aranceles/forn.json';
+  const URL = 'https://odontovoz.com.ar/aranceles/forn.json';
   const RN = 'Federación Odontológica de Río Negro';
   const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
 

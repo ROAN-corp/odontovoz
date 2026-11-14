@@ -28,7 +28,7 @@
   const sedeName = id => { const l = sedes().filter(x => x.id === id)[0]; return l ? l.name : ''; };
   const proName = id => { const p = A.PROS.filter(x => x.id === id)[0]; return p ? p.name : ''; };
   /* el enlace siempre apunta a la app publicada (desde el APK la dirección propia es «localhost» y no sirve para otros) */
-  const PUB_APP = 'https://roan-corp.github.io/odontovoz/app/';
+  const PUB_APP = 'https://odontovoz.com.ar/app/';
   const appUrl = () => (/^https?:$/.test(location.protocol) && !/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname) && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? location.origin + location.pathname.replace(/index\.html$/, '') : PUB_APP);
   const fmtWhen = t => { if (!t) return 'nunca'; const d = new Date(t), s = (Date.now() - d) / 1000; return s < 120 ? 'recién' : s < 3600 ? 'hace ' + Math.round(s / 60) + ' min' : s < 86400 ? 'hace ' + Math.round(s / 3600) + ' h' : A.fmtDMY(d.toISOString().slice(0, 10)); };
 

@@ -8,7 +8,7 @@
   };
   const PRIV_VER = '2026-11-14';
   A.TERMS_VER = PRIV_VER;
-  const WEB = 'https://roan-corp.github.io/odontovoz/';
+  const WEB = 'https://odontovoz.com.ar/';
 
   /* ---------- servidor (Supabase): dirección y clave pública del proyecto ---------- */
   const conf = () => {
@@ -110,7 +110,7 @@
 
   /* ---------- registro, ingreso, contraseña ---------- */
   /* a dónde vuelve el enlace del correo: siempre la app publicada (sin esto Supabase usaba la página de origen y daba 404) */
-  const BACK = '?redirect_to=' + encodeURIComponent('https://roan-corp.github.io/odontovoz/app/');
+  const BACK = '?redirect_to=' + encodeURIComponent('https://odontovoz.com.ar/app/');
   CL.signUp = async (email, pass, meta) => {
     const d = await http('/auth/v1/signup' + BACK, { method: 'POST', auth: false, body: { email, password: pass, data: meta } });
     if (d && d.access_token) { saveSession(asSession(d)); return { in: true }; }
@@ -416,7 +416,7 @@
     if (!np) h += '<div class="field"><label for="lgMail">Correo electrónico</label><input id="lgMail" type="email" autocomplete="email" inputmode="email" required value="' + esc(CL._mail || '') + '"></div>';
     if (!rec) h += '<div class="field"><label for="lgPass">' + (np ? 'Nueva contraseña' : 'Contraseña') + '</label><input id="lgPass" type="password" autocomplete="' + (up || np ? 'new-password' : 'current-password') + '" minlength="8" required></div>';
     if (up || np) h += '<div class="field"><label for="lgPass2">Repetí la contraseña</label><input id="lgPass2" type="password" autocomplete="new-password" minlength="8" required></div><div class="hint" style="margin:0">Mínimo 8 caracteres, con letras y números.</div>';
-    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://roan-corp.github.io/odontovoz/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
+    if (up) h += '<label class="chk"><input type="checkbox" id="lgOk1"> Leí y acepto los <a href="https://odontovoz.com.ar/terminos.html" target="_blank" rel="noopener">términos y condiciones</a> (incluido el contrato de encargado de datos) y la <a href="#" data-act="privacyOpen">política de privacidad</a>.</label>' +
       '<label class="chk"><input type="checkbox" id="lgOk2"> Soy profesional de la salud (o trabajo para uno) y voy a registrar datos de pacientes con su consentimiento, respetando el secreto profesional.</label>';
     if (!up && !rec && !np) h += CL.keepBox();
     h += '<div id="lgMsg" class="lg-alert' + (msg ? ' bad' : '') + '" role="alert" aria-live="assertive"' + (msg ? '' : ' hidden') + '>' + esc(msg || '') + '</div>';

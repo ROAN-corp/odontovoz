@@ -6,7 +6,7 @@
   const LSs = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* nada */ } };
   const KEY = () => 'odontovoz.nf.' + (A.DEMO ? 'demo' : (A.ownerId && A.ownerId()) || 'local');
   const APK_URL = 'https://github.com/ROAN-corp/odontovoz/releases/latest/download/OdontoVoz.apk';
-  const WEB_SW = 'https://roan-corp.github.io/odontovoz/app/sw.js';
+  const WEB_SW = 'https://odontovoz.com.ar/app/sw.js';
   const native = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   const mb = () => (A.memberNow && A.memberNow()) || null;
   const isOwner = () => !mb();

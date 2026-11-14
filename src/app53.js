@@ -3,7 +3,7 @@
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
   const N = s => A.norm(String(s == null ? '' : s).replace(/([a-z])([A-Z])/g, '$1 $2')).replace(/[_\-.:]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const PAGE = 'https://roan-corp.github.io/odontovoz/mudanza.html';
+  const PAGE = 'https://odontovoz.com.ar/mudanza.html';
   const MANY = 5000;   // hoy cada equipo guarda todo en el navegador: más de esto conviene traer solo los activos
 
   /* ---------- leer campos de registros de cualquier sistema ---------- */
