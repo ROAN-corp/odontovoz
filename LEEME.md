@@ -548,6 +548,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.50.5 · Aumentos de la Federación al día
+
+- Los aranceles de la FORN se revisan también todos los lunes (además del día 2): si la Federación publica un aumento a mitad de mes, se aplica solo.
+- Río Negro: cualquier valor (también uno editado) sube si la Federación publica uno más alto; nunca baja. Neuquén con referencia: lo editado no se toca más.
+
 ## OdontoVoz 1.50.4 · Neuquén con referencia de Río Negro
 
 - Al elegir Neuquén se pregunta si se precargan los de Río Negro como referencia (`fornSrc = 'nqnref'`): se cargan y actualizan como en Río Negro (solo suben, lo editado no se toca) y en el cobro se ve «(ref. Río Negro)».

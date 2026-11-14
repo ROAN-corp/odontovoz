@@ -7970,7 +7970,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.50.4';
+  A.VERSION = '1.50.5';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -20786,6 +20786,7 @@ const OVMenu = (function () {
       if (map.sub && cos != null) cov = Math.max(0, cov - cos);
       const a = o.aran[code];
       if (!a) { o.aran[code] = { on: true, cov, cos: cos != null ? cos : 0, forn: 1 }; if (!(A.NOMEN || []).some(x => x[0] === code)) o.aran[code].label = t.rows[code].d; n++; return; }
+      if (a.man && A.fornIsRef && A.fornIsRef()) return; /* Neuquén: lo que cambiaste por el valor de Neuquén no se toca más */
       if (cov > (a.cov || 0)) { a.cov = cov; n++; }
       if (cos != null && cos > (a.cos || 0) && !a.man) { a.cos = cos; n++; }
     });

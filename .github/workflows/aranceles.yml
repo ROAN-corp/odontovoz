@@ -2,6 +2,7 @@ name: Aranceles de la Federación Odontológica de Río Negro
 on:
   schedule:
     - cron: '17 11 2 * *'   # el día 2 de cada mes, 8:17 de Argentina
+    - cron: '17 11 * * 1'   # y todos los lunes, por si la Federación publica aumentos a mitad de mes
   workflow_dispatch:
 permissions:
   contents: write

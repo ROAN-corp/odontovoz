@@ -32,6 +32,7 @@
       if (map.sub && cos != null) cov = Math.max(0, cov - cos);
       const a = o.aran[code];
       if (!a) { o.aran[code] = { on: true, cov, cos: cos != null ? cos : 0, forn: 1 }; if (!(A.NOMEN || []).some(x => x[0] === code)) o.aran[code].label = t.rows[code].d; n++; return; }
+      if (a.man && A.fornIsRef && A.fornIsRef()) return; /* Neuquén: lo que cambiaste por el valor de Neuquén no se toca más */
       if (cov > (a.cov || 0)) { a.cov = cov; n++; }
       if (cos != null && cos > (a.cos || 0) && !a.man) { a.cos = cos; n++; }
     });
