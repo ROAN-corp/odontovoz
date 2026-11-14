@@ -337,6 +337,53 @@ footer { background: var(--deep); color: #cfe7e3; padding: 40px 0 calc(40px + en
 footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; }
 footer a { color: #fff; }
 footer .brand { margin-right: auto; }
+
+/* ---------- índice plegable (glosario) ---------- */
+.alt { background: var(--white); border-block: 1px solid var(--line); }
+.ix-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 14px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,.35); background: transparent; color: #fff; font: 700 15px/1 var(--display); cursor: pointer; }
+.ix-btn:hover { background: rgba(255,255,255,.1); }
+.ix-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+@media (max-width: 860px) { .ix-btn { order: -1; padding: 0 10px; } .ix-btn span { display: none; } .top .brand { margin-right: auto; } .top-in { margin-left: 0; } }
+@media (max-width: 520px) { .top .btn.solid { display: none; } .top-in { margin-left: auto; font-size: 16px; } .top .brand { margin-right: 0; } }
+@media (max-width: 360px) { .top .wrap { gap: 10px; } .brand { font-size: 18px; } }
+.ix-back { position: fixed; inset: 0; z-index: 60; background: rgba(4, 24, 25, .45); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.ix-back.on { opacity: 1; pointer-events: auto; }
+.ix { position: fixed; top: 0; right: 0; bottom: 0; z-index: 61; width: min(420px, 100vw); background: var(--white); color: var(--ink); display: flex; flex-direction: column; box-shadow: -12px 0 40px rgba(0,0,0,.18); transform: translateX(104%); transition: transform .25s ease; visibility: hidden; }
+.ix.on { transform: none; visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .ix, .ix-back { transition: none; } }
+.ix-hd { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.ix-hd h2 { font-size: 24px; flex: 1; }
+.ix-x { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--paper); color: var(--ink); font-size: 26px; line-height: 1; cursor: pointer; }
+.ix-q { margin: 12px 16px 6px; position: relative; }
+.ix-q input { width: 100%; min-height: 46px; padding: 0 14px 0 40px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: 400 17px var(--body); }
+.ix-q input:focus { border-color: var(--teal); outline: none; }
+.ix-q svg { position: absolute; left: 12px; top: 13px; width: 20px; height: 20px; fill: none; stroke: var(--ink-2); stroke-width: 2; }
+.ix-tools { display: flex; gap: 14px; padding: 2px 16px 8px; font-size: 14px; }
+.ix-tools button { border: 0; background: none; color: var(--teal); font: 700 14px var(--body); cursor: pointer; padding: 4px 0; text-decoration: underline; text-underline-offset: 3px; }
+.ix-body { overflow-y: auto; padding: 0 8px 28px; overscroll-behavior: contain; flex: 1; }
+.ix-g { margin: 16px 8px 4px; font: 800 12px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.ix details { border-radius: 12px; }
+.ix details[open] { background: var(--paper); }
+.ix summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 10px; border-radius: 12px; cursor: pointer; font: 700 17px/1.25 var(--display); }
+.ix summary::-webkit-details-marker { display: none; }
+.ix summary:hover { background: var(--paper); }
+.ix summary .n { margin-left: auto; min-width: 26px; padding: 3px 7px; border-radius: 999px; background: var(--mint); color: var(--deep); font: 700 12px/1 var(--body); text-align: center; }
+.ix summary .ch { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--ink-2); stroke-width: 2.4; transition: transform .2s; }
+.ix details[open] > summary .ch { transform: rotate(90deg); }
+.ix ul { list-style: none; margin: 0; padding: 0 6px 10px 36px; }
+.ix li a { display: block; padding: 8px 8px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 16px; line-height: 1.3; }
+.ix li a:hover, .ix li a:focus-visible { background: var(--white); color: var(--teal); }
+.ix li.go a { color: var(--teal); font-weight: 700; }
+.ix .solo { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 10px 6px 38px; border-radius: 12px; color: var(--ink); text-decoration: none; font: 700 17px/1.25 var(--display); }
+.ix .solo:hover { background: var(--paper); color: var(--teal); }
+.ix mark { background: var(--sun); color: #2b2100; border-radius: 3px; padding: 0 1px; }
+.ix-none { padding: 24px 16px; color: var(--ink-2); }
+.ix-ft { border-top: 1px solid var(--line); padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 10px; }
+.ix-ft .btn { flex: 1; min-height: 46px; font-size: 15px; padding: 0 12px; }
+.ix-flash { animation: ixFlash 1.8s ease; border-radius: 12px; }
+@keyframes ixFlash { 0%, 40% { box-shadow: 0 0 0 4px var(--sun); } 100% { box-shadow: 0 0 0 4px transparent; } }
+body.ix-lock { overflow: hidden; }
+.ix [hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -349,19 +396,28 @@ footer .brand { margin-right: auto; }
       OdontoVoz
     </a>
     <nav aria-label="Secciones">
-      <a href="#unico">Lo que solo tiene</a>
-      <a href="#ver">Miralo funcionar</a>
+      <a href="#funciones">Funciones</a>
       <a href="#planes">Planes</a>
       <a href="#descargas">Descargas</a>
       <a href="#preguntas">Preguntas</a>
     </nav>
+    <button class="ix-btn" id="ixBtn" type="button" aria-haspopup="dialog" aria-controls="ixPanel" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Índice</span></button>
     <a class="top-in" href="app/">Entrar</a>
     <a class="btn solid" href="app/">Probar gratis</a>
   </div>
 </header>
+<div class="ix-back" id="ixBack" hidden></div>
+<aside class="ix" id="ixPanel" role="dialog" aria-modal="true" aria-labelledby="ixTitle" hidden>
+  <div class="ix-hd"><h2 id="ixTitle">Índice</h2><button class="ix-x" id="ixClose" type="button" aria-label="Cerrar el índice">×</button></div>
+  <label class="ix-q"><span class="sr" style="position:absolute;left:-9999px">Buscar en el índice</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="ixQ" type="search" placeholder="Buscar: stock, firma, iPhone, precios…" autocomplete="off"></label>
+  <div class="ix-tools"><button type="button" id="ixAll">Abrir todo</button><button type="button" id="ixNone">Cerrar todo</button></div>
+  <nav class="ix-body" id="ixBody" aria-label="Índice de la página"></nav>
+  <div class="ix-ft"><a class="btn solid" href="app/">Probar gratis</a><a class="btn teal" href="app/">Entrar</a></div>
+</aside>
+
 
 <main>
-<section class="hero" aria-labelledby="t-hero">
+<section class="hero" id="inicio" aria-labelledby="t-hero">
   <div class="wrap">
     <div>
       <h1 id="t-hero">Dictás lo que hiciste. OdontoVoz hace el resto.</h1>
@@ -479,19 +535,8 @@ footer .brand { margin-right: auto; }
     </div>
   </div>
 </section>
-<section class="tuts" id="tutoriales" aria-labelledby="t-tut">
-  <div class="wrap">
-    <div class="sec-head"><h2 id="t-tut">Tutoriales de un minuto</h2><p class="lede">Elegí tu forma de trabajar y mirá cómo se usa.</p></div>
-    <div class="tut-grid">
-      <figure class="reel tut"><video src="video/tut-pro.mp4" poster="video/poster-tut-pro.jpg" playsinline controls preload="none" aria-label="Tutorial para profesional"></video><figcaption>Profesional</figcaption></figure>
-      <figure class="reel tut"><video src="video/tut-centro.mp4" poster="video/poster-tut-centro.jpg" playsinline controls preload="none" aria-label="Tutorial para consultorio y centro"></video><figcaption>Consultorio y centro</figcaption></figure>
-      <figure class="reel tut"><video src="video/tut-empresa.mp4" poster="video/poster-tut-empresa.jpg" playsinline controls preload="none" aria-label="Tutorial para empresa con varios centros"></video><figcaption>Empresa</figcaption></figure>
-      <figure class="reel tut"><video src="video/tut-lite.mp4" poster="video/poster-tut-lite.jpg" playsinline controls preload="none" aria-label="Tutorial del modo LITE"></video><figcaption>LITE</figcaption></figure>
-    </div>
-  </div>
-</section>
 
-<section aria-labelledby="t-vs">
+<section class="alt" id="antes" aria-labelledby="t-vs">
   <div class="wrap">
     <div class="sec-head">
       <h2 id="t-vs">Menos papeles, menos planillas, menos «¿cuánto le cobro?»</h2>
@@ -518,22 +563,27 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
-<section class="dyn" aria-labelledby="t-modos">
+<section id="voz" aria-labelledby="t-voz">
   <div class="wrap">
     <div class="sec-head">
-      <h2 id="t-modos">Para cada forma de trabajar</h2>
-      <p class="lede">Elegís el modo cuando empezás y lo cambiás cuando crecés, sin perder nada. Todas las funciones (voz, cobros, stock, firma) están en todos los modos.</p>
+      <h2 id="t-voz">Le hablás como a tu asistente</h2>
+      <p class="lede">Entiende cómo se habla en el consultorio, no hace falta aprender comandos. Estos son ejemplos reales.</p>
     </div>
-    <div class="modes">
-      <div class="mode"><small>Modo profesional</small><b>Odontólogo solo</b><p>Tu agenda en uno o varios consultorios, tus pacientes, tu caja y tu stock. Cobrás vos, en el momento.</p></div>
-      <div class="mode"><small>Modo consultorio</small><b>Con recepción</b><p>Varios profesionales y una secretaria que agenda, recibe y cobra lo que cada uno le manda.</p></div>
-      <div class="mode"><small>Modo centro</small><b>Clínicas</b><p>Agenda de todos los profesionales, liquidaciones por porcentaje o alquiler de módulo y control del día.</p></div>
-      <div class="mode"><small>Modo empresa</small><b>Varios centros</b><p>Centros › consultorios › odontólogos con rotación semanal, permisos por puesto y reportes para el contador.</p></div>
-    </div>
+    <ul class="say">
+      <li><q>Agendá a Pedro Juárez mañana a las 10, media hora</q><span>Crea el turno y avisa si se superpone.</span></li>
+      <li><q>Abrí la ficha de Laura Sánchez</q><span>Busca por nombre, apellido o DNI, aunque se pronuncie distinto.</span></li>
+      <li><q>Caries en el 36 por oclusal</q><span>Marca la cara en el odontograma, para realizar.</span></li>
+      <li><q>Tiene un arreglo de resina en el 16 por vestibular</q><span>Lo registra como existente, con el material.</span></li>
+      <li><q>Motivo de consulta: dolor en una muela de abajo</q><span>Queda arriba de todo en el resumen del paciente.</span></li>
+      <li><q>Alergia a la penicilina</q><span>Se suma a la anamnesis y aparece como alerta en la agenda.</span></li>
+      <li><q>Fecha de nacimiento 3 de mayo de 1990</q><span>Carga la fecha y calcula la edad.</span></li>
+      <li><q>¿Quién sigue?</q><span>Te dice el próximo paciente y abre su resumen.</span></li>
+    </ul>
+    <p class="wake">El asistente tiene nombre para que no se active con cualquier conversación: Navi, Doc, Mia, Nexus, Axon o Lumina, el que prefieras. Responde en voz alta y deja la pantalla encendida mientras lo usás.</p>
   </div>
 </section>
 
-<section id="como" aria-labelledby="t-dia">
+<section class="alt" id="como" aria-labelledby="t-dia">
   <div class="wrap">
     <div class="sec-head">
       <h2 id="t-dia">Un día en el consultorio con OdontoVoz</h2>
@@ -551,7 +601,22 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
-<section class="shots" aria-labelledby="t-pant">
+<section class="dyn" id="modos" aria-labelledby="t-modos">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 id="t-modos">Para cada forma de trabajar</h2>
+      <p class="lede">Elegís el modo cuando empezás y lo cambiás cuando crecés, sin perder nada. Todas las funciones (voz, cobros, stock, firma) están en todos los modos.</p>
+    </div>
+    <div class="modes">
+      <div class="mode"><small>Modo profesional</small><b>Odontólogo solo</b><p>Tu agenda en uno o varios consultorios, tus pacientes, tu caja y tu stock. Cobrás vos, en el momento.</p></div>
+      <div class="mode"><small>Modo consultorio</small><b>Con recepción</b><p>Varios profesionales y una secretaria que agenda, recibe y cobra lo que cada uno le manda.</p></div>
+      <div class="mode"><small>Modo centro</small><b>Clínicas</b><p>Agenda de todos los profesionales, liquidaciones por porcentaje o alquiler de módulo y control del día.</p></div>
+      <div class="mode"><small>Modo empresa</small><b>Varios centros</b><p>Centros › consultorios › odontólogos con rotación semanal, permisos por puesto y reportes para el contador.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="shots" id="funciones" aria-labelledby="t-pant">
   <div class="wrap">
     <div class="sec-head">
       <h2 id="t-pant">Todo el consultorio, en una sola app</h2>
@@ -584,7 +649,7 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
-<section class="dyn" aria-labelledby="t-dyn">
+<section class="dyn" id="adapta" aria-labelledby="t-dyn">
   <div class="wrap dyn-grid">
     <div>
       <div class="sec-head">
@@ -626,26 +691,6 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
-<section aria-labelledby="t-voz">
-  <div class="wrap">
-    <div class="sec-head">
-      <h2 id="t-voz">Le hablás como a tu asistente</h2>
-      <p class="lede">Entiende cómo se habla en el consultorio, no hace falta aprender comandos. Estos son ejemplos reales.</p>
-    </div>
-    <ul class="say">
-      <li><q>Agendá a Pedro Juárez mañana a las 10, media hora</q><span>Crea el turno y avisa si se superpone.</span></li>
-      <li><q>Abrí la ficha de Laura Sánchez</q><span>Busca por nombre, apellido o DNI, aunque se pronuncie distinto.</span></li>
-      <li><q>Caries en el 36 por oclusal</q><span>Marca la cara en el odontograma, para realizar.</span></li>
-      <li><q>Tiene un arreglo de resina en el 16 por vestibular</q><span>Lo registra como existente, con el material.</span></li>
-      <li><q>Motivo de consulta: dolor en una muela de abajo</q><span>Queda arriba de todo en el resumen del paciente.</span></li>
-      <li><q>Alergia a la penicilina</q><span>Se suma a la anamnesis y aparece como alerta en la agenda.</span></li>
-      <li><q>Fecha de nacimiento 3 de mayo de 1990</q><span>Carga la fecha y calcula la edad.</span></li>
-      <li><q>¿Quién sigue?</q><span>Te dice el próximo paciente y abre su resumen.</span></li>
-    </ul>
-    <p class="wake">El asistente tiene nombre para que no se active con cualquier conversación: Navi, Doc, Mia, Nexus, Axon o Lumina, el que prefieras. Responde en voz alta y deja la pantalla encendida mientras lo usás.</p>
-  </div>
-</section>
-
 <section class="plans-sec" id="planes" aria-labelledby="t-planes">
   <div class="wrap">
     <div class="sec-head">
@@ -657,13 +702,6 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
-<section class="mu-sec" id="mudanza" aria-labelledby="t-mu">
-  <div class="wrap mu-in">
-    <div><p class="wa-kick">Gratis</p><h2 id="t-mu">¿Venís de Bilog, Dentalink u otro sistema? Te mudamos gratis.</h2>
-    <p class="lede">Traemos tus pacientes, tu agenda y tus evoluciones sin que cargues nada de nuevo. Con el asistente de mudanza lo hacés en minutos, o lo hacemos juntos en una videollamada.</p></div>
-    <a class="btn solid" href="mudanza.html">Cómo es la mudanza</a>
-  </div>
-</section>
 <section class="wa-sec" id="secretaria" aria-labelledby="t-wa">
   <div class="wrap">
     <div class="sec-head">
@@ -685,6 +723,14 @@ footer .brand { margin-right: auto; }
       <div class="wa-p"><b>Recordatorios 3.000</b><small>Centros y empresas · hasta 3.000 por mes</small><div class="wa-usd">USD 69<span>/mes</span></div><small data-usd="69"></small></div>
     </div>
     <div class="wa-safe"><b>Tu número, cuidado.</b> Usamos el canal oficial de WhatsApp para empresas (Meta), nunca programas no autorizados. Solo responde a quien escribe; los recordatorios son únicamente de turnos, de 9 a 20 h, con tope por día y con baja en un toque. Si WhatsApp avisa que la calidad del número baja, los mensajes salientes se frenan solos.</div>
+  </div>
+</section>
+
+<section class="mu-sec" id="mudanza" aria-labelledby="t-mu">
+  <div class="wrap mu-in">
+    <div><p class="wa-kick">Gratis</p><h2 id="t-mu">¿Venís de Bilog, Dentalink u otro sistema? Te mudamos gratis.</h2>
+    <p class="lede">Traemos tus pacientes, tu agenda y tus evoluciones sin que cargues nada de nuevo. Con el asistente de mudanza lo hacés en minutos, o lo hacemos juntos en una videollamada.</p></div>
+    <a class="btn solid" href="mudanza.html">Cómo es la mudanza</a>
   </div>
 </section>
 
@@ -816,7 +862,19 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
-<section aria-labelledby="t-datos">
+<section class="tuts" id="tutoriales" aria-labelledby="t-tut">
+  <div class="wrap">
+    <div class="sec-head"><h2 id="t-tut">Tutoriales de un minuto</h2><p class="lede">Elegí tu forma de trabajar y mirá cómo se usa.</p></div>
+    <div class="tut-grid">
+      <figure class="reel tut"><video src="video/tut-pro.mp4" poster="video/poster-tut-pro.jpg" playsinline controls preload="none" aria-label="Tutorial para profesional"></video><figcaption>Profesional</figcaption></figure>
+      <figure class="reel tut"><video src="video/tut-centro.mp4" poster="video/poster-tut-centro.jpg" playsinline controls preload="none" aria-label="Tutorial para consultorio y centro"></video><figcaption>Consultorio y centro</figcaption></figure>
+      <figure class="reel tut"><video src="video/tut-empresa.mp4" poster="video/poster-tut-empresa.jpg" playsinline controls preload="none" aria-label="Tutorial para empresa con varios centros"></video><figcaption>Empresa</figcaption></figure>
+      <figure class="reel tut"><video src="video/tut-lite.mp4" poster="video/poster-tut-lite.jpg" playsinline controls preload="none" aria-label="Tutorial del modo LITE"></video><figcaption>LITE</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="datos" aria-labelledby="t-datos">
   <div class="wrap">
     <div class="sec-head"><h2 id="t-datos">Tus datos, protegidos y siempre tuyos</h2></div>
     <div class="trust">
@@ -844,7 +902,7 @@ footer .brand { margin-right: auto; }
   </div>
 </section>
 
-<section class="final" aria-labelledby="t-final">
+<section class="final" id="empezar" aria-labelledby="t-final">
   <div class="wrap">
     <h2 id="t-final">Probala esta semana con tus pacientes reales</h2>
     <p class="lede">7 días gratis, sin tarjeta y con todas las funciones. Si tenés dudas, te respondemos nosotros, que también somos odontólogos.</p>
@@ -907,7 +965,7 @@ const NOTA_PLANES = 'Los planes PRO traen todas las funciones y se pueden usar t
     return '<p class="price"><span class="was"><s>' + usd(p.usd) + '</s> <em>−' + promo.descuento + '%</em></span>' + usd(conDesc(p.usd)) + ' <small>el primer mes (≈ ' + pesos(p.usd * DOLAR * (100 - promo.descuento) / 100) + ') · después ' + usd(p.usd) + ' (≈ ' + pesos(p.usd * DOLAR) + ') por mes</small></p>';
   };
   if (promo) document.getElementById('plans').insertAdjacentHTML('beforebegin', '<div class="promo" role="note"><b>' + esc(promo.titulo) + '</b><span>' + esc(promo.texto) + '</span></div>');
-  document.getElementById('plans').innerHTML = PLANES.map(p => '<article class="plan' + (p.destacado ? ' star' : '') + '"><h3>' + esc(p.nombre) + '</h3><p class="who">' + esc(p.quien) + '</p>' + precio(p) + '<ul>' + p.items.map(i => '<li>' + item(i) + '</li>').join('') + '</ul><a class="btn ' + (p.destacado ? '' : 'teal') + '" href="' + esc(p.link || contactLink(p.nombre)) + '">' + esc(p.link || WA.length || CONTACTO.email ? p.boton : 'Probar gratis') + '</a></article>').join('');
+  document.getElementById('plans').innerHTML = PLANES.map(p => '<article id="plan-' + p.nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '" class="plan' + (p.destacado ? ' star' : '') + '"><h3>' + esc(p.nombre) + '</h3><p class="who">' + esc(p.quien) + '</p>' + precio(p) + '<ul>' + p.items.map(i => '<li>' + item(i) + '</li>').join('') + '</ul><a class="btn ' + (p.destacado ? '' : 'teal') + '" href="' + esc(p.link || contactLink(p.nombre)) + '">' + esc(p.link || WA.length || CONTACTO.email ? p.boton : 'Probar gratis') + '</a></article>').join('');
   document.getElementById('plansNote').textContent = NOTA_PLANES + ' Todos empiezan con la prueba gratis.';
   if (WA.length || CONTACTO.email) document.getElementById('contactFoot').innerHTML = '<a href="' + esc(contactLink('')) + '">Contacto</a>' + WA.map((n, i) => ' · <a href="https://wa.me/' + esc(n.replace(/\D/g, '')) + '">WhatsApp ' + esc((CONTACTO.nombres || [])[i] || '') + ' ' + esc(n.replace(/^549/, '').replace(/^(\d{4})(\d{6})$/, '$1 $2')) + '</a>').join('');
 
@@ -996,6 +1054,152 @@ const NOTA_PLANES = 'Los planes PRO traen todas las funciones y se pueden usar t
       hl(null); await wait(2600);
     }
   })();
+})();
+</script>
+<script>
+/* ====== Índice plegable: se arma solo con lo que hay en la página (si agregás una sección, sumala acá) ====== */
+(function () {
+  const $ = q => document.querySelector(q), $$ = (q, r) => Array.from((r || document).querySelectorAll(q));
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const norm = t => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const slug = t => norm(t).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
+  const txt = el => (el ? el.textContent : '').replace(/\s+/g, ' ').trim();
+  const card = el => el.closest('article, .uc, .mode, li, .dl, .wa-p, .wa-grid > div, .feats > div, .trust > div, figure, details') || el;
+  const plan = el => { const n = txt(el.querySelector('h3')), p = (typeof PLANES !== 'undefined' ? PLANES : []).filter(x => x.nombre === n)[0]; return n + (p ? (p.usd ? ' · USD ' + p.usd + ' por mes' : ' · gratis') : ''); };
+  const IX = [
+    ['Conocé OdontoVoz', [
+      { id: 'inicio', t: 'Inicio' },
+      { id: 'unico', t: 'Lo que solo tiene OdontoVoz', q: '#unico .uc h3' },
+      { id: 'ver', t: 'Miralo funcionar', q: '#ver .steps b' },
+      { id: 'antes', t: 'Antes y después de OdontoVoz' },
+      { id: 'voz', t: 'Le hablás como a tu asistente', q: '#voz .say q', lab: el => '«' + txt(el) + '»' }]],
+    ['Cómo se usa', [
+      { id: 'como', t: 'Un día en el consultorio', q: '#como .day li', lab: el => txt(el.querySelector('time')) + ' · ' + txt(el.querySelector('b')), tg: el => el },
+      { id: 'modos', t: 'Para cada forma de trabajar', q: '#modos .mode', lab: el => txt(el.querySelector('b')) + ' (' + txt(el.querySelector('small')).replace(/^modo /i, '') + ')', tg: el => el },
+      { id: 'adapta', t: 'Se adapta a cómo trabajás', q: '#adapta .dyn-list b' }]],
+    ['Funciones', [
+      { id: 'funciones', t: 'Todas las funciones', q: '#funciones .feats h3' },
+      { id: 'firma', t: 'Firma del paciente en la pantalla', q: '#firma .dyn-list b' }]],
+    ['Planes y precios', [
+      { id: 'planes', t: 'Planes', q: '#plans .plan', lab: plan, tg: el => el },
+      { id: 'secretaria', t: 'Autogestión y recordatorios por WhatsApp', q: '#secretaria .wa-grid b, #secretaria .wa-p b' },
+      { id: 'mudanza', t: 'Mudanza gratis desde otro sistema', links: [['mudanza.html', 'Cómo es la mudanza (Bilog, Dentalink y otros)']] }]],
+    ['Descargar e instalar', [
+      { id: 'descargas', t: 'Descargas', q: '#descargas .dl h3' },
+      { id: 'instalar', t: 'Cómo instalarla', q: '#instalar [role="tab"]', tab: 1 },
+      { id: 'tutoriales', t: 'Tutoriales de un minuto', q: '#tutoriales figure', lab: el => 'Tutorial: ' + txt(el.querySelector('figcaption')), tg: el => el }]],
+    ['Ayuda', [
+      { id: 'datos', t: 'Tus datos, protegidos', q: '#datos .trust h3' },
+      { id: 'preguntas', t: 'Preguntas frecuentes', q: '#preguntas details', lab: el => txt(el.querySelector('summary')), tg: el => el },
+      { id: 'empezar', t: 'Contacto y legales', links: () => [].concat($$('#contactFoot a').map(a => [a.href, txt(a)]), [['terminos.html', 'Términos y condiciones'], ['privacidad.html', 'Política de privacidad'], ['terminos.html#promociones', 'Bases de las promociones'], ['baja.html', 'Botón de baja de servicio'], ['baja.html#arrepentimiento', 'Botón de arrepentimiento']]) }]]
+  ];
+  const panel = $('#ixPanel'), back = $('#ixBack'), body = $('#ixBody'), btn = $('#ixBtn'), q = $('#ixQ');
+  if (!panel || !btn) return;
+  const CH = '<svg class="ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  let built = false, ENTRIES = [];
+  function build() {
+    ENTRIES = []; let h = '';
+    IX.forEach(([g, list]) => {
+      h += '<p class="ix-g">' + esc(g) + '</p>';
+      list.forEach(sec => {
+        if (!document.getElementById(sec.id)) return;
+        const items = [];
+        if (sec.q) $$(sec.q).forEach(el => {
+          const label = (sec.lab ? sec.lab(el) : txt(el)).replace(/[.:]$/, '');
+          if (!label) return;
+          if (sec.tab) { items.push({ label, tab: el.id }); return; }
+          const t = sec.tg ? sec.tg(el) : card(el);
+          if (!t.id) t.id = 'ix-' + slug(label);
+          items.push({ label, href: '#' + t.id });
+        });
+        const L = typeof sec.links === 'function' ? sec.links() : sec.links || [];
+        L.forEach(([href, label]) => items.push({ label, href, ext: !/^#/.test(href) }));
+        const k = ENTRIES.length; ENTRIES.push({ sec, items });
+        if (!items.length) { h += '<a class="solo" data-k="' + k + '" href="#' + sec.id + '">' + esc(sec.t) + '</a>'; return; }
+        h += '<details data-k="' + k + '"><summary>' + CH + '<span class="tt">' + esc(sec.t) + '</span><span class="n">' + items.length + '</span></summary><ul>' +
+          '<li class="go"><a href="#' + sec.id + '">Ir a «' + esc(sec.t) + '»</a></li>' +
+          items.map(it => '<li><a href="' + esc(it.href || '#instalar') + '"' + (it.tab ? ' data-tab="' + esc(it.tab) + '"' : '') + (it.ext ? ' data-ext="1"' : '') + '>' + esc(it.label) + '</a></li>').join('') + '</ul></details>';
+      });
+    });
+    body.innerHTML = h + '<p class="ix-none" id="ixNoneMsg" hidden>No encontré eso en la página. Probá con otra palabra o escribinos por WhatsApp.</p>';
+    built = true;
+  }
+  /* sección que se está viendo: su grupo se abre al abrir el índice */
+  const current = () => { let best = null; $$('main > section[id]').forEach(s => { if (s.getBoundingClientRect().top < 140) best = s.id; }); return best; };
+  let last = null;
+  function open() {
+    if (!built) build();
+    last = document.activeElement; q.value = ''; filter('');
+    const cur = current();
+    $$('details', body).forEach(d => { d.open = ENTRIES[+d.dataset.k].sec.id === cur; });
+    panel.hidden = false; back.hidden = false; document.body.classList.add('ix-lock'); btn.setAttribute('aria-expanded', 'true');
+    requestAnimationFrame(() => { panel.classList.add('on'); back.classList.add('on'); });
+    const d = $('details[open]', body); if (d) setTimeout(() => d.scrollIntoView({ block: 'nearest' }), 260);
+    setTimeout(() => $('#ixClose').focus(), 60);
+  }
+  function close(keep) {
+    panel.classList.remove('on'); back.classList.remove('on'); document.body.classList.remove('ix-lock'); btn.setAttribute('aria-expanded', 'false');
+    setTimeout(() => { panel.hidden = true; back.hidden = true; }, 260);
+    if (!keep && last && last.focus) last.focus();
+  }
+  function go(href, tab) {
+    const el = document.getElementById(href.slice(1)); if (!el) return;
+    if (tab) { const t = document.getElementById(tab); if (t) t.click(); }
+    if (el.tagName === 'DETAILS') el.open = true;
+    const head = ($('header.top') || {}).offsetHeight || 64;
+    const top = el.getBoundingClientRect().top + scrollY - head - (el.tagName === 'SECTION' ? 0 : 16);
+    const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+    /* las imágenes que se cargan en el camino corren la página: se corrige al llegar */
+    let n = 0; const fix = () => { const want = el.getBoundingClientRect().top + scrollY - head - (el.tagName === 'SECTION' ? 0 : 16); if (Math.abs(want - scrollY) > 6 && n++ < 4) { window.scrollTo({ top: want, behavior: 'auto' }); setTimeout(fix, 250); } };
+    setTimeout(fix, smooth ? 700 : 80);
+    try { history.replaceState(null, '', href); } catch (e) { /* nada */ }
+    if (el.tagName !== 'SECTION') { el.classList.remove('ix-flash'); void el.offsetWidth; el.classList.add('ix-flash'); setTimeout(() => el.classList.remove('ix-flash'), 1900); }
+    el.setAttribute('tabindex', '-1'); el.focus({ preventScroll: true });
+  }
+  function filter(v) {
+    const n = norm(v.trim());
+    let any = false;
+    $$('[data-k]', body).forEach(box => {
+      const E = ENTRIES[+box.dataset.k], inT = !n || norm(E.sec.t).indexOf(n) >= 0;
+      let hit = inT;
+      if (box.tagName === 'DETAILS') {
+        $$('li:not(.go)', box).forEach((li, i) => {
+          const a = li.querySelector('a'), lab = E.items[i].label, m = !n || inT || norm(lab).indexOf(n) >= 0;
+          li.hidden = !m; if (m && n && !inT) hit = true;
+          a.innerHTML = n ? mark(lab, n) : esc(lab);
+        });
+        box.querySelector('.tt').innerHTML = n ? mark(E.sec.t, n) : esc(E.sec.t);
+        if (n) box.open = hit;
+      } else box.innerHTML = n ? mark(E.sec.t, n) : esc(E.sec.t);
+      box.hidden = !hit; if (hit) any = true;
+    });
+    $$('.ix-g', body).forEach(g => { let x = g.nextElementSibling, vis = false; while (x && !x.classList.contains('ix-g') && x.id !== 'ixNoneMsg') { if (!x.hidden) vis = true; x = x.nextElementSibling; } g.hidden = !vis; });
+    const nm = $('#ixNoneMsg'); if (nm) nm.hidden = any;
+  }
+  function mark(t, n) {
+    const i = norm(t).indexOf(n); if (i < 0) return esc(t);
+    return esc(t.slice(0, i)) + '<mark>' + esc(t.slice(i, i + n.length)) + '</mark>' + esc(t.slice(i + n.length));
+  }
+  btn.addEventListener('click', () => panel.classList.contains('on') ? close() : open());
+  $('#ixClose').addEventListener('click', () => close());
+  back.addEventListener('click', () => close());
+  q.addEventListener('input', () => filter(q.value));
+  $('#ixAll').addEventListener('click', () => $$('details', body).forEach(d => { if (!d.hidden) d.open = true; }));
+  $('#ixNone').addEventListener('click', () => $$('details', body).forEach(d => { d.open = false; }));
+  body.addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return;
+    if (a.dataset.ext) { close(true); return; }
+    const href = a.getAttribute('href'); if (!href || href[0] !== '#') return;
+    e.preventDefault(); close(true); setTimeout(() => go(href, a.dataset.tab), 120);
+  });
+  document.addEventListener('keydown', e => {
+    if (!panel.classList.contains('on')) return;
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'Tab') { const f = $$('a[href], button, input, summary', panel).filter(x => x.offsetParent !== null); if (!f.length) return; const a = f[0], z = f[f.length - 1]; if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); } else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); } }
+  });
+  /* si alguien entra con un enlace a un punto del índice (#ix-…), lo arma y lo lleva */
+  if (/^#ix-/.test(location.hash)) { build(); setTimeout(() => go(location.hash), 300); }
 })();
 </script>
 </body>
