@@ -548,6 +548,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.50.2 · Aranceles: solo suben y se pueden apagar
+
+- La actualización mensual de la FORN solo sube valores (nunca baja lo que tenés o editaste); los editados a mano llevan ✎ (`a.man`).
+- Interruptor general en Obras sociales (`A.CFG.fornAuto`; al apagarlo se quitan los valores cargados solos que no editaste, con Deshacer) y por obra social (`o.fornOff`).
+
 ## OdontoVoz 1.50.1 · Aranceles de la Federación automáticos
 
 - Al abrir la app (dueño o admin) se bajan los aranceles de la FORN y se cargan solos en cada obra social de la lista que coincida por nombre (y se actualizan cuando cambian). No se pisan las listas cargadas a mano.

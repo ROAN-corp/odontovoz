@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.50.2', d: '2026-11-14', items: [
+      { t: 'Los aranceles de la Federación solo suben: si publican un valor más bajo que el que tenés o editaste, queda el tuyo. Lo editado se marca con ✎.', top: 1 },
+      { t: 'En Obras sociales podés apagar la carga automática (por ejemplo, si tu consultorio está en Neuquén) o apagarla para una obra social sola.' }] },
     { v: '1.50.1', d: '2026-11-14', items: [
       { t: 'Los aranceles de la Federación Odontológica de Río Negro se cargan solos en tus obras sociales (OSPe, Prevención Salud, OSDE, Swiss Medical y más) y se actualizan cada mes.', top: 1 },
       { t: 'Si la tabla trae coseguro, la primera vez te pregunta si lo cobrás; queda como predeterminado.' }] },
