@@ -548,6 +548,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.50.1 · Aranceles de la Federación automáticos
+
+- Al abrir la app (dueño o admin) se bajan los aranceles de la FORN y se cargan solos en cada obra social de la lista que coincida por nombre (y se actualizan cuando cambian). No se pisan las listas cargadas a mano.
+- Cada obra social numera distinto: la práctica se busca por su nombre (por ejemplo, OSPe 02.15 «Restauraciones simples»).
+- Si la tabla trae coseguro, la primera vez se pregunta si se cobra (queda en `A.CFG.copDef`).
+
 ## OdontoVoz 1.50 · Cobro con obra social claro
 
 - En «Prácticas de hoy» (desde Qué hice hoy o la evolución clínica), si el paciente tiene obra social aparece «¿Qué le cobrás al paciente?»: No le cobro nada / Coseguro / Diferencial / Todo particular, para todas las prácticas o una por una.

@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.50.1', d: '2026-11-14', items: [
+      { t: 'Los aranceles de la Federación Odontológica de Río Negro se cargan solos en tus obras sociales (OSPe, Prevención Salud, OSDE, Swiss Medical y más) y se actualizan cada mes.', top: 1 },
+      { t: 'Si la tabla trae coseguro, la primera vez te pregunta si lo cobrás; queda como predeterminado.' }] },
     { v: '1.50', d: '2026-11-14', items: [
       { t: 'Al cargar prácticas a un paciente con obra social elegís qué le cobrás: «No le cobro nada», coseguro, diferencial (el monto que quieras) o todo particular.', top: 1 },
       { t: 'Lo que paga la obra social queda pendiente en Caja › Obras sociales, aunque todavía no tengas su arancel cargado (lo podés escribir en el momento y se recuerda).', top: 1 }] },

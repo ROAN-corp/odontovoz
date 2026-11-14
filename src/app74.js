@@ -38,12 +38,40 @@
   A.copPayFor = payOf;
 
   /* todas las prácticas de un paciente con obra social traen la obra social (si no hay arancel, el importe queda a completar) */
+  /* cada obra social numera distinto (OSPe: 02.15 restauración simple, 02.18 compuesta): se busca la práctica equivalente por su nombre */
+  const GROUPS = [
+    [/^02\.01$/, /^02\./, /simple|una cara|1 cara|superficial/],
+    [/^02\.02$/, /^02\./, /compuest|complej|dos caras|2 caras|tres|3 caras|mas caras/],
+    [/^08\.12$/, null, /tartrectom|limpieza|profilax|gingivitis/],
+    [/^01\.01$/, /^01\./, /examen|diagnost|consulta/],
+    [/^01\.02$/, /^01\./, /urgencia/],
+    [/^10\.01$/, /^10\./, /extracci/],
+    [/^09\.01\.01$/, /^09\./, /periapical/],
+    [/^09\.02\.04$/, /^09\./, /panoram/],
+    [/^05\.05$/, /^05\./, /sellador|sellante/],
+    [/^05\.02$/, /^05\./, /fluor/]
+  ];
+  A.osAltCode = (os, code, label) => {
+    const ar = os && os.aran; if (!ar || !code) return null;
+    if (ar[code] && ar[code].on) return code;
+    const g = GROUPS.filter(x => x[0].test(code))[0]; if (!g) return null;
+    const lab = c => norm((ar[c] && ar[c].label) || (A.NOMEN || []).filter(x => x[0] === c).map(x => x[1])[0] || '');
+    let hit = Object.keys(ar).filter(c => ar[c] && ar[c].on && (!g[1] || g[1].test(c)) && g[2].test(lab(c)));
+    /* restauraciones con un solo código (p. ej. «con luz halógena»): sirve para cualquier cantidad de caras */
+    if (!hit.length && /^02\./.test(code)) hit = Object.keys(ar).filter(c => ar[c] && ar[c].on && /^02\./.test(c) && /restaurac|obturac|composite|resina|amalgama|halogena|fotocur/.test(lab(c)) && !/provisori|perno|carilla|incrustac/.test(lab(c)));
+    return hit.sort()[0] || null;
+  };
   const ppPrev = A.pracParse;
   if (ppPrev) A.pracParse = function (text, pid) {
     const out = ppPrev.apply(this, arguments) || [];
     try {
       const po = patOS(pid); if (!po) return out;
       out.forEach(it => {
+        const code0 = A.codeFor ? A.codeFor({ cond: it.a && it.a.cond, tooth: it.a && it.a.teeth && it.a.teeth[0], faces: it.a && it.a.faces ? it.a.faces.join('') : '', label: it.label }) : null;
+        if ((!it.os || it.os.est) && po.real && po.os.on) {
+          const alt = A.osAltCode(po.os, code0, it.label), ar = alt ? po.os.aran[alt] : null;
+          if (ar) { const md = defMode(po); it.os = { id: po.id, sigla: po.sigla, code: alt, cov: (ar.cov || 0), cos: ar.cos || 0, mode: md === 'cos' && !(ar.cos > 0) ? 'none' : md }; it.pay = payOf(it); return; }
+        }
         if (it.os) { if (it.os.est) it.os.noAran = true; if (it.os.mode === 'cos' && !(it.os.cos > 0)) { it.os.mode = 'none'; it.pay = payOf(it); } return; }
         const code = A.codeFor ? A.codeFor({ cond: it.a && it.a.cond, tooth: it.a && it.a.teeth && it.a.teeth[0], faces: it.a && it.a.faces ? it.a.faces.join('') : '', label: it.label }) : null;
         it.os = { id: po.id, sigla: po.sigla, code, cov: 0, cos: 0, mode: defMode(po) === 'cos' ? 'none' : defMode(po), noAran: true };
@@ -71,6 +99,8 @@
     const p = A.PAT(m.pid) || {}, po = patOS(m.pid), cob = cobraOf(m.pro), solo = isSolo();
     const osItems = m.items.filter(i => i.os), allMode = osItems.length && osItems.every(i => i.os.mode === osItems[0].os.mode) ? osItems[0].os.mode : '';
     let b = '<p class="po-who"><b>' + esc(p.name || 'Paciente') + '</b> · ' + esc(po ? po.sigla : 'Particular') + ' · atendió ' + esc(proName(m.pro)) + '</p>';
+    const askCos = osItems.some(i => i.os.cos > 0) && !A.CFG.copDef && !(po && po.cop);
+    if (askCos) b += '<div class="po-ask"><b>¿Les cobrás el coseguro a tus pacientes?</b><span>La tabla de ' + esc(po ? po.sigla : 'la obra social') + ' trae coseguro. Lo que elijas queda como predeterminado (en cada cobro lo podés cambiar).</span><div class="row-btns"><button class="btn small" data-act="poCosDef" data-v="cos">Sí, lo cobro</button><button class="btn small" data-act="poCosDef" data-v="none">No, nunca</button></div></div>';
     if (osItems.length) {
       b += '<div class="po-mode"><span class="po-mq">¿Qué le cobrás al paciente?</span><div class="po-seg" role="radiogroup" aria-label="Qué le cobrás al paciente">' +
         MODES.map(x => '<button type="button" role="radio" aria-checked="' + (allMode === x[0]) + '" class="po-sb' + (allMode === x[0] ? ' on' : '') + '" data-act="poAll" data-m="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
@@ -134,6 +164,11 @@
     if (k === 'dif') { const n = $('[data-in="poAmt"]'); if (n) { n.focus(); n.select(); } }
   };
   A.chg.poLearn = el => { S.modal.learn = el.checked; };
+  A.acts.poCosDef = el => {
+    sync(); const v = el.getAttribute('data-v'); A.CFG.copDef = v; A.save();
+    S.modal.items.forEach(it => { if (!it.os || it.os.mode === 'part') return; it.os.mode = v === 'cos' && !(it.os.cos > 0) ? 'none' : v; it.os.difSet = null; it.pay = payOf(it); });
+    A.renderModal(); A.toast(v === 'cos' ? 'Listo: se propone cobrar el coseguro.' : 'Listo: no se propone cobrar coseguro.');
+  };
   const addPrev = A.chg.poAdd;
   A.chg.poAdd = el => {
     sync(); const n0 = S.modal.items.length; if (addPrev) addPrev(el);
@@ -209,7 +244,7 @@
     '.po-sb.on{background:var(--teal,#0b6b6f);border-color:var(--teal,#0b6b6f);color:#fff;font-weight:700}' +
     '.po-cov{display:inline-flex;align-items:center;gap:2px}.po-cov input{width:96px;padding:3px 6px;border:1px solid var(--line,#ccd);border-radius:8px;font:inherit;font-size:.85rem}' +
     '.po-list li{flex-wrap:wrap}.po-l{flex:1 1 180px;min-width:0}.po-al{font-size:.72rem;color:var(--muted,#567);margin-right:4px}.po-amt input{width:90px}' +
-    '.po-learn{margin:8px 0 0;font-size:.86rem}' +
+    '.po-learn{margin:8px 0 0;font-size:.86rem}.po-ask{display:grid;gap:4px;margin:8px 0;padding:10px 12px;border-radius:14px;background:#fff6e0;border:1px solid #f0c674;color:#4d3800}.po-ask span{font-size:.84rem}' +
     '@media (max-width:640px){.po-sb{padding:6px 10px;font-size:.84rem}.po-cov input{width:84px}.po-list li{align-items:flex-start}.po-amt{margin-left:30px;flex:1 1 100%;justify-content:flex-end}.po-cop select{width:100%}}';
   document.head.appendChild(css);
 })();

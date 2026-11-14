@@ -7970,7 +7970,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.50';
+  A.VERSION = '1.50.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18030,6 +18030,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.50.1', d: '2026-11-14', items: [
+      { t: 'Los aranceles de la Federación Odontológica de Río Negro se cargan solos en tus obras sociales (OSPe, Prevención Salud, OSDE, Swiss Medical y más) y se actualizan cada mes.', top: 1 },
+      { t: 'Si la tabla trae coseguro, la primera vez te pregunta si lo cobrás; queda como predeterminado.' }] },
     { v: '1.50', d: '2026-11-14', items: [
       { t: 'Al cargar prácticas a un paciente con obra social elegís qué le cobrás: «No le cobro nada», coseguro, diferencial (el monto que quieras) o todo particular.', top: 1 },
       { t: 'Lo que paga la obra social queda pendiente en Caja › Obras sociales, aunque todavía no tengas su arancel cargado (lo podés escribir en el momento y se recuerda).', top: 1 }] },
@@ -20531,12 +20534,40 @@ const OVMenu = (function () {
   A.copPayFor = payOf;
 
   /* todas las prácticas de un paciente con obra social traen la obra social (si no hay arancel, el importe queda a completar) */
+  /* cada obra social numera distinto (OSPe: 02.15 restauración simple, 02.18 compuesta): se busca la práctica equivalente por su nombre */
+  const GROUPS = [
+    [/^02\.01$/, /^02\./, /simple|una cara|1 cara|superficial/],
+    [/^02\.02$/, /^02\./, /compuest|complej|dos caras|2 caras|tres|3 caras|mas caras/],
+    [/^08\.12$/, null, /tartrectom|limpieza|profilax|gingivitis/],
+    [/^01\.01$/, /^01\./, /examen|diagnost|consulta/],
+    [/^01\.02$/, /^01\./, /urgencia/],
+    [/^10\.01$/, /^10\./, /extracci/],
+    [/^09\.01\.01$/, /^09\./, /periapical/],
+    [/^09\.02\.04$/, /^09\./, /panoram/],
+    [/^05\.05$/, /^05\./, /sellador|sellante/],
+    [/^05\.02$/, /^05\./, /fluor/]
+  ];
+  A.osAltCode = (os, code, label) => {
+    const ar = os && os.aran; if (!ar || !code) return null;
+    if (ar[code] && ar[code].on) return code;
+    const g = GROUPS.filter(x => x[0].test(code))[0]; if (!g) return null;
+    const lab = c => norm((ar[c] && ar[c].label) || (A.NOMEN || []).filter(x => x[0] === c).map(x => x[1])[0] || '');
+    let hit = Object.keys(ar).filter(c => ar[c] && ar[c].on && (!g[1] || g[1].test(c)) && g[2].test(lab(c)));
+    /* restauraciones con un solo código (p. ej. «con luz halógena»): sirve para cualquier cantidad de caras */
+    if (!hit.length && /^02\./.test(code)) hit = Object.keys(ar).filter(c => ar[c] && ar[c].on && /^02\./.test(c) && /restaurac|obturac|composite|resina|amalgama|halogena|fotocur/.test(lab(c)) && !/provisori|perno|carilla|incrustac/.test(lab(c)));
+    return hit.sort()[0] || null;
+  };
   const ppPrev = A.pracParse;
   if (ppPrev) A.pracParse = function (text, pid) {
     const out = ppPrev.apply(this, arguments) || [];
     try {
       const po = patOS(pid); if (!po) return out;
       out.forEach(it => {
+        const code0 = A.codeFor ? A.codeFor({ cond: it.a && it.a.cond, tooth: it.a && it.a.teeth && it.a.teeth[0], faces: it.a && it.a.faces ? it.a.faces.join('') : '', label: it.label }) : null;
+        if ((!it.os || it.os.est) && po.real && po.os.on) {
+          const alt = A.osAltCode(po.os, code0, it.label), ar = alt ? po.os.aran[alt] : null;
+          if (ar) { const md = defMode(po); it.os = { id: po.id, sigla: po.sigla, code: alt, cov: (ar.cov || 0), cos: ar.cos || 0, mode: md === 'cos' && !(ar.cos > 0) ? 'none' : md }; it.pay = payOf(it); return; }
+        }
         if (it.os) { if (it.os.est) it.os.noAran = true; if (it.os.mode === 'cos' && !(it.os.cos > 0)) { it.os.mode = 'none'; it.pay = payOf(it); } return; }
         const code = A.codeFor ? A.codeFor({ cond: it.a && it.a.cond, tooth: it.a && it.a.teeth && it.a.teeth[0], faces: it.a && it.a.faces ? it.a.faces.join('') : '', label: it.label }) : null;
         it.os = { id: po.id, sigla: po.sigla, code, cov: 0, cos: 0, mode: defMode(po) === 'cos' ? 'none' : defMode(po), noAran: true };
@@ -20564,6 +20595,8 @@ const OVMenu = (function () {
     const p = A.PAT(m.pid) || {}, po = patOS(m.pid), cob = cobraOf(m.pro), solo = isSolo();
     const osItems = m.items.filter(i => i.os), allMode = osItems.length && osItems.every(i => i.os.mode === osItems[0].os.mode) ? osItems[0].os.mode : '';
     let b = '<p class="po-who"><b>' + esc(p.name || 'Paciente') + '</b> · ' + esc(po ? po.sigla : 'Particular') + ' · atendió ' + esc(proName(m.pro)) + '</p>';
+    const askCos = osItems.some(i => i.os.cos > 0) && !A.CFG.copDef && !(po && po.cop);
+    if (askCos) b += '<div class="po-ask"><b>¿Les cobrás el coseguro a tus pacientes?</b><span>La tabla de ' + esc(po ? po.sigla : 'la obra social') + ' trae coseguro. Lo que elijas queda como predeterminado (en cada cobro lo podés cambiar).</span><div class="row-btns"><button class="btn small" data-act="poCosDef" data-v="cos">Sí, lo cobro</button><button class="btn small" data-act="poCosDef" data-v="none">No, nunca</button></div></div>';
     if (osItems.length) {
       b += '<div class="po-mode"><span class="po-mq">¿Qué le cobrás al paciente?</span><div class="po-seg" role="radiogroup" aria-label="Qué le cobrás al paciente">' +
         MODES.map(x => '<button type="button" role="radio" aria-checked="' + (allMode === x[0]) + '" class="po-sb' + (allMode === x[0] ? ' on' : '') + '" data-act="poAll" data-m="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
@@ -20627,6 +20660,11 @@ const OVMenu = (function () {
     if (k === 'dif') { const n = $('[data-in="poAmt"]'); if (n) { n.focus(); n.select(); } }
   };
   A.chg.poLearn = el => { S.modal.learn = el.checked; };
+  A.acts.poCosDef = el => {
+    sync(); const v = el.getAttribute('data-v'); A.CFG.copDef = v; A.save();
+    S.modal.items.forEach(it => { if (!it.os || it.os.mode === 'part') return; it.os.mode = v === 'cos' && !(it.os.cos > 0) ? 'none' : v; it.os.difSet = null; it.pay = payOf(it); });
+    A.renderModal(); A.toast(v === 'cos' ? 'Listo: se propone cobrar el coseguro.' : 'Listo: no se propone cobrar coseguro.');
+  };
   const addPrev = A.chg.poAdd;
   A.chg.poAdd = el => {
     sync(); const n0 = S.modal.items.length; if (addPrev) addPrev(el);
@@ -20702,9 +20740,79 @@ const OVMenu = (function () {
     '.po-sb.on{background:var(--teal,#0b6b6f);border-color:var(--teal,#0b6b6f);color:#fff;font-weight:700}' +
     '.po-cov{display:inline-flex;align-items:center;gap:2px}.po-cov input{width:96px;padding:3px 6px;border:1px solid var(--line,#ccd);border-radius:8px;font:inherit;font-size:.85rem}' +
     '.po-list li{flex-wrap:wrap}.po-l{flex:1 1 180px;min-width:0}.po-al{font-size:.72rem;color:var(--muted,#567);margin-right:4px}.po-amt input{width:90px}' +
-    '.po-learn{margin:8px 0 0;font-size:.86rem}' +
+    '.po-learn{margin:8px 0 0;font-size:.86rem}.po-ask{display:grid;gap:4px;margin:8px 0;padding:10px 12px;border-radius:14px;background:#fff6e0;border:1px solid #f0c674;color:#4d3800}.po-ask span{font-size:.84rem}' +
     '@media (max-width:640px){.po-sb{padding:6px 10px;font-size:.84rem}.po-cov input{width:84px}.po-list li{align-items:flex-start}.po-amt{margin-left:30px;flex:1 1 100%;justify-content:flex-end}.po-cop select{width:100%}}';
   document.head.appendChild(css);
+})();
+/* ===== 1.50.1: aranceles de la Federación Odontológica de Río Negro cargados y actualizados solos en tus obras sociales ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S;
+  const N = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const boss = () => !A.isBoss || A.isBoss();
+  let DATA = null;
+
+  /* la obra social de la Federación que corresponde, solo si el nombre coincide de verdad (no por una palabra suelta) */
+  const sure = (o, f) => {
+    if (!f) return false;
+    if (o.forn && o.forn.slug === f.slug) return true;
+    const txt = ' ' + N(f.name + ' ' + f.slug.replace(/-\d+$/, '').replace(/-/g, ' ') + ' ' + (f.sub || '')).replace(/ /g, '  ') + ' ', comp = N(f.name).replace(/ /g, '');
+    const words = N(o.sigla).split(' ').filter(w => w.length > 2 && ['obra', 'social', 'del', 'los', 'las'].indexOf(w) < 0);
+    if (!words.length) return false;
+    if (comp === N(o.sigla).replace(/ /g, '')) return true;
+    return words.every(w => txt.indexOf(' ' + w + ' ') >= 0);
+  };
+  const cols = t => {
+    const k = t.cols.map(c => c.kind), cos = k.indexOf('cos'), cov = k.indexOf('cov'), tot = k.indexOf('total');
+    return { cov: cov >= 0 ? cov : (tot >= 0 ? tot : 0), cos, sub: cov < 0 && cos >= 0 && tot >= 0 };
+  };
+  const findF = o => { if (!DATA || !A.fornMatch) return null; const f = A.fornMatch(o); return sure(o, f) ? f : null; };
+
+  /* carga (si no tenía) o actualiza (si la Federación publicó valores nuevos) una obra social */
+  const loadOne = o => {
+    if (!o || !o.on || o.kind === 'particular' || o.fornOff) return '';
+    const f = findF(o); if (!f || !f.tables || !f.tables.length) return '';
+    const n = Object.keys(o.aran || {}).length;
+    if (!o.forn) {
+      if (n >= 3 && !Object.keys(o.aran).some(c => o.aran[c].forn)) return ''; /* ya tenía su propia lista: no se pisa */
+      const c = cols(f.tables[0]); A.fornApply(o, { slug: f.slug, t: 0, cov: c.cov, cos: c.cos, sub: c.sub }); return 'new';
+    }
+    if (o.forn.at !== DATA.at && f.tables[o.forn.t]) { const before = JSON.stringify(o.aran); A.fornApply(o, o.forn); return JSON.stringify(o.aran) !== before ? 'upd' : ''; }
+    return '';
+  };
+  A.fornAuto = () => {
+    if (!DATA || !boss() || !A.osList) return { neu: [], upd: [] };
+    const neu = [], upd = [];
+    A.osList().forEach(o => { const r = loadOne(o); if (r === 'new') neu.push(o.sigla); else if (r === 'upd') upd.push(o.sigla); });
+    if (neu.length || upd.length) {
+      A.CFG.fornSeen = DATA.at; A.save();
+      if (A.nfAdd) A.nfAdd({ id: 'fornauto:' + String(DATA.at).slice(0, 10), k: 'info', t: 'Aranceles de la Federación al día', b: (neu.length ? 'Cargados: ' + neu.join(', ') + '. ' : '') + (upd.length ? 'Actualizados: ' + upd.join(', ') + '.' : ''), act: 'osOpen' });
+    }
+    return { neu, upd };
+  };
+
+  /* al cargar prácticas: si la obra social del paciente todavía no tiene aranceles y la Federación los publica, se cargan en el momento */
+  const ppPrev = A.pracParse;
+  if (ppPrev) A.pracParse = function (text, pid) {
+    try {
+      if (DATA && boss()) { const o = A.osOf && A.osOf(A.PAT(pid)); if (o && loadOne(o)) A.save(); }
+    } catch (e) { /* nada */ }
+    return ppPrev.apply(this, arguments);
+  };
+
+  /* se bajan al abrir la app (una vez por sesión) y se aplican solos */
+  let started = false;
+  const go = () => {
+    if (!A.fornGet) return;
+    A.fornGet().then(d => { if (!d) return; DATA = d; try { A.fornAuto(); } catch (e) { /* nada */ } });
+  };
+  const arPrev = A.afterRefresh;
+  A.afterRefresh = function () {
+    const r = arPrev ? arPrev.apply(this, arguments) : undefined;
+    if (!started && (!A.DEMO || A._fornData) && navigator.onLine !== false) { started = true; setTimeout(go, A._fornData ? 50 : 2500); }
+    return r;
+  };
+  A._fornAutoLoad = d => { DATA = d; return A.fornAuto(); }; /* para pruebas */
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {
