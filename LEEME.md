@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.49.3 · Guardado local más grande
+
+- La copia de los datos que guarda cada equipo pasa a IndexedDB (cientos de MB) además de localStorage (5–10 MB). Mientras entre en localStorage se sigue guardando ahí también; si no entra, queda solo en IndexedDB. Sin cambios para el usuario y sin costo.
+
 ## OdontoVoz 1.49.2 · Indicaciones y recetas
 
 - La pestaña «Indicaciones» de la historia clínica pasa a llamarse **«Indicaciones y recetas»**: arriba la receta electrónica (RCTA u otra plataforma de cada profesional) y abajo las «Indicaciones para el paciente». La receta ya no está en Documentos. Por voz: «ir a indicaciones y recetas».

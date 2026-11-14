@@ -97,7 +97,7 @@
   A.wipeLocal = () => wipeLocal();
   function wipeLocal() {
     A.noSave = true;
-    try { Object.keys(localStorage).forEach(k => { if (k.indexOf('odontovoz.real.v1') === 0) localStorage.removeItem(k); }); } catch (e) { /* nada */ }
+    try { Object.keys(localStorage).concat(window.OVStore ? OVStore.keys() : []).forEach(k => { if (k.indexOf('odontovoz.real.v1') === 0) localStorage.removeItem(k); }); } catch (e) { /* nada */ }
     ['odontovoz.cloud.since', 'odontovoz.person', 'odontovoz.sedeSel', 'odontovoz.scope'].forEach(k => LS.set(k, null));
     try { indexedDB.deleteDatabase('odontovoz.media'); } catch (e) { /* nada */ }
   }

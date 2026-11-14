@@ -999,6 +999,88 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 })();
 </script>
 <script>
+/* Guardado local grande (1.49.3): los datos del consultorio en cada equipo pasan a IndexedDB (cientos de MB) en vez de
+   quedar solo en localStorage (5–10 MB). Se sigue escribiendo también en localStorage mientras entre, así que para la
+   mayoría no cambia nada; cuando no entra, queda solo en IndexedDB. La app espera a que esté cargado para arrancar. */
+(function () {
+  'use strict';
+  var BIG = /^odontovoz\.(real\.v1|proto\.v2)(\.|$)/, MEM = Object.create(null), P = Storage.prototype, g = P.getItem, s = P.setItem, r = P.removeItem;
+  var TK = 'ovs.t.', DK = 'ovs.del.', DB = null, ready = false, pend = 0, waiters = [];
+  var LS = null; try { LS = window.localStorage; } catch (e) { LS = null; }
+  var isLS = function (o) { return !!LS && o === LS; };
+  var sig = function (v) { var h = 5381, n = v.length, a = Math.max(0, n - 400); for (var i = a; i < n; i++) h = ((h << 5) + h + v.charCodeAt(i)) | 0; return n + ':' + h; };
+  var done = function () { pend--; if (pend <= 0) { pend = 0; var w = waiters; waiters = []; w.forEach(function (f) { f(); }); } };
+  var tx = function (fn, after) { if (!DB) return; try { pend++; var t = DB.transaction('kv', 'readwrite'); fn(t.objectStore('kv')); t.oncomplete = function () { if (after) after(); done(); }; t.onerror = t.onabort = function () { done(); }; } catch (e) { done(); } };
+  var put = function (k, v, t) { tx(function (st) { st.put({ v: v, t: t }, k); }); };
+  var del = function (k) { tx(function (st) { st.delete(k); }, function () { try { if (!(k in MEM)) r.call(LS, DK + k); } catch (e) { /* nada */ } }); };
+  P.getItem = function (k) { if (ready && isLS(this) && BIG.test(k)) return k in MEM ? MEM[k] : null; return g.call(this, k); };
+  P.setItem = function (k, v) {
+    if (!(ready && isLS(this) && BIG.test(k))) return s.call(this, k, v);
+    v = String(v); var t = Date.now(); MEM[k] = v;
+    try { r.call(LS, DK + k); } catch (e) { /* nada */ }
+    put(k, v, t);
+    try { s.call(LS, k, v); s.call(LS, TK + k, t + '|' + sig(v)); }
+    catch (e) { try { r.call(LS, k); r.call(LS, TK + k); } catch (e2) { /* nada */ } if (!DB) throw e; }
+  };
+  P.removeItem = function (k) {
+    if (!(ready && isLS(this) && BIG.test(k))) return r.call(this, k);
+    delete MEM[k];
+    try { s.call(LS, DK + k, '1'); } catch (e) { /* nada */ }
+    try { r.call(LS, k); r.call(LS, TK + k); } catch (e) { /* nada */ }
+    del(k);
+  };
+  window.OVStore = {
+    keys: function () { return Object.keys(MEM); },
+    ready: function () { return ready; },
+    idb: function () { return !!DB; },
+    inLS: function (k) { try { return g.call(LS, k) != null; } catch (e) { return false; } },
+    bytes: function () { var n = 0; Object.keys(MEM).forEach(function (k) { n += (MEM[k] || '').length; }); return n; },
+    flush: function () { return new Promise(function (res) { if (pend <= 0) res(); else waiters.push(res); }); }
+  };
+  var open = function () {
+    return new Promise(function (res) {
+      try {
+        var q = indexedDB.open('odontovoz.store', 1);
+        q.onupgradeneeded = function () { q.result.createObjectStore('kv'); };
+        q.onsuccess = function () { res(q.result); };
+        q.onerror = q.onblocked = function () { res(null); };
+        setTimeout(function () { res(null); }, 4000);
+      } catch (e) { res(null); }
+    });
+  };
+  var readAll = function (db) {
+    return new Promise(function (res) {
+      var out = {}; if (!db) return res(out);
+      try { var q = db.transaction('kv').objectStore('kv').openCursor(); q.onsuccess = function () { var c = q.result; if (c) { out[c.key] = c.value; c.continue(); } else res(out); }; q.onerror = function () { res(out); }; }
+      catch (e) { res(out); }
+    });
+  };
+  var start = function () {
+    var el = document.getElementById('ovApp'); if (!el || el._ran) return; el._ran = true;
+    var add = document.addEventListener;
+    document.addEventListener = function (t, f, o) { if (t === 'DOMContentLoaded') { setTimeout(f, 0); return; } return add.call(this, t, f, o); };
+    try { var sc = document.createElement('script'); sc.textContent = el.textContent; el.parentNode.insertBefore(sc, el.nextSibling); }
+    finally { document.addEventListener = add; }
+  };
+  var go = function () { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start(); };
+  if (!LS || !window.indexedDB) { ready = false; go(); return; }
+  open().then(function (db) { DB = db; return readAll(db); }).then(function (rows) {
+    var keys = {}; Object.keys(rows).forEach(function (k) { if (BIG.test(k)) keys[k] = 1; });
+    try { for (var i = 0; i < LS.length; i++) { var lk = LS.key(i); if (BIG.test(lk)) keys[lk] = 1; } } catch (e) { /* nada */ }
+    Object.keys(keys).forEach(function (k) {
+      if (g.call(LS, DK + k)) { try { r.call(LS, k); r.call(LS, TK + k); } catch (e) { /* nada */ } del(k); return; }
+      var lv = g.call(LS, k), meta = String(g.call(LS, TK + k) || ''), lt = +(meta.split('|')[0]) || 0, row = rows[k];
+      var lsOk = lv != null && (!meta || meta.split('|')[1] !== undefined && meta.slice(meta.indexOf('|') + 1) === sig(lv));
+      if (lv != null && (!row || !lsOk || lt >= row.t)) { MEM[k] = lv; if (!row || row.v !== lv) put(k, lv, lsOk ? lt || Date.now() : Date.now()); }
+      else if (row) MEM[k] = row.v;
+    });
+    ready = true;
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* nada */ }
+    go();
+  }, function () { go(); });
+})();
+</script>
+<script type="text/x-ov-app" id="ovApp">
 /* Intérprete de comandos de odontograma por voz (español rioplatense).
    Determinístico: sin red, sin modelo de lenguaje, misma entrada = misma salida. */
 (function (root) {
@@ -4969,6 +5051,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       A.noSave = true;
       localStorage.setItem(A.KEY, d.data);
       for (const id of Object.keys(d.media || {})) await A.media.put(id, d.media[id]);
+      if (window.OVStore) await OVStore.flush();
       say('Copia restaurada. Reiniciando…');
       setTimeout(() => { try { location.reload(); } catch (e) { say('Copia restaurada. Cerrá y volvé a abrir la aplicación.'); } }, 300);
     } catch (e) { A.noSave = false; say('No se pudo restaurar: ' + (e && e.message ? e.message : 'espacio insuficiente') + '. No se cambió nada.'); }
@@ -7887,7 +7970,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.49.1';
+  A.VERSION = '1.49.3';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -13381,7 +13464,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.wipeLocal = () => wipeLocal();
   function wipeLocal() {
     A.noSave = true;
-    try { Object.keys(localStorage).forEach(k => { if (k.indexOf('odontovoz.real.v1') === 0) localStorage.removeItem(k); }); } catch (e) { /* nada */ }
+    try { Object.keys(localStorage).concat(window.OVStore ? OVStore.keys() : []).forEach(k => { if (k.indexOf('odontovoz.real.v1') === 0) localStorage.removeItem(k); }); } catch (e) { /* nada */ }
     ['odontovoz.cloud.since', 'odontovoz.person', 'odontovoz.sedeSel', 'odontovoz.scope'].forEach(k => LS.set(k, null));
     try { indexedDB.deleteDatabase('odontovoz.media'); } catch (e) { /* nada */ }
   }
@@ -17947,6 +18030,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.49.3', d: '2026-11-14', items: [
+      { t: 'Cada celular y computadora guarda su copia de los datos en un espacio mucho más grande: ahora entran consultorios y centros con decenas de miles de pacientes, también sin internet.' }] },
+    { v: '1.49.2', d: '2026-11-13', items: [
+      { t: 'En la historia clínica, «Indicaciones» ahora se llama «Indicaciones y recetas»: arriba está el botón para hacer la receta electrónica (RCTA) y abajo las indicaciones para el paciente.', top: 1 }] },
     { v: '1.49.1', d: '2026-11-13', items: [
       { t: 'Receta electrónica: en Android, «Recetar en RCTA» abre la app de RCTA si la tenés instalada (si no, la web). Los datos del paciente quedan copiados para pegar.', top: 1 }] },
     { v: '1.49', d: '2026-11-12', items: [
