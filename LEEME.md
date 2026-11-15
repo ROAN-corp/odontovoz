@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.52.1 · Dirección nueva
+
+- La web y la app pasan a https://odontovoz.com.ar/ (la dirección vieja redirige sola). En la web hay que volver a entrar con el usuario; los datos bajan de la nube.
+
 ## OdontoVoz 1.52 · Planes nuevos y sin LITE
 
 - Planes: Prueba (7 días), Profesional USD 17 (+ USD 3 por consultorio adicional con un equipo, hasta 5), Consultorio o Centro USD 35 (3 profesionales, 5 equipos; + USD 3 por profesional adicional con un equipo), Empresa USD 82. Sin «PRO» en los nombres.

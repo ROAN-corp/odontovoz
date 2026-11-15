@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.52.1', d: '2026-11-15', items: [
+      { t: 'Nueva dirección: odontovoz.com.ar (la anterior te lleva sola). Si usás la web, entrá de nuevo con tu usuario.', top: 1 }] },
     { v: '1.52', d: '2026-11-14', items: [
       { t: 'Planes nuevos: Profesional, Consultorio o Centro y Empresa, todos con todas las funciones. Se pueden sumar consultorios o profesionales (con un equipo más) por USD 3.', top: 1 },
       { t: 'El modo LITE ya no está: la app es una sola, completa.' }] },

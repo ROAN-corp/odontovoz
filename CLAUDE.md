@@ -8,11 +8,11 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.35 (noviem
 - Hablale al usuario en castellano rioplatense, simple y sin jerga técnica.
 
 ## Direcciones
-- Web pública (landing): https://roan-corp.github.io/odontovoz/ (fuente: `sitio/`)
-- App web: https://roan-corp.github.io/odontovoz/app/
-- Panel de licencias: https://roan-corp.github.io/odontovoz/admin.html (admins: rodribobadilla5630@gmail.com y angelagatielo@gmail.com, tabla `ov_admins`)
+- Web pública (landing): https://odontovoz.com.ar/ (fuente: `sitio/`; desde 1.52.1, la vieja roan-corp.github.io/odontovoz redirige)
+- App web: https://odontovoz.com.ar/app/
+- Panel de licencias: https://odontovoz.com.ar/admin.html (admins: rodribobadilla5630@gmail.com y angelagatielo@gmail.com, tabla `ov_admins`)
 - APK: https://github.com/ROAN-corp/odontovoz/releases/latest/download/OdontoVoz.apk
-- Supabase: proyecto `hcppfvioiaaejayzzhpa` (org ROAN). Site URL `https://roan-corp.github.io/odontovoz/app/`. La URL y la clave **publicable** están en `OV_CONFIG` dentro de `index.html`.
+- Supabase: proyecto `hcppfvioiaaejayzzhpa` (org ROAN). Site URL `https://odontovoz.com.ar/app/` (Redirect URLs: odontovoz.com.ar/**, www.odontovoz.com.ar/** y las viejas). La URL y la clave **publicable** están en `OV_CONFIG` dentro de `index.html`.
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
@@ -122,12 +122,13 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.35 (noviem
   - `app72`: `A.adjCalc(base, {k: none|desc|rec|cuo, p, n, how: tarjeta|propio})`, bloque `.aj-box` en `MF.pcPay` y `MF.cobro` (`ajK`, `ajP`, `ajPc`, `ajN`, `ajHow`), `A.adjBook` → `ajuste` firmado con `adj`, `by`, `at` (+ `pd.cuotas` si son cuotas propias), predeterminados en `A.CFG.payAdj[medio]`; `ppGo`/`cobroSave` envueltos.
   - `app73`: presupuesto con `f.cur`, `f.ip`, `f.ic`, `f.extra`; `apply(b, f)` deja `b.items[].cur`, `b.multi = {sub, tot, fx}` y `b.subtotal/total` en pesos equivalentes (los usan cuotas y cuenta); `A.budgetBody` envuelto; se aplica en `touchPd` durante `budgetSave` (antes de la firma). Cotizaciones `A.CFG.fx`. `MF.priceList` (`plOpen2`, copiar/WhatsApp/PDF). `A.fmtCur(n, cur)`. Prueba: `t149.py`.
 - 1.49.1 (`src/app71.js`, `scripts/patch-android.js`): `rx.app` (RCTA): APK → `ovapp:<paquete>?f=<web>` que `MainActivity.openApp` abre con `getLaunchIntentForPackage` (o la web); Chrome Android → `intent://rcta.me/#Intent;scheme=https;package=com.innovamed.rcta;end` + web a los 1,5 s si sigue visible; iPhone → web.
+- 1.52.1: dominio `odontovoz.com.ar` activo (rama `dominio` unida a `main`). GitHub Pages con dominio propio; Supabase con las Redirect URLs nuevas. El localStorage/IndexedDB es por dirección: en la web, cada usuario vuelve a entrar y baja sus datos de la nube.
 - Ojo: en los `css.textContent = '…' + '…'` una coma en lugar de `+` deja solo el último pedazo (pasó en `app40`).
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
 ## Pendiente
-- (14/11/2026) Dominio `odontovoz.com.ar` registrado en NIC.ar a nombre de Rodrigo (vence 13/11/2027), delegado a Cloudflare (cuenta somosroan, plan Free; NS `saanvi`/`shane.ns.cloudflare.com`; registros A @ → 185.199.108-111.153 y CNAME www → roan-corp.github.io, todos «DNS only»). La rama `dominio` tiene los enlaces cambiados a `https://odontovoz.com.ar/`: cuando Cloudflare diga «activo», poner el dominio en GitHub Pages (Enforce HTTPS), sumar la URL en Supabase (Site URL + Redirect URLs, sin quitar la vieja), unir `dominio` a `main`, volver a pegar las plantillas de `supabase/correos/` y actualizar estas notas.
+- (Hecho 15/11/2026) Dominio `odontovoz.com.ar` (NIC.ar a nombre de Rodrigo, vence 13/11/2027; Cloudflare cuenta somosroan, plan Free, registros «DNS only»). Activo en GitHub Pages y Supabase.
 - (14/11/2026) Marca ODONTOVOZ (denominativa) presentada en el INPI a nombre de Rodrigo 100%: clase 9 (ref. web 4217236) y clase 42 (ref. web 4217232), 18 términos de la lista oficial en cada una; pagado el VEP E-RECAUDA 202600172660 ($84.086) con Mercado Pago. Falta: números de acta cuando se acredite (hasta 15 días), seguir notificaciones, transferir a la sociedad cuando exista, más adelante la marca mixta (logo). Siguiente: registro del software en la DNDA («Inscripción de obra publicada – Software», TAD, depósito digital).
 - (Hecho 11/11/2026) Push con la app cerrada: proyecto Firebase `odontovoz-7b856` (cuenta somosroan, sin Analytics, app Android `ar.odontovoz.app`), secretos `GOOGLE_SERVICES_JSON` y `SUPABASE_ACCESS_TOKEN` (token con alcance al proyecto: lectura + Edge Functions escritura) en GitHub, `FCM_SERVICE_ACCOUNT` en Supabase, `supabase/push.sql` y `supabase/permisos.sql` corridos, `push-hook` publicado, APK v1.48.0.157 con push. Falta probar en dos celulares.
 - (Hecho 11/11/2026) `supabase/auditoria.sql` corrido en Supabase: triggers `ov_stamp_trg` y `ov_history_trg`, `ov_audit`, limpieza diaria con `pg_cron`, `ov_history` sin permisos de escritura para la app.
