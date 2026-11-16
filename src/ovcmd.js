@@ -280,7 +280,8 @@
     haces: 'haceme', hagas: 'haceme', hacerme: 'haceme',
     cargas: 'cargame', cargues: 'cargame', cargarme: 'cargame',
     anotas: 'anotame', anotes: 'anotame', anotarme: 'anotame',
-    agendas: 'agendame', agendes: 'agendame', agendarme: 'agendame'
+    agendas: 'agendame', agendes: 'agendame', agendarme: 'agendame',
+    canceles: 'cancelame', cancelas: 'cancelame', suspendas: 'suspendeme', anules: 'anulame', borres: 'borrame', cierres: 'cerrame', bloquees: 'bloqueame', liberes: 'liberame', agregues: 'agregame', sumes: 'sumame', habilites: 'habilitame', extiendas: 'extendeme', amplies: 'ampliame', armes: 'armame', crees: 'creame'
   };
   const VOS_RE = new RegExp('^(?:me |nos )?(' + Object.keys(VOS).join('|') + ')\\b');
   const WANT = /^(?:yo )?(?:(?:le|me|nos|les) )?(?:quiero|quisiera|queria|necesito|necesitaria|me gustaria|vamos a|voy a|tengo que|hay que|tendria que|deberia|deberias|podes|podrias|puedes|podria|podriamos|podemos|puedo|me podes|me podrias|me puedes|me podria|nos podes|me dejas|dejame|te animas a|sabes|sabrias|vas a|ibas a|habria que|se podra|se podria|se puede|sera posible|seria posible|hay forma de|hay manera de|como hago para|como puedo)\s+(?=[a-z]+(?:ar|er|ir)(?:me|le|les|lo|la|nos|selo|sela)?\b)/;
@@ -332,11 +333,74 @@
     return s.trim();
   }
 
+  /* ---------- agenda de un día entero (1.54) ----------
+     dayOff: cancelar/cerrar la agenda de un día (todos los turnos de ese día).
+     dayAdd: abrir una agenda extra un día puntual, o estirar la de ese día («hasta las 18»). */
+  const TM = '(\\d{1,2}(?::\\d{2})?(?: y (?:media|cuarto))?|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|dieciseis|diecisiete|dieciocho|diecinueve|veinte|mediodia)(?: ?(?:hs|horas|h))?(?: de la (manana|tarde|noche))?';
+  function hm(x, ampm) {
+    if (!x) return null;
+    if (/mediodia/.test(x)) return 720;
+    const t = parseTime('las ' + x.replace(/ ?(?:hs|horas|h)$/, '') + (ampm ? ' de la ' + ampm : ''));
+    return t.value;
+  }
+  function parseRange(s) {
+    let m, from = null, to = null, rest = s;
+    if ((m = new RegExp('\\b(?:de|desde)(?: las?)? ' + TM + ' (?:a|hasta)(?: las?)? ' + TM).exec(s))) {
+      from = hm(m[1], m[2]); to = hm(m[3], m[4]);
+      if (from != null && to != null && to <= from && to < 13 * 60) to += 12 * 60;
+      rest = s.replace(m[0], ' ');
+    } else {
+      if ((m = new RegExp('\\b(?:hasta(?: las?)?|que termine a las|terminando a las) ' + TM).exec(s))) { to = hm(m[1], m[2]); rest = rest.replace(m[0], ' '); }
+      if ((m = new RegExp('\\b(?:desde(?: las?)?|arrancando a las|empezando a las|a partir de las) ' + TM).exec(rest))) { from = hm(m[1], m[2]); rest = rest.replace(m[0], ' '); }
+    }
+    if (from == null && to == null) {
+      if (/\b(?:a|por) la manana\b|\btoda la manana\b/.test(s)) { from = 480; to = 780; rest = s.replace(/\b(?:a|por|toda) la manana\b/, ' '); }
+      else if (/\b(?:a|por) la tarde\b|\btoda la tarde\b/.test(s)) { from = 840; to = 1200; rest = s.replace(/\b(?:a|por|toda) la tarde\b/, ' '); }
+    }
+    return { from, to, rest: rest.replace(/\s+/g, ' ').trim() };
+  }
+  const ALLW = /\b(?:de todos(?! los turnos)|de todo el (?:consultorio|centro|equipo)|del consultorio|del centro|de todo el mundo|de todos los (?:profesionales|odontologos|doctores)|todo el consultorio|todo el centro|el consultorio entero|el centro entero|toda la clinica)\b/;
+  function dayAgenda(c, today, pros) {
+    let m, s = c;
+    /* «la doctora Vega el viernes no atiende», «el doctor Roldán atiende el jueves de 9 a 14» */
+    if ((m = /(^|\s)(?:el |la )?((?:dra|dr|doc|doctora|doctor|odontologa|odontologo) [a-z]+)(?=\s|$)/.exec(s)) && !/\b(?:con|de|del|para|a)\s+(?:el |la )?$/.test(s.slice(0, m.index + m[1].length))) s = (s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim() + ' con ' + m[2];
+    const DAY = '(?:el |este |la |para el |el dia )?(?:hoy|manana|pasado manana|lunes|martes|miercoles|jueves|viernes|sabado|domingo|\\d{1,2})';
+    const why = (m = /\s+(?:porque|ya que|por que|que|asi que|debido a que|por)\s+(?:me|tengo|tuve|hay|es|voy|estoy|se|surgio|un|una|el|la)\b.*$/.exec(s)) ? m[0].replace(/^\s+(?:porque|ya que|por que|que|asi que|debido a que|por)\s+/, '') : '';
+    if (why) s = s.slice(0, m.index);
+    const OFFV = '(?:cancela|suspende|anula|borra|libera|limpia|vacia|cerra|bloquea|levanta|elimina|saca|tacha|baja|posterga|reprograma)(?:me|le|nos|r)?';
+    const AG = '(?:(?:toda |todo |la |el |mi |los |las |sus |toda la |todo el )?(?:agenda|dia|consultorio|consulta|consultas|jornada|atencion|turnos|todos los turnos|todos los pacientes|pacientes|citas|horario|horas))';
+    let off = false, add = false;
+    if (new RegExp('^' + OFFV + ' ' + AG + '\\b').test(s) || new RegExp('^(?:(?:da|dale|dar) )?de baja (?:a |al )?' + AG + '\\b').test(s)) off = true;
+    else if (new RegExp('^(?:cerra|bloquea|tacha|libera|cancela|suspende|anula|vacia)(?:me|le|r)? (?:todo |toda |el dia |todo el dia |todo el |toda la )?' + DAY + '\\b').test(s)) off = true;
+    else if (/^(?:(?:el |este |la |para el )?(?:hoy|manana|pasado manana|lunes|martes|miercoles|jueves|viernes|sabado|domingo)(?: \d{1,2})?(?: que viene| proximo)?) (?:no (?:atiendo|atiende|vengo|viene|voy|va|trabajo|trabaja|abro|hay consultorio|hay atencion|hay turnos|puedo|puede|estoy|esta|atendemos|abrimos|trabajamos|va a haber)|me (?:tomo|lo tomo)(?: libre)?|lo tengo libre|estoy libre|cerramos|cierro|esta cerrado)\b/.test(s)) off = true;
+    else if (/^(?:no (?:atiendo|atiende|vengo|viene|voy|trabajo|trabaja|abro|atendemos|abrimos|trabajamos|puedo ir|voy a ir|voy a atender|vamos a atender|va a atender)|me (?:tomo|tome)(?: (?:libre|franco))?|tengo (?:libre|franco)|me voy|cerramos|cierro|me ausento|me pido|pido franco (?:para )?)\b/.test(s) && /\b(?:hoy|manana|lunes|martes|miercoles|jueves|viernes|sabado|domingo|\d{1,2} de [a-z]+)\b/.test(s)) off = true;
+    const ADDV = '(?:agrega|suma|abri|habilita|pone|crea|arma|carga|activa|abre|genera|anota|agenda|mete|programa)(?:me|le|nos|r)?';
+    const ADDO = '(?:(?:una |un |la |el |mi |otra |otro )?(?:nueva |nuevo |extra )?(?:agenda|horario|horas|atencion|jornada|dia de atencion|dia de trabajo|consultorio|franja|bloque de atencion|turnos)(?: nueva| nuevo| extra| especial| adicional)?)';
+    if (!off) {
+      if (new RegExp('^(?:(?:necesito|quiero|preciso|quisiera|me hace falta|hace falta) )?(?:' + ADDV + ' )?' + ADDO + '\\b').test(s) && (/^(?:necesito|quiero|preciso|quisiera|me hace falta|hace falta) /.test(s) ? / (?:extra|nueva|nuevo|adicional|especial)\b|\b(?:de|desde|hasta) /.test(s) : new RegExp('^' + ADDV + ' ').test(s))) add = true;
+      else if (new RegExp('^(?:habilita|agrega|suma|abri|activa|abre)(?:me|le|r)? (?:todo |el dia )?' + DAY + '\\b').test(s) && /\b(?:de|desde|hasta) /.test(s)) add = true;
+      else if (/^(?:extende|amplia|alarga|estira|estirame|extendeme|ampliame|alargame|corre|correme|adelanta|adelantame|atrasa)(?:me|le|r)? (?:la |el |mi )?(?:agenda|horario|dia|jornada|atencion)\b/.test(s)) add = true;
+      else if (/^(?:(?:el |este |la |para el )?(?:hoy|manana|pasado manana|lunes|martes|miercoles|jueves|viernes|sabado|domingo)(?: \d{1,2})?(?: que viene| proximo)? )?(?:voy a |va a )?(?:atiendo|atiende|atender|vengo|viene|venir|abro|abre|abrir|trabajo|trabaja|trabajar|me quedo|se queda|quedarme|estoy|esta|atendemos|abrimos|arranco|arranca|empiezo|empieza|entro|entra)\b/.test(s) && /\b(?:de|desde|hasta|a la (?:manana|tarde))\b/.test(s) && /\b(?:hoy|manana|lunes|martes|miercoles|jueves|viernes|sabado|domingo|\d{1,2} de [a-z]+)\b/.test(s)) add = true;
+    }
+    if (!off && !add) return null;
+    const all = ALLW.test(s) || (off && /\b(?:el|todo el) (?:consultorio|centro)\b/.test(s)); if (all) s = s.replace(ALLW, ' ');
+    const rg = add ? parseRange(s) : { from: null, to: null, rest: s };
+    if (rg.from != null && rg.to == null && rg.from >= 780 && /\b(?:adelanta\w*|arranc\w*|empiez\w*|empez\w*|entro|entra|temprano)\b/.test(s)) rg.from -= 720;
+    let r = rg.rest.replace(/\b(?:de|del|de la|para|para la|para el|a)\s+(?=(?:la |el )?(?:dra|dr|doc|doctora|doctor|odontologa|odontologo)\b)/g, 'con ');
+    let pp = parsePro(r, pros);
+    if (!pp.value) { const w = /\b(?:de|del|para|con|a)\s+([a-z]{3,})\b/g; let x; while ((x = w.exec(r))) { const t = parsePro('con ' + x[1], pros); if (t.value) { pp = { value: t.value, rest: r.replace(x[0], ' ') }; break; } } }
+    r = pp.rest;
+    const d = parseDate(r.replace(/\b(?:del|de la|para el|para|el dia|este|esta)\b/g, ' ').replace(/\s+/g, ' '), today);
+    if (off) return { intent: 'dayOff', date: d.value, pro: pp.value, all, why: why.trim() };
+    if (rg.from == null && rg.to == null && /^(?:abri|abre|pone|carga|agenda|anota|mete|programa|activa)/.test(c)) return null;
+    return { intent: 'dayAdd', date: d.value, pro: pp.value, from: rg.from, to: rg.to };
+  }
+
   /* ---------- análisis principal ---------- */
   function parse(text, ctx) {
     ctx = ctx || {};
     const today = ctx.today || keyOf(new Date());
-    const raw = N(text), c = navRewrite(rephrase(clean(text)));
+    const raw = N(text), pre = rephrase(clean(text)), c = navRewrite(pre);
     if (!c) return null;
     let m;
 
@@ -371,6 +435,9 @@
       if (r && /^(?:pay|arrived|noshow|cancelAppt|note)$/.test(r.intent)) return r;
       if (/^(?:anota|deja anotado|deja asentado|asenta)/.test(c) && /^(?:(?:le|les|me) )?(?:hice|hicimos|realice|realizamos|coloque|colocamos|puse|pusimos|saque|sacamos|termine|terminamos|cemente|obture|extraje|limpie|tome|tomamos|se le hizo|se hizo)\b/.test(m[1])) return { intent: 'note', text: m[1] };
     }
+    // agenda de un día entero: «cancelame la agenda del viernes porque me tuve que ir», «agregame una agenda el jueves de 9 a 14»
+    { const dd = dayAgenda(pre, today, ctx.pros) || (c !== pre ? dayAgenda(c, today, ctx.pros) : null); if (dd) return dd; }
+
     // cobros dichos con el paciente adelante o en primera persona: «Pérez pagó 20 mil», «le cobré 20 mil a Pérez», «recibí 20 mil de Pérez»
     const payOf = (rest, who) => {
       const a = parseAmount(rest); let r = a.rest; const me = parseMethod(r); r = me.rest;

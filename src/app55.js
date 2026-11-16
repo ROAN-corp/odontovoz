@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.54', d: '2026-11-16', items: [
+      { t: 'Cancelar la agenda de un día entero: «Navi, cancelame la agenda del viernes porque me tuve que ir». Suspende los turnos, bloquea el día y te deja avisar a cada paciente por WhatsApp.', top: 1 },
+      { t: 'Agregar agenda un día puntual: «Navi, agregame una agenda el jueves de 9 a 14» o «extendeme el jueves hasta las 18». También en la agenda › Más.', top: 1 }] },
     { v: '1.53.1', d: '2026-11-16', items: [
       { t: 'El asistente por voz entiende muchas más formas de pedir lo mismo: «¿me abrís…?», «¿me abrirías…?», «chusmeame la historia de…», «Julián pagó 20 lucas», «cayó Julián», «¿cómo pinta mañana?».', top: 1 }] },
     { v: '1.53', d: '2026-11-16', items: [

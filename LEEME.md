@@ -548,6 +548,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.54 · Agenda de un día entero
+
+- **Cancelar la agenda de un día** (voz o Agenda › Más › «Cancelar la agenda del día»): «cancelame la agenda del viernes porque me tuve que ir», «el viernes no atiendo», «cerrá el viernes», «suspendé todos los turnos del viernes», «cancelá la agenda de todo el consultorio el viernes». Muestra los turnos afectados, al confirmar los cancela, bloquea el día (tampoco se dan turnos online) y deja un botón de WhatsApp por paciente con un mensaje de disculpas para reprogramar. «Deshacer» deja todo como estaba.
+- **Agregar agenda un día puntual** (voz o Agenda › Más › «Agregar agenda un día»): «agregame una agenda el jueves de 9 a 14», «el sábado atiendo de 9 a 13», «extendeme la agenda del jueves hasta las 18», «el jueves arranco desde las 7». Sumar, estirar o reemplazar el horario de ese día; si estaba cerrado o de licencia, lo reabre. Solo dueño o administrador.
+
 ## OdontoVoz 1.53.1 · La voz entiende más formas de pedir
 
 - Más de 300 frases nuevas probadas (`tests/ovcmd.frases.json`): pedidos en condicional («¿me abrirías…?»), negativos («¿no me abrís…?»), con «poné que / anotá que», con el paciente adelante («Julián pagó 20 mil», «Julián canceló», «Julián pegó el faltazo»), preguntas por un día («¿qué tengo mañana?», «¿cómo pinta el lunes?») y modismos («chusmeame», «echale un ojo», «garpó», «cayó», «clavale un turno»).

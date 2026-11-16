@@ -661,5 +661,213 @@
    "Navi, eso ya está",
    "Navi, listo ya está"
   ]
+ ],
+ [
+  {
+   "intent": "dayOff",
+   "date": "2026-11-06",
+   "all": false
+  },
+  [
+   "Navi, cancelame la agenda del viernes porque me tuve que ir",
+   "Navi, cancelá la agenda del viernes",
+   "Navi, suspendé la agenda del viernes",
+   "Navi, suspendé todos los turnos del viernes",
+   "Navi, el viernes no atiendo",
+   "Navi, el viernes no vengo",
+   "Navi, el viernes no voy a ir",
+   "Navi, cerrá el viernes",
+   "Navi, bloqueame el viernes",
+   "Navi, bloqueá todo el viernes",
+   "Navi, anulá la agenda del viernes",
+   "Navi, borrá la agenda del viernes",
+   "Navi, liberá el viernes",
+   "Navi, vaciá la agenda del viernes",
+   "Navi, tachá el viernes",
+   "Navi, ¿me cancelás la agenda del viernes?",
+   "Navi, ¿podés cancelar la agenda del viernes?",
+   "Navi, necesito que canceles la agenda del viernes",
+   "Navi, quiero cancelar todo el viernes",
+   "Navi, me tomo el viernes",
+   "Navi, el viernes me lo tomo libre",
+   "Navi, el viernes no hay consultorio",
+   "Navi, el viernes cerramos",
+   "Navi, el viernes no trabajo",
+   "Navi, levantame la agenda del viernes",
+   "Navi, dale de baja a la agenda del viernes",
+   "Navi, reprogramá la agenda del viernes",
+   "Navi, cancelá todos los pacientes del viernes",
+   "Navi, cancelame el día viernes que tengo un compromiso",
+   "Navi, suspendé las consultas del viernes por enfermedad",
+   "Navi, cancelá la jornada del viernes",
+   "Navi, el viernes no voy a poder atender",
+   "Navi, no atiendo el viernes",
+   "Navi, no voy el viernes",
+   "Navi, el viernes 6 no atiendo",
+   "Navi, cancelame el viernes 6 de noviembre"
+  ]
+ ],
+ [
+  {
+   "intent": "dayOff",
+   "date": "2026-11-05"
+  },
+  [
+   "Navi, mañana no atiendo",
+   "Navi, cancelá la agenda de mañana",
+   "Navi, mañana no vengo porque estoy enfermo",
+   "Navi, cerrá mañana"
+  ]
+ ],
+ [
+  {
+   "intent": "dayOff",
+   "date": "2026-11-04"
+  },
+  [
+   "Navi, cancelá la agenda de hoy",
+   "Navi, hoy no atiendo más",
+   "Navi, suspendé los turnos de hoy"
+  ]
+ ],
+ [
+  {
+   "intent": "dayOff",
+   "date": "2026-11-06",
+   "pro": "pr1"
+  },
+  [
+   "Navi, cancelá la agenda del viernes de la doctora Vega",
+   "Navi, suspendé los turnos de Vega del viernes",
+   "Navi, la doctora Vega el viernes no atiende"
+  ]
+ ],
+ [
+  {
+   "intent": "dayOff",
+   "date": "2026-11-06",
+   "all": true
+  },
+  [
+   "Navi, cancelá la agenda de todo el consultorio el viernes",
+   "Navi, el viernes cerramos todo el consultorio",
+   "Navi, cerrá el consultorio el viernes",
+   "Navi, suspendé los turnos de todos el viernes"
+  ]
+ ],
+ [
+  {
+   "intent": "dayOff",
+   "why": "me tuve que ir"
+  },
+  [
+   "Navi, cancelame la agenda del viernes porque me tuve que ir"
+  ]
+ ],
+ [
+  {
+   "intent": "dayAdd",
+   "date": "2026-11-05",
+   "from": 540,
+   "to": 840
+  },
+  [
+   "Navi, agregame una nueva agenda para este jueves de 9 a 14hs",
+   "Navi, agregá agenda el jueves de 9 a 14",
+   "Navi, sumame horario el jueves de 9 a 14",
+   "Navi, abrí agenda el jueves de 9 a 14",
+   "Navi, habilitame el jueves de 9 a 14",
+   "Navi, el jueves atiendo de 9 a 14",
+   "Navi, el jueves voy a atender de 9 a 14",
+   "Navi, voy a atender el jueves de 9 a 14",
+   "Navi, el jueves vengo de 9 a 14",
+   "Navi, poneme agenda el jueves de 9 a 14",
+   "Navi, creá una agenda para el jueves de 9 a 14",
+   "Navi, armame agenda el jueves de 9 a 14 horas",
+   "Navi, el jueves abro de 9 a 14",
+   "Navi, ¿me agregás una agenda el jueves de 9 a 14?",
+   "Navi, ¿podés abrirme agenda el jueves de 9 a 14?",
+   "Navi, quiero agregar horario el jueves de 9 a 14",
+   "Navi, necesito una agenda extra el jueves de 9 a 14",
+   "Navi, agregá un día de atención el jueves de 9 a 14",
+   "Navi, sumá horas el jueves desde las 9 hasta las 14",
+   "Navi, el jueves trabajo de 9 a 2 de la tarde",
+   "Navi, agregá agenda el jueves de 9 de la mañana a 2 de la tarde",
+   "Navi, habilitá turnos el jueves de 9 a 14"
+  ]
+ ],
+ [
+  {
+   "intent": "dayAdd",
+   "date": "2026-11-07",
+   "from": 540,
+   "to": 780
+  },
+  [
+   "Navi, el sábado atiendo de 9 a 13",
+   "Navi, abrime agenda el sábado de 9 a 13",
+   "Navi, agregá el sábado de 9 a 13"
+  ]
+ ],
+ [
+  {
+   "intent": "dayAdd",
+   "date": "2026-11-05",
+   "from": null,
+   "to": 1080
+  },
+  [
+   "Navi, extendeme la agenda del jueves hasta las 18",
+   "Navi, el jueves me quedo hasta las 18",
+   "Navi, estirá la agenda del jueves hasta las 6 de la tarde",
+   "Navi, ampliá el horario del jueves hasta las 18"
+  ]
+ ],
+ [
+  {
+   "intent": "dayAdd",
+   "date": "2026-11-05",
+   "from": 420,
+   "to": null
+  },
+  [
+   "Navi, el jueves arranco desde las 7",
+   "Navi, adelantame la agenda del jueves desde las 7"
+  ]
+ ],
+ [
+  {
+   "intent": "dayAdd",
+   "date": "2026-11-05",
+   "pro": "pr2",
+   "from": 540,
+   "to": 840
+  },
+  [
+   "Navi, agregá agenda para el doctor Roldán el jueves de 9 a 14",
+   "Navi, el doctor Roldán atiende el jueves de 9 a 14"
+  ]
+ ],
+ [
+  {
+   "intent": "nav",
+   "tab": "agenda",
+   "date": "2026-11-06"
+  },
+  [
+   "Navi, agenda del viernes",
+   "Navi, abrime la agenda del viernes",
+   "Navi, mostrame la agenda del viernes"
+  ]
+ ],
+ [
+  {
+   "intent": "cancelAppt",
+   "name": "perez"
+  },
+  [
+   "Navi, cancelale el turno a Pérez",
+   "Navi, cancelá el turno de Pérez"
+  ]
  ]
 ]
