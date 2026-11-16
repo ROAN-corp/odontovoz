@@ -548,6 +548,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.1.2 · Stock en el menú y cantidades por insumo (16/11/2026)
+
+- Logo de OdontoVoz en la barra de arriba (centrado en la PC; en el celular, solo el ícono al lado del título). Ya no va arriba del saludo del inicio.
+- «Stock de insumos» en el menú principal (después de Caja); sigue también en Ajustes.
+- Stock › «Cuándo avisar y cuánto pedir»: para cada insumo, el aviso (con decimales: 0,5 = media caja) y «Pedir hasta tener» (si queda vacío, se calcula con el uso). También en «Datos» de cada insumo.
+
 ## OdontoVoz 1.1.1 · Logo en el inicio (16/11/2026)
 
 - Logo de OdontoVoz (`src/app81.js`, `A.ovMarkSVG`) con el nombre al lado, arriba del saludo del inicio, en celular y PC.

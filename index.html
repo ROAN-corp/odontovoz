@@ -8086,10 +8086,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.1.1';
+  A.VERSION = '1.1.2';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.56.1';
+  A.VBUILD = '1.56.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -15689,7 +15689,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const nLow = L.filter(i => status(i) !== 'ok').length, nExp = L.filter(expSoon).length;
     h += '<div class="stk-sum"><span class="ok">' + L.filter(i => status(i) === 'ok').length + ' bien</span><span class="low">' + nLow + ' poco o nada</span>' + (nExp ? '<span class="exp">' + nExp + ' vence' + (nExp === 1 ? '' : 'n') + ' pronto</span>' : '') + '</div>';
     h += '<div class="stk-bar"><input type="search" placeholder="Buscar insumo…" value="' + esc(st.q || '') + '" data-in="stkQ" aria-label="Buscar insumo"><select data-chg="stkCat" aria-label="Categoría"><option value="">Todas</option>' + cats.map(c => '<option' + (c === st.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select><label class="chk"><input type="checkbox" data-chg="stkLow"' + (st.low ? ' checked' : '') + '> <span>Solo lo que falta</span></label></div>';
-    h += '<div class="row-btns stk-acts"><button class="btn small primary" data-act="stkIn">+ Llegó mercadería</button><button class="btn small" data-act="stkCount">Contar el stock</button><button class="btn small" data-act="stkUseM">Usé algo</button>' + (isEmp() && sedes().length > 1 ? '<button class="btn small" data-act="stkMove">Pasar a otro centro</button>' : '') + '<button class="btn small ghost" data-act="stkNew">+ Insumo nuevo</button></div>';
+    h += '<div class="row-btns stk-acts"><button class="btn small primary" data-act="stkIn">+ Llegó mercadería</button><button class="btn small" data-act="stkCount">Contar el stock</button><button class="btn small" data-act="stkUseM">Usé algo</button>' + (isEmp() && sedes().length > 1 ? '<button class="btn small" data-act="stkMove">Pasar a otro centro</button>' : '') + '<button class="btn small ghost" data-act="stkNew">+ Insumo nuevo</button>' + (canCfg() ? '<button class="btn small ghost" data-act="stkLevels">Cuándo avisar y cuánto pedir</button>' : '') + '</div>';
     h += '<ul class="stk-list" id="stkList">' + listRows(vis) + '</ul>';
     return h;
   };
@@ -15704,7 +15704,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* lista de compras: lo que está bajo el mínimo o no llega a 30 días */
   function buyList(L) {
     return L.map(i => {
-      const u = use30(i), want = Math.max(i.min * 2, u > 0 ? Math.ceil(u * 1.1) : 0, i.min > 0 ? i.min + 1 : 0);
+      const u = use30(i), want = i.par > 0 ? i.par : Math.max(i.min * 2, u > 0 ? Math.ceil(u * 1.1) : 0, i.min > 0 ? i.min + 1 : 0);
       const need = Math.ceil(Math.max(0, want - i.qty));
       return { i, need, why: i.qty <= 0 ? 'sin stock' : i.min > 0 && i.qty <= i.min ? 'bajo el mínimo' : daysLeft(i) != null && daysLeft(i) <= 30 ? 'alcanza ~' + daysLeft(i) + ' días' : '' };
     }).filter(x => x.need > 0 && x.why);
@@ -15712,7 +15712,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function buyHTML(sd, L) {
     const B = buyList(L);
     if (!B.length) return '<div class="stk-empty"><p><b>No falta nada.</b> Todos los insumos están arriba del mínimo y alcanzan para más de un mes con lo que se viene usando.</p></div>';
-    return '<p class="hint">Lo que conviene pedir' + (isEmp() ? ' para <b>' + esc(sedeName(sd)) + '</b>' : '') + ', calculado con el mínimo de cada insumo y con lo que se usó en los últimos 30 días.</p><ul class="stk-buy">' +
+    return '<p class="hint">Lo que conviene pedir' + (isEmp() ? ' para <b>' + esc(sedeName(sd)) + '</b>' : '') + ', calculado con el mínimo de cada insumo y con lo que se usó en los últimos 30 días.' + (canCfg() ? ' <button class="linkbtn" data-act="stkLevels">Cambiar cuándo avisar y cuánto pedir</button>' : '') + '</p><ul class="stk-buy">' +
       B.map(x => '<li><span><b>' + esc(x.i.name) + '</b><small>Hay ' + fq(x.i.qty) + ' ' + esc(x.i.unit || '') + ' · ' + esc(x.why) + '</small></span><b class="stk-need">' + x.need + ' ' + esc(x.i.unit || '') + '</b></li>').join('') + '</ul>' +
       '<div class="row-btns"><a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(buyText(sd, B)) + '">Mandar el pedido por WhatsApp</a><button class="btn" data-act="stkBuyCopy">Copiar el pedido</button></div>';
   }
@@ -15773,7 +15773,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (mode === 'in') b += '<div class="row2"><div class="field"><label for="siQ">Cantidad que llegó (' + esc(i.unit || 'unidades') + ')</label><input id="siQ" inputmode="decimal" placeholder="Ej.: 2"></div><div class="field"><label for="siE">Vence (opcional)</label><input id="siE" type="date"></div></div><div class="field"><label for="siN">Nota (opcional)</label><input id="siN" placeholder="Ej.: proveedor, número de factura, precio"></div>';
     if (mode === 'use') b += '<div class="row2"><div class="field"><label for="siQ">Cuánto se usó</label><input id="siQ" inputmode="decimal" placeholder="Ej.: 1"></div><div class="field"><label for="siU">En</label><select id="siU"><option value="u">' + esc(i.unit || 'unidades') + '</option>' + (i.uses > 1 ? '<option value="x">usos (1/' + i.uses + ' de unidad)</option>' : '') + '<option value="v">se venció o se rompió (' + esc(i.unit || 'unidades') + ')</option></select></div></div><div class="field"><label for="siN">Nota (opcional)</label><input id="siN" placeholder="Ej.: paciente, motivo"></div>';
     if (mode === 'count') b += '<div class="field"><label for="siQ">Cuánto hay de verdad ahora (' + esc(i.unit || 'unidades') + ')</label><input id="siQ" inputmode="decimal" value="' + fq(i.qty) + '" onfocus="this.select()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();App.acts.stkISave();}"></div><p class="hint">Se guarda la diferencia como ajuste, para que se vea en el historial.</p>';
-    if (mode === 'edit') b += '<div class="field"><label for="seN">Nombre</label><input id="seN" value="' + esc(i.name) + '"></div><div class="row2"><div class="field"><label for="seU">Unidad</label><input id="seU" value="' + esc(i.unit || '') + '" placeholder="cajas, jeringas…"></div><div class="field"><label for="seX">Usos que rinde cada unidad</label><input id="seX" inputmode="numeric" value="' + i.uses + '"></div></div><div class="row2"><div class="field"><label for="seM">Avisar cuando queden</label><input id="seM" inputmode="decimal" value="' + fq(i.min || 0) + '"></div><div class="field"><label for="seC">Categoría</label><input id="seC" value="' + esc(i.cat) + '" list="stkCats"><datalist id="stkCats">' + CATS.map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div></div><div class="field"><label for="seE">Próximo vencimiento</label><input id="seE" type="date" value="' + esc(i.exp || '') + '"></div>';
+    if (mode === 'edit') b += '<div class="field"><label for="seN">Nombre</label><input id="seN" value="' + esc(i.name) + '"></div><div class="row2"><div class="field"><label for="seU">Unidad</label><input id="seU" value="' + esc(i.unit || '') + '" placeholder="cajas, jeringas…"></div><div class="field"><label for="seX">Usos que rinde cada unidad</label><input id="seX" inputmode="numeric" value="' + i.uses + '"></div></div><div class="row2"><div class="field"><label for="seM">Avisar cuando queden</label><input id="seM" inputmode="decimal" value="' + fq(i.min || 0) + '"></div><div class="field"><label for="seC">Categoría</label><input id="seC" value="' + esc(i.cat) + '" list="stkCats"><datalist id="stkCats">' + CATS.map(c => '<option value="' + esc(c) + '">').join('') + '</datalist></div></div><div class="row2"><div class="field"><label for="seP">Al pedir, completar hasta tener</label><input id="seP" inputmode="decimal" value="' + (i.par > 0 ? fq(i.par) : '') + '" placeholder="automático"></div></div><div class="field"><label for="seE">Próximo vencimiento</label><input id="seE" type="date" value="' + esc(i.exp || '') + '"></div>';
     if (mode === 'hist') b += i.mv.length ? '<ul class="stk-mov">' + i.mv.slice(0, 40).map(x => '<li><span class="stk-mw ' + x.why + '">' + esc(x.why) + '</span><span class="stk-ml"><small>' + new Date(x.at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + (x.by ? ' · ' + esc(x.by) : '') + (x.note ? ' · ' + esc(x.note) : '') + '</small></span><b class="' + (x.d < 0 ? 'neg' : 'pos') + '">' + (x.d > 0 ? '+' : '') + fq(x.d) + '</b></li>').join('') + '</ul>' : '<p class="hint">Sin movimientos.</p>';
     b += '<div class="hint bad" id="siMsg"></div>';
     const foot = '<button class="btn" data-act="stkBack">Volver</button>' + (mode === 'edit' && canCfg() ? '<button class="btn danger" data-act="stkDel">Borrar</button>' : '') + (mode !== 'hist' ? '<button class="btn primary" data-act="stkISave">Guardar</button>' : '');
@@ -15787,7 +15787,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (m.mode === 'in') { if (!(q > 0)) return say('Escribí cuánto llegó.'); const e = ($('#siE') || {}).value; i.qty = Math.round((i.qty + q) * 1000) / 1000; if (e) i.exp = i.exp && i.exp < e && i.qty - q > 0 ? i.exp : e; mvAdd(i, q, 'compra', note); A.toast('+' + fq(q) + ' ' + (i.unit || '') + ' de ' + i.name + '.'); }
     else if (m.mode === 'use') { if (!(q > 0)) return say('Escribí cuánto se usó.'); const u = ($('#siU') || {}).value, d = u === 'x' ? q / i.uses : q; i.qty = Math.max(0, Math.round((i.qty - d) * 1000) / 1000); mvAdd(i, -d, u === 'v' ? 'vencido' : 'uso', note); }
     else if (m.mode === 'count') { const v = dec(($('#siQ') || {}).value); if (v < 0) return say('No puede ser negativo.'); const d = v - i.qty; i.qty = v; mvAdd(i, d, 'conteo'); }
-    else if (m.mode === 'edit') { const n = ($('#seN').value || '').trim(); if (!n) return say('Poné el nombre.'); i.name = n; i.unit = $('#seU').value.trim(); i.uses = Math.max(1, Math.round(num($('#seX').value)) || 1); i.min = Math.max(0, dec($('#seM').value)); i.cat = ($('#seC').value || '').trim() || 'Otros'; i.exp = $('#seE').value || null; }
+    else if (m.mode === 'edit') { const n = ($('#seN').value || '').trim(); if (!n) return say('Poné el nombre.'); i.name = n; i.unit = $('#seU').value.trim(); i.uses = Math.max(1, Math.round(num($('#seX').value)) || 1); i.min = Math.max(0, dec($('#seM').value)); i.par = Math.max(0, dec($('#seP').value)) || 0; i.cat = ($('#seC').value || '').trim() || 'Otros'; i.exp = $('#seE').value || null; }
     save(); checkAlerts(place()); back();
   };
   A.acts.stkDel = () => { const m = S.modal, sd = place(), L = list(sd), i = itemById(m.id); if (!i) return; ST()[sd] = L.filter(x => x !== i); save(); back(); A.toast('Insumo borrado.', () => { list(sd).push(i); save(); paint(); }); };
@@ -15819,6 +15819,23 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let n = 0; const L = list(place());
     A.$$('[data-cid]').forEach(inp => { if (inp.value.trim() === '') return; const i = L.filter(x => x.id === inp.getAttribute('data-cid'))[0]; if (!i) return; norm1(i); const v = Math.max(0, dec(inp.value)), d = v - i.qty; if (Math.abs(d) < 1e-9) return; i.qty = v; mvAdd(i, d, 'conteo'); n++; });
     save(); checkAlerts(place()); back(); A.toast(n ? 'Conteo guardado (' + n + ' insumo' + (n === 1 ? '' : 's') + ').' : 'No cambiaste ningún número.');
+  };
+  /* cuándo avisar y cuánto pedir de cada insumo (todo junto) */
+  A.acts.stkLevels = () => { S.modal = { type: 'stkLevels' }; A.renderModal(); };
+  MF.stkLevels = () => {
+    const L = list(place()).map(norm1), cats = []; L.forEach(i => { if (cats.indexOf(i.cat) < 0) cats.push(i.cat); });
+    return A.modalShell('Cuándo avisar y cuánto pedir', '<p class="hint" style="margin-top:0"><b>Avisar cuando queden:</b> por ejemplo 0,5 = te avisa cuando quede media caja. <b>Pedir hasta tener:</b> cuánto querés tener después de comprar (si lo dejás vacío, se calcula con lo que venís usando). Se aceptan decimales.</p>' +
+      cats.map(c => '<h3 class="stk-ch">' + esc(c) + '</h3><div class="stk-lgrid"><div class="stk-lh"><span></span><small>Avisar cuando queden</small><small>Pedir hasta tener</small></div>' + L.filter(i => i.cat === c).map(i => '<div class="stk-lr"><span>' + esc(i.name) + '<small>' + esc(i.unit || '') + ' · hay ' + fq(i.qty) + '</small></span><input inputmode="decimal" data-lmin="' + i.id + '" value="' + fq(i.min || 0) + '" aria-label="Avisar cuando queden de ' + esc(i.name) + '"><input inputmode="decimal" data-lpar="' + i.id + '" value="' + (i.par > 0 ? fq(i.par) : '') + '" placeholder="auto" aria-label="Pedir hasta tener de ' + esc(i.name) + '"></div>').join('') + '</div>').join(''),
+      '<button class="btn" data-act="stkBack">Volver</button><button class="btn primary" data-act="stkLevelsGo">Guardar</button>', true);
+  };
+  A.acts.stkLevelsGo = () => {
+    let n = 0; const L = list(place());
+    L.forEach(i => {
+      const a = document.querySelector('[data-lmin="' + i.id + '"]'), b = document.querySelector('[data-lpar="' + i.id + '"]'); if (!a || !b) return;
+      const mn = Math.max(0, dec(a.value)), pr = b.value.trim() === '' ? 0 : Math.max(0, dec(b.value));
+      if (mn !== (i.min || 0) || pr !== (i.par || 0)) { i.min = mn; i.par = pr; n++; }
+    });
+    save(); checkAlerts(place()); back(); A.toast(n ? 'Guardado (' + n + ' insumo' + (n === 1 ? '' : 's') + ').' : 'No cambiaste nada.');
   };
   /* pasar insumos a otro centro (Empresa) */
   A.acts.stkMove = () => { S.modal = { type: 'stkMoveM' }; A.renderModal(); };
@@ -15868,6 +15885,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.stk-buy li,.stk-mov li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px}.stk-buy li>span,.stk-ml{flex:1;min-width:0;display:flex;flex-direction:column}.stk-buy small,.stk-ml small{color:var(--ink-2);font-size:12px}.stk-need{white-space:nowrap;color:var(--accent)}' +
     '.stk-mw{font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--line);white-space:nowrap}.stk-mw.uso{background:#fde7e4}.stk-mw.compra{background:var(--ok-soft,#e5f4ea)}.stk-mw.conteo{background:#e3edfb}.stk-mw.traspaso{background:#efe6fb}.stk-mov .neg{color:#a93226}.stk-mov .pos{color:#1e8449}' +
     '.stk-rec{border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-bottom:6px}.stk-rec summary{cursor:pointer;display:flex;flex-direction:column}.stk-rec summary small{color:var(--ink-2);font-size:12px}.stk-rgrid,.stk-cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 12px;margin-top:8px}' +
+    '.stk-lgrid{display:grid;gap:6px}.stk-lh,.stk-lr{display:grid;grid-template-columns:1fr 92px 92px;gap:8px;align-items:center}.stk-lh small{font-size:11px;color:var(--ink-2);text-align:center;line-height:1.2}.stk-lr span{display:flex;flex-direction:column;font-size:13.5px;min-width:0}.stk-lr span small{font-size:11.5px;color:var(--ink-2)}.stk-lr input{min-height:34px;border:1px solid var(--line);border-radius:8px;text-align:right;padding:0 6px;background:var(--surface);color:var(--ink);font:inherit;width:100%;box-sizing:border-box}.linkbtn{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;font:inherit;cursor:pointer}' +
     '.stk-rgrid label,.stk-cgrid label{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:13.5px}.stk-rgrid label span,.stk-cgrid label span{flex:1;min-width:0;display:flex;flex-direction:column}.stk-cgrid small{color:var(--ink-2);font-size:11.5px}.stk-rgrid em{color:#b9770e;font-style:normal;font-size:11.5px}.stk-rgrid input,.stk-cgrid input{width:76px;min-height:34px;border:1px solid var(--line);border-radius:8px;text-align:right;padding:0 6px;background:var(--surface);color:var(--ink);font:inherit}.stk-ch{margin:12px 0 2px;font-size:14px}' +
     '.stk-head{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}.stk-head span{color:var(--ink-2);font-size:13.5px}' +
     '.stk-pick button{all:unset;cursor:pointer;display:flex;flex-direction:column;padding:8px 10px;border:1px solid var(--line);border-radius:10px;width:100%;box-sizing:border-box}.stk-pick button:hover{border-color:var(--accent)}.stk-pick small{color:var(--ink-2);font-size:12px}';
@@ -18149,8 +18167,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
-    { v: '1.1.1', b: '1.56.1', d: '2026-11-16', items: [
-      { t: 'El logo de OdontoVoz ahora se ve arriba del inicio, también en la computadora.' }] },
+    { v: '1.1.2', b: '1.56.2', d: '2026-11-16', items: [
+      { t: 'Stock de insumos ahora está en el menú principal.', top: 1 },
+      { t: 'En Stock › «Cuándo avisar y cuánto pedir» elegís, para cada insumo, cuándo te avisa (se puede media caja: 0,5) y hasta cuánto pedir.' },
+      { t: 'El logo de OdontoVoz pasó a la barra de arriba.' }] },
     { v: '1.1', b: '1.56.0', d: '2026-11-16', items: [
       { t: 'Cobrar antes de atender: si el paciente viene con prácticas autorizadas (por ejemplo de SOSUNC), la secretaria se las cobra al llegar. Cuando el odontólogo carga lo que hizo, le aparece «ya cobrado en secretaría» y no se cobra dos veces.', top: 1 },
       { t: 'Está en la ventanita del turno («Cobrar antes de atender»), en la cuenta del paciente y, al marcar «Llegó» a alguien de una obra social que pide autorización, la app lo pregunta sola.' },
@@ -22288,26 +22308,39 @@ const OVMenu = (function () {
     ':root[data-theme="dark"] .pre-bnr,:root[data-theme="dark"] .pre-fbnr{background:#17331f;border-color:#2c5b3a}:root[data-theme="dark"] .po-list li.is-pre,:root[data-theme="dark"] .pre-line,:root[data-theme="dark"] .tp-acts .tp-pre{background:#132a1a}:root[data-theme="dark"] .pre-had{background:#3d2f16}';
   document.head.appendChild(css);
 })();
-/* ===== 1.1.1: logo de OdontoVoz arriba del inicio (con el nombre chiquito al lado) ===== */
+/* ===== 1.1.2: logo de OdontoVoz en el medio de la barra de arriba, y «Stock de insumos» en el menú principal ===== */
 (function () {
   'use strict';
   const A = window.App;
   const MARK = '<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="ovbG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f6f6c"/><stop offset="1" stop-color="#0a3f45"/></linearGradient></defs><rect width="40" height="40" rx="10" fill="url(#ovbG)"/>' +
     '<g transform="translate(4 4)" fill="none" stroke="#bfe8df" stroke-linejoin="round" stroke-linecap="round"><path d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke-width="2"/><path d="M11 11.5v2M13.5 10v5M16 9v7M18.5 10v5M21 11.5v2" stroke-width="1.8"/></g></svg>';
   A.ovMarkSVG = MARK;
-  const mount = () => {
-    const v = document.getElementById('view-inicio'); if (!v) return;
-    const hi = v.querySelector('.home-hi'); if (!hi || hi.querySelector('.ov-brand')) return;
-    hi.insertAdjacentHTML('afterbegin', '<div class="ov-brand" aria-label="OdontoVoz"><span class="ov-bm">' + MARK + '</span><span class="ov-bt">Odonto<b>Voz</b></span></div>');
+  /* el logo va en la barra, centrado entre los botones de la izquierda y el buscador */
+  const mountBar = () => {
+    const bar = document.querySelector('header.appbar .top-in'); if (!bar || bar.querySelector('.ov-barlogo')) return;
+    const el = document.createElement('div'); el.className = 'ov-barlogo'; el.setAttribute('aria-label', 'OdontoVoz');
+    el.innerHTML = '<span class="ov-bm">' + MARK + '</span><span class="ov-bt">Odonto<b>Voz</b></span>';
+    const t = bar.querySelector('.ab-title'); if (t) t.insertAdjacentElement('afterend', el); else bar.appendChild(el);
   };
-  const arPrev = A.afterRefresh; A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; try { mount(); } catch (e) { /* nada */ } return r; };
-  const go = () => { const v = document.getElementById('view-inicio'); if (!v) { setTimeout(go, 300); return; } new MutationObserver(() => { try { mount(); } catch (e) { /* nada */ } }).observe(v, { childList: true, subtree: true }); mount(); };
-  go();
+  /* «Stock de insumos» sale de Ajustes y pasa al menú principal (después de Caja) */
+  const mountMenu = () => {
+    const st = document.querySelector('.dnav[data-act="stkOpen"]'), caja = document.querySelector('.dnav[data-act="tab"][data-tab="caja"]');
+    if (!st || !caja || st.previousElementSibling === caja || st.dataset.main) return;
+    caja.insertAdjacentElement('afterend', st); st.dataset.main = '1'; st.classList.add('dnav-main');
+  };
+  const run = () => { try { mountBar(); mountMenu(); } catch (e) { /* nada */ } };
+  const arPrev = A.afterRefresh; A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; run(); return r; };
+  setTimeout(run, 0); setTimeout(run, 600); setTimeout(run, 2000);
   const css = document.createElement('style');
-  css.textContent = '.ov-brand{display:flex;align-items:center;gap:9px;margin:0 0 10px}.ov-bm{display:inline-flex;width:38px;height:38px;border-radius:10px;box-shadow:0 2px 8px rgba(10,63,69,.25)}.ov-bm svg{width:100%;height:100%;display:block}' +
-    '.ov-bt{font-weight:800;font-size:15px;letter-spacing:-.01em;color:var(--ink,#123)}.ov-bt b{color:var(--accent,#0d6b6b);font-weight:800}' +
-    '.home-hi h1 .ov-mark{display:none}' +
-    '@media(min-width:900px){.ov-brand{margin-bottom:14px}.ov-bm{width:44px;height:44px;border-radius:12px}.ov-bt{font-size:17px}}';
+  css.textContent = 'header.appbar .top-in{position:relative}.ab-title{min-width:0}' +
+    '.ov-barlogo{flex:none;display:flex;align-items:center;gap:8px;pointer-events:none;margin:0 6px}' +
+    '.ov-barlogo .ov-bm{display:inline-flex;width:30px;height:30px;border-radius:8px;box-shadow:0 1px 5px rgba(10,63,69,.22)}.ov-barlogo .ov-bm svg{width:100%;height:100%;display:block}' +
+    '.ov-barlogo .ov-bt{font-weight:800;font-size:16px;letter-spacing:-.01em;color:var(--ink,#123);white-space:nowrap}.ov-barlogo .ov-bt b{color:var(--accent,#0d6b6b);font-weight:800}' +
+    /* en la compu, centrado en la barra */
+    '@media(min-width:1100px){.ov-barlogo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;z-index:1}.ov-barlogo .ov-bm{width:34px;height:34px;border-radius:9px}.ov-barlogo .ov-bt{font-size:17px}}' +
+    /* tablet y celular: al lado del título; en el celular, solo el ícono */
+    '@media(max-width:699px){.ov-barlogo .ov-bt{display:none}.ov-barlogo .ov-bm{width:26px;height:26px;border-radius:7px}}' +
+    '@media(max-width:339px){.ov-barlogo{display:none}}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
