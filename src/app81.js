@@ -18,7 +18,7 @@
     if (!st || !caja || st.previousElementSibling === caja || st.dataset.main) return;
     caja.insertAdjacentElement('afterend', st); st.dataset.main = '1'; st.classList.add('dnav-main');
   };
-  const run = () => { try { mountBar(); mountMenu(); } catch (e) { /* nada */ } };
+  const run = () => { try { mountBar(); mountMenu(); const h = document.querySelector('header.appbar'); if (h) h.classList.toggle('ov-home', A.S.tab === 'inicio'); } catch (e) { /* nada */ } };
   const arPrev = A.afterRefresh; A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; run(); return r; };
   setTimeout(run, 0); setTimeout(run, 600); setTimeout(run, 2000);
   const css = document.createElement('style');
@@ -28,8 +28,9 @@
     '.ov-barlogo .ov-bt{font-weight:800;font-size:16px;letter-spacing:-.01em;color:var(--ink,#123);white-space:nowrap}.ov-barlogo .ov-bt b{color:var(--accent,#0d6b6b);font-weight:800}' +
     /* en la compu, centrado en la barra */
     '@media(min-width:1100px){.ov-barlogo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;z-index:1}.ov-barlogo .ov-bm{width:34px;height:34px;border-radius:9px}.ov-barlogo .ov-bt{font-size:17px}}' +
-    /* tablet y celular: al lado del título; en el celular, solo el ícono */
-    '@media(max-width:699px){.ov-barlogo .ov-bt{display:none}.ov-barlogo .ov-bm{width:26px;height:26px;border-radius:7px}}' +
+    /* tablet: al lado del título */
+    /* celular y APK: en el inicio, el nombre (sin el ícono) centrado en el espacio libre, en lugar del título; en las demás pantallas queda el título */
+    '@media(max-width:699px){.ov-barlogo{display:none;flex:1 1 auto;justify-content:center;margin:0 4px}.ov-barlogo .ov-bm{display:none}.ov-barlogo .ov-bt{font-size:17px}header.appbar.ov-home .ov-barlogo{display:flex}header.appbar.ov-home .ab-title{display:none}}' +
     '@media(max-width:339px){.ov-barlogo{display:none}}';
   document.head.appendChild(css);
 })();

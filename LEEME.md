@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.1.3 · Nombre en la barra del celular (16/11/2026)
+
+- En el celular y el APK, en el inicio, la barra muestra «OdontoVoz» (sin el ícono) centrado en el espacio libre, en lugar del título; en las demás pantallas queda el título. En la PC sigue el logo con el nombre en el medio.
+
 ## OdontoVoz 1.1.2 · Stock en el menú y cantidades por insumo (16/11/2026)
 
 - Logo de OdontoVoz en la barra de arriba (centrado en la PC; en el celular, solo el ícono al lado del título). Ya no va arriba del saludo del inicio.
