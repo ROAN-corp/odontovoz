@@ -24,7 +24,7 @@
   const tblName = (t, i) => (t.title ? t.title : 'Tabla ' + (i + 1)) + ' · ' + Object.keys(t.rows).length + ' prácticas';
 
   /* parecido de nombres (obra social de la app ↔ de la Federación) */
-  const ALIAS = { 'sancor salud': 'asociacion-mutual-sancor', ospjn: 'osjpn', 'luz y fuerza': 'osfatlyf', osfatlyf: 'osfatlyf', 'swiss medical': 'swiss-medical', jerarquicos: 'jerarquicos-salud', avalian: 'avalian-aca-salud', 'federada salud': 'federada-salud-2', 'prevencion salud': 'prevencion-salud', medife: 'medife', omint: 'consulmed', 'ospsa': 'ospsa-sanidad', 'uom': 'uom', 'osde': 'osde', 'galeno': 'galeno', 'medicus': 'medicus' };
+  const ALIAS = { 'sancor salud': 'asociacion-mutual-sancor', ospjn: 'osjpn', 'luz y fuerza': 'osfatlyf', osfatlyf: 'osfatlyf', 'swiss medical': 'swiss-medical', jerarquicos: 'jerarquicos-salud', avalian: 'avalian-aca-salud', 'federada salud': 'federada-salud-2', 'prevencion salud': 'prevencion-salud', medife: 'medife', omint: 'consulmed', 'ospsa': 'ospsa-sanidad', 'uom': 'uom', 'osde': 'osde', 'galeno': 'galeno', 'medicus': 'medicus', sosunc: 'sosunc' };
   A.fornMatch = o => {
     if (!DATA) return null;
     if (o.forn && fById(o.forn.slug)) return fById(o.forn.slug);

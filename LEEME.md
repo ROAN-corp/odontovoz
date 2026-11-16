@@ -548,6 +548,13 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.1 · Cobrar antes de atender (16/11/2026)
+
+- **Cobro anticipado en secretaría** (`src/app80.js`): para pacientes que llegan con prácticas autorizadas (p. ej. SOSUNC). Desde la ventanita del turno, la cuenta del paciente o el aviso al marcar «Llegó» (si su obra social pide autorización): cantidad, práctica, pieza opcional, coseguro sugerido según los aranceles, n.º de autorización y medio de pago. Genera el pago con recibo.
+- Cuando el odontólogo carga lo que hizo («Prácticas de hoy»), lo que coincide por tipo de práctica (y pieza, si se anotó) aparece **«✓ Ya cobrado en secretaría»** y no pasa a «Para cobrar». Si lo anotó con otro nombre, se elige a mano («¿Lo cobró la secretaría?»); «no es esta» lo desengancha.
+- Aviso en la ficha y en «Para cobrar» de lo cobrado que falta hacer; lista con «Ya se hizo» y «Devolver» (la devolución sale de la caja del día).
+- **SOSUNC** agregada a las obras sociales (pide autorización; aranceles de la Federación de Río Negro si se pueden bajar).
+
 ## OdontoVoz 1.0 · Primera versión oficial (16/11/2026)
 
 - Los números de versión vuelven a empezar: esta es la **1.0** (la que se registra en la DNDA). Incluye todo lo hecho hasta la 1.54.1 de prueba.

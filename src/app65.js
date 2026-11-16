@@ -128,9 +128,10 @@
       const cargos = pd.ledger.filter(e => e.type === 'cargo' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
       const left = {}; cargos.forEach(e => { left[e.id] = Math.max(0, +e.amount || 0); });
       const piece = (e, amt, date, via, method, osId) => { if (amt > 0) out.push({ pid, patient: name, cargo: e, pro: e.pro || 'pr1', desc: e.desc, cat: (e.txId && txCat[e.txId]) || (A.catOf ? A.catOf({ desc: e.desc }) : ''), date, amount: amt, via, method: method || '', os: osId || null, osMonth: osId ? e.date.slice(0, 7) : null }); };
+      const ref = {}; pd.ledger.forEach(e => { if (e.type === 'pago' && e.refund && e.pre && !e.voided) ref[e.pre] = (ref[e.pre] || 0) - (+e.amount || 0); });
       pd.ledger.filter(e => e.type === 'pago' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : 1)).forEach(p => {
-        let av = +p.amount || 0;
-        const first = (p.pcIds || []).map(id => cargos.filter(c => c.id === id)[0]).filter(Boolean);
+        let av = +p.amount || 0; if (p.pre && ref[p.pre] > 0) { const x = Math.min(av, ref[p.pre]); av -= x; ref[p.pre] -= x; }
+        const first = (p.pcIds || []).map(id => cargos.filter(c => c.id === id)[0]).filter(Boolean); cargos.forEach(c => { if (c.pagoId === p.id && first.indexOf(c) < 0) first.push(c); });
         first.concat(cargos.filter(c => first.indexOf(c) < 0)).forEach(c => { if (av <= 0 || !(left[c.id] > 0)) return; const x = Math.min(av, left[c.id]); left[c.id] -= x; av -= x; piece(c, x, p.date, 'paciente', p.method); });
       });
       cargos.forEach(c => {
