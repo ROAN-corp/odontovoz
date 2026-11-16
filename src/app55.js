@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.53', d: '2026-11-16', items: [
+      { t: 'Pasar historias de papel: sacale fotos a cada historia clínica, OdontoVoz la lee y vos revisás y confirmás sección por sección.', top: 1 },
+      { t: 'Descargar todas las historias clínicas en PDF (Ajustes › Copia de seguridad), con constancia y códigos para comprobar que no se tocaron.', top: 1 }] },
     { v: '1.52.1', d: '2026-11-15', items: [
       { t: 'Nueva dirección: odontovoz.com.ar (la anterior te lleva sola). Si usás la web, entrá de nuevo con tu usuario.', top: 1 }] },
     { v: '1.52', d: '2026-11-14', items: [

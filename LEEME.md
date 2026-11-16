@@ -548,6 +548,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.53 · Historias de papel y resguardo de historias clínicas
+
+- **Pasar historias de papel** (Menú › Pasar historias de papel, o desde la pestaña Imágenes de la ficha): fotos de cada historia (hasta 8 hojas) o PDF escaneado; la lectura con IA (función `hc-read`) arma datos, antecedentes, odontograma y evoluciones; una persona revisa por secciones (lo dudoso en amarillo, lo ilegible `[?]` en naranja), corrige y confirma. Las fotos quedan en la ficha como «Historia clínica en papel» y queda registrado quién la pasó.
+- **Descargar historias clínicas** (dueño o administrador; Ajustes › Copia de seguridad): ZIP con un PDF por paciente hasta la fecha elegida, índice CSV, constancia y código SHA-256 de cada archivo; el registro de la descarga queda en la nube y se puede comprobar cualquier archivo después.
+- Términos y privacidad 2026-11-16 (Anthropic como proveedor para la lectura de las historias de papel).
+
 ## OdontoVoz 1.52.1 · Dirección nueva
 
 - La web y la app pasan a https://odontovoz.com.ar/ (la dirección vieja redirige sola). En la web hay que volver a entrar con el usuario; los datos bajan de la nube.
