@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.1.1 · Logo en el inicio (16/11/2026)
+
+- Logo de OdontoVoz (`src/app81.js`, `A.ovMarkSVG`) con el nombre al lado, arriba del saludo del inicio, en celular y PC.
+
 ## OdontoVoz 1.1 · Cobrar antes de atender (16/11/2026)
 
 - **Cobro anticipado en secretaría** (`src/app80.js`): para pacientes que llegan con prácticas autorizadas (p. ej. SOSUNC). Desde la ventanita del turno, la cuenta del paciente o el aviso al marcar «Llegó» (si su obra social pide autorización): cantidad, práctica, pieza opcional, coseguro sugerido según los aranceles, n.º de autorización y medio de pago. Genera el pago con recibo.

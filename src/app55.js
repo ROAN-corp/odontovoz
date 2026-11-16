@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.1.1', b: '1.56.1', d: '2026-11-16', items: [
+      { t: 'El logo de OdontoVoz ahora se ve arriba del inicio, también en la computadora.' }] },
     { v: '1.1', b: '1.56.0', d: '2026-11-16', items: [
       { t: 'Cobrar antes de atender: si el paciente viene con prácticas autorizadas (por ejemplo de SOSUNC), la secretaria se las cobra al llegar. Cuando el odontólogo carga lo que hizo, le aparece «ya cobrado en secretaría» y no se cobra dos veces.', top: 1 },
       { t: 'Está en la ventanita del turno («Cobrar antes de atender»), en la cuenta del paciente y, al marcar «Llegó» a alguien de una obra social que pide autorización, la app lo pregunta sola.' },
