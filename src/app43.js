@@ -214,7 +214,7 @@
     if (!B.length) return '<div class="stk-empty"><p><b>No falta nada.</b> Todos los insumos están arriba del mínimo y alcanzan para más de un mes con lo que se viene usando.</p></div>';
     return '<p class="hint">Lo que conviene pedir' + (isEmp() ? ' para <b>' + esc(sedeName(sd)) + '</b>' : '') + ', calculado con el mínimo de cada insumo y con lo que se usó en los últimos 30 días.' + (canCfg() ? ' <button class="linkbtn" data-act="stkLevels">Cambiar cuándo avisar y cuánto pedir</button>' : '') + '</p><ul class="stk-buy">' +
       B.map(x => '<li><span><b>' + esc(x.i.name) + '</b><small>Hay ' + fq(x.i.qty) + ' ' + esc(x.i.unit || '') + ' · ' + esc(x.why) + '</small></span><b class="stk-need">' + x.need + ' ' + esc(x.i.unit || '') + '</b></li>').join('') + '</ul>' +
-      '<div class="row-btns"><a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(buyText(sd, B)) + '">Mandar el pedido por WhatsApp</a><button class="btn" data-act="stkBuyCopy">Copiar el pedido</button></div>';
+      ((A.partnerBuyHTML && A.partnerBuyHTML(buyText(sd, B))) || '<div class="row-btns"><a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(buyText(sd, B)) + '">Mandar el pedido por WhatsApp</a><button class="btn" data-act="stkBuyCopy">Copiar el pedido</button></div>');
   }
   const buyText = (sd, B) => 'Pedido de insumos · ' + (A.CLINIC || '') + (isEmp() ? ' · ' + sedeName(sd) : '') + ' · ' + A.fmtDMY(today()) + '\n' + B.map(x => '- ' + x.need + ' ' + (x.i.unit || '') + ' de ' + x.i.name).join('\n');
   function movHTML(L) {
@@ -249,6 +249,9 @@
   A.ins.stkQ = el => { S.stk.q = el.value; const L = list(place()).map(norm1), st = S.stk, q = A.norm ? A.norm(st.q) : st.q.toLowerCase(); const u = $('#stkList'); if (u) u.innerHTML = listRows(L.filter(i => (!st.cat || i.cat === st.cat) && (!st.low || status(i) !== 'ok' || expSoon(i)) && (!q || (A.norm ? A.norm(i.name) : i.name.toLowerCase()).indexOf(q) >= 0))); };
   A.chg.stkCat = el => { S.stk.cat = el.value; paint(); };
   A.chg.stkLow = el => { S.stk.low = el.checked; paint(); };
+  /* 1.2: lo que falta (para el aviso del inicio y las colaboraciones) */
+  A.stkLowList = () => { try { return list(place()).map(norm1).filter(i => status(i) !== 'ok'); } catch (e) { return []; } };
+  A.stkBuyText = () => { const sd = place(); return buyText(sd, buyList(list(sd).map(norm1))); };
   A.acts.stkBuyCopy = async () => { const sd = place(), t = buyText(sd, buyList(list(sd).map(norm1))); try { await navigator.clipboard.writeText(t); A.toast('Pedido copiado.'); } catch (e) { A.toast(t); } };
   A.acts.stkSeed = () => {
     const sd = place(), L = list(sd);

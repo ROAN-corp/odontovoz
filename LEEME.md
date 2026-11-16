@@ -548,6 +548,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.2 · Colaboraciones administradas por los creadores (16/11/2026)
+
+- Tabla `ov_partners` (`supabase/colaboraciones.sql`): casas aliadas con logo, sucursales con WhatsApp, beneficio (`pct`, días, desde/hasta, texto) y dónde aparecen. Todas las apps leen las activas (sin sesión); solo los creadores (`ov_admins`) las cambian, con `ov_partner_save` / `ov_partner_del` / `ov_partners_all`.
+- `src/app82.js`: la casa principal aparece primero en el pedido de stock (con el beneficio anotado en el WhatsApp), aviso «Te faltan N insumos · Pedir a …» en el inicio y «En colaboración (exclusiva) con» al pie del menú. Panel «Creadores de OdontoVoz» en el menú, solo para creadores: cambiar el % y los días sin publicar versión.
+- Surdental queda cargada apagada hasta que esté el acuerdo.
+
 ## OdontoVoz 1.1.3 · Nombre en la barra del celular (16/11/2026)
 
 - En el celular y el APK, en el inicio, la barra muestra «OdontoVoz» (sin el ícono) centrado en el espacio libre, en lugar del título; en las demás pantallas queda el título. En la PC sigue el logo con el nombre en el medio.
