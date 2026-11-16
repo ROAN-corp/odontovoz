@@ -141,5 +141,7 @@ C.setWake('nexus');
 C.setWake('agenda');
 [['agenda, agregá a Gómez el viernes a las 10', true, 'agrega a gomez el viernes a las 10']].forEach(([p, woke, rest]) => { n++; const r = C.stripWake(p); if (r.woke !== woke || r.rest !== rest) { fail++; console.log('FALLA wake agenda', p, JSON.stringify(r)); } });
 C.setWake('navi');
+// 1.54: el mismo pedido dicho de muchas formas y con modismos rioplatenses (tests/ovcmd.frases.json)
+require('./ovcmd.frases.json').forEach(([exp, list]) => list.forEach(p => tw(p, exp)));
 console.log((n - fail) + ' de ' + n + ' frases bien' + (fail ? ' · ' + fail + ' fallas' : ''));
 process.exit(fail ? 1 : 0);

@@ -1,0 +1,665 @@
+[
+ [
+  {
+   "intent": "ficha",
+   "sub": "datos",
+   "name": "sosa julian"
+  },
+  [
+   "Navi, abrime la historia clínica de Sosa Julián"
+  ]
+ ],
+ [
+  {
+   "intent": "ficha",
+   "sub": "datos",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, podés abrir la historia clínica de Julián Sosa?",
+   "Navi, abrime la historia clínica de Julián Sosa",
+   "Navi, me abrís la historia de Julián Sosa?",
+   "Navi, ¿me podés abrir la historia clínica de Julián Sosa?",
+   "Navi, ¿podrías abrirme la historia clínica de Julián Sosa?",
+   "Navi, ¿me abrirías la historia de Julián Sosa?",
+   "Navi, abrí la historia clínica de Julián Sosa",
+   "Navi, necesito que me abras la historia clínica de Julián Sosa",
+   "Navi, te pido que me abras la historia de Julián Sosa",
+   "Navi, dale, abrime la historia de Julián Sosa",
+   "Navi, a ver la historia clínica de Julián Sosa",
+   "Navi, haceme el favor de abrirme la historia de Julián Sosa",
+   "Navi, ¿se puede abrir la historia clínica de Julián Sosa?",
+   "Navi, ¿me harías el favor de abrir la historia de Julián Sosa?",
+   "Navi, ¿no me abrís la historia de Julián Sosa?",
+   "Navi, traeme la historia clínica de Julián Sosa",
+   "Navi, pasame la historia clínica de Julián Sosa",
+   "Navi, buscame la historia clínica de Julián Sosa",
+   "Navi, mostrame la historia de Julián Sosa",
+   "Navi, dejame ver la historia clínica de Julián Sosa",
+   "Navi, quiero ver la historia de Julián Sosa",
+   "Navi, me gustaría ver la historia clínica de Julián Sosa",
+   "Navi, ¿puedo ver la historia clínica de Julián Sosa?",
+   "Navi, la historia clínica de Julián Sosa",
+   "Navi, historia clínica de Julián Sosa",
+   "Navi, abrime la HC de Julián Sosa",
+   "Navi, sacame la historia de Julián Sosa",
+   "Navi, fijate la historia de Julián Sosa",
+   "Navi, entrá a la historia clínica de Julián Sosa",
+   "Navi, poneme la historia de Julián Sosa",
+   "Navi, ponete la historia de Julián Sosa",
+   "Navi, cargame la historia clínica de Julián Sosa",
+   "Navi, abríme la historia clínica del paciente Julián Sosa",
+   "Navi, abrime la historia clínica de la paciente Julián Sosa",
+   "Navi, buscá la historia clínica de Julián Sosa",
+   "Navi, ¿tenés la historia clínica de Julián Sosa?",
+   "Navi, ¿me traés la historia de Julián Sosa?",
+   "Navi, ¿me pasás la historia clínica de Julián Sosa?",
+   "Navi, abrime los antecedentes de Julián Sosa",
+   "Navi, andá a la historia clínica de Julián Sosa",
+   "Navi, vamos a la historia clínica de Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "ficha",
+   "sub": "datos",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, mostrame los datos de Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "openPat",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, abrime a Julián Sosa",
+   "Navi, buscame a Julián Sosa",
+   "Navi, ¿me buscás a Julián Sosa?",
+   "Navi, ¿podés buscar a Julián Sosa?",
+   "Navi, abrí la ficha de Julián Sosa",
+   "Navi, abrime la ficha de Julián Sosa",
+   "Navi, ¿me abrís la ficha de Julián Sosa?",
+   "Navi, quiero ver la ficha de Julián Sosa",
+   "Navi, necesito la ficha de Julián Sosa",
+   "Navi, traeme a Julián Sosa",
+   "Navi, abrime el paciente Julián Sosa",
+   "Navi, buscá al paciente Julián Sosa",
+   "Navi, encontrame a Julián Sosa",
+   "Navi, ¿dónde está Julián Sosa?",
+   "Navi, abrime la ficha del paciente Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "newAppt",
+   "name": "julian sosa",
+   "date": "2026-11-10",
+   "start": 600
+  },
+  [
+   "Navi, dale un turno a Julián Sosa el martes a las 10",
+   "Navi, agendame a Julián Sosa el martes a las 10",
+   "Navi, ¿le podés dar un turno a Julián Sosa el martes a las 10?",
+   "Navi, anotá a Julián Sosa el martes a las 10",
+   "Navi, reservale un turno a Julián Sosa el martes a las 10",
+   "Navi, necesito un turno para Julián Sosa el martes a las 10",
+   "Navi, metele un turno a Julián Sosa el martes a las 10",
+   "Navi, haceme un turno para Julián Sosa el martes a las 10",
+   "Navi, ¿me agendás a Julián Sosa el martes a las 10?",
+   "Navi, quiero darle un turno a Julián Sosa el martes a las 10",
+   "Navi, ponele un turno a Julián Sosa el martes a las 10",
+   "Navi, sacale un turno a Julián Sosa para el martes a las 10",
+   "Navi, turno para Julián Sosa el martes a las 10",
+   "Navi, ¿podés agendar a Julián Sosa el martes a las 10?",
+   "Navi, agendá a Julián Sosa para el martes a las 10 de la mañana",
+   "Navi, el martes a las 10 agendame a Julián Sosa",
+   "Navi, ¿me anotás a Julián Sosa el martes a las 10?",
+   "Navi, dame un turno para Julián Sosa el martes a las 10",
+   "Navi, cargá un turno para Julián Sosa el martes a las 10",
+   "Navi, citá a Julián Sosa el martes a las 10",
+   "Navi, programale un turno a Julián Sosa el martes a las 10",
+   "Navi, asignale un turno a Julián Sosa el martes a las 10",
+   "Navi, ¿hay lugar para Julián Sosa el martes a las 10?",
+   "Navi, quiero que agendes a Julián Sosa el martes a las 10",
+   "Navi, necesito que me agendes a Julián Sosa el martes a las 10",
+   "Navi, agendame un turno a nombre de Julián Sosa el martes a las 10"
+  ]
+ ],
+ [
+  {
+   "intent": "pay",
+   "amount": 20000,
+   "name": "julian sosa"
+  },
+  [
+   "Navi, cobrale 20 mil a Julián Sosa",
+   "Navi, Julián Sosa pagó 20 mil",
+   "Navi, Julián Sosa me pagó 20 mil",
+   "Navi, registrá un pago de 20 mil de Julián Sosa",
+   "Navi, anotá que Julián Sosa pagó 20 mil",
+   "Navi, le cobré 20 mil a Julián Sosa",
+   "Navi, cobré 20 mil a Julián Sosa",
+   "Navi, ¿le cobrás 20 mil a Julián Sosa?",
+   "Navi, cargá un cobro de 20 mil a Julián Sosa",
+   "Navi, Julián Sosa dejó 20 mil",
+   "Navi, Julián Sosa abonó 20 mil",
+   "Navi, Julián Sosa me dio 20 lucas",
+   "Navi, entraron 20 mil de Julián Sosa",
+   "Navi, poné que Julián Sosa pagó 20 mil",
+   "Navi, recibí 20 mil de Julián Sosa",
+   "Navi, cobro de 20 mil a Julián Sosa",
+   "Navi, Julián Sosa transfirió 20 mil",
+   "Navi, ¿podés cobrarle 20 mil a Julián Sosa?"
+  ]
+ ],
+ [
+  {
+   "intent": "arrived",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, llegó Julián Sosa",
+   "Navi, Julián Sosa ya llegó",
+   "Navi, ya está Julián Sosa",
+   "Navi, Julián Sosa está en la sala de espera",
+   "Navi, marcá que llegó Julián Sosa",
+   "Navi, avisá que llegó Julián Sosa",
+   "Navi, Julián Sosa está esperando",
+   "Navi, vino Julián Sosa",
+   "Navi, ya vino Julián Sosa",
+   "Navi, Julián Sosa está acá",
+   "Navi, poné que llegó Julián Sosa",
+   "Navi, dale llegada a Julián Sosa",
+   "Navi, Julián Sosa ya está en la sala",
+   "Navi, recibí a Julián Sosa",
+   "Navi, entró Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "cancelAppt",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, cancelale el turno a Julián Sosa",
+   "Navi, cancelá el turno de Julián Sosa",
+   "Navi, sacá el turno de Julián Sosa",
+   "Navi, borrá el turno de Julián Sosa",
+   "Navi, suspendé el turno de Julián Sosa",
+   "Navi, Julián Sosa canceló el turno",
+   "Navi, Julián Sosa canceló",
+   "Navi, ¿me cancelás el turno de Julián Sosa?",
+   "Navi, anulá el turno de Julián Sosa",
+   "Navi, Julián Sosa no viene",
+   "Navi, dale de baja el turno a Julián Sosa",
+   "Navi, eliminá el turno de Julián Sosa",
+   "Navi, ¿podés cancelar el turno de Julián Sosa?",
+   "Navi, quiero cancelar el turno de Julián Sosa",
+   "Navi, liberá el turno de Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "noshow",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, Julián Sosa no vino",
+   "Navi, Julián Sosa faltó",
+   "Navi, marcá ausente a Julián Sosa",
+   "Navi, poné que Julián Sosa faltó",
+   "Navi, faltó Julián Sosa",
+   "Navi, no vino Julián Sosa",
+   "Navi, Julián Sosa no se presentó",
+   "Navi, poné ausente a Julián Sosa",
+   "Navi, Julián Sosa me dejó plantado"
+  ]
+ ],
+ [
+  {
+   "intent": "who"
+  },
+  [
+   "Navi, ¿quién sigue?",
+   "Navi, ¿quién me toca ahora?",
+   "Navi, ¿a quién tengo ahora?",
+   "Navi, ¿quién viene ahora?",
+   "Navi, ¿quién es el próximo?",
+   "Navi, ¿cuál es el próximo paciente?",
+   "Navi, ¿a quién atiendo ahora?",
+   "Navi, ¿quién está por venir?",
+   "Navi, ¿quién me queda?",
+   "Navi, ¿quién es el que sigue?",
+   "Navi, ¿quién está en la sala?",
+   "Navi, ¿hay alguien esperando?"
+  ]
+ ],
+ [
+  {
+   "intent": "nav",
+   "tab": "agenda",
+   "date": "2026-11-05"
+  },
+  [
+   "Navi, ¿qué tengo mañana?",
+   "Navi, mostrame mañana",
+   "Navi, ¿cómo viene mañana?",
+   "Navi, ¿qué turnos hay mañana?",
+   "Navi, agenda de mañana",
+   "Navi, pasame a mañana",
+   "Navi, abrime la agenda de mañana",
+   "Navi, ¿quiénes vienen mañana?",
+   "Navi, ¿cómo estoy mañana?",
+   "Navi, ¿qué hay para mañana?",
+   "Navi, llevame a mañana",
+   "Navi, ¿cuántos pacientes tengo mañana?",
+   "Navi, quiero ver los turnos de mañana",
+   "Navi, ¿me mostrás la agenda de mañana?",
+   "Navi, ¿tengo algo mañana?",
+   "Navi, ¿cómo tengo la agenda mañana?"
+  ]
+ ],
+ [
+  {
+   "intent": "newPat"
+  },
+  [
+   "Navi, cargá un paciente nuevo",
+   "Navi, nuevo paciente",
+   "Navi, agregá un paciente",
+   "Navi, ¿me cargás un paciente nuevo?",
+   "Navi, quiero cargar un paciente nuevo",
+   "Navi, dá de alta un paciente",
+   "Navi, necesito agregar un paciente",
+   "Navi, creá un paciente nuevo",
+   "Navi, registrá un paciente nuevo",
+   "Navi, ¿podés cargar un paciente nuevo?",
+   "Navi, alta de paciente",
+   "Navi, anotá un paciente nuevo"
+  ]
+ ],
+ [
+  {
+   "intent": "hc"
+  },
+  [
+   "Navi, anotá en la historia que tiene dolor en el 36",
+   "Navi, poné en la historia clínica que tiene dolor en el 36",
+   "Navi, agregá a la historia que tiene dolor en el 36",
+   "Navi, escribí en la evolución que tiene dolor en el 36",
+   "Navi, en la historia clínica poné que tiene dolor en el 36",
+   "Navi, ¿me anotás en la historia que tiene dolor en el 36?",
+   "Navi, dejá anotado en la historia que tiene dolor en el 36",
+   "Navi, sumá a la historia que tiene dolor en el 36",
+   "Navi, cargá en la historia que tiene dolor en el 36",
+   "Navi, quiero anotar en la historia que tiene dolor en el 36"
+  ]
+ ],
+ [
+  {
+   "intent": "nav",
+   "tab": "caja"
+  },
+  [
+   "Navi, ¿cómo vamos de plata?",
+   "Navi, ¿cuánto llevamos hoy?",
+   "Navi, abrime la caja",
+   "Navi, ¿me mostrás la caja?",
+   "Navi, ¿cuánto se cobró hoy?",
+   "Navi, ¿cuánto hicimos hoy?",
+   "Navi, quiero ver la caja",
+   "Navi, llevame a la caja",
+   "Navi, ¿cómo está la caja?",
+   "Navi, ¿cuánta guita entró?",
+   "Navi, pasame a la caja"
+  ]
+ ],
+ [
+  {
+   "intent": "ficha",
+   "sub": "odon",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, abrime el odontograma de Julián Sosa",
+   "Navi, ¿me mostrás el odontograma de Julián Sosa?",
+   "Navi, quiero ver los dientes de Julián Sosa",
+   "Navi, ¿cómo tiene la boca Julián Sosa?",
+   "Navi, dejame ver el odontograma de Julián Sosa",
+   "Navi, ¿podrías abrirme el odontograma de Julián Sosa?",
+   "Navi, sacame el odontograma de Julián Sosa",
+   "Navi, buscame el odontograma de Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "owe",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, ¿cuánto debe Julián Sosa?"
+  ]
+ ],
+ [
+  {
+   "intent": "owe",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, ¿qué debe Julián Sosa?"
+  ]
+ ],
+ [
+  {
+   "intent": "ficha",
+   "sub": "cuenta",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, abrime la cuenta de Julián Sosa",
+   "Navi, ¿cómo está la cuenta de Julián Sosa?",
+   "Navi, mostrame el saldo de Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "ficha",
+   "sub": "datos",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, chusmeame la historia de Julián Sosa",
+   "Navi, pegale una mirada a la historia clínica de Julián Sosa",
+   "Navi, echale un ojo a la historia de Julián Sosa",
+   "Navi, tirame la historia clínica de Julián Sosa",
+   "Navi, una cosita, ¿me abrís la historia de Julián Sosa?",
+   "Navi, ¿me das una mano y me abrís la historia de Julián Sosa?",
+   "Navi, sabés qué, abrime la historia clínica de Julián Sosa",
+   "Navi, escuchame una cosa, abrime la historia de Julián Sosa",
+   "Navi, abrime la historia de Julián Sosa al toque",
+   "Navi, dale nomás, abrime la historia de Julián Sosa",
+   "Navi, ¿me hacés la gamba y me abrís la historia de Julián Sosa?",
+   "Navi, ¿me tirás la historia clínica de Julián Sosa?",
+   "Navi, dame la historia clínica de Julián Sosa",
+   "Navi, dale una mirada a la historia de Julián Sosa",
+   "Navi, relojeame la historia de Julián Sosa",
+   "Navi, abrime de una la historia de Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "ficha",
+   "sub": "odon",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, echale un ojo al odontograma de Julián Sosa",
+   "Navi, chusmeá el odontograma de Julián Sosa"
+  ]
+ ],
+ [
+  {
+   "intent": "nav",
+   "tab": "agenda"
+  },
+  [
+   "Navi, tirame la agenda",
+   "Navi, chusmeá la agenda",
+   "Navi, pegale una mirada a la agenda",
+   "Navi, mandame la agenda",
+   "Navi, ¿me pasás la agenda?"
+  ]
+ ],
+ [
+  {
+   "intent": "nav",
+   "tab": "agenda",
+   "date": "2026-11-05"
+  },
+  [
+   "Navi, ¿cómo pinta mañana?",
+   "Navi, ¿qué onda mañana?",
+   "Navi, ¿cómo arranco mañana?",
+   "Navi, ¿a qué hora arranco mañana?",
+   "Navi, ¿cómo viene la mano mañana?",
+   "Navi, ¿qué me espera mañana?"
+  ]
+ ],
+ [
+  {
+   "intent": "newAppt",
+   "name": "julian sosa",
+   "date": "2026-11-10",
+   "start": 600
+  },
+  [
+   "Navi, haceme un lugarcito para Julián Sosa el martes a las 10",
+   "Navi, meteme a Julián Sosa el martes a las 10",
+   "Navi, encajale un turno a Julián Sosa el martes a las 10",
+   "Navi, clavale un turno a Julián Sosa el martes a las 10",
+   "Navi, zampale un turno a Julián Sosa el martes a las 10",
+   "Navi, buscale un turno a Julián Sosa el martes a las 10",
+   "Navi, conseguile un turno a Julián Sosa el martes a las 10",
+   "Navi, ¿me hacés un lugar para Julián Sosa el martes a las 10?"
+  ]
+ ],
+ [
+  {
+   "intent": "pay",
+   "amount": 20000,
+   "name": "julian sosa"
+  },
+  [
+   "Navi, Julián Sosa garpó 20 lucas",
+   "Navi, Julián Sosa me tiró 20 lucas",
+   "Navi, Julián Sosa aflojó 20 mil",
+   "Navi, Julián Sosa puso 20 mil",
+   "Navi, Julián Sosa me pagó 20 lucas con transferencia",
+   "Navi, Julián Sosa me pasó 20 mil por transferencia",
+   "Navi, Julián Sosa dejó una seña de 20 mil",
+   "Navi, Julián Sosa largó 20 lucas"
+  ]
+ ],
+ [
+  {
+   "intent": "arrived",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, cayó Julián Sosa",
+   "Navi, ya cayó Julián Sosa",
+   "Navi, Julián Sosa está en la puerta",
+   "Navi, Julián Sosa ya está abajo",
+   "Navi, tocó timbre Julián Sosa",
+   "Navi, Julián Sosa ya está"
+  ]
+ ],
+ [
+  {
+   "intent": "noshow",
+   "name": "julian sosa"
+  },
+  [
+   "Navi, Julián Sosa pegó el faltazo",
+   "Navi, Julián Sosa se colgó",
+   "Navi, Julián Sosa me clavó",
+   "Navi, Julián Sosa nos clavó",
+   "Navi, Julián Sosa faltó sin avisar"
+  ]
+ ],
+ [
+  {
+   "intent": "who"
+  },
+  [
+   "Navi, ¿quién viene después?",
+   "Navi, ¿con quién sigo?",
+   "Navi, ¿a quién le toca?",
+   "Navi, ¿quién está ahora?",
+   "Navi, ¿quién es el siguiente?",
+   "Navi, ¿quién está afuera?"
+  ]
+ ],
+ [
+  {
+   "intent": "nav",
+   "tab": "caja"
+  },
+  [
+   "Navi, ¿cuánto juntamos hoy?",
+   "Navi, ¿cuánto hicimos hoy?",
+   "Navi, ¿cómo venimos de guita?",
+   "Navi, abrime la caja al toque",
+   "Navi, tirame la caja"
+  ]
+ ],
+ [
+  {
+   "intent": "note"
+  },
+  [
+   "Navi, hice una obturación oclusal en el 36",
+   "Navi, anotá que le hice una limpieza",
+   "Navi, le hice una extracción del 48"
+  ]
+ ],
+ [
+  {
+   "intent": "newAppt",
+   "dur": 60,
+   "start": 600,
+   "date": "2026-11-05"
+  },
+  [
+   "Navi, dame un turno de una hora para Pérez mañana a las 10"
+  ]
+ ],
+ [
+  {
+   "intent": "newAppt",
+   "name": "perez",
+   "start": 600
+  },
+  [
+   "Navi, agendame a Pérez mañana a las 10",
+   "Navi, turno para Pérez mañana a las 10"
+  ]
+ ],
+ [
+  {
+   "intent": "openPat",
+   "name": "perez"
+  },
+  [
+   "Navi, pasame a Pérez",
+   "Navi, buscame a Pérez",
+   "Navi, ¿dónde está Pérez?"
+  ]
+ ],
+ [
+  {
+   "intent": "nav",
+   "tab": "agenda",
+   "date": "2026-11-10"
+  },
+  [
+   "Navi, mostrame el martes",
+   "Navi, ¿qué tengo el martes?",
+   "Navi, llevame al martes"
+  ]
+ ],
+ [
+  {
+   "intent": "today"
+  },
+  [
+   "Navi, ¿qué tengo hoy?",
+   "Navi, ¿cómo viene el día?"
+  ]
+ ],
+ [
+  {
+   "intent": "odon",
+   "text": "caries oclusal del 45"
+  },
+  [
+   "Navi, agregá una caries oclusal del 45 en el odontograma"
+  ]
+ ],
+ [
+  {
+   "intent": "pay",
+   "amount": 5000,
+   "method": "Efectivo",
+   "name": "perez"
+  },
+  [
+   "Navi, Pérez pagó 5 mil en efectivo",
+   "Navi, cobrale 5 mil en efectivo a Pérez"
+  ]
+ ],
+ [
+  {
+   "intent": "arrived",
+   "name": "perez"
+  },
+  [
+   "Navi, llegó Pérez",
+   "Navi, Pérez ya llegó"
+  ]
+ ],
+ [
+  {
+   "intent": "confirm"
+  },
+  [
+   "Navi, dale",
+   "Navi, listo"
+  ]
+ ],
+ [
+  {
+   "intent": "stop"
+  },
+  [
+   "Navi, basta"
+  ]
+ ],
+ [
+  {
+   "intent": "home"
+  },
+  [
+   "Navi, llevame al inicio",
+   "Navi, tirame el inicio"
+  ]
+ ],
+ [
+  {
+   "intent": "budget"
+  },
+  [
+   "Navi, armame un presupuesto"
+  ]
+ ],
+ [
+  {
+   "intent": "hc"
+  },
+  [
+   "Navi, anotá en la historia que es alérgica a la penicilina"
+  ]
+ ],
+ [
+  {
+   "intent": "unknown"
+  },
+  [
+   "Navi, eso ya está",
+   "Navi, listo ya está"
+  ]
+ ]
+]
