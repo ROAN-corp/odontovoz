@@ -548,6 +548,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.54.1 · Buscador de obra social
+
+- En el paciente nuevo, la ficha y el turnero, la obra social se elige con un buscador propio en lugar de la lista del navegador (que en Android salía chica, pegada al teclado y solo buscaba por el comienzo): lista debajo del campo, renglones de 48 px, busca por sigla o nombre, «Usar lo que escribí» si no está, flechas y Enter en la PC.
+
 ## OdontoVoz 1.54 · Agenda de un día entero
 
 - **Cancelar la agenda de un día** (voz o Agenda › Más › «Cancelar la agenda del día»): «cancelame la agenda del viernes porque me tuve que ir», «el viernes no atiendo», «cerrá el viernes», «suspendé todos los turnos del viernes», «cancelá la agenda de todo el consultorio el viernes». Muestra los turnos afectados, al confirmar los cancela, bloquea el día (tampoco se dan turnos online) y deja un botón de WhatsApp por paciente con un mensaje de disculpas para reprogramar. «Deshacer» deja todo como estaba.
