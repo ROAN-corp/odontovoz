@@ -102,8 +102,8 @@
     try {
       const t = await fetch(WEB_SW + '?t=' + Date.now(), { cache: 'no-store' }).then(r => r.text());
       const m = /odontovoz-(\d+\.\d+(?:\.\d+)?)/.exec(t); if (!m) return;
-      const nv = m[1].replace(/\.0$/, '');
-      if (cmpV(nv, A.VERSION) > 0) A.nfAdd({ id: 'upd:apk:' + nv, k: 'update', t: 'Hay una versión nueva para descargar: ' + nv, b: 'Tocá para bajar el APK nuevo e instalarlo encima. No se pierden tus datos.', act: 'nfUrl', args: { url: APK_URL } });
+      const nv = m[1].replace(/\.0$/, ''), nm = (/NAME = '([^']+)'/.exec(t) || [])[1] || nv;
+      if (cmpV(nv, A.VBUILD || A.VERSION) > 0) A.nfAdd({ id: 'upd:apk:' + nv, k: 'update', t: 'Hay una versión nueva para descargar: ' + nm, b: 'Tocá para bajar el APK nuevo e instalarlo encima. No se pierden tus datos.', act: 'nfUrl', args: { url: APK_URL } });
     } catch (e) { /* sin conexión */ }
   }
 

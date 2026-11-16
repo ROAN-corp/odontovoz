@@ -8086,7 +8086,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.54.1';
+  A.VERSION = '1.0';
+  /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
+     Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
+  A.VBUILD = '1.55.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -14370,8 +14373,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     try {
       const t = await fetch(WEB_SW + '?t=' + Date.now(), { cache: 'no-store' }).then(r => r.text());
       const m = /odontovoz-(\d+\.\d+(?:\.\d+)?)/.exec(t); if (!m) return;
-      const nv = m[1].replace(/\.0$/, '');
-      if (cmpV(nv, A.VERSION) > 0) A.nfAdd({ id: 'upd:apk:' + nv, k: 'update', t: 'Hay una versión nueva para descargar: ' + nv, b: 'Tocá para bajar el APK nuevo e instalarlo encima. No se pierden tus datos.', act: 'nfUrl', args: { url: APK_URL } });
+      const nv = m[1].replace(/\.0$/, ''), nm = (/NAME = '([^']+)'/.exec(t) || [])[1] || nv;
+      if (cmpV(nv, A.VBUILD || A.VERSION) > 0) A.nfAdd({ id: 'upd:apk:' + nv, k: 'update', t: 'Hay una versión nueva para descargar: ' + nm, b: 'Tocá para bajar el APK nuevo e instalarlo encima. No se pierden tus datos.', act: 'nfUrl', args: { url: APK_URL } });
     } catch (e) { /* sin conexión */ }
   }
 
@@ -18146,6 +18149,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.0', b: '1.55.0', d: '2026-11-16', items: [
+      { t: 'OdontoVoz 1.0: la primera versión oficial. Desde ahora los números de versión arrancan de nuevo.', top: 1 },
+      { t: 'Incluye todo lo de las versiones de prueba: voz, agenda, historia clínica, historias de papel, caja, obras sociales, stock, equipo y más.' }] },
     { v: '1.54.1', d: '2026-11-16', items: [
       { t: 'Elegir la obra social es más fácil: la lista aparece debajo del campo, con renglones grandes, y busca por sigla o por nombre («luz» encuentra Luz y Fuerza).', top: 1 }] },
     { v: '1.54', d: '2026-11-16', items: [
@@ -18239,11 +18245,12 @@ const OVMenu = (function () {
       { t: 'Más seguridad al usar la app en varios equipos y en varios consultorios.' }] }
   ];
   const vnum = v => String(v || '0').split('.').map(n => +n || 0).reduce((s, n, i) => s + n * Math.pow(1000, 2 - i), 0);
-  const LATEST = NEWS[0].v;
+  const key = n => n.b || n.v;   /* desde la 1.0 cada versión lleva su compilación interna en b */
+  const LATEST = key(NEWS[0]);
   const KEY = 'odontovoz.newsSeen';
   /* el primer uso de esta función en un equipo: se toma como visto lo anterior a 1.40 (no se muestra la historia entera) */
   if (!LS.get(KEY, '')) LS.set(KEY, '1.39.9');
-  const unseen = () => { const seen = vnum(LS.get(KEY, '0')); return NEWS.filter(n => vnum(n.v) > seen); };
+  const unseen = () => { const seen = vnum(LS.get(KEY, '0')); return NEWS.filter(n => vnum(key(n)) > seen); };
 
   /* ---------- tarjeta en el inicio: una sola, aunque haya varias versiones nuevas ---------- */
   const card = () => {

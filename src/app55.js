@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.0', b: '1.55.0', d: '2026-11-16', items: [
+      { t: 'OdontoVoz 1.0: la primera versión oficial. Desde ahora los números de versión arrancan de nuevo.', top: 1 },
+      { t: 'Incluye todo lo de las versiones de prueba: voz, agenda, historia clínica, historias de papel, caja, obras sociales, stock, equipo y más.' }] },
     { v: '1.54.1', d: '2026-11-16', items: [
       { t: 'Elegir la obra social es más fácil: la lista aparece debajo del campo, con renglones grandes, y busca por sigla o por nombre («luz» encuentra Luz y Fuerza).', top: 1 }] },
     { v: '1.54', d: '2026-11-16', items: [
@@ -99,11 +102,12 @@
       { t: 'Más seguridad al usar la app en varios equipos y en varios consultorios.' }] }
   ];
   const vnum = v => String(v || '0').split('.').map(n => +n || 0).reduce((s, n, i) => s + n * Math.pow(1000, 2 - i), 0);
-  const LATEST = NEWS[0].v;
+  const key = n => n.b || n.v;   /* desde la 1.0 cada versión lleva su compilación interna en b */
+  const LATEST = key(NEWS[0]);
   const KEY = 'odontovoz.newsSeen';
   /* el primer uso de esta función en un equipo: se toma como visto lo anterior a 1.40 (no se muestra la historia entera) */
   if (!LS.get(KEY, '')) LS.set(KEY, '1.39.9');
-  const unseen = () => { const seen = vnum(LS.get(KEY, '0')); return NEWS.filter(n => vnum(n.v) > seen); };
+  const unseen = () => { const seen = vnum(LS.get(KEY, '0')); return NEWS.filter(n => vnum(key(n)) > seen); };
 
   /* ---------- tarjeta en el inicio: una sola, aunque haya varias versiones nuevas ---------- */
   const card = () => {

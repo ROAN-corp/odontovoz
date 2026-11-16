@@ -548,6 +548,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Términos (cláusula 6 bis) y privacidad versión 2026-11-11.
 - `A.pd` completa campos faltantes (arreglo del error «reading reduce» en `A.saldo`).
 
+## OdontoVoz 1.0 · Primera versión oficial (16/11/2026)
+
+- Los números de versión vuelven a empezar: esta es la **1.0** (la que se registra en la DNDA). Incluye todo lo hecho hasta la 1.54.1 de prueba.
+- Por dentro sigue una compilación que no baja (`A.VBUILD`, `VERSION` de `sw.js`: 1.55.0), así los equipos con el APK viejo reciben el aviso de actualización y Novedades sigue funcionando. Lo que ve la gente es `A.VERSION` / `NAME` de `sw.js` / `package.json`.
+
 ## OdontoVoz 1.54.1 · Buscador de obra social
 
 - En el paciente nuevo, la ficha y el turnero, la obra social se elige con un buscador propio en lugar de la lista del navegador (que en Android salía chica, pegada al teclado y solo buscaba por el comienzo): lista debajo del campo, renglones de 48 px, busca por sigla o nombre, «Usar lo que escribí» si no está, flechas y Enter en la PC.
