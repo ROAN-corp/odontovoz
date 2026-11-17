@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.5 · resumen del turno ordenado (17/11/2026)
+
+- `src/app85.js`: en el panel del turno (`S.panel.type === 'appt'`) un `MutationObserver` sobre `#panelHost` ordena: cabecera · seña en una línea (`.sena-mini`) · tarjeta `.fc-card` (botón grande «Abrir ficha completa», realizado/pagado/debe del libro de cuenta, lo de hoy o el último realizado, «Cobrar / ver cuenta») · Datos principales (sin la fila Cuenta) · Odontograma · Motivo · el resto como estaba. `A.CFG.panelOld = true` vuelve al orden anterior.
+
 ## OdontoVoz 1.4 · Navi conversa (17/11/2026)
 
 - `src/ovcmd.js`: capa de charla antes de `navRewrite` (`convo`/`convoOne`): `dayCount` {date, dated}, `dayFree` {date, dated, add, ask} (libres, huecos, lugar, disponibilidad, «puedo sumar más gente», «si agregamos un paciente nuevo»), `follow` («¿y el viernes?»), `multi` {steps} (parte en «y / y después / y decime…» y hereda el día). `parseDate` entiende «el viernes de la semana que viene». `screenOf` → `screen` {act, sub} para las pantallas del menú (stock, obras sociales, novedades, laboratorio, mi plan, costos, avisos, mudanza…).
