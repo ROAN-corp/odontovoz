@@ -90,18 +90,19 @@
   /* =====================================================================
      2. PRIMERO: ¿QUIÉN COBRA?
      ===================================================================== */
-  const askWho = m => m && m.type === 'pracOk' && !m.who && !m.only && !isSolo() && role() !== 'recepcion' && role() !== 'asistente' && A.CFG.askWho !== false && m.items.some(i => i.on && (i.pay || 0) > 0);
+  const askWho = m => m && m.type === 'pracOk' && !m.who && !m.only && !isSolo() && role() !== 'recepcion' && role() !== 'asistente' && A.CFG.askWho !== false && m.items.some(i => i.on);
   const pracPrev = MF.pracOk;
   MF.pracOk = m => {
     if (!askWho(m)) return pracPrev(m);
     const p = A.PAT(m.pid) || {}, on = m.items.filter(i => i.on), tot = on.reduce((s, i) => s + (i.pay || 0), 0);
     const osTot = on.filter(i => i.os).reduce((t, i) => t + (i.os.cov || 0) * (i.qty || 1), 0);
     let b = '<p class="pw-lead">Anotaste ' + (on.length === 1 ? '1 práctica' : on.length + ' prácticas') + ' a <b>' + esc(p.name || 'el paciente') + '</b>:</p>' +
-      '<ul class="pw-list">' + on.map(i => '<li><span>' + esc(i.label) + '</span><b>' + money(i.pay) + '</b></li>').join('') + '</ul>' +
-      '<div class="pw-tot"><span>Paga el paciente</span><b>' + money(tot) + '</b></div>' + (osTot ? '<p class="pw-os">Y ' + money(osTot) + ' van a la obra social.</p>' : '') +
+      '<ul class="pw-list">' + on.map(i => '<li><span>' + esc(i.label) + '</span><b>' + (i.os && !(i.pay > 0) ? '<small>' + esc(i.os.sigla || 'obra social') + '</small>' : money(i.pay)) + '</b></li>').join('') + '</ul>' +
+      (tot ? '<div class="pw-tot"><span>Paga el paciente</span><b>' + money(tot) + '</b></div>' : '') + (osTot ? '<p class="pw-os">' + (tot ? 'Y ' : '') + money(osTot) + ' van a la obra social.</p>' : '') +
+      (on.some(i => i.os) ? '<p class="pw-os">Si cobra la secretaría, ella elige cómo se cobra cada práctica: coseguro, diferencial, particular o nada.</p>' : '') +
       '<h3 class="pw-q">¿Quién le cobra?</h3><div class="pw-btns">' +
-      '<button class="pw-b primary" data-act="pwGo" data-k="rcp"><span class="pw-i" aria-hidden="true">🧾</span><b>Cobra secretaría</b><small>Le llega a recepción con todo lo que anotaste</small></button>' +
-      '<button class="pw-b" data-act="pwGo" data-k="pro"><span class="pw-i" aria-hidden="true">💵</span><b>Lo cobro yo</b><small>Revisás los importes y cobrás acá</small></button></div>' +
+      '<button class="pw-b primary" data-act="pwGo" data-k="rcp"><span class="pw-i" aria-hidden="true">🧾</span><b>Cobra secretaría</b><small>Le llega a recepción con lo que anotaste y ella decide cómo cobrarlo</small></button>' +
+      '<button class="pw-b" data-act="pwGo" data-k="pro"><span class="pw-i" aria-hidden="true">💵</span><b>Lo cobro yo</b><small>Elegís vos cómo se cobra y cobrás acá</small></button></div>' +
       '<div class="pw-more"><button class="btn small ghost" data-act="pwGo" data-k="fix">Corregir prácticas antes de mandar</button><button class="btn small ghost" data-act="pwGo" data-k="nota">Solo guardar en la historia, sin cobrar</button></div><div class="hint bad" id="poMsg"></div>';
     return A.modalShell('¿Quién cobra?', b, '<button class="btn" data-act="closeModal">Volver</button>');
   };
@@ -205,17 +206,18 @@
     const evos = []; its.forEach(e => { if (e.evo && evos.indexOf(e.evo) < 0) evos.push(e.evo); });
     let extra = '';
     if (evos.length) extra += '<div class="pp-evo in"><small>Lo que anotó el odontólogo</small>' + evos.map(t => '<q>' + esc(t) + '</q>').join('') + '</div>';
+    if (m.edit == null && its.some(e => e.os || e.cop)) m.edit = true;
     if (its.length && !m.edit) extra += '<button class="btn small ghost pp-edit" data-act="ppEdit">✎ Corregir prácticas o importes</button>';
     if (m.edit) {
       m.ed = m.ed || {};
-      extra += '<div class="pp-ed"><p class="hint" style="margin:0 0 6px">Cambiá lo que haga falta. Lo que destildes no se cobra. Queda anotado quién lo corrigió.</p>' + its.map(e => {
-        const x = m.ed[e.id] || { amt: e.amount, mode: e.cop || (e.os ? 'cos' : ''), off: false };
+      extra += '<div class="pp-ed"><p class="hint" style="margin:0 0 6px">' + (its.some(e => e.os) ? 'Elegí cómo se cobra cada práctica y el importe se calcula solo. ' : '') + 'Lo que destildes no se cobra. Si cambiás un importe a mano, contá por qué.</p>' + its.map(e => {
+        const x = m.ed[e.id] || { amt: e.amount, mode: mode0(e), off: false };
         return '<div class="pp-er' + (x.off ? ' pp-off' : '') + '"><label class="po-chk"><input type="checkbox" data-chg="ppEdOn" data-id="' + e.id + '"' + (x.off ? '' : ' checked') + ' aria-label="Cobrar ' + esc(e.desc) + '"></label><span class="pp-el"><b>' + esc(String(e.desc || '').split(' · ').slice(0, 3).join(' · ')) + '</b>' +
-          '<select data-chg="ppEdMode" data-id="' + e.id + '" aria-label="Qué paga el paciente">' + (e.os ? [['cos', 'Coseguro'], ['dif', 'Diferencial'], ['none', 'Cubierto 100% por la obra social'], ['free', 'No le cobro nada']] : [['', 'Se cobra'], ['free', 'No le cobro nada']]).map(o => '<option value="' + o[0] + '"' + ((x.mode || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' +
-          (x.mode === 'free' ? '<input class="pp-why" data-in="ppEdWhy" data-id="' + e.id + '" value="' + esc(x.why || '') + '" placeholder="¿Por qué no se cobra? (obligatorio)" aria-label="Motivo">' : '') + '</span>' +
+          '<select data-chg="ppEdMode" data-id="' + e.id + '" aria-label="Qué paga el paciente">' + (e.os ? [['cos', 'Coseguro' + (e.osCos > 0 ? ' ' + money(e.osCos) : '')], ['dif', 'Diferencial' + (difOf(e) != null ? ' ' + money(difOf(e)) : '')], ['none', 'Cubierto 100% por la obra social'], ['part', 'Todo particular' + (fullOf(e) ? ' ' + money(fullOf(e)) : '')], ['free', 'No le cobro nada']] : [['', 'Se cobra'], ['free', 'No le cobro nada']]).map(o => '<option value="' + o[0] + '"' + ((x.mode || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select>' +
+          (e.os ? '<small>' + esc(osName(e)) + (e.osCov > 0 && x.mode !== 'part' ? ' paga ' + money(e.osCov) : x.mode === 'part' ? ': no se le pasa' : '') + '</small>' : '') + (x.mode === 'free' ? '<input class="pp-why" data-in="ppEdWhy" data-id="' + e.id + '" value="' + esc(x.why || '') + '" placeholder="¿Por qué no se cobra? (obligatorio)" aria-label="Motivo">' : '') + '</span>' +
           '<span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-chg="ppEdAmt" data-id="' + e.id + '" value="' + (x.off ? 0 : x.amt) + '"' + (x.off ? ' disabled' : '') + ' aria-label="Importe"></span></div>';
       }).join('') + (m.add || []).map((a, i) => '<div class="pp-er pp-new"><span class="po-chk">+</span><span class="pp-el"><b>' + esc(a.label) + '</b><small>agregada ahora</small></span><span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-chg="ppAddAmt" data-i="' + i + '" value="' + a.amt + '" aria-label="Importe"></span><button class="btn small ghost" data-act="ppAddDel" data-i="' + i + '" aria-label="Quitar">✕</button></div>').join('') +
-        '<div class="field pp-whyall"><label for="ppWhyAll">¿Por qué lo corregís? <small>(obligatorio si cambiás algo · lo ve el dueño)</small></label><input id="ppWhyAll" data-in="ppWhyAll" value="' + esc(m.whyAll || '') + '" placeholder="Ej.: el doctor me avisó que la limpieza no se cobra"></div>' +
+        '<div class="field pp-whyall"><label for="ppWhyAll">Aclaración <small>(obligatoria si cambiás un importe a mano, sacás o agregás algo · la ve el dueño)</small></label><input id="ppWhyAll" data-in="ppWhyAll" value="' + esc(m.whyAll || '') + '" placeholder="Ej.: el doctor me avisó que la limpieza no se cobra"></div>' +
         '<select class="pp-addsel" data-chg="ppAdd" aria-label="Agregar otra práctica"><option value="">+ Agregar otra práctica…</option>' + (A.catCats ? A.catCats() : []).map(c => '<optgroup label="' + esc(c) + '">' + A.CAT.filter(x => x.cat === c).map(x => '<option value="' + esc(x.k) + '">' + esc(x.label) + ' · ' + money(x.price) + '</option>').join('') + '</optgroup>').join('') + '</select></div>';
     }
     if (!extra) return html;
@@ -228,25 +230,40 @@
     const t = its.reduce((s, e) => s + effAmt(m, e), 0) + (m.add || []).reduce((s, a) => s + (a.amt || 0), 0);
     m.tot = t; const want = t + (m.addPrev ? m.prev : 0); if (m.split) { m.a2 = Math.min(m.a2, want); m.a1 = want - m.a2; } else m.a1 = want;
   };
-  const edOf = (m, id) => { m.ed = m.ed || {}; if (!m.ed[id]) { const e = A.pd(m.pid).ledger.filter(x => x.id === id)[0] || {}; m.ed[id] = { amt: e.amount || 0, mode: e.cop || (e.os ? 'cos' : ''), off: false }; } return m.ed[id]; };
+  /* cuánto paga el paciente según cómo se cobra (con lo que mandó el odontólogo: precio, lo que paga la obra social, coseguro) */
+  const mode0 = e => (e.cop === 'part' && !e.os) ? '' : (e.cop || (e.os ? 'cos' : ''));
+  const fullOf = e => (+e.price > 0 ? +e.price : (+e.amount || 0) + (+e.osCov || 0)) || 0;
+  const difOf = e => (+e.price > 0 && +e.osCov > 0) ? Math.max(0, +e.price - +e.osCov) : null;
+  const osName = e => { const o = A.osById ? A.osById(e.os) : null; return (o && o.sigla) || 'La obra social'; };
+  const autoAmt = (e, mode) => {
+    if (mode === 'none' || mode === 'free') return 0;
+    if (mode === 'part') return fullOf(e);
+    if (mode === 'dif') { const d = difOf(e); return d != null ? d : (mode0(e) === 'dif' ? e.amount : null); }
+    if (mode === 'cos') return e.osCos != null ? +e.osCos : (mode0(e) === 'cos' ? e.amount : null);
+    return mode0(e) === mode ? e.amount : (fullOf(e) || e.amount);
+  };
+  A.rcpAutoAmt = autoAmt;
+  const edOf = (m, id) => { m.ed = m.ed || {}; if (!m.ed[id]) { const e = A.pd(m.pid).ledger.filter(x => x.id === id)[0] || {}; m.ed[id] = { amt: e.amount || 0, mode: mode0(e), off: false }; } return m.ed[id]; };
   A.acts.ppEdit = () => { const m = S.modal; if (!m) return; m.edit = true; A.renderModal(); };
   A.chg.ppEdOn = el => { const m = S.modal, x = edOf(m, el.getAttribute('data-id')); x.off = !el.checked; reTot(m); A.renderModal(); };
-  A.chg.ppEdAmt = el => { const m = S.modal, x = edOf(m, el.getAttribute('data-id')); x.amt = Math.max(0, num(el.value)); reTot(m); A.renderModal(); };
-  A.chg.ppEdMode = el => { const m = S.modal, id = el.getAttribute('data-id'), x = edOf(m, id), e = A.pd(m.pid).ledger.filter(y => y.id === id)[0] || {}; x.mode = el.value; if (x.mode === 'none' || x.mode === 'free') x.amt = 0; else if (x.amt === 0) x.amt = e.amount || 0; reTot(m); A.renderModal(); };
+  A.chg.ppEdAmt = el => { const m = S.modal, x = edOf(m, el.getAttribute('data-id')); x.amt = Math.max(0, num(el.value)); x.hand = true; reTot(m); A.renderModal(); };
+  A.chg.ppEdMode = el => { const m = S.modal, id = el.getAttribute('data-id'), x = edOf(m, id), e = A.pd(m.pid).ledger.filter(y => y.id === id)[0] || {}; x.mode = el.value; const v = autoAmt(e, x.mode); if (v != null) x.amt = v; else if (x.amt === 0) x.amt = e.amount || 0; x.hand = false; reTot(m); A.renderModal(); };
   A.ins.ppWhyAll = el => { S.modal.whyAll = el.value; };
   A.ins.ppEdWhy = el => { const x = edOf(S.modal, el.getAttribute('data-id')); x.why = el.value; };
   A.chg.ppAdd = el => { const m = S.modal, c = A.CAT.filter(x => x.k === el.value)[0]; if (!c) return; (m.add = m.add || []).push({ k: c.k, label: c.label, amt: c.price || 0 }); reTot(m); A.renderModal(); };
   A.chg.ppAddAmt = el => { const m = S.modal, a = (m.add || [])[+el.getAttribute('data-i')]; if (a) { a.amt = Math.max(0, num(el.value)); reTot(m); A.renderModal(); } };
   A.acts.ppAddDel = el => { const m = S.modal; (m.add || []).splice(+el.getAttribute('data-i'), 1); reTot(m); A.renderModal(); };
   /* antes de cobrar (o de dejar la deuda): se graban las correcciones */
-  const edChanged = m => { if ((m.add || []).length) return true; const pd = A.pd(m.pid); return Object.keys(m.ed || {}).some(id => { const x = m.ed[id], e = pd.ledger.filter(y => y.id === id)[0] || {}; return x.off || (x.amt !== e.amount) || ((x.mode || '') !== (e.cop || (e.os ? 'cos' : ''))); }); };
+  const edChanged = m => { if ((m.add || []).length) return true; const pd = A.pd(m.pid); return Object.keys(m.ed || {}).some(id => { const x = m.ed[id], e = pd.ledger.filter(y => y.id === id)[0] || {}; if (x.off) return true; const au = autoAmt(e, x.mode || ''); return x.amt !== (au != null ? au : e.amount) && (x.hand || au == null); }); };
+  const edAny = m => (m.add || []).length || Object.keys(m.ed || {}).some(id => { const x = m.ed[id], e = A.pd(m.pid).ledger.filter(y => y.id === id)[0] || {}; return x.off || x.amt !== e.amount || (x.mode || '') !== mode0(e); });
   function applyEdits(m) {
-    if (!m || (!m.ed && !(m.add || []).length)) return;
+    if (!m || (!m.ed && !(m.add || []).length) || !edAny(m)) return;
     const pd = A.pd(m.pid), d = T(), by = who(), at = new Date().toISOString(), its = pd.ledger.filter(e => (m.ids || []).indexOf(e.id) >= 0), base = its[0] || {}, why = String(m.whyAll || '').trim();
     its.forEach(e => {
       const x = (m.ed || {})[e.id]; if (!x) return;
-      const now = x.off ? 0 : x.amt, dlt = now - e.amount;
-      if (dlt) pd.ledger.push({ id: A.uid(), date: d, type: 'ajuste', amount: dlt, desc: (x.off ? 'No se cobra: ' : x.mode === 'free' ? 'Bonificado: ' : 'Corrección de importe: ') + String(e.desc || '').split(' · ').slice(0, 2).join(' · ') + (x.mode === 'none' ? ' (cubierto 100% por la obra social)' : x.mode === 'free' ? ' · motivo: ' + String(x.why || '').trim() : '') + (why ? ' · ' + why : ''), why: why || undefined, pro: e.pro, adjFor: e.id, by, at, rcpFix: 1, free: x.mode === 'free' ? 1 : undefined, freeWhy: x.mode === 'free' ? String(x.why || '').trim() : undefined });
+      const now = x.off ? 0 : x.amt, dlt = now - e.amount, chMode = !x.off && (x.mode || '') !== mode0(e), MN = { cos: 'como coseguro', dif: 'como diferencial', none: 'cubierto 100% por la obra social', part: 'como particular (no se le pasa a la obra social)', '': '' };
+      if (!dlt && chMode && x.mode === 'part' && e.os) pd.ledger.push({ id: A.uid(), date: d, type: 'ajuste', amount: 0, desc: 'Se cobra como particular: ' + String(e.desc || '').split(' · ').slice(0, 2).join(' · '), pro: e.pro, adjFor: e.id, by, at, rcpFix: 1, cop: 'part', osOff: e.id, why: why || undefined });
+      if (dlt) pd.ledger.push({ cop: chMode ? x.mode : undefined, osOff: chMode && x.mode === 'part' && e.os ? e.id : undefined, modeTxt: chMode ? MN[x.mode || ''] : undefined, id: A.uid(), date: d, type: 'ajuste', amount: dlt, desc: (x.off ? 'No se cobra: ' : x.mode === 'free' ? 'Bonificado: ' : chMode && MN[x.mode || ''] ? 'Se cobra ' + MN[x.mode || ''] + ': ' : 'Corrección de importe: ') + String(e.desc || '').split(' · ').slice(0, 2).join(' · ') + (x.mode === 'none' && !chMode ? ' (cubierto 100% por la obra social)' : x.mode === 'free' ? ' · motivo: ' + String(x.why || '').trim() : '') + (why ? ' · ' + why : ''), why: why || undefined, pro: e.pro, adjFor: e.id, by, at, rcpFix: 1, free: x.mode === 'free' ? 1 : undefined, freeWhy: x.mode === 'free' ? String(x.why || '').trim() : undefined });
       if (x.off) { e.cobOk = 'quitado'; e.cobDone = at; e.cobDoneBy = by; m.ids = m.ids.filter(i => i !== e.id); }
     });
     (m.add || []).forEach(a => {
@@ -257,7 +274,9 @@
     m.ed = null; m.add = []; A.touchPd(m.pid);
   }
   ['ppGo', 'ppDebt'].forEach(k => { const prev = A.acts[k]; if (prev) A.acts[k] = function () { try { const m = S.modal; if (m && m.type === 'pcPay') { const nw = Object.keys(m.ed || {}).filter(id => m.ed[id].mode === 'free' && !m.ed[id].off && !String(m.ed[id].why || '').trim())[0]; if (nw) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Contá por qué no se cobra (queda anotado).'; } return; }
-        const wi = $('#ppWhyAll'); if (wi) m.whyAll = wi.value; if (m.edit && edChanged(m) && !String(m.whyAll || '').trim()) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Escribí por qué corregiste el cobro: lo ve el dueño.'; } if (wi) wi.focus(); return; } const keepA1 = m.a1, keepA2 = m.a2; applyEdits(m); if (keepA1 != null) { m.a1 = keepA1; m.a2 = keepA2; } } } catch (e) { if (A.logError) A.logError('ppEdit', e); } return prev.apply(this, arguments); }; });
+        const wi = $('#ppWhyAll'); if (wi) m.whyAll = wi.value; if (m.edit && edChanged(m) && !String(m.whyAll || '').trim()) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Escribí por qué corregiste el cobro: lo ve el dueño.'; } if (wi) wi.focus(); return; } const keepA1 = m.a1, keepA2 = m.a2, zero = k === 'ppGo' && (m.ids || []).length && !((m.tot || 0) + (m.addPrev ? m.prev : 0) > 0);
+        applyEdits(m); if (keepA1 != null) { m.a1 = keepA1; m.a2 = keepA2; }
+        if (zero) { const pd = A.pd(m.pid), at = new Date().toISOString(), by = who(); pd.ledger.forEach(e => { if ((m.ids || []).indexOf(e.id) >= 0 && !e.cobOk) { e.cobOk = e.os ? 'os' : 'bonif'; e.cobDone = at; e.cobDoneBy = by; } }); A.touchPd(m.pid); const nm = (A.PAT(m.pid) || {}).name || ''; S.modal = null; A.renderModal(); A.save(); A.toast('Listo: ' + nm + ' no paga nada hoy.'); if (A.renderPanel) A.renderPanel(); A.refresh(); return; } } } catch (e) { if (A.logError) A.logError('ppEdit', e); } return prev.apply(this, arguments); }; });
 
   /* =====================================================================
      estilos (solo tokens del tema)

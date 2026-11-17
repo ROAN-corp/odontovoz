@@ -184,7 +184,7 @@
       else { const t = { id: A.uid(), cond: null, tooth: null, faces: '', label: it.label, price: it.price, status: 'hecho', planDate: null, doneDate: d, pro: m.pro, bid: null }; pd.tx.push(t); A.onTxDone(pid, t); made.push(t); }
       /* el cargo que se acaba de crear: importe confirmado y a quién le toca cobrarlo */
       pd.ledger.slice(before).filter(e => e.type === 'cargo' && !e.voided).forEach(e => {
-        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } if (it.free || (it.os && it.os.mode === 'free')) { e.free = 1; e.freeWhy = String(it.why || '').trim(); e.desc = (e.desc || it.label) + ' · no se cobra: ' + e.freeWhy; if (!e.os && !(+e.amount > 0)) e.cobOk = 'bonif'; } else if (String(it.why || '').trim()) { e.why = String(it.why).trim(); e.desc = (e.desc || it.label) + ' · aclaración: ' + e.why; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
+        e.amount = it.pay; e.price = it.price || 0; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.osCos = (it.os.cos || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } if (it.free || (it.os && it.os.mode === 'free')) { e.free = 1; e.freeWhy = String(it.why || '').trim(); e.desc = (e.desc || it.label) + ' · no se cobra: ' + e.freeWhy; if (!e.os && !(+e.amount > 0)) e.cobOk = 'bonif'; } else if (String(it.why || '').trim()) { e.why = String(it.why).trim(); e.desc = (e.desc || it.label) + ' · aclaración: ' + e.why; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
         if (a) e.apptId = a.id; if (curSede() && !e.loc) e.loc = curSede();
       });
     });

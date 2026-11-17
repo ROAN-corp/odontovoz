@@ -210,7 +210,7 @@
           delete e.os; delete e.osCov; e.desc = String(e.desc || '').replace(/ · [^·]* cubre [^·]*$/, ''); ch++;
           const t = (pd.tx || []).filter(x => x.id === e.txId)[0]; if (t && t.os) { delete t.os; }
         } else if (e.os && po && !e.osCov && e.cop) { e.osCov = 0; ch++; }
-        if (e.os && !(+e.amount > 0) && e.cob && !e.cobOk) { e.cobOk = 'os'; ch++; }
+        if (e.os && !(+e.amount > 0) && e.cob && e.cob !== 'rcp' && !e.cobOk) { e.cobOk = 'os'; ch++; }
       });
       if (ch) A.touchPd(pid);
     } catch (e) { /* nada */ }
@@ -228,8 +228,9 @@
     const rows = dueePrev(), add = {};
     A.allPids().forEach(id => {
       const pd = A.pd(id); if (!pd) return; const name = (A.PAT(id) || {}).name || (pd.prof && pd.prof.name) || 'Paciente';
+      const off = A.osOffSet ? A.osOffSet(pd) : {};
       (pd.ledger || []).forEach(e => {
-        if (e.type !== 'cargo' || e.voided || e.anula || !e.os || +e.osCov > 0 || !('osCov' in e)) return;
+        if (e.type !== 'cargo' || e.voided || e.anula || !e.os || +e.osCov > 0 || !('osCov' in e) || off[e.id]) return;
         const mk = e.date.slice(0, 7), key = e.os + '|' + mk, r = add[key] || (add[key] = { os: e.os, month: mk, items: [] });
         r.items.push({ pid: id, name, desc: e.desc + ' (sin importe)', date: e.date, amt: 0, pro: e.pro });
       });

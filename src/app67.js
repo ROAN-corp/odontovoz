@@ -62,6 +62,7 @@
     if (!o.via) o.via = RN; if (f.normas && !(o.notes || '').includes(f.normas)) o.notes = ((o.notes || '') + '\nNormas de trabajo (FORN): ' + f.normas).trim();
     o.upd = A.today(); return n;
   };
+  A.fornById = slug => fById(slug); A.fornSig = t => sigOf(t);
   const sigOf = t => { let h = 0; const s = JSON.stringify(t.rows); for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; };
 
   /* ---------- pantalla: traer aranceles para una obra social ---------- */

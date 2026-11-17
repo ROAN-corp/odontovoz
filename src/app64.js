@@ -41,7 +41,7 @@
     const m = S.modal, pid = m && m.pid;
     const r = poPrev.apply(this, arguments);
     try {
-      if (pid) { const pd = A.pd(pid); let ch = 0; (pd.ledger || []).forEach(e => { if (e.type === 'cargo' && e.cob && !e.cobOk && e.os && !(+e.amount > 0)) { e.cobOk = 'os'; ch++; } }); if (ch) { A.touchPd(pid); A.refresh(); } }
+      if (pid) { const pd = A.pd(pid); let ch = 0; (pd.ledger || []).forEach(e => { if (e.type === 'cargo' && e.cob && e.cob !== 'rcp' && !e.cobOk && e.os && !(+e.amount > 0)) { e.cobOk = 'os'; ch++; } }); if (ch) { A.touchPd(pid); A.refresh(); } }
     } catch (e) { /* nada */ }
     return r;
   };
@@ -50,12 +50,14 @@
   /* todos los pacientes con datos (también archivados) */
   A.allPids = () => { const o = {}; A.PATS.forEach(p => { o[p.id] = 1; }); Object.keys(A.S.pd || {}).forEach(k => { o[k] = 1; }); return Object.keys(o); };
   A.osPayStore = () => A.CFG.osPay || (A.CFG.osPay = {});
+  /* prácticas que en recepción se cobraron como particular: la obra social ya no las paga (ajuste con osOff = id del cargo) */
+  A.osOffSet = pd => { const o = {}; ((pd && pd.ledger) || []).forEach(x => { if (x.type === 'ajuste' && x.osOff && !x.voided && !x.anula) o[x.osOff] = 1; }); return o; };
   A.osDue = () => {
     const by = {};
     A.allPids().forEach(id => {
-      const pd = A.pd(id); if (!pd) return; const p = { id, name: (A.PAT(id) || {}).name || (pd.prof && pd.prof.name) || 'Paciente' };
+      const pd = A.pd(id); if (!pd) return; const p = { id, name: (A.PAT(id) || {}).name || (pd.prof && pd.prof.name) || 'Paciente' }, off = A.osOffSet(pd);
       (pd.ledger || []).forEach(e => {
-        if (e.type !== 'cargo' || e.voided || e.anula || !e.os || !(+e.osCov > 0)) return;
+        if (e.type !== 'cargo' || e.voided || e.anula || !e.os || !(+e.osCov > 0) || off[e.id]) return;
         const mk = e.date.slice(0, 7), o = by[e.os] || (by[e.os] = {}), r = o[mk] || (o[mk] = { amt: 0, n: 0, items: [] });
         r.amt += +e.osCov; r.n++; r.items.push({ pid: p.id, name: p.name, desc: e.desc, date: e.date, amt: +e.osCov, pro: e.pro });
       });

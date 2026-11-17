@@ -139,6 +139,7 @@
   MF.pcPay = m => {
     initPl(m, m.m1); m.adj = { k: 'none' }; m.split = false;
     let h = pcPrev(m); const base = baseOf(m);
+    if (!(base > 0) && (m.ids || []).length) return h.replace('<div class="hint" id="ppMsg">', '<p class="pl-zero">Hoy no paga nada. Tocá «Listo» y queda registrado.</p><div class="hint" id="ppMsg">').replace(/(data-act="ppGo"[^>]*>)Cobrar</, (a, b) => b + 'Listo, no paga nada<').replace(/<button class="btn ghost" data-act="ppDebt">[^<]*<\/button>/, '');
     h = h.replace('<div class="hint" id="ppMsg">', () => A.payLinesHTML(m, base) + '<div class="hint" id="ppMsg">');
     return h.replace(/(data-act="ppGo"[^>]*>)Cobrar</, (a, b) => b + 'Cobrar ' + money(A.payLines(m, base).reduce((s, l) => s + l.total, 0)) + '<');
   };
@@ -203,7 +204,7 @@
 
   /* estilos (solo tokens del tema) */
   const css = document.createElement('style');
-  css.textContent = '.m-body:has(.pl-box) .pp-row,.m-body:has(.pl-box) [data-act="ppSplit"],.m-body:has(.pl-box) .aj-box{display:none!important}' +
+  css.textContent = '.m-body:has(.pl-box) .pp-row,.m-body:has(.pl-box) [data-act="ppSplit"],.m-body:has(.pl-box) .aj-box,.m-body:has(.pl-zero) .pp-row,.m-body:has(.pl-zero) [data-act="ppSplit"],.m-body:has(.pl-zero) .aj-box{display:none!important}.pl-zero{margin:8px 0;padding:10px 12px;border-radius:12px;background:var(--accent-soft);color:var(--ink);font-weight:600}' +
     '.pl-box{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:10px 0 6px;background:var(--surface)}.pl-hd{font-weight:700;margin-bottom:6px}' +
     '.pl-ln{padding:8px 0;border-top:1px solid var(--line)}.pl-ln:first-of-type{border-top:0;padding-top:0}' +
     '.pl-r1{display:flex;gap:8px;align-items:center}.pl-r1 select{flex:1;min-width:0}.pl-amt{flex:0 0 130px;display:flex;align-items:center;gap:4px}.pl-amt input{width:100%;min-width:0}.pl-rest{flex:0 0 auto;font-size:.9rem;color:var(--ink-2)}.pl-rest b{color:var(--ink)}' +
