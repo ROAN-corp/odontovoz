@@ -2066,7 +2066,18 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.$$ = (s, el) => Array.prototype.slice.call((el || document).querySelectorAll(s));
   A.esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const nf = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
-  A.money = n => nf.format(Math.round(n || 0));
+  const nf2 = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  /* importes con centavos: se muestran con coma solo si los tienen */
+  A.money = n => { const r = Math.round((+n || 0) * 100) / 100; return r % 1 ? nf2.format(r) : nf.format(r); };
+  /* leer un importe escrito a mano: «12.500», «12500,50», «12.500,5», «1234.56», «$ 3.000» */
+  A.parseMoney = v => {
+    let s = String(v == null ? '' : v).replace(/[^\d.,-]/g, ''); if (!s) return 0;
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.').replace(/,/g, '');
+    else if (/\.\d{3}(?!\d)/.test(s) && !/\.\d{1,2}$/.test(s)) s = s.replace(/\./g, '');
+    else { const k = s.lastIndexOf('.'); if (k >= 0) s = s.slice(0, k).replace(/\./g, '') + '.' + s.slice(k + 1); }
+    const n = parseFloat(s); return isNaN(n) ? 0 : Math.round(n * 100) / 100;
+  };
+  A.moneyIn = n => (+n || 0) ? String(Math.round((+n) * 100) / 100).replace('.', ',') : '';
   A.norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
   const pad = n => (n < 10 ? '0' : '') + n;
   A.pad = pad;
@@ -3899,18 +3910,18 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const cats = A.catCats();
     let body = '<p class="hint">Cargá y modificá tus prácticas y precios. Lo que cambies se usa en presupuestos, plan de tratamiento y liquidaciones. Los cambios se guardan solos.</p>';
     cats.forEach(c => {
-      body += '<div class="block"><h3>' + esc(c) + '</h3><table class="tbl"><tbody>' + A.CAT.filter(x => x.cat === c).map(x => '<tr><td><input class="inp" data-chg="catEdit" data-k="' + x.k + '" data-f="label" value="' + esc(x.label) + '" aria-label="Nombre de la práctica"></td><td class="num"><input class="p" inputmode="numeric" data-chg="catEdit" data-k="' + x.k + '" data-f="price" value="' + x.price + '" aria-label="Precio"></td><td class="num"><button class="btn small ghost" data-act="catDel" data-k="' + x.k + '" aria-label="Quitar">Quitar</button></td></tr>').join('') + '</tbody></table></div>';
+      body += '<div class="block"><h3>' + esc(c) + '</h3><table class="tbl"><tbody>' + A.CAT.filter(x => x.cat === c).map(x => '<tr><td><input class="inp" data-chg="catEdit" data-k="' + x.k + '" data-f="label" value="' + esc(x.label) + '" aria-label="Nombre de la práctica"></td><td class="num"><input class="p" inputmode="decimal" data-chg="catEdit" data-k="' + x.k + '" data-f="price" value="' + A.moneyIn(x.price) + '" aria-label="Precio"></td><td class="num"><button class="btn small ghost" data-act="catDel" data-k="' + x.k + '" aria-label="Quitar">Quitar</button></td></tr>').join('') + '</tbody></table></div>';
     });
     body += '<div class="block"><h3>Agregar práctica</h3><div class="row3"><div class="field"><label for="ncCat">Categoría</label><input id="ncCat" list="ncCats" placeholder="Elegí o escribí una nueva"><datalist id="ncCats">' + cats.map(c => '<option>' + esc(c) + '</option>').join('') + '</datalist></div><div class="field"><label for="ncLab">Práctica</label><input id="ncLab" placeholder="Ej.: Prótesis fija sobre implante"></div><div class="field"><label for="ncPrice">Precio</label><input id="ncPrice" inputmode="numeric"></div></div><div class="row-btns"><button class="btn primary small" data-act="catAdd">Agregar al catálogo</button></div><div id="ncMsg" class="hint bad"></div></div>';
-    body += '<div class="block"><h3>Valores por pieza del odontograma</h3><div class="hint">Solo para lo que no está en la lista de arriba. Restauraciones (composite por cantidad de caras), amalgamas, extracciones, endodoncias, coronas, pernos e implantes toman el precio de la lista.</div><table class="tbl"><thead><tr><th>Tratamiento</th><th class="num">Base</th><th class="num">Cara extra</th></tr></thead><tbody>' + Object.keys(A.ARANCEL).filter(k => ARAN_LABEL[k] && k !== 'extraido').map(k => '<tr><td>' + esc(ARAN_LABEL[k]) + '</td><td class="num"><input class="p" inputmode="numeric" data-chg="aranEdit" data-k="' + k + '" data-i="0" value="' + A.ARANCEL[k][0] + '"></td><td class="num"><input class="p" inputmode="numeric" data-chg="aranEdit" data-k="' + k + '" data-i="1" value="' + (A.ARANCEL[k][1] || 0) + '"></td></tr>').join('') + '</tbody></table></div>';
+    body += '<div class="block"><h3>Valores por pieza del odontograma</h3><div class="hint">Solo para lo que no está en la lista de arriba. Restauraciones (composite por cantidad de caras), amalgamas, extracciones, endodoncias, coronas, pernos e implantes toman el precio de la lista.</div><table class="tbl"><thead><tr><th>Tratamiento</th><th class="num">Base</th><th class="num">Cara extra</th></tr></thead><tbody>' + Object.keys(A.ARANCEL).filter(k => ARAN_LABEL[k] && k !== 'extraido').map(k => '<tr><td>' + esc(ARAN_LABEL[k]) + '</td><td class="num"><input class="p" inputmode="decimal" data-chg="aranEdit" data-k="' + k + '" data-i="0" value="' + A.ARANCEL[k][0] + '"></td><td class="num"><input class="p" inputmode="decimal" data-chg="aranEdit" data-k="' + k + '" data-i="1" value="' + (A.ARANCEL[k][1] || 0) + '"></td></tr>').join('') + '</tbody></table></div>';
     return A.modalShell('Prácticas y aranceles', body, '<button class="btn danger" data-act="catReset">Restaurar catálogo original</button><button class="btn primary" data-act="catClose">Listo</button>', true);
   };
   A.chg.catEdit = el => {
     const x = A.CAT.filter(c => c.k === el.getAttribute('data-k'))[0]; if (!x) return; const f = el.getAttribute('data-f');
-    if (f === 'price') { x.price = parseInt(String(el.value).replace(/\D/g, ''), 10) || 0; el.value = x.price; } else x.label = el.value.trim() || x.label;
+    if (f === 'price') { x.price = A.parseMoney(el.value); el.value = A.moneyIn(x.price); } else x.label = el.value.trim() || x.label;
     A.save();
   };
-  A.chg.aranEdit = el => { const k = el.getAttribute('data-k'), i = parseInt(el.getAttribute('data-i'), 10), v = parseInt(String(el.value).replace(/\D/g, ''), 10) || 0; A.ARANCEL[k][i] = v; if (k === 'extraccion') A.ARANCEL.extraido[i] = v; el.value = v; A.save(); };
+  A.chg.aranEdit = el => { const k = el.getAttribute('data-k'), i = parseInt(el.getAttribute('data-i'), 10), v = A.parseMoney(el.value); A.ARANCEL[k][i] = v; if (k === 'extraccion') A.ARANCEL.extraido[i] = v; el.value = A.moneyIn(v); A.save(); };
   A.acts.catDel = el => { const i = A.CAT.findIndex(c => c.k === el.getAttribute('data-k')); if (i >= 0) A.CAT.splice(i, 1); A.save(); A.renderModal(); };
   A.acts.catAdd = () => {
     const cat = $('#ncCat').value.trim(), lab = $('#ncLab').value.trim(), price = parseInt($('#ncPrice').value.replace(/\D/g, ''), 10);
@@ -7329,7 +7340,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd, V = A.voice;
   A.VERSION = '6.1';
   const N = s => A.norm(s);
-  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney ? A.parseMoney(v) : (parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0);
 
   /* =====================================================================
      OBRAS SOCIALES Y PREPAGAS
@@ -7447,7 +7458,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       b += '<div class="block"><h3>Aranceles por práctica</h3><div class="hint" style="margin:0">Tildá lo que cubre. «Paga la obra social» es lo que te liquida; «Coseguro» es lo que paga el paciente. Al registrar una práctica hecha, al paciente se le carga el coseguro o el copago, según lo que elijas arriba.' + (o.upd ? ' Actualizado el ' + A.fmtDMY(o.upd) + '.' : '') + '</div>';
       b += '<div class="os-tbl"><div class="os-th"><span>Código y práctica</span><span>Cubre</span><span>Paga la O.S.</span><span>Coseguro</span></div>' + NOMEN.concat(Object.keys(o.aran).filter(k => !NOMEN.some(x => x[0] === k)).map(k => [k, o.aran[k].label || k])).map(x => {
         const a = o.aran[x[0]] || {};
-        return '<div class="os-tr' + (a.on ? ' on' : '') + '"><span><b>' + esc(x[0]) + '</b> ' + esc(x[1]) + '</span><input type="checkbox" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="on" aria-label="Cubre ' + esc(x[1]) + '"' + (a.on ? ' checked' : '') + '><input inputmode="numeric" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cov" value="' + (a.cov || '') + '" placeholder="$" aria-label="Paga la obra social"><input inputmode="numeric" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cos" value="' + (a.cos || '') + '" placeholder="$" aria-label="Coseguro"></div>';
+        return '<div class="os-tr' + (a.on ? ' on' : '') + '"><span><b>' + esc(x[0]) + '</b> ' + esc(x[1]) + '</span><input type="checkbox" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="on" aria-label="Cubre ' + esc(x[1]) + '"' + (a.on ? ' checked' : '') + '><input inputmode="decimal" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cov" value="' + A.moneyIn(a.cov) + '" placeholder="$" aria-label="Paga la obra social"><input inputmode="decimal" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cos" value="' + A.moneyIn(a.cos) + '" placeholder="$" aria-label="Coseguro"></div>';
       }).join('') + '</div>';
       b += '<div class="row-btns"><button class="btn small" data-act="osPct">Subir todos un %</button><button class="btn small" data-act="osCode">+ Otro código</button></div></div>';
       const rows = A.osMonth(m.m, o.id);
@@ -7459,7 +7470,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.chg.osField = el => { const o = A.osById(el.getAttribute('data-os')); if (!o) return; const k = el.getAttribute('data-k'); o[k] = el.type === 'checkbox' ? el.checked : el.value.trim(); if (k === 'sigla' && !o.sigla) o.sigla = 'Sin nombre'; A.save(); if ((k === 'kind' || k === 'sigla') && S.modal && S.modal.type === 'osEdit') A.renderModal(); };
   A.chg.osAr = el => {
     const o = A.osById(el.getAttribute('data-os')); if (!o) return; const c = el.getAttribute('data-c'), f = el.getAttribute('data-f'), a = o.aran[c] || (o.aran[c] = { on: false, cov: 0, cos: 0 });
-    if (f === 'on') a.on = el.checked; else { a[f] = num(el.value); el.value = a[f] || ''; if (a[f] && !a.on) { a.on = true; const cb = el.parentNode.querySelector('input[type=checkbox]'); if (cb) cb.checked = true; } }
+    if (f === 'on') a.on = el.checked; else { a[f] = num(el.value); el.value = A.moneyIn(a[f]); if (a[f] && !a.on) { a.on = true; const cb = el.parentNode.querySelector('input[type=checkbox]'); if (cb) cb.checked = true; } }
     el.parentNode.classList.toggle('on', !!a.on); o.upd = A.today(); A.save();
   };
   A.acts.osPct = () => { S.modal = { type: 'osPct', id: S.modal.id, back: S.modal }; A.renderModal(); };
@@ -8184,10 +8195,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.10';
+  A.VERSION = '1.10.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.65.0';
+  A.VBUILD = '1.65.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18318,6 +18329,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.10.1', b: '1.65.1', d: '2026-11-17', items: [
+      { t: 'Los aranceles aceptan centavos: escribí por ejemplo 12.500,50.', top: true }] },
     { v: '1.10', b: '1.65.0', d: '2026-11-17', items: [
       { t: 'Planes a la vista: en Obras sociales y aranceles cada obra social muestra sus planes y podés ver los aranceles de cada uno.', top: true },
       { t: 'Al cobrar, si la obra social tiene planes, tocás el del paciente y los importes se acomodan solos (queda guardado en la ficha).', top: true },
@@ -24502,7 +24515,7 @@ const OVMenu = (function () {
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(Math.round(n || 0));
   const N = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10); return isNaN(n) ? null : n; };
+  const num = v => { if (!/\d/.test(String(v == null ? '' : v))) return null; return A.parseMoney(v); };
   const boss = () => (A.isBoss ? A.isBoss() : true);
   const RN = 'Federación Odontológica de Río Negro';
 
@@ -24658,8 +24671,8 @@ const OVMenu = (function () {
     b += codes.length ? '<div class="os-tbl osp-tbl"><div class="os-th"><span>Práctica</span><span>General</span><span>Este plan paga</span><span>Coseguro</span></div>' + codes.map(c => {
       const g = o.aran[c] || {}, x = pl.aran[c] || {};
       return '<div class="os-tr' + (x.cov != null ? ' on' : '') + '"><span><b>' + esc(c) + '</b> ' + esc(lab(c)) + '</span><span class="osp-g">' + (g.on ? money(g.cov) : '—') + '</span>' +
-        '<input inputmode="numeric" data-chg="ospV" data-c="' + esc(c) + '" data-f="cov" value="' + (x.cov != null ? x.cov : '') + '" placeholder="' + (g.on ? g.cov : '') + '" aria-label="Lo que paga en este plan: ' + esc(lab(c)) + '">' +
-        '<input inputmode="numeric" data-chg="ospV" data-c="' + esc(c) + '" data-f="cos" value="' + (x.cos != null ? x.cos : '') + '" placeholder="' + (g.on ? (g.cos || 0) : '') + '" aria-label="Coseguro en este plan: ' + esc(lab(c)) + '"></div>';
+        '<input inputmode="decimal" data-chg="ospV" data-c="' + esc(c) + '" data-f="cov" value="' + (x.cov != null ? A.moneyIn(x.cov) : '') + '" placeholder="' + (g.on ? g.cov : '') + '" aria-label="Lo que paga en este plan: ' + esc(lab(c)) + '">' +
+        '<input inputmode="decimal" data-chg="ospV" data-c="' + esc(c) + '" data-f="cos" value="' + (x.cos != null ? A.moneyIn(x.cos) : '') + '" placeholder="' + (g.on ? (g.cos || 0) : '') + '" aria-label="Coseguro en este plan: ' + esc(lab(c)) + '"></div>';
     }).join('') + '</div>' : '<div class="empty">Primero cargá la tabla general de la obra social (o traé los valores de la Federación).</div>';
     return A.modalShell(o.sigla + ' · plan ' + pl.name, b, '<button class="btn danger" data-act="ospDel">Quitar el plan</button><button class="btn primary" data-act="ospBack">Listo</button>', true);
   };
@@ -24673,7 +24686,7 @@ const OVMenu = (function () {
     const m = S.modal, { o, pl } = plOf(m), i = $('#ospPct'), p = parseFloat(String(i ? i.value : '100').replace(',', '.')); if (!pl) return;
     if (!(p > 0)) { A.toast('Poné un porcentaje.'); return; }
     m.pct = String(p); let n = 0;
-    Object.keys(o.aran || {}).forEach(c => { const g = o.aran[c]; if (!g || !g.on) return; const x = pl.aran[c] || (pl.aran[c] = {}); x.cov = Math.round((g.cov || 0) * p / 100); x.on = true; n++; });
+    Object.keys(o.aran || {}).forEach(c => { const g = o.aran[c]; if (!g || !g.on) return; const x = pl.aran[c] || (pl.aran[c] = {}); x.cov = Math.round((g.cov || 0) * p) / 100; x.on = true; n++; });
     pl.copy = { p, at: A.today() }; A.save(); m.fresh = false; A.renderModal(); A.toast(n + ' valores copiados al ' + String(p).replace('.', ',') + '%. Corregí los que sean distintos.');
   };
   A.acts.ospForn = () => {

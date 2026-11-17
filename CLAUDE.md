@@ -142,6 +142,7 @@ Leé esto antes de tocar nada. Resume el proyecto hasta la versión 1.35 (noviem
 - 1.9 (1.64.0, `src/app91.js`, `app89`/`app90`/`app40`/`app64`/`app65`/`app74`/`app67`): «¿Quién cobra?» siempre primero; la secretaría elige cómo se cobra (coseguro/diferencial/cubierto/particular/nada, importe automático; particular → ajuste `osOff`). Planes de obra social `o.pl` (vista por `A.osOf` según `p.plan`), autoplanes de la Federación por columnas `plan`, chips de plan en la ficha. Ver `LEEME.md` 1.9.
 - 1.9.1 (1.64.1, `src/app89.js`, `src/app40.js`): restauraciones con «simple (1 cara)/compuesta (2 caras)/compleja (N caras)» en el nombre (`it.cx`, `A.restKind`), caras sueltas a la última pieza, siglas «27 OV». Ver `LEEME.md` 1.9.1.
 - 1.10 (1.65.0, `src/app92.js`): planes en la lista de obras sociales, pestañas por plan, plan elegible al cobrar (`poPlan`), ventana de actualización `#updPop` (web y APK). Ver `LEEME.md` 1.10.
+- 1.10.1 (1.65.1): aranceles con centavos (`A.parseMoney`, `A.moneyIn`; `A.money` muestra centavos si los hay).
 - Ojo: en los `css.textContent = '…' + '…'` una coma en lugar de `+` deja solo el último pedazo (pasó en `app40`).
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.

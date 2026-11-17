@@ -4,7 +4,7 @@
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd, V = A.voice;
   A.VERSION = '6.1';
   const N = s => A.norm(s);
-  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney ? A.parseMoney(v) : (parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0);
 
   /* =====================================================================
      OBRAS SOCIALES Y PREPAGAS
@@ -122,7 +122,7 @@
       b += '<div class="block"><h3>Aranceles por práctica</h3><div class="hint" style="margin:0">Tildá lo que cubre. «Paga la obra social» es lo que te liquida; «Coseguro» es lo que paga el paciente. Al registrar una práctica hecha, al paciente se le carga el coseguro o el copago, según lo que elijas arriba.' + (o.upd ? ' Actualizado el ' + A.fmtDMY(o.upd) + '.' : '') + '</div>';
       b += '<div class="os-tbl"><div class="os-th"><span>Código y práctica</span><span>Cubre</span><span>Paga la O.S.</span><span>Coseguro</span></div>' + NOMEN.concat(Object.keys(o.aran).filter(k => !NOMEN.some(x => x[0] === k)).map(k => [k, o.aran[k].label || k])).map(x => {
         const a = o.aran[x[0]] || {};
-        return '<div class="os-tr' + (a.on ? ' on' : '') + '"><span><b>' + esc(x[0]) + '</b> ' + esc(x[1]) + '</span><input type="checkbox" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="on" aria-label="Cubre ' + esc(x[1]) + '"' + (a.on ? ' checked' : '') + '><input inputmode="numeric" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cov" value="' + (a.cov || '') + '" placeholder="$" aria-label="Paga la obra social"><input inputmode="numeric" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cos" value="' + (a.cos || '') + '" placeholder="$" aria-label="Coseguro"></div>';
+        return '<div class="os-tr' + (a.on ? ' on' : '') + '"><span><b>' + esc(x[0]) + '</b> ' + esc(x[1]) + '</span><input type="checkbox" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="on" aria-label="Cubre ' + esc(x[1]) + '"' + (a.on ? ' checked' : '') + '><input inputmode="decimal" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cov" value="' + A.moneyIn(a.cov) + '" placeholder="$" aria-label="Paga la obra social"><input inputmode="decimal" data-chg="osAr" data-os="' + o.id + '" data-c="' + esc(x[0]) + '" data-f="cos" value="' + A.moneyIn(a.cos) + '" placeholder="$" aria-label="Coseguro"></div>';
       }).join('') + '</div>';
       b += '<div class="row-btns"><button class="btn small" data-act="osPct">Subir todos un %</button><button class="btn small" data-act="osCode">+ Otro código</button></div></div>';
       const rows = A.osMonth(m.m, o.id);
@@ -134,7 +134,7 @@
   A.chg.osField = el => { const o = A.osById(el.getAttribute('data-os')); if (!o) return; const k = el.getAttribute('data-k'); o[k] = el.type === 'checkbox' ? el.checked : el.value.trim(); if (k === 'sigla' && !o.sigla) o.sigla = 'Sin nombre'; A.save(); if ((k === 'kind' || k === 'sigla') && S.modal && S.modal.type === 'osEdit') A.renderModal(); };
   A.chg.osAr = el => {
     const o = A.osById(el.getAttribute('data-os')); if (!o) return; const c = el.getAttribute('data-c'), f = el.getAttribute('data-f'), a = o.aran[c] || (o.aran[c] = { on: false, cov: 0, cos: 0 });
-    if (f === 'on') a.on = el.checked; else { a[f] = num(el.value); el.value = a[f] || ''; if (a[f] && !a.on) { a.on = true; const cb = el.parentNode.querySelector('input[type=checkbox]'); if (cb) cb.checked = true; } }
+    if (f === 'on') a.on = el.checked; else { a[f] = num(el.value); el.value = A.moneyIn(a[f]); if (a[f] && !a.on) { a.on = true; const cb = el.parentNode.querySelector('input[type=checkbox]'); if (cb) cb.checked = true; } }
     el.parentNode.classList.toggle('on', !!a.on); o.upd = A.today(); A.save();
   };
   A.acts.osPct = () => { S.modal = { type: 'osPct', id: S.modal.id, back: S.modal }; A.renderModal(); };

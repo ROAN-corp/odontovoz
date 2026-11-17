@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.10.1', b: '1.65.1', d: '2026-11-17', items: [
+      { t: 'Los aranceles aceptan centavos: escribí por ejemplo 12.500,50.', top: true }] },
     { v: '1.10', b: '1.65.0', d: '2026-11-17', items: [
       { t: 'Planes a la vista: en Obras sociales y aranceles cada obra social muestra sus planes y podés ver los aranceles de cada uno.', top: true },
       { t: 'Al cobrar, si la obra social tiene planes, tocás el del paciente y los importes se acomodan solos (queda guardado en la ficha).', top: true },

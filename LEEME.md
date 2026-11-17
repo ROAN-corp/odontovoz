@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.10.1 · aranceles con centavos (17/11/2026)
+
+- `index.html`: `A.parseMoney(texto)` («12.500», «12500,50», «12.500,5», «1234.56») y `A.moneyIn(n)` (para mostrar en un campo, con coma); `A.money` muestra centavos solo si el importe los tiene. Usados en aranceles de obra social (`osAr`, `app7`), planes (`ospV`, `app91`), catálogo (`catEdit`) y valores por pieza (`aranEdit`), con `inputmode="decimal"`. Los demás campos de cobro siguen en pesos enteros. Prueba: `tdec.py`.
+
 ## OdontoVoz 1.10 · planes a la vista y ventana de actualización (17/11/2026)
 
 - `src/app92.js`: `MF.osList` muestra «Planes: …» (`.osl-pl`) en cada obra social; `MF.osEdit` y `MF.ospEd` con pestañas `.osp-tabs` (General / cada plan, `ospGoPl`). `MF.pracOk` (también la pantalla «¿Quién cobra?») con `.po-plan` si la obra social tiene planes: `poPlan` guarda `p.plan` y vuelve a leer `m.txt` con `A.pracParse` (respeta destildados y la forma de cobro). Arreglo: `A.acts.ospEd` (botón «Valores» de 1.9) no existía; ahora está en `app91`.

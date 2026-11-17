@@ -6,7 +6,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(Math.round(n || 0));
   const N = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
-  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10); return isNaN(n) ? null : n; };
+  const num = v => { if (!/\d/.test(String(v == null ? '' : v))) return null; return A.parseMoney(v); };
   const boss = () => (A.isBoss ? A.isBoss() : true);
   const RN = 'Federación Odontológica de Río Negro';
 
@@ -162,8 +162,8 @@
     b += codes.length ? '<div class="os-tbl osp-tbl"><div class="os-th"><span>Práctica</span><span>General</span><span>Este plan paga</span><span>Coseguro</span></div>' + codes.map(c => {
       const g = o.aran[c] || {}, x = pl.aran[c] || {};
       return '<div class="os-tr' + (x.cov != null ? ' on' : '') + '"><span><b>' + esc(c) + '</b> ' + esc(lab(c)) + '</span><span class="osp-g">' + (g.on ? money(g.cov) : '—') + '</span>' +
-        '<input inputmode="numeric" data-chg="ospV" data-c="' + esc(c) + '" data-f="cov" value="' + (x.cov != null ? x.cov : '') + '" placeholder="' + (g.on ? g.cov : '') + '" aria-label="Lo que paga en este plan: ' + esc(lab(c)) + '">' +
-        '<input inputmode="numeric" data-chg="ospV" data-c="' + esc(c) + '" data-f="cos" value="' + (x.cos != null ? x.cos : '') + '" placeholder="' + (g.on ? (g.cos || 0) : '') + '" aria-label="Coseguro en este plan: ' + esc(lab(c)) + '"></div>';
+        '<input inputmode="decimal" data-chg="ospV" data-c="' + esc(c) + '" data-f="cov" value="' + (x.cov != null ? A.moneyIn(x.cov) : '') + '" placeholder="' + (g.on ? g.cov : '') + '" aria-label="Lo que paga en este plan: ' + esc(lab(c)) + '">' +
+        '<input inputmode="decimal" data-chg="ospV" data-c="' + esc(c) + '" data-f="cos" value="' + (x.cos != null ? A.moneyIn(x.cos) : '') + '" placeholder="' + (g.on ? (g.cos || 0) : '') + '" aria-label="Coseguro en este plan: ' + esc(lab(c)) + '"></div>';
     }).join('') + '</div>' : '<div class="empty">Primero cargá la tabla general de la obra social (o traé los valores de la Federación).</div>';
     return A.modalShell(o.sigla + ' · plan ' + pl.name, b, '<button class="btn danger" data-act="ospDel">Quitar el plan</button><button class="btn primary" data-act="ospBack">Listo</button>', true);
   };
@@ -177,7 +177,7 @@
     const m = S.modal, { o, pl } = plOf(m), i = $('#ospPct'), p = parseFloat(String(i ? i.value : '100').replace(',', '.')); if (!pl) return;
     if (!(p > 0)) { A.toast('Poné un porcentaje.'); return; }
     m.pct = String(p); let n = 0;
-    Object.keys(o.aran || {}).forEach(c => { const g = o.aran[c]; if (!g || !g.on) return; const x = pl.aran[c] || (pl.aran[c] = {}); x.cov = Math.round((g.cov || 0) * p / 100); x.on = true; n++; });
+    Object.keys(o.aran || {}).forEach(c => { const g = o.aran[c]; if (!g || !g.on) return; const x = pl.aran[c] || (pl.aran[c] = {}); x.cov = Math.round((g.cov || 0) * p) / 100; x.on = true; n++; });
     pl.copy = { p, at: A.today() }; A.save(); m.fresh = false; A.renderModal(); A.toast(n + ' valores copiados al ' + String(p).replace('.', ',') + '%. Corregí los que sean distintos.');
   };
   A.acts.ospForn = () => {
