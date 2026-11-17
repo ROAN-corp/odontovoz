@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.3 · El asistente habla menos (17/11/2026)
+
+- `src/app83.js`: si no entiende, `A.cmd.exec` devuelve «No entendí «lo que oyó».» sin sugerencias (reemplaza el `hint()` de `app14`); `A.voice.speak` envuelto con `A.shortSpeech(msg)`: primera oración, sin paréntesis ni consejos (Probá/Decí/Podés…), hasta ~90–110 caracteres; mantiene «Decí X para guardar/confirmar…». `A.CFG.voiceLong = true` vuelve al modo detallado.
+
 ## OdontoVoz 1.2.3 · OdontoVoz centrado siempre en el inicio del celular (16/11/2026)
 
 - A pedido del usuario: en el inicio del celular vuelve a verse siempre «OdontoVoz» centrado, aunque haya varios lugares. Cambiar de lugar se hace solo desde el menú (nombre del lugar enmarcado, `#drClinic.dr-pl`).

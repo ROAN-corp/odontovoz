@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.3', b: '1.58.0', d: '2026-11-17', items: [
+      { t: 'El asistente habla menos: si no entiende, dice solo «No entendí», y las respuestas en voz alta son cortas.', top: true }] },
     { v: '1.2.3', b: '1.57.3', d: '2026-11-16', items: [
       { t: 'Si trabajás en más de un lugar, abrí el menú y tocá el nombre del lugar (arriba de todo) para cambiar.' }] },
     { v: '1.2', b: '1.57.0', d: '2026-11-16', items: [

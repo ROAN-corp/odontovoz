@@ -8086,10 +8086,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.2.3';
+  A.VERSION = '1.3';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.57.3';
+  A.VBUILD = '1.58.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18171,6 +18171,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.3', b: '1.58.0', d: '2026-11-17', items: [
+      { t: 'El asistente habla menos: si no entiende, dice solo «No entendí», y las respuestas en voz alta son cortas.', top: true }] },
     { v: '1.2.3', b: '1.57.3', d: '2026-11-16', items: [
       { t: 'Si trabajás en más de un lugar, abrí el menú y tocá el nombre del lugar (arriba de todo) para cambiar.' }] },
     { v: '1.2', b: '1.57.0', d: '2026-11-16', items: [
@@ -22602,6 +22604,55 @@ const OVMenu = (function () {
     '.pt-prev{margin:6px 0 0;padding:8px 10px;border-radius:10px;background:var(--accent-soft,#e6f3f3);font-size:13px}.pt-act{margin-top:4px}' +
     '.linkbtn{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;font:inherit;cursor:pointer}';
   document.head.appendChild(css);
+})();
+/* ===== 1.3: el asistente habla poco: «No entendí» a secas y respuestas habladas cortas ===== */
+(function () {
+  'use strict';
+  const A = window.App;
+  const NO = /^No (te )?entend/i;
+  /* consejos que no se dicen en voz alta (en pantalla quedan) */
+  const TIP = /^(prob[aá]|dec[ií]|pod[eé]s|por ejemplo|ej\.|tip|si quer[eé]s|tambi[eé]n pod|record[aá]|acordate|ojo)/i;
+
+  /* cuando no entiende: solo «No entendí», sin sugerencias (en pantalla también, con lo que escuchó) */
+  const execPrev = A.cmd.exec;
+  A.cmd.exec = function (text, o) {
+    const r = execPrev.apply(this, arguments);
+    if (r && !r.ok && NO.test(r.msg || '') && A.CFG.voiceLong !== true) {
+      const heard = String(text || '').trim();
+      r.msg = 'No entendí' + (heard && heard.length < 80 ? ' «' + heard + '».' : '.');
+      r.spoken = 'No entendí.';
+    }
+    return r;
+  };
+
+  /* lo que se dice en voz alta: la primera idea, sin consejos ni ejemplos, y corto */
+  A.shortSpeech = msg => {
+    let t = String(msg || '').replace(/[«»"]/g, '').replace(/\s*\([^)]*\)/g, '').replace(/\s·\s/g, ', ').replace(/\s+/g, ' ').trim();
+    if (!t) return t;
+    if (NO.test(t)) return 'No entendí.';
+    const parts = t.replace(/[«»"]/g, '').split(/(?<=[.!?])\s+/);
+    let out = parts[0];
+    for (let i = 1; i < parts.length; i++) {
+      if (TIP.test(parts[i]) || (out + ' ' + parts[i]).length > 90) break;
+      out += ' ' + parts[i];
+    }
+    /* si hay que confirmar («Decí agendar para guardarlo»), eso sí se dice */
+    const ask = parts.slice(1).filter(p => /^dec[ií] \S+( \S+)? para (guardar|confirmar|hacerlo|agendar|cobrar|borrar)/i.test(p))[0];
+    if (ask && out.indexOf(ask) < 0) out += ' ' + ask.split(':')[0].replace(/[,;]\s*$/, '') + (/[.!?]$/.test(ask.split(':')[0]) ? '' : '.');
+    if (TIP.test(out)) return '';
+    const cap = ask ? 160 : 110;
+    if (out.length > cap) { out = out.slice(0, cap).replace(/[\s,;:]+\S*$/, ''); }
+    return out;
+  };
+  const V = A.voice;
+  if (V && V.speak) {
+    const spPrev = V.speak;
+    V.speak = function (msg, force) {
+      if (A.CFG.voiceLong === true) return spPrev.apply(this, arguments);
+      const s = A.shortSpeech(msg); if (!s) return;
+      return spPrev.call(this, s, force);
+    };
+  }
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {
