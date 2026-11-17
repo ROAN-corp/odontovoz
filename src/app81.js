@@ -18,17 +18,14 @@
     if (!st || !caja || st.previousElementSibling === caja || st.dataset.main) return;
     caja.insertAdjacentElement('afterend', st); st.dataset.main = '1'; st.classList.add('dnav-main');
   };
-  /* con varios lugares (consultorio propio + invitado): botón fijo arriba del menú para cambiar */
+  /* con varios lugares (consultorio propio + invitado): el nombre del lugar arriba del menú es un botón para cambiar */
   const mountPlace = () => {
-    const L = A.placesList ? A.placesList() : [], many = L.length > 1 && A.cloud && A.cloud.session;
-    let b = document.getElementById('drPlace');
-    if (!many) { if (b) b.remove(); return; }
-    const h = A.placeHere ? A.placeHere() : null, name = h ? (h.mine ? 'Mi consultorio' : (h.clinic || 'Lugar invitado')) : '';
-    const html = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span class="t">Cambiar de lugar<small>' + (name ? 'Estás en: ' + String(name).replace(/[&<>"]/g, '') : 'Elegí dónde trabajar') + '</small></span>';
-    if (!b) {
-      const at = document.querySelector('#gearMenu .dnav.acct-type') || document.querySelector('#gearMenu .dnav'); if (!at) return;
-      at.insertAdjacentHTML('beforebegin', '<button class="dnav dr-place" id="drPlace" data-act="plOpen">' + html + '</button>');
-    } else if (b.innerHTML !== html) b.innerHTML = html;
+    const L = A.placesList ? A.placesList() : [], many = L.length > 1 && !!(A.cloud && A.cloud.session);
+    const old = document.getElementById('drPlace'); if (old) old.remove();
+    const c = document.getElementById('drClinic'); if (!c) return;
+    c.classList.toggle('dr-pl', many);
+    if (many) { c.setAttribute('data-act', 'plOpen'); c.setAttribute('role', 'button'); c.setAttribute('tabindex', '0'); c.title = 'Cambiar de lugar'; }
+    else { c.removeAttribute('data-act'); c.removeAttribute('role'); c.removeAttribute('tabindex'); }
   };
   const run = () => { try { mountBar(); mountMenu(); mountPlace(); const h = document.querySelector('header.appbar'), t = document.querySelector('.ab-title'); if (h) { h.classList.toggle('ov-home', A.S.tab === 'inicio'); h.classList.toggle('ov-many', !!(t && t.classList.contains('pl-many'))); } } catch (e) { /* nada */ } };
   const arPrev = A.afterRefresh; A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; run(); return r; };
@@ -45,6 +42,6 @@
     '@media(max-width:699px){.ov-barlogo{display:none;flex:1 1 auto;justify-content:center;margin:0 4px}.ov-barlogo .ov-bm{display:none}.ov-barlogo .ov-bt{font-size:17px}header.appbar.ov-home:not(.ov-many) .ov-barlogo{display:flex}header.appbar.ov-home:not(.ov-many) .ab-title{display:none}}' +
     '@media(max-width:339px){.ov-barlogo{display:none}}' +
     /* con varios lugares, el título (que se toca para cambiar de lugar) manda sobre el nombre */
-        '.dr-place{border:1.5px solid var(--accent,#0d6b6b);border-radius:12px;margin-bottom:6px}.dr-place .t small{display:block;font-size:11.5px;color:var(--ink-2);font-weight:500}';
+        '.dr-id{min-width:0}#drClinic.dr-pl{display:block;white-space:normal;overflow:visible;margin-top:6px;padding:7px 11px;border:1.5px solid var(--accent,#0d6b6b);border-radius:12px;background:color-mix(in srgb,var(--accent,#0d6b6b) 10%,transparent);color:var(--accent,#0d6b6b);font-weight:700;cursor:pointer;line-height:1.25}#drClinic.dr-pl::after{content:"⇄ Tocá para cambiar de lugar";display:block;margin-top:3px;font-size:11.5px;font-weight:600;color:var(--ink-2)}';
   document.head.appendChild(css);
 })();

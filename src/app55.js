@@ -6,8 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
-    { v: '1.2.1', b: '1.57.1', d: '2026-11-16', items: [
-      { t: 'Si trabajás en más de un lugar, «Cambiar de lugar» está arriba de todo en el menú, y en el celular el nombre del lugar vuelve a la barra para tocarlo.' }] },
+    { v: '1.2.2', b: '1.57.2', d: '2026-11-16', items: [
+      { t: 'Si trabajás en más de un lugar, tocá el nombre del lugar arriba del menú para cambiar. En el celular también vuelve a la barra del inicio.' }] },
     { v: '1.2', b: '1.57.0', d: '2026-11-16', items: [
       { t: 'Pedidos de stock más rápidos: cuando haya un proveedor recomendado, le mandás el pedido armado por WhatsApp con un toque.' }] },
     { v: '1.1.3', b: '1.56.3', d: '2026-11-16', items: [

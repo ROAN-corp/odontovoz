@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.2.2 · Cambiar de lugar desde el menú (16/11/2026)
+
+- Con varios lugares, el nombre del lugar arriba del menú (`#drClinic`) es un botón enmarcado («⇄ Tocá para cambiar de lugar», clase `dr-pl`, abre `plOpen`). Se quita el botón `#drPlace` de la 1.2.1.
+
 ## OdontoVoz 1.2.1 · Volver a cambiar de lugar (16/11/2026)
 
 - Arreglo: en el celular, en el inicio, el nombre «OdontoVoz» tapaba el título que se toca para cambiar de lugar (quedabas atrapado en el lugar invitado). Con varios lugares, ahora se ve el título; además hay un botón «Cambiar de lugar» (`#drPlace`) arriba de todo en el menú.
