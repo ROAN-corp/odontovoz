@@ -8,6 +8,7 @@
   const places = () => { if (CL.places && CL.places.length) return CL.places; try { const l = JSON.parse(LS.get('odontovoz.places.list', '[]')); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
   const curOwner = () => CL.ownerId || null;
   const here = () => places().filter(p => p.owner === curOwner())[0] || null;
+  A.placesList = places; A.placeHere = here;
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
   const noServer = e => e && (e.status === 404 || /could not find the function|schema cache/i.test(String(e.message || '')));
 

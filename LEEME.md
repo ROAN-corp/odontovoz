@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.2.1 · Volver a cambiar de lugar (16/11/2026)
+
+- Arreglo: en el celular, en el inicio, el nombre «OdontoVoz» tapaba el título que se toca para cambiar de lugar (quedabas atrapado en el lugar invitado). Con varios lugares, ahora se ve el título; además hay un botón «Cambiar de lugar» (`#drPlace`) arriba de todo en el menú.
+
 ## OdontoVoz 1.2 · suscripciones
 - Cada cuenta nueva recibe 7 días de prueba gratis; las primeras 50 del lanzamiento, 14 días (tabla `ov_accounts`, columna `promo`, scripts `supabase/licencias.sql` y `supabase/prueba-7-dias.sql`).
 - Si la suscripción vence o se suspende, la cuenta queda en **solo lectura**: ve y descarga sus datos, pero no puede cargar nada nuevo. El servidor lo hace cumplir (no se puede saltear desde el teléfono).
