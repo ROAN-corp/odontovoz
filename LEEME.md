@@ -135,6 +135,13 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.4 · Navi conversa (17/11/2026)
+
+- `src/ovcmd.js`: capa de charla antes de `navRewrite` (`convo`/`convoOne`): `dayCount` {date, dated}, `dayFree` {date, dated, add, ask} (libres, huecos, lugar, disponibilidad, «puedo sumar más gente», «si agregamos un paciente nuevo»), `follow` («¿y el viernes?»), `multi` {steps} (parte en «y / y después / y decime…» y hereda el día). `parseDate` entiende «el viernes de la semana que viene». `screenOf` → `screen` {act, sub} para las pantallas del menú (stock, obras sociales, novedades, laboratorio, mi plan, costos, avisos, mudanza…).
+- `src/app84.js`: responde esas intenciones (cuenta turnos y libres de los profesionales visibles, `A.navi.last` para seguir la charla, `A.navi.pending` para «¿A quién agendo?» → `agendá a <nombre> el <día> a las <hora>`).
+- Arreglo (`src/app6.js` `findPat`): con nombre y apellido tienen que coincidir las dos palabras; antes «Zulema Quiroga» daba el turno a Martín Quiroga.
+- Pruebas: `node tests/ovcmd.charla.test.js` (7.700 frases armadas combinando arranques, preguntas y días) + las 605 de siempre.
+
 ## OdontoVoz 1.3 · El asistente habla menos (17/11/2026)
 
 - `src/app83.js`: si no entiende, `A.cmd.exec` devuelve «No entendí «lo que oyó».» sin sugerencias (reemplaza el `hint()` de `app14`); `A.voice.speak` envuelto con `A.shortSpeech(msg)`: primera oración, sin paréntesis ni consejos (Probá/Decí/Podés…), hasta ~90–110 caracteres; mantiene «Decí X para guardar/confirmar…». `A.CFG.voiceLong = true` vuelve al modo detallado.

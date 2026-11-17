@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.4', b: '1.59.0', d: '2026-11-17', items: [
+      { t: 'Navi conversa: «¿cuántos turnos tengo el viernes?», «¿y mañana?», «¿puedo sumar más gente?» y pedidos largos como «llevame a la agenda de mañana y contame cuántos turnos tengo».', top: true },
+      { t: 'Si le pedís sumar un paciente nuevo, te pregunta a quién y lo agenda en el primer turno libre. También abre por voz cualquier pantalla del menú (stock, obras sociales, novedades…).' }] },
     { v: '1.3', b: '1.58.0', d: '2026-11-17', items: [
       { t: 'El asistente habla menos: si no entiende, dice solo «No entendí», y las respuestas en voz alta son cortas.', top: true }] },
     { v: '1.2.3', b: '1.57.3', d: '2026-11-16', items: [

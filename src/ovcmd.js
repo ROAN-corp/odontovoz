@@ -126,6 +126,12 @@
       if (!m[3] && keyOf(d) < today) d = new Date(t.getFullYear() + 1, MONS[m[2]], dn, 12);
       return cut(m, keyOf(d));
     }
+    if ((m = /\b(?:para )?(?:el )?(lunes|martes|miercoles|jueves|viernes|sabado|domingo) (?:de |para )?(?:la )?(?:semana (?:que viene|proxima|siguiente|entrante)|proxima semana|otra semana)\b/.exec(s)) ||
+        (m = /\b(?:la )?(?:semana (?:que viene|proxima|siguiente|entrante)|proxima semana|otra semana),? (?:el )?(lunes|martes|miercoles|jueves|viernes|sabado|domingo)\b/.exec(s))) {
+      /* el día pedido de la semana siguiente (de lunes a domingo) */
+      const want = DOWS[m[1]], t = fromKey(today), cur = (t.getDay() + 6) % 7, w = (want + 6) % 7;
+      return cut(m, addD(today, 7 - cur + w));
+    }
     if ((m = /\b(?:para )?(?:el )?(?:dia )?(?:este |proximo |el proximo |el otro )?(lunes|martes|miercoles|jueves|viernes|sabado|domingo)( que viene| proximo| siguiente)?\b/.exec(s))) {
       const want = DOWS[m[1]], cur = fromKey(today).getDay(); let diff = (want - cur + 7) % 7;
       if (diff === 0 && (m[2] || /proximo|otro/.test(m[0]))) diff = 7;
@@ -397,12 +403,101 @@
   }
 
   /* ---------- análisis principal ---------- */
+
+
+  /* ---------- pantallas del menú (1.4): «abrí el stock», «llevame a obras sociales», «quiero ver las novedades» ---------- */
+  const SCREENS = [
+    ['stkOpen', null, 'stock|stock de insumos|insumos|inventario|deposito|materiales|lo que me falta comprar|pedido de insumos|pedido de materiales'],
+    ['waOpen', null, 'autogestion|autogestion por whatsapp|whatsapp de turnos|secretaria virtual|bot de whatsapp|bot|recordatorios por whatsapp'],
+    ['labAllOpen', null, 'laboratorio|laboratorios|trabajos de laboratorio|pedidos al laboratorio|protesista|trabajos del laboratorio'],
+    ['jrOpen', null, 'cambios de hoy|lo que cambie hoy|cambios del dia|historial de hoy|lo que hice hoy en la app'],
+    ['planOpen', null, 'mi plan|planes|el plan de la app|suscripcion|mi suscripcion|abono|mi abono|cuanto pago'],
+    ['assistOpen', null, 'asistente|asistente de voz|configuracion de la voz|ajustes de la voz|navi'],
+    ['catalogOpen', null, 'practicas|practicas y aranceles|aranceles|mis precios|precios|lista de precios|nomenclador|catalogo|catalogo de practicas'],
+    ['osOpen', null, 'obras sociales|obra social|obras sociales y aranceles|prepagas|coberturas|mutuales'],
+    ['notifOpen', null, 'avisos y sonidos|ajustes de avisos|configuracion de avisos|sonidos'],
+    ['nfToggle', null, 'avisos|notificaciones|mis avisos|mis notificaciones|casilla|bandeja|bandeja de avisos|los mensajes'],
+    ['importOpen', null, 'mudanza|mudanza desde otro sistema|importar|importar pacientes|traer pacientes|traer los pacientes'],
+    ['hcpOpen', null, 'historias de papel|pasar historias de papel|historias en papel|cargar historias de papel'],
+    ['appearOpen', null, 'apariencia|aspecto|colores de la app|tema de la app'],
+    ['cfgOpen', 'datos', 'copia de seguridad|copias de seguridad|respaldo|respaldos|backup'],
+    ['hcxOpen', null, 'descargar historias|descargar historias clinicas|exportar historias|bajar las historias'],
+    ['archOpen', null, 'pacientes archivados|archivados|archivo de pacientes'],
+    ['newsOpen', null, 'novedades|que hay de nuevo|ultimas novedades|que cambio en la app|lo nuevo'],
+    ['fbOpen', null, 'sugerencias|sugerencias y criticas|dejar una sugerencia|criticas|quejas'],
+    ['supportOpen', null, 'soporte|ayuda y soporte|hablar con soporte|contacto con soporte'],
+    ['tutVid', null, 'videos|videos tutoriales|tutoriales|tutoriales en video'],
+    ['cfgOpen', 'centro', 'profesionales|odontologos|los profesionales|horarios|horarios de atencion|datos del centro|datos del consultorio|centro profesionales y horarios'],
+    ['plOpen', null, 'cambiar de lugar|cambiar de consultorio|otro consultorio|mis lugares|donde trabajo|lugares|cambiar de centro'],
+    ['costOpen', null, 'costos|mis costos|costos fijos|cuanto me cuesta|resultado del mes|ganancia del mes'],
+    ['myLiq', null, 'mi liquidacion|lo que me toca|mi parte|cuanto me toca'],
+    ['modeOpen', null, 'modo prueba|modo de prueba|uso real|modo prueba y uso real']
+  ].map(([act, sub, words]) => [act, sub, new RegExp('^(?:la |el |los |las |mi |mis |a la |al |a los |a las |a mi |a mis )?(?:(?:pantalla|seccion|parte|ventana|menu|pagina|lista|panel|solapa|pestana) (?:de |del |de la |de los |de las )?)?(?:' + words + ')$')]);
+  const SCRGO = '(?:' + GO + '|me (?:abris|mostras|llevas|pasas)|abrime|llevame|llevame a|mostrame|pasame|pasame a|entra a|entrame a|anda a|vamos a|quiero ir a|quiero ver|necesito ver|necesito ir a|quiero entrar a|me llevas a|me podes llevar a|podes abrir|podes mostrarme|dejame ver|ensename)';
+  function screenOf(c) {
+    let s = c.replace(new RegExp('^' + SCRGO + '\\s+'), '').replace(/^(?:a |al |a la |a los |a las )/, '').replace(/\s+(?:por favor|porfa|de la app|de la aplicacion|del sistema)$/, '').trim();
+    for (const [act, sub, re] of SCREENS) if (re.test(s)) return { intent: 'screen', act, sub };
+    return null;
+  }
+  /* ---------- charla con el asistente (1.4): preguntas por un día, seguir la charla, pedidos encadenados ---------- */
+  const DAYP = '(?:hoy|manana|pasado manana|ayer|(?:el |este |el proximo |el otro )?(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)(?: (?:de |para )?(?:la )?(?:semana (?:que viene|proxima|siguiente|entrante)|proxima semana|otra semana)| que viene| proximo| siguiente)?|(?:la )?(?:semana (?:que viene|proxima|siguiente|entrante)|proxima semana|otra semana)(?: el (?:lunes|martes|miercoles|jueves|viernes|sabado|domingo))?|(?:el |para el )?\\d{1,2}(?: de [a-z]+)?|(?:el |para el )?(?:dia )?\\d{1,2} de [a-z]+|dentro de \\S+ (?:dias?|semanas?))';
+  const OPEN = '(?:creo que|crees que|creo|crees|vos que decis|que decis|sabes si|sabes|me podes decir|podes decirme|me decis|decime|contame|fijate|fijame|chequea|chequeame|revisa|revisame|mira|mirame|averigua|averiguame|consulta|me fijo|a ver|haber|che|y)\\s+';
+  const STRIP = s => { let p; do { p = s; s = s.replace(new RegExp('^' + OPEN), ''); } while (s !== p); return s.replace(/^(?:si|que|cuantos? |cuantas? )?/, x => x).trim(); };
+  function dayOf(s, today) { const d = parseDate(' ' + s + ' ', today); return d.value || null; }
+  function hasDay(s) { return new RegExp('\\b' + DAYP + '\\b').test(s); }
+  const WHO = '(?:turnos?|pacientes?|citas?|consultas?|gente|personas?|atenciones|agendados?|anotados?)';
+  const FREEW = '(?:libres?|disponibles?|vacios?|vacantes?|sin ocupar|desocupados?)';
+  const SLOTW = '(?:turnos?|horarios?|lugares?|lugarcitos?|huecos?|espacios?|ratos?|turnitos?)';
+  function convoOne(c, today) {
+    let m, s = STRIP(c);
+    const date = dayOf(s, today), dated = hasDay(s);
+    /* ¿puedo sumar más gente? / si agregamos un paciente nuevo / ¿me entra uno más? */
+    const canAdd = new RegExp('(?:puedo|podemos|podria|podriamos|se puede|me da para|da para|hay forma de|alcanza para|entra|entran|me entra|me entran|cabe|caben)\\s+(?:a\\s+)?(?:sumar|agregar|meter|dar|poner|encajar|atender|agendar|anotar|recibir|ver|clavar)?\\s*(?:a\\s+)?(?:mas gente|mas pacientes|mas turnos|otro paciente|otra persona|un paciente(?: mas| nuevo)?|una persona mas|alguien mas|alguno mas|uno mas|otro mas|otro turno|un turno mas|alguien|algun paciente|gente)');
+    const addNew = /\b(?:si\s+)?(?:agreg|sum|met|anot|agend|pon|dal|da)(?:a|o|e|amos|emos|ame|ale|ale turno a|ar)?(?:mos|le|me)?\s+(?:turno\s+)?(?:a\s+)?(?:un|una|otro|otra)\s+(?:paciente|persona)(?:\s+nuev[oa]|\s+mas)?\b/;
+    const wantName = addNew.test(s) || /\b(?:quiero|queria|quisiera|necesito|vamos a)\s+(?:agregar|sumar|meter|anotar|agendar|dar(?:le)? turno a)\s+(?:un|una|otro|otra|a un|a una)\s+(?:paciente|persona)/.test(s);
+    const freeQ = new RegExp('\\b(?:cuant[oa]s?|que|cuales|hay|tengo|tenemos|quedan?|me quedan?|nos quedan?|sobran?)\\s+(?:\\S+\\s+){0,3}?' + SLOTW + '\\s+(?:\\S+\\s+){0,2}?' + FREEW).test(s) ||
+      new RegExp('\\b(?:tengo|tenemos|hay|queda|quedan|me queda|me quedan|habra|habria)\\s+(?:algun |algo de |un |mas |algo )?(?:lugar|lugarcito|hueco|huequito|espacio|turno libre|turnos libres|horario libre|horarios libres|disponibilidad|lugar libre|lugares libres)\\b').test(s) ||
+      new RegExp('\\b' + SLOTW + ' ' + FREEW + '\\b').test(s) ||
+      /\bcuant[oa]s\s+(?:\S+\s+)?(?:huecos?|huequitos?|espacios?|lugares|lugarcitos|disponibles?|libres)\b/.test(s) || /\b(?:disponibilidad|esta (?:lleno|completo|libre)|estoy (?:lleno|completo|a full)|tengo (?:la agenda )?(?:llena|completa))\b/.test(s);
+    const forName = /\bpara (?!el |la |los |las |manana|hoy|pasado|esta |este |la semana|un |una |otro |otra |alguien|mas |gente)[a-z]+/.test(s) || /\ba las? \S+|\b\d{1,2}(?::\d\d)? ?(?:hs|horas)\b/.test(s);
+    const askNew = wantName && (dated || /\bsi\b|\bturno\b|\bagend/.test(s));
+    if (!forName && (canAdd.test(s) || askNew)) return { intent: 'dayFree', date, dated, add: true, ask: askNew };
+    if (freeQ && !forName) return { intent: 'dayFree', date, dated };
+    /* ¿cuántos turnos / pacientes tengo? */
+    if (new RegExp('\\bcuant[oa]s\\s+(?:\\S+\\s+){0,2}?' + WHO).test(s) || new RegExp('\\b(?:cuanta gente|cuantos vienen|cuantos tengo|cuantos hay|cuanto trabajo)\\b').test(s) ||
+        new RegExp('\\b(?:tengo|hay|tenemos) (?:muchos|muchas|pocos|pocas|mucha|poca) ' + WHO).test(s) || (dated && /\b(?:como (?:viene|esta|pinta) (?:la agenda|el dia|la cosa))\b/.test(s))) {
+      if (!/\b(?:quedan|faltan|me quedan|me faltan)\b/.test(s) || dated) return { intent: 'dayCount', date, dated };
+    }
+    /* seguir la charla: «¿y el viernes?», «y para mañana», «¿y la semana que viene?» */
+    if ((m = new RegExp('^(?:y|y que tal|y para|y el|y la|y del|y de|que tal|y para el|y para la|y en)?\\s*(?:el |la |para el |para la |del |de )?(' + DAYP + ')(?: que tal| como viene| como esta)?$').exec(c)) && /^(?:y|que tal)\b/.test(c)) return { intent: 'follow', date: dayOf(m[1], today), dated: true };
+    return null;
+  }
+  /* parte un pedido largo en pedidos: «llevame a la agenda de mañana y contame cuántos turnos tengo» */
+  const JOIN = /\s*(?:,\s*)?\b(?:y despues|y luego|y ademas|y tambien|y de paso|y ahi|y una vez ahi|y|despues|luego|ademas|entonces)\s+(?=(?:contame|decime|fijate|fijame|deci|mostrame|llevame|lleva|abri|abrime|anda|pasame|cuantos|cuantas|cuanto|tengo|hay|que|avisame|agenda|agendame|chequea|revisa|mira|averigua|si|me|puedo|podemos|creo|crees|vemos|ver|quiero)\b)/;
+  function convo(c, today) {
+    const parts = c.split(JOIN).map(x => x.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      const out = []; let last = null;
+      for (const p of parts) {
+        let r = convoOne(p, today) || parse(p, { today, pros: [], _noConvo: true });
+        if (r) r.text = p;
+        if (!r || r.intent === 'unknown') return null;
+        if ((r.intent === 'dayCount' || r.intent === 'dayFree') && !r.dated && last) r.date = last;
+        if (r.date) last = r.date;
+        out.push(r);
+      }
+      return { intent: 'multi', steps: out };
+    }
+    return convoOne(c, today);
+  }
   function parse(text, ctx) {
     ctx = ctx || {};
     const today = ctx.today || keyOf(new Date());
     const raw = N(text), pre = rephrase(clean(text)), c = navRewrite(pre);
     if (!c) return null;
     let m;
+    if (!ctx._noConvo) { const cv = convo(clean(text), today); if (cv) return cv; }
+    { const sc = screenOf(c) || screenOf(pre); if (sc) return sc; }
 
     // detener el dictado
     if (/^(?:terminar|termina|termine|finalizar|finaliza|cortar|corta|parar|para|frenar|frena|detener|deten|apagar|apaga|cerrar|cerra|desactivar|desactiva|salir del?)\s*(?:el |la )?(?:dictado|microfono|escucha|voz|manos libres|modo voz)$/.test(c) ||
@@ -559,7 +654,7 @@
     return { intent: 'unknown', text: c, raw };
   }
 
-  const api = { parse, clean, N, stripWake, setWake, NAMES, parseDur, parseDate, parseTime, parseAmount, parseMethod, parseMotive, parsePro, cleanName, wordsNum };
+  const api = { screenOf, parse, clean, N, stripWake, setWake, NAMES, parseDur, parseDate, parseTime, parseAmount, parseMethod, parseMotive, parsePro, cleanName, wordsNum };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.OVCmd = api;
 })(typeof window !== 'undefined' ? window : this);

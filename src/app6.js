@@ -197,7 +197,10 @@
      ===================================================================== */
   function findPat(name) {
     if (!name) { const c = A.curPid(); return c ? { pid: c } : { none: true }; }
-    const r = A.searchPats(name, 8); if (!r.length) return { none: true, name };
+    let r = A.searchPats(name, 8); if (!r.length) return { none: true, name };
+    /* con nombre y apellido, que estén las dos palabras (antes «Zulema Quiroga» daba el turno a Martín Quiroga) */
+    const ws = A.norm(name).split(/\s+/).filter(w => w.length > 1);
+    if (ws.length > 1) { const all = r.filter(p => { const full = A.norm(p.first + ' ' + p.last).split(/\s+/); return ws.every(w => full.some(x => x.indexOf(w) === 0)); }); if (!all.length) return { none: true, name }; r = all; }
     if (r.length === 1) return { pid: r[0].id };
     const nn = A.norm(name), ex = r.filter(p => A.norm(p.first + ' ' + p.last) === nn || A.norm(p.last + ' ' + p.first) === nn);
     if (ex.length === 1) return { pid: ex[0].id };
