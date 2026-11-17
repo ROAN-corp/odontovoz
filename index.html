@@ -8184,10 +8184,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.6';
+  A.VERSION = '1.6.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.61.0';
+  A.VBUILD = '1.61.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10549,8 +10549,51 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
   const saveNowPrev = A.saveNow;
   A.saveNow = () => { try { scan(); } catch (e) { if (A.logError) A.logError('journal', e); } return saveNowPrev(); };
+  /* «Deshacer» nunca borra historia clínica ni plata (Ley 26.529): lo escrito queda anulado, con quién y por qué */
+  const UWHY = 'Deshecho desde «Cambios de hoy»';
+  const ustamp = () => { let a = {}; try { a = (A.actor && A.actor()) || {}; } catch (e) { /* nada */ } return { at: new Date().toISOString(), who: a.who || '', uid: a.uid || '' }; };
+  const unionById = (out, cur, k) => { const c = cur[k]; if (!Array.isArray(c)) return; out[k] = Array.isArray(out[k]) ? out[k] : []; c.forEach(x => { if (!x || !x.id) return; const i = out[k].findIndex(y => y && y.id === x.id); if (i >= 0) out[k][i] = x; else out[k].push(x); }); };
+  function pdSafe(cur, bef) {
+    if (!cur) return bef;
+    if (!bef) bef = Object.assign({}, cur, { notes: [], ledger: [], tx: [] });
+    const out = JSON.parse(J(bef)), st = ustamp(), touched = [];
+    /* evoluciones: las nuevas quedan anuladas (no se borran); las que ya estaban, como están ahora */
+    out.notes = Array.isArray(out.notes) ? out.notes : [];
+    (cur.notes || []).forEach(n => { const i = out.notes.findIndex(x => x.id === n.id); if (i >= 0) out.notes[i] = n; else out.notes.push(n.void || n.auto ? n : Object.assign({}, n, { void: { why: UWHY, at: st.at, who: st.who, uid: st.uid } })); });
+    /* documentos firmados, papeles, fotos, indicaciones, registro, controles, cobros por adelantado: nunca se sacan */
+    ['docs', 'paper', 'images', 'rx', 'alog', 'controls', 'pre'].forEach(k => unionById(out, cur, k));
+    if (cur.paperHC && !out.paperHC) out.paperHC = cur.paperHC;
+    /* cuenta: lo cargado hoy se anula con su contrapartida, no se borra */
+    if (Array.isArray(cur.ledger)) {
+      out.ledger = Array.isArray(out.ledger) ? out.ledger : [];
+      cur.ledger.forEach(e => {
+        const i = out.ledger.findIndex(x => x.id === e.id); if (i >= 0) { if (e.voided && !out.ledger[i].voided) out.ledger[i] = e; return; }
+        const ee = Object.assign({}, e); out.ledger.push(ee);
+        if (!ee.voided && !ee.anula && (+ee.amount || 0)) { ee.voided = true; ee.voidWhy = UWHY; ee.voidBy = st.who; ee.voidAt = st.at; out.ledger.push({ id: A.uid(), date: A.today(), type: e.type === 'pago' ? 'cargo' : 'ajuste', amount: e.type === 'pago' ? e.amount : -e.amount, desc: 'Anulación: ' + (e.desc || ''), pro: e.pro, voided: true, anula: e.id }); }
+      });
+    }
+    /* tratamientos hechos hoy: quedan como anulados */
+    if (Array.isArray(cur.tx)) {
+      out.tx = Array.isArray(out.tx) ? out.tx : [];
+      cur.tx.forEach(t => { const i = out.tx.findIndex(x => x.id === t.id); if (i < 0 && t.status === 'hecho') out.tx.push(Object.assign({}, t, { status: 'anulado', voidWhy: UWHY, voidAt: st.at, voidBy: st.who })); });
+    }
+    ['odon', 'perio', 'tx', 'hc', 'tplan', 'budgets', 'prof'].forEach(k => { if (J(cur[k]) !== J(out[k])) touched.push(SEC[k] || k); });
+    if (touched.length) { out.notes.push({ id: A.uid(), date: A.today(), pro: (cur.notes && cur.notes[0] && cur.notes[0].pro) || (A.S.me || ''), text: 'Se deshicieron cambios de hoy en: ' + touched.join(', ') + '. La versión anterior queda guardada en el registro de cambios.', auto: true, uid: st.uid, who: st.who }); }
+    return out;
+  }
+  function cashSafe(cur, bef) {
+    if (!cur) return bef;
+    const out = bef ? JSON.parse(J(bef)) : {}, st = ustamp();
+    ['closes', 'opens', 'adj', 'xfer', 'voids', 'log'].forEach(k => unionById(out, cur, k));
+    ['acred', 'fact', 'dun'].forEach(k => { if (cur[k] && typeof cur[k] === 'object') out[k] = Object.assign({}, out[k] || {}, cur[k]); });
+    if (cur.acc0) out.acc0 = cur.acc0;
+    out.moves = Array.isArray(out.moves) ? out.moves : []; out.voids = Array.isArray(out.voids) ? out.voids : [];
+    (cur.moves || []).forEach(m => { if (!out.moves.some(x => x.id === m.id) && !out.voids.some(x => x.id === m.id)) out.voids.push(Object.assign({}, m, { void: { why: UWHY, at: st.at, by: st.who } })); });
+    return out;
+  }
   function restore(k, json) {
-    const v = JSON.parse(json);
+    let v = JSON.parse(json);
+    try { if (k.indexOf('pd:') === 0) v = pdSafe(A.S.pd[k.slice(3)], v); else if (k === 'cash') v = cashSafe(A.S.cash, v); } catch (e) { if (A.logError) A.logError('jrSafe', e); }
     if (k.indexOf('day:') === 0) { A.S.days[k.slice(4)] = v || []; A.S.dirtyDays[k.slice(4)] = 1; }
     else if (k.indexOf('pd:') === 0) { const pid = k.slice(3); A.S.pd[pid] = v; A.S.dirtyPd[pid] = 1; if (v && v.prof && A.PAT(pid)) A.setProfileQuiet(pid, v.prof); }
     else if (k === 'cfg') { Object.keys(A.CFG).forEach(x => { if (!(x in (v || {}))) delete A.CFG[x]; }); Object.assign(A.CFG, v || {}); }
@@ -10560,7 +10603,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.jrOpen = () => { if (A.hideDrawer) A.hideDrawer(); A.saveNow(); S.modal = { type: 'jr' }; A.renderModal(); };
   MF.jr = () => {
     const l = todayList();
-    const body = '<p class="hint" style="margin-top:0">Todo lo que se cambió hoy en este equipo. Tocá «Deshacer» y vuelve a como estaba. Mañana esta lista empieza de cero: lo que quede en la historia clínica se corrige anulando, no borrando.</p>' +
+    const body = '<p class="hint" style="margin-top:0">Todo lo que se cambió hoy en este equipo. Tocá «Deshacer» y vuelve a como estaba. Lo escrito en la historia clínica y los cobros no se borran: quedan anulados, con quién y por qué (Ley 26.529).</p>' +
       (l.length ? '<ul class="jr-list">' + l.map(e => '<li><span class="jr-t mono">' + esc(e.at) + '</span><button class="jr-l jr-go" data-act="jrGo" data-id="' + e.id + '" title="Ir a este cambio">' + esc(e.label) + ' <span aria-hidden="true">›</span></button><button class="btn small" data-act="jrUndoAsk" data-id="' + e.id + '">Deshacer</button></li>').join('') + '</ul>' : '<div class="empty">Hoy todavía no hay cambios en este equipo.</div>');
     return A.modalShell('Cambios de hoy', body, '<button class="btn primary" data-act="closeModal">Listo</button>', true);
   };
@@ -18269,6 +18312,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.6.1', b: '1.61.1', d: '2026-11-17', items: [
+      { t: '«Deshacer» en Cambios de hoy ya no borra la historia clínica ni los cobros: lo escrito queda anulado, con quién y por qué.', top: true },
+      { t: 'Modo oscuro: se arreglaron textos que no se leían (letras claras sobre fondo blanco), también en la página de mudanza.' }] },
     { v: '1.6', b: '1.61.0', d: '2026-11-17', items: [
       { t: 'Caja nueva, más fácil: Hoy, Te deben, Tenés que pagar, Tu plata, El mes e Historial. Arriba, lo que entró, lo que salió y lo que queda en el cajón, y un semáforo con lo que hay que revisar.', top: true },
       { t: 'Abrir y cerrar la caja contando los billetes; si falta o sobra plata queda anotado por qué. Transferencias para confirmar, comisiones de tarjetas, facturas y resumen para el contador.' },
@@ -23808,6 +23854,56 @@ const OVMenu = (function () {
     '.lq-n{flex:1;min-width:0}.lq-n b{display:block}.lq-n small{color:var(--muted,#667);font-size:.82rem}.lq-v{display:flex;flex-direction:column;align-items:flex-end;gap:3px}.lq-v b{font-size:1.15rem;font-variant-numeric:tabular-nums}' +
     '.lq-pub{border:1px solid var(--accent,#0f6f6c);border-radius:14px;padding:12px;margin-bottom:12px}.lq-pub h3{margin:0 0 8px}.lq-deds{margin:8px 0;padding-left:18px;font-size:.92rem}';
   document.head.appendChild(css);
+})();
+/* ===== 1.6.1: modo oscuro sin letras invisibles (colores que faltaban y textos blancos sobre fondos claros) ===== */
+(function () {
+  'use strict';
+  const A = window.App;
+  /* 1) nombres de colores que usaban algunos módulos y no existían (en oscuro caían a blanco) */
+  const base = document.createElement('style');
+  base.id = 'ov-dark-fix';
+  base.textContent = ':root{--card:var(--surface);--muted:var(--ink-2);--soft:var(--accent-soft);--teal:var(--accent);--bad:var(--red);--bg-soft:rgba(0,0,0,.035);--bg-2:var(--surface-2);--f-sans:var(--f-body);--mono:var(--f-mono)}' +
+    ':root[data-theme="dark"]{--bg-soft:rgba(255,255,255,.06)}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg-soft:rgba(255,255,255,.06)}}';
+  document.head.appendChild(base);
+
+  /* 2) reglas «fondo de color de acento + letra blanca» y «fondo claro fijo sin color de letra»: en oscuro se corrigen */
+  const DARK = [':root[data-theme="dark"] ', ':root:not([data-theme="light"]) '];
+  const SKIP = /sig|firma|canvas|paper|pdf|prev|qr|logo|odon|tooth|pieza|perio|print|photo|img|swatch|color-dot|cj-dot|stdot|pc[0-9]|ov-mark/i;
+  const WHITE = /^(#fff|#ffffff|white|rgb\(255, ?255, ?255\))$/i;
+  const lightHex = v => { const m = String(v || '').trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i); if (!m) return /^(white|rgb\(255, ?255, ?255\))$/i.test(String(v || '').trim()); let h = m[1]; if (h.length === 3) h = h.split('').map(c => c + c).join(''); const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.82; };
+  const done = new WeakSet();
+  let out = null;
+  function scan() {
+    const list = [];
+    const add = (sel, decl) => { const s = sel.split(',').map(x => x.trim()).filter(Boolean); DARK.forEach((p, i) => list.push({ s: s.map(x => p + x).join(','), d: decl, m: i })); };
+    [].forEach.call(document.styleSheets, sh => {
+      if (sh.ownerNode === out || sh.ownerNode === base) return;
+      let rules; try { rules = sh.cssRules; } catch (e) { return; }
+      const walk = list => [].forEach.call(list || [], r => {
+        if (r.cssRules && !r.selectorText) { if (r.media && /dark/.test(r.media.mediaText)) return; walk(r.cssRules); return; }
+        if (!r.selectorText || done.has(r)) return; done.add(r);
+        const st = r.style, bg = (st.backgroundColor || st.background || '').trim(), col = (st.color || '').trim(), sel = r.selectorText;
+        if (/data-theme|:root/.test(sel)) return;
+        if (/var\(--accent\)/.test(bg) && !/gradient/.test(bg) && WHITE.test(col)) add(sel, 'color:var(--accent-ink)!important');
+        else if (!col && lightHex(bg.split(' ')[0]) && !SKIP.test(sel)) add(sel, 'background:var(--surface-2)!important');
+        else if (lightHex(bg.split(' ')[0]) && col && /var\(--ink/.test(col) && !SKIP.test(sel)) add(sel, 'background:var(--surface-2)!important');
+      });
+      walk(rules);
+    });
+    const L = list; if (!L.length) return;
+    if (!out) { out = document.createElement('style'); out.id = 'ov-dark-fix2'; document.head.appendChild(out); }
+    out.textContent += L.filter(x => x.m === 0).map(x => x.s + '{' + x.d + '}').join('') + '@media (prefers-color-scheme: dark){' + L.filter(x => x.m === 1).map(x => x.s + '{' + x.d + '}').join('') + '}';
+  }
+  /* 3) arreglos puntuales que no salen de una regla de hoja de estilos */
+  const fix = document.createElement('style');
+  fix.textContent = DARK.map((p, i) => (i ? '@media (prefers-color-scheme: dark){' : '') +
+    p + '#dayStrip .wk.today[aria-pressed="true"],' + p + '#dayStrip .wk.today[aria-pressed="true"] b,' + p + '#dayStrip .wk.today[aria-pressed="true"] small,' + p + '#dayStrip .wk.today[aria-pressed="true"] span{color:var(--accent-ink)!important}' + p + '.cj-diff.bad{color:#ffb9b3}' + p + '.cj-b small,' + p + '.cj-b span{color:var(--ink-2)}' + p + '.cj-light.ok>b,' + p + '.cj-res.ok b{color:#55c58a}' + p + '.cj-res.bad b{color:#ff8a84}' + p + '.cj-osbar{background:var(--warn-soft)!important}' +
+    (i ? '}' : '')).join('');
+  document.head.appendChild(fix);
+  const run = () => { try { scan(); } catch (e) { if (A && A.logError) A.logError('dark88', e); } };
+  run(); setTimeout(run, 1500); setTimeout(run, 6000);
+  /* estilos que se agregan más tarde (ventanas que cargan sus propios estilos) */
+  if (window.MutationObserver) { let t = 0; new MutationObserver(ms => { if (ms.some(m => [].some.call(m.addedNodes, n => n.tagName === 'STYLE' && n !== out))) { clearTimeout(t); t = setTimeout(run, 200); } }).observe(document.head, { childList: true }); }
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

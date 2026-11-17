@@ -84,8 +84,51 @@
   }
   const saveNowPrev = A.saveNow;
   A.saveNow = () => { try { scan(); } catch (e) { if (A.logError) A.logError('journal', e); } return saveNowPrev(); };
+  /* «Deshacer» nunca borra historia clínica ni plata (Ley 26.529): lo escrito queda anulado, con quién y por qué */
+  const UWHY = 'Deshecho desde «Cambios de hoy»';
+  const ustamp = () => { let a = {}; try { a = (A.actor && A.actor()) || {}; } catch (e) { /* nada */ } return { at: new Date().toISOString(), who: a.who || '', uid: a.uid || '' }; };
+  const unionById = (out, cur, k) => { const c = cur[k]; if (!Array.isArray(c)) return; out[k] = Array.isArray(out[k]) ? out[k] : []; c.forEach(x => { if (!x || !x.id) return; const i = out[k].findIndex(y => y && y.id === x.id); if (i >= 0) out[k][i] = x; else out[k].push(x); }); };
+  function pdSafe(cur, bef) {
+    if (!cur) return bef;
+    if (!bef) bef = Object.assign({}, cur, { notes: [], ledger: [], tx: [] });
+    const out = JSON.parse(J(bef)), st = ustamp(), touched = [];
+    /* evoluciones: las nuevas quedan anuladas (no se borran); las que ya estaban, como están ahora */
+    out.notes = Array.isArray(out.notes) ? out.notes : [];
+    (cur.notes || []).forEach(n => { const i = out.notes.findIndex(x => x.id === n.id); if (i >= 0) out.notes[i] = n; else out.notes.push(n.void || n.auto ? n : Object.assign({}, n, { void: { why: UWHY, at: st.at, who: st.who, uid: st.uid } })); });
+    /* documentos firmados, papeles, fotos, indicaciones, registro, controles, cobros por adelantado: nunca se sacan */
+    ['docs', 'paper', 'images', 'rx', 'alog', 'controls', 'pre'].forEach(k => unionById(out, cur, k));
+    if (cur.paperHC && !out.paperHC) out.paperHC = cur.paperHC;
+    /* cuenta: lo cargado hoy se anula con su contrapartida, no se borra */
+    if (Array.isArray(cur.ledger)) {
+      out.ledger = Array.isArray(out.ledger) ? out.ledger : [];
+      cur.ledger.forEach(e => {
+        const i = out.ledger.findIndex(x => x.id === e.id); if (i >= 0) { if (e.voided && !out.ledger[i].voided) out.ledger[i] = e; return; }
+        const ee = Object.assign({}, e); out.ledger.push(ee);
+        if (!ee.voided && !ee.anula && (+ee.amount || 0)) { ee.voided = true; ee.voidWhy = UWHY; ee.voidBy = st.who; ee.voidAt = st.at; out.ledger.push({ id: A.uid(), date: A.today(), type: e.type === 'pago' ? 'cargo' : 'ajuste', amount: e.type === 'pago' ? e.amount : -e.amount, desc: 'Anulación: ' + (e.desc || ''), pro: e.pro, voided: true, anula: e.id }); }
+      });
+    }
+    /* tratamientos hechos hoy: quedan como anulados */
+    if (Array.isArray(cur.tx)) {
+      out.tx = Array.isArray(out.tx) ? out.tx : [];
+      cur.tx.forEach(t => { const i = out.tx.findIndex(x => x.id === t.id); if (i < 0 && t.status === 'hecho') out.tx.push(Object.assign({}, t, { status: 'anulado', voidWhy: UWHY, voidAt: st.at, voidBy: st.who })); });
+    }
+    ['odon', 'perio', 'tx', 'hc', 'tplan', 'budgets', 'prof'].forEach(k => { if (J(cur[k]) !== J(out[k])) touched.push(SEC[k] || k); });
+    if (touched.length) { out.notes.push({ id: A.uid(), date: A.today(), pro: (cur.notes && cur.notes[0] && cur.notes[0].pro) || (A.S.me || ''), text: 'Se deshicieron cambios de hoy en: ' + touched.join(', ') + '. La versión anterior queda guardada en el registro de cambios.', auto: true, uid: st.uid, who: st.who }); }
+    return out;
+  }
+  function cashSafe(cur, bef) {
+    if (!cur) return bef;
+    const out = bef ? JSON.parse(J(bef)) : {}, st = ustamp();
+    ['closes', 'opens', 'adj', 'xfer', 'voids', 'log'].forEach(k => unionById(out, cur, k));
+    ['acred', 'fact', 'dun'].forEach(k => { if (cur[k] && typeof cur[k] === 'object') out[k] = Object.assign({}, out[k] || {}, cur[k]); });
+    if (cur.acc0) out.acc0 = cur.acc0;
+    out.moves = Array.isArray(out.moves) ? out.moves : []; out.voids = Array.isArray(out.voids) ? out.voids : [];
+    (cur.moves || []).forEach(m => { if (!out.moves.some(x => x.id === m.id) && !out.voids.some(x => x.id === m.id)) out.voids.push(Object.assign({}, m, { void: { why: UWHY, at: st.at, by: st.who } })); });
+    return out;
+  }
   function restore(k, json) {
-    const v = JSON.parse(json);
+    let v = JSON.parse(json);
+    try { if (k.indexOf('pd:') === 0) v = pdSafe(A.S.pd[k.slice(3)], v); else if (k === 'cash') v = cashSafe(A.S.cash, v); } catch (e) { if (A.logError) A.logError('jrSafe', e); }
     if (k.indexOf('day:') === 0) { A.S.days[k.slice(4)] = v || []; A.S.dirtyDays[k.slice(4)] = 1; }
     else if (k.indexOf('pd:') === 0) { const pid = k.slice(3); A.S.pd[pid] = v; A.S.dirtyPd[pid] = 1; if (v && v.prof && A.PAT(pid)) A.setProfileQuiet(pid, v.prof); }
     else if (k === 'cfg') { Object.keys(A.CFG).forEach(x => { if (!(x in (v || {}))) delete A.CFG[x]; }); Object.assign(A.CFG, v || {}); }
@@ -95,7 +138,7 @@
   A.acts.jrOpen = () => { if (A.hideDrawer) A.hideDrawer(); A.saveNow(); S.modal = { type: 'jr' }; A.renderModal(); };
   MF.jr = () => {
     const l = todayList();
-    const body = '<p class="hint" style="margin-top:0">Todo lo que se cambió hoy en este equipo. Tocá «Deshacer» y vuelve a como estaba. Mañana esta lista empieza de cero: lo que quede en la historia clínica se corrige anulando, no borrando.</p>' +
+    const body = '<p class="hint" style="margin-top:0">Todo lo que se cambió hoy en este equipo. Tocá «Deshacer» y vuelve a como estaba. Lo escrito en la historia clínica y los cobros no se borran: quedan anulados, con quién y por qué (Ley 26.529).</p>' +
       (l.length ? '<ul class="jr-list">' + l.map(e => '<li><span class="jr-t mono">' + esc(e.at) + '</span><button class="jr-l jr-go" data-act="jrGo" data-id="' + e.id + '" title="Ir a este cambio">' + esc(e.label) + ' <span aria-hidden="true">›</span></button><button class="btn small" data-act="jrUndoAsk" data-id="' + e.id + '">Deshacer</button></li>').join('') + '</ul>' : '<div class="empty">Hoy todavía no hay cambios en este equipo.</div>');
     return A.modalShell('Cambios de hoy', body, '<button class="btn primary" data-act="closeModal">Listo</button>', true);
   };

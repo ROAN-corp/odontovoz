@@ -87,7 +87,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .hero .fine { margin-top: 16px; font-size: 15px; color: #9fcbc4; }
 @media (max-width: 900px) { .hero .wrap { grid-template-columns: 1fr; } }
 
-.demo { background: #f7fbfa; color: var(--ink); border-radius: 22px; padding: 18px 18px 16px; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .55); }
+.demo { background: var(--white); color: var(--ink); border-radius: 22px; padding: 18px 18px 16px; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .55); }
 .demo-bar { display: flex; align-items: center; gap: 12px; }
 .mic { width: 46px; height: 46px; border-radius: 50%; background: var(--teal); display: grid; place-items: center; flex: none; position: relative; }
 .mic svg { width: 22px; height: 22px; }
@@ -96,7 +96,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .said { min-height: 56px; display: flex; align-items: center; font: 500 19px/1.35 var(--display); color: var(--ink); }
 .said .cur { display: inline-block; width: 2px; height: 1.1em; background: var(--teal); margin-left: 2px; vertical-align: -3px; animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
-.odo { margin: 12px 0 8px; background: #fff; border: 1px solid #d3e0de; border-radius: 14px; padding: 10px 8px 6px; }
+.odo { margin: 12px 0 8px; color: #0f2a2b; background: #fff; border: 1px solid #d3e0de; border-radius: 14px; padding: 10px 8px 6px; }
 .odo svg { width: 100%; height: auto; display: block; }
 .odo text { font: 700 9px var(--body); fill: #6b8384; }
 .odo .t rect, .odo .t polygon { fill: #fff; stroke: #9db1b1; stroke-width: 1; }
@@ -106,7 +106,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .odo .hl { fill: none; stroke: var(--sun); stroke-width: 3; rx: 4; }
 .done-line { min-height: 26px; font-size: 15px; color: #2a6b49; font-weight: 700; display: flex; gap: 8px; align-items: center; }
 .done-line i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
-.legend { display: flex; gap: 16px; font-size: 13px; color: #4a6264; margin-top: 6px; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); margin-top: 6px; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
 
@@ -308,7 +308,7 @@ section { padding: clamp(64px, 9vw, 112px) 0; scroll-margin-top: 64px; }
 .quick { margin-top: 22px; padding: 16px; border-radius: 18px; background: rgba(255,255,255,.07); border: 1px solid rgba(191,232,223,.25); max-width: 640px; }
 .quick-t { font: 800 13px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: #bfe8df; margin: 0 0 12px; }
 .quick-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.qk { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: #fff; color: var(--ink); text-decoration: none; border: 2px solid transparent; }
+.qk { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--white); color: var(--ink); text-decoration: none; border: 2px solid transparent; }
 .qk:hover, .qk:focus-visible { border-color: var(--sun); }
 .qk svg { width: 26px; height: 26px; flex: none; fill: none; stroke: var(--teal); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .qk span { display: flex; flex-direction: column; gap: 3px; min-width: 0; } .qk b { font: 800 15px/1.15 var(--display); } .qk small { font-size: 12.5px; color: var(--ink-2); line-height: 1.25; }
@@ -384,6 +384,8 @@ footer .brand { margin-right: auto; }
 @keyframes ixFlash { 0%, 40% { box-shadow: 0 0 0 4px var(--sun); } 100% { box-shadow: 0 0 0 4px transparent; } }
 body.ix-lock { overflow: hidden; }
 .ix [hidden] { display: none !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) main a:not([class]), :root:not([data-theme="light"]) .steps a, :root:not([data-theme="light"]) .faq a, :root:not([data-theme="light"]) .dl.main a:not(.btn), :root:not([data-theme="light"]) .day time, :root:not([data-theme="light"]) .mode small { color: #4cc3c4; } :root:not([data-theme="light"]) .badge { color: #e5efee; } }
+:root[data-theme="dark"] main a:not([class]), :root[data-theme="dark"] .steps a, :root[data-theme="dark"] .faq a, :root[data-theme="dark"] .day time, :root[data-theme="dark"] .mode small { color: #4cc3c4; } :root[data-theme="dark"] .badge { color: #e5efee; }
 </style>
 </head>
 <body>

@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.6.1', b: '1.61.1', d: '2026-11-17', items: [
+      { t: '«Deshacer» en Cambios de hoy ya no borra la historia clínica ni los cobros: lo escrito queda anulado, con quién y por qué.', top: true },
+      { t: 'Modo oscuro: se arreglaron textos que no se leían (letras claras sobre fondo blanco), también en la página de mudanza.' }] },
     { v: '1.6', b: '1.61.0', d: '2026-11-17', items: [
       { t: 'Caja nueva, más fácil: Hoy, Te deben, Tenés que pagar, Tu plata, El mes e Historial. Arriba, lo que entró, lo que salió y lo que queda en el cajón, y un semáforo con lo que hay que revisar.', top: true },
       { t: 'Abrir y cerrar la caja contando los billetes; si falta o sobra plata queda anotado por qué. Transferencias para confirmar, comisiones de tarjetas, facturas y resumen para el contador.' },
