@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.9.1 · restauraciones simples, compuestas o complejas (17/11/2026)
+
+- `src/app89.js`: `rewriteRegion` junta en la última pieza las caras sueltas cuando todas las piezas ya tienen cara («27 por oclusal y por vestibular» → OV) y reparte en orden «24, 25 y 33 por oclusal, por mesial y por distal»; siglas de caras pegadas a la pieza (`LET`: «27 OV», «36 MOD»). `A.pracParse` envuelto agrega `it.cx` = `A.restKind(caras)` («simple (1 cara)», «compuesta (2 caras)», «compleja (N caras)») al nombre; `app40.poGo` lo pone en el `t.label` del tratamiento y en la `desc` del cargo (lo que ve recepción). El código de la obra social ya salía de la cantidad de caras (`codeFor`/`osAltCode`). Prueba: `trest2.py`, `t19d.py`.
+
 ## OdontoVoz 1.9 · quién cobra primero y planes de obra social (17/11/2026)
 
 - `src/app89.js`: «¿Quién cobra?» aparece siempre que hay prácticas (aunque la obra social cubra todo). «Cobra secretaría» manda sin que el odontólogo elija la forma. En `MF.pcPay` el editor se abre solo si hay obra social: por práctica Coseguro (`e.osCos`), Diferencial (`e.price − e.osCov`), Cubierto 100%, Todo particular (`e.price`) o No le cobro nada (motivo); el importe se calcula solo (`A.rcpAutoAmt`). El motivo general solo es obligatorio si se cambia un importe a mano, se saca o se agrega algo. Particular deja un `ajuste` con `osOff = id del cargo` (y `cop`): `A.osOffSet(pd)` (app64) lo saca de lo que debe la obra social (`osDue` de app64/app74, `cobAlloc` de app65). `cobAlloc` suma a cada cargo sus ajustes `adjFor` (menos los de recargo). Si queda en $0, «Listo, no paga nada» marca `cobOk` 'os' o 'bonif' sin pago. `app40` guarda en el cargo `price` y `osCos`; `app64`/`app74` ya no marcan `cobOk = 'os'` si `e.cob === 'rcp'`.

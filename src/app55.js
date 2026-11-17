@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.9.1', b: '1.64.1', d: '2026-11-17', items: [
+      { t: 'Las restauraciones dicen si son simples (1 cara), compuestas (2) o complejas (3 o más), y se cobran con ese código. También entiende «por oclusal y por vestibular» y siglas como «27 OV» o «36 MOD».', top: true }] },
     { v: '1.9', b: '1.64.0', d: '2026-11-17', items: [
       { t: 'Al anotar lo que hiciste, primero solo elegís quién cobra. Si cobra la secretaría, ella decide cómo: coseguro, diferencial, cubierto por la obra social, todo particular o nada.', top: true },
       { t: 'Planes de cada obra social: cada plan con sus valores (los de la Federación se cargan solos). En la ficha elegís el plan del paciente y al cobrar se usan esos valores.', top: true }] },

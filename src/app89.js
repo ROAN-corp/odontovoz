@@ -23,23 +23,30 @@
   const REST = /\b(arreglos?|obturacion(?:es)?|composites?|resinas?|restauracion(?:es)?|amalgamas?|ionomeros?)\b/g;
   const FACE = { oclusal: 'oclusal', oclusales: 'oclusal', ocluso: 'oclusal', mesial: 'mesial', mesio: 'mesial', distal: 'distal', disto: 'distal', vestibular: 'vestibular', vestibulo: 'vestibular', bucal: 'vestibular', palatino: 'palatino', palatina: 'palatino', palato: 'palatino', lingual: 'lingual', linguo: 'lingual', incisal: 'incisal', inciso: 'incisal' };
   const FACE_ALL = /^(mesio|disto|vestibulo|linguo|palato|ocluso|inciso)(oclusal|distal|mesial|vestibular|lingual|palatino|palatina|incisal)$/;
+  const LET = { m: 'mesial', o: 'oclusal', d: 'distal', v: 'vestibular', l: 'lingual', p: 'palatino', i: 'incisal' };
   const FILL = /^(en|la|las|el|los|pieza|piezas|diente|dientes|numero|nro|n|de|del|sobre|a)$/;
   const isTooth = w => /^\d{2}$/.test(w) && /^([1-4][1-8]|[5-8][1-5])$/.test(w);
   const plainOf = s => s.toLowerCase().split('').map(c => c.normalize('NFD').charAt(0)).join('');
   function rewriteRegion(words) {
-    const teeth = [], floating = []; let cur = null, lastT = null, sepSince = false, porPending = false;
+    const teeth = [], floating = []; let cur = null, lastT = null, sepSince = false, porPending = false, sawPor = false;
     words.forEach(w => {
-      if (w.k === 'T') { cur = null; const t = { n: w.v, faces: null }; teeth.push(t); lastT = t; sepSince = false; porPending = false; return; }
+      if (w.k === 'T') { sawPor = false; cur = null; const t = { n: w.v, faces: null }; teeth.push(t); lastT = t; sepSince = false; porPending = false; return; }
       if (w.k === 'S') { sepSince = true; return; }
-      if (w.k === 'P') { cur = null; porPending = true; return; }
+      if (w.k === 'P') { cur = null; porPending = true; sawPor = true; return; }
       if (w.k === 'F') {
         if (cur && !porPending) { w.v.forEach(f => { if (cur.indexOf(f) < 0) cur.push(f); }); return; }
         cur = w.v.slice(); porPending = false;
-        if (lastT && !sepSince && !lastT.faces) lastT.faces = cur; else floating.push(cur);
+        if (lastT && !sepSince && !lastT.faces) { lastT.faces = cur; lastT.por = sawPor; } else floating.push(cur);
       }
     });
     if (!teeth.length) return null;
-    const bare = teeth.filter(t => !t.faces);
+    /* «restauración en 27 por oclusal y por vestibular»: con todas las piezas ya con cara, las caras sueltas van a la última */
+    if (floating.length && !teeth.some(t => !t.faces)) { const last = teeth[teeth.length - 1]; floating.forEach(g => g.forEach(f => { if (last.faces.indexOf(f) < 0) last.faces.push(f); })); floating.length = 0; }
+    const bare = teeth.filter(t => !t.faces), lastT0 = teeth[teeth.length - 1];
+    /* «arreglo en 24, 25 y 33 por oclusal, por mesial y por distal»: una cara por pieza, en orden */
+    if (bare.length && floating.length === bare.length && lastT0.por && bare.every(t => teeth.indexOf(t) < teeth.length - 1)) {
+      const g = [lastT0.faces].concat(floating); teeth.forEach((t, i) => { t.faces = g[i]; }); return teeth;
+    }
     if (bare.length && floating.length) {
       if (floating.length === bare.length) bare.forEach((t, i) => { t.faces = floating[i]; });
       else { const all = []; floating.forEach(g => g.forEach(f => { if (all.indexOf(f) < 0) all.push(f); })); bare.forEach(t => { t.faces = all; }); }
@@ -67,6 +74,9 @@
         if (/^\d+$/.test(w)) { if (!isTooth(w)) break; words.push({ k: 'T', v: w }); sawTooth = true; lastGood = t.index + t[0].replace(/\s+$/, '').length; end = tokRe.lastIndex; continue; }
         if (w === 'por' || w === 'cara' || w === 'caras') { words.push({ k: 'P' }); end = tokRe.lastIndex; continue; }
         if (FACE[w]) { words.push({ k: 'F', v: [FACE[w]] }); lastGood = t.index + t[0].replace(/\s+$/, '').length; end = tokRe.lastIndex; continue; }
+        /* caras en siglas pegadas a la pieza: «27 OV», «36 MOD» */
+        const orig = s.slice(t.index, t.index + t[0].length).trim();
+        if (sawTooth && /^[modvlpi]{1,5}$/.test(w) && new Set(w).size === w.length && (orig === orig.toUpperCase() || (w.length >= 2 && !/^(lo|mi|di|do|vi|li|pi|io|id)$/.test(w)))) { words.push({ k: 'F', v: w.split('').map(c => LET[c]) }); lastGood = t.index + t[0].replace(/\s+$/, '').length; end = tokRe.lastIndex; continue; }
         const cm = w.match(FACE_ALL); if (cm) { words.push({ k: 'F', v: [FACE[cm[1]], FACE[cm[2]]] }); lastGood = t.index + t[0].replace(/\s+$/, '').length; end = tokRe.lastIndex; continue; }
         if (/^(arreglos?|obturacion(?:es)?|composites?|resinas?|restauracion(?:es)?|amalgamas?|ionomeros?)$/.test(w)) { end = tokRe.lastIndex; continue; }
         if (FILL.test(w)) { end = tokRe.lastIndex; continue; }
@@ -83,7 +93,16 @@
   }
   A.evoRewrite = rewrite;
   const ppPrev = A.pracParse;
-  if (ppPrev) A.pracParse = function (txt) { const a = [].slice.call(arguments); a[0] = rewrite(txt); return ppPrev.apply(this, a); };
+  /* restauraciones: simple (1 cara), compuesta (2) o compleja (3 o más), para que se vea al cobrar */
+  const RCOND = /^(obturacion|composite|resina|amalgama|ionomero|caries|restauracion)$/;
+  A.restKind = n => n <= 1 ? 'simple (1 cara)' : n === 2 ? 'compuesta (2 caras)' : 'compleja (' + n + ' caras)';
+  const addKind = (lab, n) => /\b(simple|compuesta|compleja)\b/i.test(lab) ? lab : String(lab).replace(/^([^·]+?)(\s·|$)/, (x, a, b) => a.trim() + ' ' + A.restKind(n) + b);
+  A.restLabel = addKind;
+  if (ppPrev) A.pracParse = function (txt) {
+    const a = [].slice.call(arguments); a[0] = rewrite(txt); const out = ppPrev.apply(this, a);
+    try { (out || []).forEach(it => { const c = it.a && it.a.cond, f = it.a && it.a.faces; if (it.kind === 'odon' && c && RCOND.test(c) && f && f.length) { it.cx = A.restKind(f.length); it.label = addKind(it.label, f.length); } }); } catch (e) { /* nada */ }
+    return out;
+  };
   const eoPrev = A.evoOdon;
   if (eoPrev) A.evoOdon = function (txt) { const a = [].slice.call(arguments); a[0] = rewrite(txt); return eoPrev.apply(this, a); };
 
