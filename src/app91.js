@@ -139,6 +139,7 @@
     const pl = { id: A.uid(), name: nm, aran: {} }; o.pl.push(pl); syncTxt(o); A.save();
     S.modal = { type: 'ospEd', os: o.id, pl: pl.id, back: S.modal, fresh: true }; A.renderModal();
   };
+  A.acts.ospEd = el => { S.modal = { type: 'ospEd', os: el.getAttribute('data-os') || (S.modal && S.modal.id), pl: el.getAttribute('data-pl'), back: S.modal }; A.renderModal(); };
   A.acts.ospFornAuto = el => {
     const o = A.osById(el.getAttribute('data-os')); if (!o) return;
     A.fornGet().then(d => {

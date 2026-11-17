@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.10 · planes a la vista y ventana de actualización (17/11/2026)
+
+- `src/app92.js`: `MF.osList` muestra «Planes: …» (`.osl-pl`) en cada obra social; `MF.osEdit` y `MF.ospEd` con pestañas `.osp-tabs` (General / cada plan, `ospGoPl`). `MF.pracOk` (también la pantalla «¿Quién cobra?») con `.po-plan` si la obra social tiene planes: `poPlan` guarda `p.plan` y vuelve a leer `m.txt` con `A.pracParse` (respeta destildados y la forma de cobro). Arreglo: `A.acts.ospEd` (botón «Valores» de 1.9) no existía; ahora está en `app91`.
+- Actualización: ventana `#updPop` («Actualizar»/«Descargar» y «Más tarde» = 12 h por versión, `odontovoz.updLater.<v>`). Web: aparece cuando el service worker deja lista la versión (`.upd-bar`); al volver a la app se llama `reg.update()`. APK: compara `sw.js` publicado con `A.VBUILD` al abrir y al volver (cada 30 min como mucho, `odontovoz.updChk`), `A.updCheck()` fuerza. Prueba: `t110.py`.
+
 ## OdontoVoz 1.9.1 · restauraciones simples, compuestas o complejas (17/11/2026)
 
 - `src/app89.js`: `rewriteRegion` junta en la última pieza las caras sueltas cuando todas las piezas ya tienen cara («27 por oclusal y por vestibular» → OV) y reparte en orden «24, 25 y 33 por oclusal, por mesial y por distal»; siglas de caras pegadas a la pieza (`LET`: «27 OV», «36 MOD»). `A.pracParse` envuelto agrega `it.cx` = `A.restKind(caras)` («simple (1 cara)», «compuesta (2 caras)», «compleja (N caras)») al nombre; `app40.poGo` lo pone en el `t.label` del tratamiento y en la `desc` del cargo (lo que ve recepción). El código de la obra social ya salía de la cantidad de caras (`codeFor`/`osAltCode`). Prueba: `trest2.py`, `t19d.py`.
