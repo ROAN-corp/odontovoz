@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.6 · caja nueva y clara (17/11/2026)
+
+- `src/app86.js`: la caja se rearma en 6 secciones con una pregunta cada una (`hoy`, `deben`, `pagar`, `plata`, `mes`, `hist`); las viejas (`resumen`, `control`, `mov`, `pend`, `cierre`, `os`) se muestran adentro (`oldHTML(sub)` reusa el render anterior sin su barra). Datos nuevos dentro de `S.cash` (clave de nube `cash`): `opens`, `closes` v2 (`counted`, `exp`, `diff`, `note`, `bills`, `keepEf`, `out`, `flow`, `re`), `acc0` (con cuánto arranca cada cuenta, `since`, `firstUse`), `adj`, `xfer`, `voids`, `acred`, `fact`, `dun`, `prov`, `log`. Comisiones por medio en `A.CFG.cjFees` (`A.cjFee`), alias en `A.CFG.payAlias`. `A.cjBal(acc)`, `A.cjPays()`, `A.cjPeriod(lo, hi)`, `A.cjDebtors()`, `A.cjChecks()`. Gastos y cobros se anulan con motivo (`mvDel`, `ledVoid` → `cjReason`); día cerrado pide motivo. Voz: abrir/cerrar la caja, cuánto hay, quién me debe, qué tengo que pagar, cómo nos fue este mes. `A.CFG.cajaOld = true` vuelve a la caja anterior. En Empresa, la caja de cada centro sigue como antes.
+- `src/app87.js`: facturas (`A.CFG.factOn`, `A.CFG.monoTope`, `S.cash.fact`), resumen para el contador (PDF y CSV), obras sociales con presentada (`A.CFG.osPres`), retenciones, débitos y reclamos (en `A.CFG.osPay[os][mes]`), liquidaciones con adelantos (`S.liq.adv`), gastos `chargePro` como descuento automático, pago que no se borra (`liqUnpay` con motivo) y confirmación del profesional (clave de nube `liqok`).
+
 ## OdontoVoz 1.5 · resumen del turno ordenado (17/11/2026)
 
 - `src/app85.js`: en el panel del turno (`S.panel.type === 'appt'`) un `MutationObserver` sobre `#panelHost` ordena: cabecera · seña en una línea (`.sena-mini`) · tarjeta `.fc-card` (botón grande «Abrir ficha completa», realizado/pagado/debe del libro de cuenta, lo de hoy o el último realizado, «Cobrar / ver cuenta») · Datos principales (sin la fila Cuenta) · Odontograma · Motivo · el resto como estaba. `A.CFG.panelOld = true` vuelve al orden anterior.

@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.6', b: '1.61.0', d: '2026-11-17', items: [
+      { t: 'Caja nueva, más fácil: Hoy, Te deben, Tenés que pagar, Tu plata, El mes e Historial. Arriba, lo que entró, lo que salió y lo que queda en el cajón, y un semáforo con lo que hay que revisar.', top: true },
+      { t: 'Abrir y cerrar la caja contando los billetes; si falta o sobra plata queda anotado por qué. Transferencias para confirmar, comisiones de tarjetas, facturas y resumen para el contador.' },
+      { t: 'Liquidaciones: adelantos, gastos a cargo del profesional y confirmación desde «Mis números». Nada se borra: lo anulado queda tachado con el motivo.' }] },
     { v: '1.5', b: '1.60.0', d: '2026-11-17', items: [
       { t: 'Al tocar el nombre de un paciente en la agenda: arriba sus datos, el odontograma y el motivo; «Abrir ficha completa» bien grande junto a lo realizado, lo pagado y lo que debe; la seña en una línea chiquita.', top: true }] },
     { v: '1.4', b: '1.59.0', d: '2026-11-17', items: [
