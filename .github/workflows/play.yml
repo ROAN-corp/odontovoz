@@ -1,0 +1,111 @@
+name: Versión para Google Play (.aab)
+
+# Se corre a mano desde Actions → «Versión para Google Play» → Run workflow.
+# Arma el paquete .aab que se sube a Play Console (apuntando a Android 16, API 36, como pide Google)
+# y un APK de prueba con la misma configuración para revisarlo en un celular antes de subirlo.
+# No publica nada en Releases: los archivos quedan en la ejecución (Artifacts → OdontoVoz-play).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  play:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bajar el proyecto
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Preparar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Android 16 (API 36) en el SDK
+        run: |
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "$SDK/platforms" | tail -5
+          if [ ! -d "$SDK/platforms/android-36" ]; then
+            yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null || echo "::warning::No se pudo instalar android-36"
+          fi
+          ls "$SDK/platforms" | tail -3
+
+      - name: Instalar dependencias
+        run: |
+          for i in 1 2 3 4; do
+            npm install --no-audit --no-fund --legacy-peer-deps && exit 0
+            echo "::warning::Falló la instalación (intento $i); reintento en 30 s"; rm -rf node_modules/sharp; sleep 30
+          done
+          exit 1
+
+      - name: Tipografías locales (sin Google Fonts)
+        run: npm install --no-save --no-audit --no-fund --legacy-peer-deps @fontsource/bricolage-grotesque@5 @fontsource/ibm-plex-mono@5 @fontsource/instrument-sans@5 @fontsource/atkinson-hyperlegible@5 @fontsource/schibsted-grotesk@5 || echo 'sin tipografías locales'
+
+      - name: Armar la app web (www)
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+        run: node scripts/prepare-www.js
+
+      - name: Crear el proyecto Android
+        run: npx cap add android
+
+      - name: Ícono y pantalla de inicio
+        run: npx capacitor-assets generate --android
+
+      - name: Permisos, versión y Android 16
+        run: |
+          node scripts/patch-android.js
+          node scripts/patch-play.js
+
+      - name: Firebase (notificaciones con la app cerrada)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            node -e "const f='www/index.html',fs=require('fs');fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace('<head>','<head><script>window.OV_PUSH=1</script>'))"
+          fi
+
+      - name: Copiar la app al proyecto Android
+        run: npx cap sync android
+
+      - name: Compilar (.aab para la tienda y .apk de prueba)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          sed -i 's/networkTimeout=[0-9]*/networkTimeout=120000/' gradle/wrapper/gradle-wrapper.properties || true
+          for i in 1 2 3; do ./gradlew --no-daemon bundleRelease assembleRelease && exit 0; echo "::warning::Falló la compilación (intento $i)"; sleep 30; done
+          exit 1
+
+      - name: Firmar con la clave de subida (la misma del APK)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KS_B64" ]; then echo "::error::Falta el secreto ANDROID_KEYSTORE_BASE64"; exit 1; fi
+          mkdir -p dist
+          echo "$KS_B64" | base64 -d > ks.jks
+          cp android/app/build/outputs/bundle/release/app-release.aab dist/OdontoVoz-play.aab
+          jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore ks.jks -storepass:env KS_PASS -keypass:env KS_PASS dist/OdontoVoz-play.aab odontovoz
+          jarsigner -verify dist/OdontoVoz-play.aab | tail -1
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/zipalign" -p -f 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          "$BT/apksigner" sign --ks ks.jks --ks-key-alias odontovoz --ks-pass env:KS_PASS --key-pass env:KS_PASS --out dist/OdontoVoz-play-prueba.apk aligned.apk
+          "$BT/apksigner" verify --print-certs dist/OdontoVoz-play-prueba.apk | grep -i "SHA-256"
+          "$BT/aapt2" dump badging dist/OdontoVoz-play-prueba.apk | grep -E "^package:|targetSdkVersion|sdkVersion" || true
+          rm -f ks.jks aligned.apk
+          ls -la dist
+
+      - name: Guardar los archivos
+        uses: actions/upload-artifact@v4
+        with:
+          name: OdontoVoz-play
+          path: dist/

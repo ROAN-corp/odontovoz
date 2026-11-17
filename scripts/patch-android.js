@@ -31,7 +31,12 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 const gradlePath = path.join(root, 'android', 'app', 'build.gradle');
 let g = fs.readFileSync(gradlePath, 'utf8');
 const runNumber = parseInt(process.env.GITHUB_RUN_NUMBER || '1', 10);
-g = g.replace(/versionCode\s+\d+/, `versionCode ${runNumber}`);
+/* versionCode: minutos desde el 1/1/2026 (siempre sube, igual en el APK de la web y en el de Google Play,
+   así uno puede actualizar encima del otro); nunca menor que el número de compilación de antes */
+const minutes = Math.floor((Date.now() - Date.UTC(2026, 0, 1)) / 60000);
+const versionCode = Math.max(runNumber, minutes);
+g = g.replace(/versionCode\s+\d+/, `versionCode ${versionCode}`);
+console.log('versionCode', versionCode);
 g = g.replace(/versionName\s+"[^"]*"/, `versionName "${pkg.version}"`);
 fs.writeFileSync(gradlePath, g);
 
