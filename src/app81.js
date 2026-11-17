@@ -39,7 +39,7 @@
     '@media(min-width:1100px){.ov-barlogo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;z-index:1}.ov-barlogo .ov-bm{width:34px;height:34px;border-radius:9px}.ov-barlogo .ov-bt{font-size:17px}}' +
     /* tablet: al lado del título */
     /* celular y APK: en el inicio, el nombre (sin el ícono) centrado en el espacio libre, en lugar del título; en las demás pantallas queda el título */
-    '@media(max-width:699px){.ov-barlogo{display:none;flex:1 1 auto;justify-content:center;margin:0 4px}.ov-barlogo .ov-bm{display:none}.ov-barlogo .ov-bt{font-size:17px}header.appbar.ov-home:not(.ov-many) .ov-barlogo{display:flex}header.appbar.ov-home:not(.ov-many) .ab-title{display:none}}' +
+    '@media(max-width:699px){.ov-barlogo{display:none;flex:1 1 auto;justify-content:center;margin:0 4px}.ov-barlogo .ov-bm{display:none}.ov-barlogo .ov-bt{font-size:17px}header.appbar.ov-home .ov-barlogo{display:flex}header.appbar.ov-home .ab-title{display:none}}' +
     '@media(max-width:339px){.ov-barlogo{display:none}}' +
     /* con varios lugares, el título (que se toca para cambiar de lugar) manda sobre el nombre */
         '.dr-id{min-width:0}#drClinic.dr-pl{display:block;white-space:normal;overflow:visible;margin-top:6px;padding:7px 11px;border:1.5px solid var(--accent,#0d6b6b);border-radius:12px;background:color-mix(in srgb,var(--accent,#0d6b6b) 10%,transparent);color:var(--accent,#0d6b6b);font-weight:700;cursor:pointer;line-height:1.25}#drClinic.dr-pl::after{content:"⇄ Tocá para cambiar de lugar";display:block;margin-top:3px;font-size:11.5px;font-weight:600;color:var(--ink-2)}';

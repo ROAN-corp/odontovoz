@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.2.3 · OdontoVoz centrado siempre en el inicio del celular (16/11/2026)
+
+- A pedido del usuario: en el inicio del celular vuelve a verse siempre «OdontoVoz» centrado, aunque haya varios lugares. Cambiar de lugar se hace solo desde el menú (nombre del lugar enmarcado, `#drClinic.dr-pl`).
+
 ## OdontoVoz 1.2.2 · Cambiar de lugar desde el menú (16/11/2026)
 
 - Con varios lugares, el nombre del lugar arriba del menú (`#drClinic`) es un botón enmarcado («⇄ Tocá para cambiar de lugar», clase `dr-pl`, abre `plOpen`). Se quita el botón `#drPlace` de la 1.2.1.

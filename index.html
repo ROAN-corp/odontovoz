@@ -8086,10 +8086,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.2.2';
+  A.VERSION = '1.2.3';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.57.2';
+  A.VBUILD = '1.57.3';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18171,8 +18171,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
-    { v: '1.2.2', b: '1.57.2', d: '2026-11-16', items: [
-      { t: 'Si trabajás en más de un lugar, tocá el nombre del lugar arriba del menú para cambiar. En el celular también vuelve a la barra del inicio.' }] },
+    { v: '1.2.3', b: '1.57.3', d: '2026-11-16', items: [
+      { t: 'Si trabajás en más de un lugar, abrí el menú y tocá el nombre del lugar (arriba de todo) para cambiar.' }] },
     { v: '1.2', b: '1.57.0', d: '2026-11-16', items: [
       { t: 'Pedidos de stock más rápidos: cuando haya un proveedor recomendado, le mandás el pedido armado por WhatsApp con un toque.' }] },
     { v: '1.1.3', b: '1.56.3', d: '2026-11-16', items: [
@@ -22359,7 +22359,7 @@ const OVMenu = (function () {
     '@media(min-width:1100px){.ov-barlogo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;z-index:1}.ov-barlogo .ov-bm{width:34px;height:34px;border-radius:9px}.ov-barlogo .ov-bt{font-size:17px}}' +
     /* tablet: al lado del título */
     /* celular y APK: en el inicio, el nombre (sin el ícono) centrado en el espacio libre, en lugar del título; en las demás pantallas queda el título */
-    '@media(max-width:699px){.ov-barlogo{display:none;flex:1 1 auto;justify-content:center;margin:0 4px}.ov-barlogo .ov-bm{display:none}.ov-barlogo .ov-bt{font-size:17px}header.appbar.ov-home:not(.ov-many) .ov-barlogo{display:flex}header.appbar.ov-home:not(.ov-many) .ab-title{display:none}}' +
+    '@media(max-width:699px){.ov-barlogo{display:none;flex:1 1 auto;justify-content:center;margin:0 4px}.ov-barlogo .ov-bm{display:none}.ov-barlogo .ov-bt{font-size:17px}header.appbar.ov-home .ov-barlogo{display:flex}header.appbar.ov-home .ab-title{display:none}}' +
     '@media(max-width:339px){.ov-barlogo{display:none}}' +
     /* con varios lugares, el título (que se toca para cambiar de lugar) manda sobre el nombre */
         '.dr-id{min-width:0}#drClinic.dr-pl{display:block;white-space:normal;overflow:visible;margin-top:6px;padding:7px 11px;border:1.5px solid var(--accent,#0d6b6b);border-radius:12px;background:color-mix(in srgb,var(--accent,#0d6b6b) 10%,transparent);color:var(--accent,#0d6b6b);font-weight:700;cursor:pointer;line-height:1.25}#drClinic.dr-pl::after{content:"⇄ Tocá para cambiar de lugar";display:block;margin-top:3px;font-size:11.5px;font-weight:600;color:var(--ink-2)}';
