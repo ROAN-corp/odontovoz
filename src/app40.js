@@ -50,9 +50,9 @@
   };
   /* 1.38: cuánto paga el paciente cuando tiene obra social: coseguro fijo, diferencia con el precio del consultorio o nada */
   const payFor = (it, qty) => {
-    qty = qty || it.qty || 1; if (!it.os) return it.price;
+    qty = qty || it.qty || 1; if (it.free) return 0; if (!it.os) return it.price;
     const m = it.os.mode || 'cos';
-    if (m === 'none') return 0;
+    if (m === 'none' || m === 'free') return 0;
     if (m === 'dif') return Math.max(0, (it.price || 0) - (it.os.cov || 0) * qty);
     return (it.os.cos || 0) * qty;
   };
@@ -141,7 +141,8 @@
     const cob = cobraOf(m.pro), solo = isSolo();
     let b = '<p class="po-who"><b>' + esc(p.name || 'Paciente') + '</b> · ' + esc(os ? os.sigla : (p.cov || 'Particular')) + ' · atendió ' + esc(proName(m.pro)) + '</p>';
     b += '<ul class="po-list">' + m.items.map((it, i) => '<li class="' + (it.on ? '' : 'off') + '"><label class="po-chk"><input type="checkbox" data-chg="poOn" data-i="' + i + '"' + (it.on ? ' checked' : '') + ' aria-label="Incluir ' + esc(it.label) + '"></label><span class="po-l"><b>' + esc(it.label) + '</b>' +
-      (it.os ? '<small>' + esc(it.os.sigla) + ' paga ' + money(it.os.cov * (it.qty || 1)) + (it.price ? ' · tu precio ' + money(it.price) : '') + '</small><label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poCm" data-i="' + i + '">' + [['cos', 'Coseguro' + (it.os.cos ? ' ' + money(it.os.cos * (it.qty || 1)) : '')], ['dif', 'Copago: diferencia ' + money(Math.max(0, (it.price || 0) - it.os.cov * (it.qty || 1)))], ['none', 'Sin cargo al paciente']].map(o => '<option value="' + o[0] + '"' + ((it.os.mode || 'cos') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label>' : '<small>' + (os ? 'sin arancel de ' + esc(os.sigla) + ' cargado · ' : '') + 'particular</small>') + '</span>' +
+      (it.os ? '<small>' + esc(it.os.sigla) + ' paga ' + money(it.os.cov * (it.qty || 1)) + (it.price ? ' · tu precio ' + money(it.price) : '') + '</small><label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poCm" data-i="' + i + '">' + [['cos', 'Coseguro' + (it.os.cos ? ' ' + money(it.os.cos * (it.qty || 1)) : '')], ['dif', 'Copago: diferencia ' + money(Math.max(0, (it.price || 0) - it.os.cov * (it.qty || 1)))], ['none', 'Cubierto 100% por la obra social'], ['free', 'No le cobro nada (bonificado)']].map(o => '<option value="' + o[0] + '"' + ((it.os.mode || 'cos') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label>' : '<small>' + (os ? 'sin arancel de ' + esc(os.sigla) + ' cargado · ' : '') + 'particular</small><label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poFree" data-i="' + i + '"><option value="">Se cobra</option><option value="1"' + (it.free ? ' selected' : '') + '>No le cobro nada (bonificado)</option></select></label>') +
+      ((it.free || (it.os && it.os.mode === 'free')) ? '<label class="po-why"><span>¿Por qué no se cobra?</span><input data-in="poWhy" data-i="' + i + '" value="' + esc(it.why || '') + '" placeholder="Ej.: garantía de un arreglo anterior, cortesía"></label>' : '') + '</span>' +
       '<span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-in="poAmt" data-i="' + i + '" value="' + (it.pay || 0) + '" aria-label="Importe de ' + esc(it.label) + '"></span></li>').join('') + '</ul>';
     b += '<div class="po-add"><select data-chg="poAdd" aria-label="Agregar otra práctica del catálogo"><option value="">+ Agregar otra práctica…</option>' + A.catCats().map(c => '<optgroup label="' + esc(c) + '">' + A.CAT.filter(x => x.cat === c).map(x => '<option value="' + esc(x.k) + '">' + esc(x.label) + ' · ' + money(x.price) + '</option>').join('') + '</optgroup>').join('') + '</select></div>';
     const osTot = m.items.filter(i => i.on && i.os).reduce((t, i) => t + (i.os.cov || 0) * (i.qty || 1), 0);
@@ -163,12 +164,16 @@
     poSync(); const c = A.CAT.filter(x => x.k === el.value)[0]; if (!c) return; const m = S.modal, os = osCalc(m.pid, { label: c.label });
     m.items.push({ key: 'c' + c.k + Date.now(), kind: 'cat', label: c.label, price: c.price, os, pay: payFor({ price: c.price, os }), on: true }); A.renderModal();
   };
+  A.chg.poFree = el => { poSync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it) return; it.free = !!el.value; if (!it.free) it.pay = it.price || 0; it.pay = payFor(it); A.renderModal(); };
+  A.ins.poWhy = el => { const it = S.modal.items[+el.getAttribute('data-i')]; if (it) it.why = el.value; };
   A.chg.poCm = el => { poSync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it || !it.os) return; it.os.mode = el.value; it.pay = payFor(it); A.renderModal(); };
   A.chg.poCobra = el => { poSync(); A.CFG.cobra = A.CFG.cobra || {}; A.CFG.cobra[S.modal.pro] = el.value; A.save(); A.renderModal(); };
 
   A.acts.poGo = el => {
     poSync(); const m = S.modal, k = el.getAttribute('data-k'), pid = m.pid, pd = A.pd(pid), d = today(), items = m.items.filter(i => i.on);
     if (k !== 'nota' && !items.length) { $('#poMsg').textContent = 'Tildá al menos una práctica, o tocá «Solo nota».'; return; }
+    const noWhy = k !== 'nota' && items.filter(i => (i.free || (i.os && i.os.mode === 'free')) && !String(i.why || '').trim())[0];
+    if (noWhy) { const o = $('#poMsg'); if (o) o.textContent = 'Contá por qué no se le cobra «' + noWhy.label + '» (queda anotado).'; else A.toast('Falta el motivo de lo que no se cobra.'); return; }
     const a = m.apptId ? A.apptById(m.apptId) : null;
     /* nota en la historia clínica: el texto tal cual lo escribió */
     if (m.txt) pd.notes.unshift({ id: A.uid(), date: d, pro: m.pro, text: m.txt, quick: true });
@@ -179,7 +184,7 @@
       else { const t = { id: A.uid(), cond: null, tooth: null, faces: '', label: it.label, price: it.price, status: 'hecho', planDate: null, doneDate: d, pro: m.pro, bid: null }; pd.tx.push(t); A.onTxDone(pid, t); made.push(t); }
       /* el cargo que se acaba de crear: importe confirmado y a quién le toca cobrarlo */
       pd.ledger.slice(before).filter(e => e.type === 'cargo' && !e.voided).forEach(e => {
-        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
+        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } if (it.free || (it.os && it.os.mode === 'free')) { e.free = 1; e.freeWhy = String(it.why || '').trim(); e.desc = (e.desc || it.label) + ' · no se cobra: ' + e.freeWhy; if (!e.os && !(+e.amount > 0)) e.cobOk = 'bonif'; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
         if (a) e.apptId = a.id; if (curSede() && !e.loc) e.loc = curSede();
       });
     });

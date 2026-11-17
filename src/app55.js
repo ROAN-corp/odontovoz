@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.7', b: '1.62.0', d: '2026-11-17', items: [
+      { t: 'Al anotar lo que hiciste en la evolución, primero te pregunta: «¿Cobra secretaría o lo cobro yo?». A recepción le aparece un cartel con lo que escribiste y lo que hay que cobrar, y lo puede corregir.', top: true },
+      { t: 'Entiende varias prácticas juntas: «arreglo en 24, 25 y 33 por oclusal, por mesial y por distal, y limpieza».' },
+      { t: 'Nuevas opciones de cobro: «Cubierto 100% por la obra social» y «No le cobro nada» (pide el motivo y queda anotado).' }] },
     { v: '1.6.1', b: '1.61.1', d: '2026-11-17', items: [
       { t: '«Deshacer» en Cambios de hoy ya no borra la historia clínica ni los cobros: lo escrito queda anulado, con quién y por qué.', top: true },
       { t: 'Modo oscuro: se arreglaron textos que no se leían (letras claras sobre fondo blanco), también en la página de mudanza.' }] },

@@ -28,9 +28,9 @@
 
   /* cuánto paga el paciente según cómo se cobra */
   const payOf = it => {
-    const q = it.qty || 1; if (!it.os) return it.price || 0;
+    const q = it.qty || 1; if (it.free) return 0; if (!it.os) return it.price || 0;
     const m = it.os.mode || 'cos';
-    if (m === 'none') return 0;
+    if (m === 'none' || m === 'free') return 0;
     if (m === 'part') return it.price || 0;
     if (m === 'dif') return it.os.difSet != null ? it.os.difSet : (it.os.cov > 0 ? Math.max(0, (it.price || 0) - it.os.cov * q) : 0);
     return (it.os.cos || 0) * q;
@@ -82,7 +82,7 @@
   };
 
   /* ---------- la ventana «Prácticas de hoy» ---------- */
-  const MODES = [['none', 'No le cobro nada'], ['cos', 'Coseguro'], ['dif', 'Diferencial'], ['part', 'Todo particular']];
+  const MODES = [['none', 'Cubierto 100% por la obra social'], ['cos', 'Coseguro'], ['dif', 'Diferencial'], ['part', 'Todo particular'], ['free', 'No le cobro nada']];
   const modeTxt = (k, it) => {
     if (k === 'cos') return 'Coseguro' + (it && it.os && it.os.cos ? ' ' + money(it.os.cos * (it.qty || 1)) : '');
     if (k === 'part') return 'Particular (no va a la obra social)';
@@ -105,7 +105,7 @@
     if (osItems.length) {
       b += '<div class="po-mode"><span class="po-mq">¿Qué le cobrás al paciente?</span><div class="po-seg" role="radiogroup" aria-label="Qué le cobrás al paciente">' +
         MODES.map(x => '<button type="button" role="radio" aria-checked="' + (allMode === x[0]) + '" class="po-sb' + (allMode === x[0] ? ' on' : '') + '" data-act="poAll" data-m="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
-        '<small>' + (allMode === 'none' ? 'Lo cubre todo ' + esc(po ? po.sigla : 'la obra social') + ': no pasa a cobrar y queda pendiente de cobro a la obra social.' : allMode === 'dif' ? 'Escribí en cada práctica cuánto le cobrás al paciente; lo de la obra social queda pendiente aparte.' : allMode === 'part' ? 'No se le factura a la obra social: el paciente paga tu precio.' : allMode === 'cos' ? 'El paciente paga el coseguro; el resto queda pendiente de la obra social.' : 'Elegí una opción para todas o cambiá cada práctica abajo.') + '</small></div>';
+        '<small>' + (allMode === 'none' ? 'Cubierto 100% por ' + esc(po ? po.sigla : 'la obra social') + ' (mismo arancel que tu precio): no pasa a cobrar y queda pendiente de cobro a la obra social.' : allMode === 'dif' ? 'Escribí en cada práctica cuánto le cobrás al paciente; lo de la obra social queda pendiente aparte.' : allMode === 'part' ? 'No se le factura a la obra social: el paciente paga tu precio.' : allMode === 'cos' ? 'El paciente paga el coseguro; el resto queda pendiente de la obra social.' : allMode === 'free' ? 'No le cobrás nada al paciente (bonificado): escribí abajo por qué. Lo de la obra social queda pendiente igual.' : 'Elegí una opción para todas o cambiá cada práctica abajo.') + '</small></div>';
     }
     b += '<ul class="po-list">' + m.items.map((it, i) => {
       const o = it.os, q = it.qty || 1;
@@ -118,7 +118,8 @@
             : money(o.cov * q) + (o.est ? ' (estimado)' : '') + (isRef(o) ? ' <span class="os-ref">(ref. Río Negro)</span>' : '')) + (it.price ? ' · tu precio ' + money(it.price) : '') + '</small>';
         sub += '<label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poCm" data-i="' + i + '">' +
           MODES.filter(x => x[0] !== 'cos' || o.cos > 0 || o.mode === 'cos').map(x => '<option value="' + x[0] + '"' + (o.mode === x[0] ? ' selected' : '') + '>' + esc(modeTxt(x[0], it)) + '</option>').join('') + '</select></label>';
-      } else sub = '<small>Particular</small>';
+      } else sub = '<small>Particular</small><label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poFree" data-i="' + i + '"><option value="">Se cobra</option><option value="1"' + (it.free ? ' selected' : '') + '>No le cobro nada</option></select></label>';
+      if (it.free || (o && o.mode === 'free')) sub += '<label class="po-why"><span>¿Por qué no se le cobra? (queda anotado)</span><input data-in="poWhy" data-i="' + i + '" value="' + esc(it.why || '') + '" placeholder="Ej.: garantía de un arreglo anterior, cortesía, familiar"></label>';
       return '<li class="' + (it.on ? '' : 'off') + '"><label class="po-chk"><input type="checkbox" data-chg="poOn" data-i="' + i + '"' + (it.on ? ' checked' : '') + ' aria-label="Incluir ' + esc(it.label) + '"></label><span class="po-l"><b>' + esc(it.label) + '</b>' + sub + '</span>' +
         '<span class="po-amt"><small class="po-al">Paciente</small><span aria-hidden="true">$</span><input inputmode="numeric" data-in="poAmt" data-i="' + i + '" value="' + (it.pay || 0) + '" aria-label="Lo que paga el paciente por ' + esc(it.label) + '"></span></li>';
     }).join('') + '</ul>';
@@ -162,6 +163,8 @@
     A.renderModal();
     if (k === 'dif') { const n = $('[data-in="poAmt"]'); if (n) { n.focus(); n.select(); } }
   };
+  A.chg.poFree = el => { sync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it) return; it.free = !!el.value; it.pay = payOf(it); A.renderModal(); };
+  A.ins.poWhy = el => { const it = S.modal.items[+el.getAttribute('data-i')]; if (it) it.why = el.value; };
   A.chg.poLearn = el => { S.modal.learn = el.checked; };
   A.acts.poCosDef = el => {
     sync(); const v = el.getAttribute('data-v'); A.CFG.copDef = v; A.save();
