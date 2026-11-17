@@ -120,6 +120,8 @@
           MODES.filter(x => x[0] !== 'cos' || o.cos > 0 || o.mode === 'cos').map(x => '<option value="' + x[0] + '"' + (o.mode === x[0] ? ' selected' : '') + '>' + esc(modeTxt(x[0], it)) + '</option>').join('') + '</select></label>';
       } else sub = '<small>Particular</small><label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poFree" data-i="' + i + '"><option value="">Se cobra</option><option value="1"' + (it.free ? ' selected' : '') + '>No le cobro nada</option></select></label>';
       if (it.free || (o && o.mode === 'free')) sub += '<label class="po-why"><span>¿Por qué no se le cobra? (queda anotado)</span><input data-in="poWhy" data-i="' + i + '" value="' + esc(it.why || '') + '" placeholder="Ej.: garantía de un arreglo anterior, cortesía, familiar"></label>';
+      else if (it.whyOpen || it.why) sub += '<label class="po-why opt"><span>Aclaración para el dueño (opcional)</span><input data-in="poWhy" data-i="' + i + '" value="' + esc(it.why || '') + '" placeholder="Ej.: le hice precio por ser familiar del Dr."></label>';
+      else sub += '<button type="button" class="po-whyb" data-act="poWhyOn" data-i="' + i + '">✎ Aclarar</button>';
       return '<li class="' + (it.on ? '' : 'off') + '"><label class="po-chk"><input type="checkbox" data-chg="poOn" data-i="' + i + '"' + (it.on ? ' checked' : '') + ' aria-label="Incluir ' + esc(it.label) + '"></label><span class="po-l"><b>' + esc(it.label) + '</b>' + sub + '</span>' +
         '<span class="po-amt"><small class="po-al">Paciente</small><span aria-hidden="true">$</span><input inputmode="numeric" data-in="poAmt" data-i="' + i + '" value="' + (it.pay || 0) + '" aria-label="Lo que paga el paciente por ' + esc(it.label) + '"></span></li>';
     }).join('') + '</ul>';
@@ -165,6 +167,7 @@
   };
   A.chg.poFree = el => { sync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it) return; it.free = !!el.value; it.pay = payOf(it); A.renderModal(); };
   A.ins.poWhy = el => { const it = S.modal.items[+el.getAttribute('data-i')]; if (it) it.why = el.value; };
+  A.acts.poWhyOn = el => { sync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it) return; it.whyOpen = true; A.renderModal(); const n = $('[data-in="poWhy"][data-i="' + el.getAttribute('data-i') + '"]'); if (n) n.focus(); };
   A.chg.poLearn = el => { S.modal.learn = el.checked; };
   A.acts.poCosDef = el => {
     sync(); const v = el.getAttribute('data-v'); A.CFG.copDef = v; A.save();

@@ -157,13 +157,15 @@
   function checks() {
     const t = T(), out = [], c = C();
     const worked = d => pays().some(p => p.date === d) || moves().some(m => m.date === d) || (A.day ? A.day(d).some(a => a.type !== 'block' && a.status === 'atendido') : false);
-    for (let i = c.firstUse ? 7 : 1; i >= 1; i--) { const d = A.add(t, -i); if (worked(d) && !closeOf(d) && (!c.firstUse || d >= c.firstUse)) { out.push({ lvl: 'bad', txt: 'No se cerró la caja del ' + dayName(d) + '.', act: 'cjCloseOpen', args: { 'data-d': d }, btn: 'Cerrarla ahora' }); break; } }
+    for (let i = c.firstUse ? 7 : 1; i >= 1; i--) { const d = A.add(t, -i); if (worked(d) && !closeOf(d) && (!c.firstUse || d >= c.firstUse)) { out.push({ lvl: 'bad', txt: 'No se cerró la caja ' + (dayName(d) === 'ayer' ? 'de ayer' : 'del ' + dayName(d)) + '.', act: 'cjCloseOpen', args: { 'data-d': d }, btn: 'Cerrarla ahora' }); break; } }
     if (!openOf(t) && !closeOf(t) && worked(t)) out.push({ lvl: 'warn', txt: 'Todavía no abriste la caja de hoy (contar la plata del cajón).', act: 'cjOpenOpen', btn: 'Abrir la caja' });
     const cl = closeOf(t); if (cl && cl.flow != null && Math.round(dayEf(t).net) !== Math.round(cl.flow)) out.push({ lvl: 'warn', txt: 'Hubo movimientos en efectivo después de cerrar la caja de hoy.', act: 'cjSub', args: { 'data-s': 'hist' }, btn: 'Ver' });
     try { const dc = A.dayControl ? A.dayControl(t) : null; const n = dc ? (dc.sinCobro || []).length : 0; if (n) out.push({ lvl: 'warn', txt: plural(n, 'paciente atendido hoy no tiene', 'pacientes atendidos hoy no tienen') + ' cobro ni deuda anotada.', act: 'cjCtl', btn: 'Ver quiénes' }); } catch (e) { /* nada */ }
     const tc = pays().filter(p => p.needConf && !p.ac && p.date >= confFrom()); if (tc.length) out.push({ lvl: 'warn', txt: plural(tc.length, 'transferencia') + ' para confirmar que llegaron al banco (' + money(tc.reduce((s, p) => s + p.amt, 0)) + ').', act: 'cjSub', args: { 'data-s': 'plata' }, btn: 'Revisar' });
     const venc = c.moves.filter(m => m.status === 'pendiente' && m.type === 'egreso' && (m.due || m.date) < t); if (venc.length) out.push({ lvl: 'bad', txt: plural(venc.length, 'cuenta vencida', 'cuentas vencidas') + ' para pagar (' + money(venc.reduce((s, m) => s + +m.amount, 0)) + ').', act: 'cjSub', args: { 'data-s': 'pagar' }, btn: 'Ver' });
     try { const cu = (A.upcomingCuotas ? A.upcomingCuotas(0) : []).filter(x => x.late); if (cu.length) out.push({ lvl: 'warn', txt: plural(cu.length, 'cuota vencida', 'cuotas vencidas') + ' de pacientes.', act: 'cjSub', args: { 'data-s': 'deben' }, btn: 'Ver' }); } catch (e) { /* nada */ }
+    if (boss()) { let nc = 0; (A.allPids ? A.allPids() : []).forEach(id => { const pd = A.pd(id); (pd && pd.ledger || []).forEach(e => { if (e.date === t && !e.voided && ((e.type === 'ajuste' && (e.rcpFix || e.plOver || e.free)) || (e.type === 'cargo' && (e.freeWhy || e.why)))) nc++; }); });
+      if (nc) out.push({ lvl: 'warn', txt: plural(nc, 'corrección o aclaración', 'correcciones o aclaraciones') + ' en cobros de hoy (cada una con su motivo).', act: 'cjCorr', btn: 'Ver' }); }
     return out;
   }
   A.cjChecks = checks;
@@ -515,6 +517,12 @@
     C().adj.forEach(j => { if (inR(j.date)) R.push({ d: j.date, k: 'cor', t: 'Corrección · ' + accName(j.acc), s: (j.why || '') + (j.by ? ' · ' + j.by : ''), amt: +j.amt }); });
     C().voids.forEach(m => { if (inR(m.date) || (m.void && inR(m.void.at.slice(0, 10)))) R.push({ d: m.date, k: 'cor', t: 'Anulado · ' + (m.desc || ''), s: 'anuló ' + ((m.void || {}).by || '') + ' el ' + A.fmtDMY(((m.void || {}).at || '').slice(0, 10)) + ': ' + ((m.void || {}).why || ''), amt: 0, show: money(m.amount), voided: 1 }); });
     (A.allPids ? A.allPids() : []).forEach(id => { const pd = A.pd(id); (pd && pd.ledger || []).forEach(e => { if (e.type === 'pago' && e.voided && !e.anula && e.voidWhy && inR(e.date)) R.push({ d: e.date, k: 'cor', t: 'Cobro anulado · ' + ((A.PAT(id) || {}).name || ''), s: 'anuló ' + (e.voidBy || '') + ': ' + e.voidWhy, amt: 0, show: money(e.amount), voided: 1 }); }); });
+    /* correcciones y aclaraciones hechas al cobrar (para que el dueño las vea) */
+    (A.allPids ? A.allPids() : []).forEach(id => { const pd = A.pd(id), nm = (A.PAT(id) || {}).name || ''; (pd && pd.ledger || []).forEach(e => {
+      if (!inR(e.date) || e.voided) return;
+      if (e.type === 'ajuste' && (e.rcpFix || e.plOver || e.free)) R.push({ d: e.date, k: 'cor', t: 'Corrección en el cobro · ' + nm, s: String(e.desc || '') + (e.by ? ' · ' + e.by : ''), amt: +e.amount || 0, pid: id });
+      else if (e.type === 'cargo' && (e.freeWhy || e.why)) R.push({ d: e.date, k: 'cor', t: (e.freeWhy ? 'No se cobró · ' : 'Aclaración · ') + nm, s: (e.freeWhy || e.why) + ' · ' + String(e.desc || '').split(' · ').slice(0, 2).join(' · ') + (e.cobBy ? ' · ' + e.cobBy : ''), amt: 0, show: money(e.amount), pid: id });
+    }); });
     return R.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
   }
   function histHTML() {
@@ -531,6 +539,7 @@
     h += '<details class="cj-more"><summary>Registro completo de la caja (quién hizo qué)</summary>' + (LG.length ? '<div class="cj-rows">' + LG.map(l => '<div class="cj-row"><i class="cj-dot ' + (l.k === 'tarde' || l.k === 'anular' ? 'bad' : 'ok') + '"></i><div class="cj-who"><b>' + esc(l.txt) + '</b><small>' + esc(l.by || '') + ' · ' + esc(new Date(l.at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })) + '</small></div></div>').join('') + '</div>' : empty('Sin registros todavía.')) + '</details>';
     return h;
   }
+  A.acts.cjCorr = () => { S.tab = 'caja'; S.caja = S.caja || {}; S.caja.sub = 'hist'; S.caja.hr = 'hoy'; S.caja.hf = 'cor'; A.refresh(); window.scrollTo(0, 0); };
   A.acts.cjHr = el => { S.caja.hr = el.getAttribute('data-v'); A.refresh(); };
   A.acts.cjHf = el => { S.caja.hf = el.getAttribute('data-v'); A.refresh(); };
 

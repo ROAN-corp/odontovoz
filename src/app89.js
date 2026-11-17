@@ -215,6 +215,7 @@
           (x.mode === 'free' ? '<input class="pp-why" data-in="ppEdWhy" data-id="' + e.id + '" value="' + esc(x.why || '') + '" placeholder="¿Por qué no se cobra? (obligatorio)" aria-label="Motivo">' : '') + '</span>' +
           '<span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-chg="ppEdAmt" data-id="' + e.id + '" value="' + (x.off ? 0 : x.amt) + '"' + (x.off ? ' disabled' : '') + ' aria-label="Importe"></span></div>';
       }).join('') + (m.add || []).map((a, i) => '<div class="pp-er pp-new"><span class="po-chk">+</span><span class="pp-el"><b>' + esc(a.label) + '</b><small>agregada ahora</small></span><span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-chg="ppAddAmt" data-i="' + i + '" value="' + a.amt + '" aria-label="Importe"></span><button class="btn small ghost" data-act="ppAddDel" data-i="' + i + '" aria-label="Quitar">✕</button></div>').join('') +
+        '<div class="field pp-whyall"><label for="ppWhyAll">¿Por qué lo corregís? <small>(obligatorio si cambiás algo · lo ve el dueño)</small></label><input id="ppWhyAll" data-in="ppWhyAll" value="' + esc(m.whyAll || '') + '" placeholder="Ej.: el doctor me avisó que la limpieza no se cobra"></div>' +
         '<select class="pp-addsel" data-chg="ppAdd" aria-label="Agregar otra práctica"><option value="">+ Agregar otra práctica…</option>' + (A.catCats ? A.catCats() : []).map(c => '<optgroup label="' + esc(c) + '">' + A.CAT.filter(x => x.cat === c).map(x => '<option value="' + esc(x.k) + '">' + esc(x.label) + ' · ' + money(x.price) + '</option>').join('') + '</optgroup>').join('') + '</select></div>';
     }
     if (!extra) return html;
@@ -232,28 +233,31 @@
   A.chg.ppEdOn = el => { const m = S.modal, x = edOf(m, el.getAttribute('data-id')); x.off = !el.checked; reTot(m); A.renderModal(); };
   A.chg.ppEdAmt = el => { const m = S.modal, x = edOf(m, el.getAttribute('data-id')); x.amt = Math.max(0, num(el.value)); reTot(m); A.renderModal(); };
   A.chg.ppEdMode = el => { const m = S.modal, id = el.getAttribute('data-id'), x = edOf(m, id), e = A.pd(m.pid).ledger.filter(y => y.id === id)[0] || {}; x.mode = el.value; if (x.mode === 'none' || x.mode === 'free') x.amt = 0; else if (x.amt === 0) x.amt = e.amount || 0; reTot(m); A.renderModal(); };
+  A.ins.ppWhyAll = el => { S.modal.whyAll = el.value; };
   A.ins.ppEdWhy = el => { const x = edOf(S.modal, el.getAttribute('data-id')); x.why = el.value; };
   A.chg.ppAdd = el => { const m = S.modal, c = A.CAT.filter(x => x.k === el.value)[0]; if (!c) return; (m.add = m.add || []).push({ k: c.k, label: c.label, amt: c.price || 0 }); reTot(m); A.renderModal(); };
   A.chg.ppAddAmt = el => { const m = S.modal, a = (m.add || [])[+el.getAttribute('data-i')]; if (a) { a.amt = Math.max(0, num(el.value)); reTot(m); A.renderModal(); } };
   A.acts.ppAddDel = el => { const m = S.modal; (m.add || []).splice(+el.getAttribute('data-i'), 1); reTot(m); A.renderModal(); };
   /* antes de cobrar (o de dejar la deuda): se graban las correcciones */
+  const edChanged = m => { if ((m.add || []).length) return true; const pd = A.pd(m.pid); return Object.keys(m.ed || {}).some(id => { const x = m.ed[id], e = pd.ledger.filter(y => y.id === id)[0] || {}; return x.off || (x.amt !== e.amount) || ((x.mode || '') !== (e.cop || (e.os ? 'cos' : ''))); }); };
   function applyEdits(m) {
     if (!m || (!m.ed && !(m.add || []).length)) return;
-    const pd = A.pd(m.pid), d = T(), by = who(), at = new Date().toISOString(), its = pd.ledger.filter(e => (m.ids || []).indexOf(e.id) >= 0), base = its[0] || {};
+    const pd = A.pd(m.pid), d = T(), by = who(), at = new Date().toISOString(), its = pd.ledger.filter(e => (m.ids || []).indexOf(e.id) >= 0), base = its[0] || {}, why = String(m.whyAll || '').trim();
     its.forEach(e => {
       const x = (m.ed || {})[e.id]; if (!x) return;
       const now = x.off ? 0 : x.amt, dlt = now - e.amount;
-      if (dlt) pd.ledger.push({ id: A.uid(), date: d, type: 'ajuste', amount: dlt, desc: (x.off ? 'No se cobra: ' : x.mode === 'free' ? 'Bonificado: ' : 'Corrección de importe: ') + String(e.desc || '').split(' · ').slice(0, 2).join(' · ') + (x.mode === 'none' ? ' (cubierto 100% por la obra social)' : x.mode === 'free' ? ' · motivo: ' + String(x.why || '').trim() : ''), pro: e.pro, adjFor: e.id, by, at, rcpFix: 1, free: x.mode === 'free' ? 1 : undefined, freeWhy: x.mode === 'free' ? String(x.why || '').trim() : undefined });
+      if (dlt) pd.ledger.push({ id: A.uid(), date: d, type: 'ajuste', amount: dlt, desc: (x.off ? 'No se cobra: ' : x.mode === 'free' ? 'Bonificado: ' : 'Corrección de importe: ') + String(e.desc || '').split(' · ').slice(0, 2).join(' · ') + (x.mode === 'none' ? ' (cubierto 100% por la obra social)' : x.mode === 'free' ? ' · motivo: ' + String(x.why || '').trim() : '') + (why ? ' · ' + why : ''), why: why || undefined, pro: e.pro, adjFor: e.id, by, at, rcpFix: 1, free: x.mode === 'free' ? 1 : undefined, freeWhy: x.mode === 'free' ? String(x.why || '').trim() : undefined });
       if (x.off) { e.cobOk = 'quitado'; e.cobDone = at; e.cobDoneBy = by; m.ids = m.ids.filter(i => i !== e.id); }
     });
     (m.add || []).forEach(a => {
-      const id = A.uid(); pd.ledger.push({ id, date: d, type: 'cargo', amount: a.amt, desc: a.label + ' · agregada en recepción', pro: base.pro || (A.PAT(m.pid) || {}).pro, cob: 'rcp', cobAt: at, cobBy: by, apptId: base.apptId, loc: base.loc, rcpFix: 1 });
+      const id = A.uid(); pd.ledger.push({ id, date: d, type: 'cargo', amount: a.amt, desc: a.label + ' · agregada en recepción' + (why ? ' · ' + why : ''), why: why || undefined, pro: base.pro || (A.PAT(m.pid) || {}).pro, cob: 'rcp', cobAt: at, cobBy: by, apptId: base.apptId, loc: base.loc, rcpFix: 1 });
       m.ids.push(id);
     });
-    if (A.cjLog) A.cjLog('cobro', 'Corrigió el cobro de ' + ((A.PAT(m.pid) || {}).name || '') + ' antes de cobrar');
+    if (A.cjLog) A.cjLog('correccion', 'Corrigió el cobro de ' + ((A.PAT(m.pid) || {}).name || '') + ' antes de cobrar' + (why ? ': ' + why : ''));
     m.ed = null; m.add = []; A.touchPd(m.pid);
   }
-  ['ppGo', 'ppDebt'].forEach(k => { const prev = A.acts[k]; if (prev) A.acts[k] = function () { try { const m = S.modal; if (m && m.type === 'pcPay') { const nw = Object.keys(m.ed || {}).filter(id => m.ed[id].mode === 'free' && !m.ed[id].off && !String(m.ed[id].why || '').trim())[0]; if (nw) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Contá por qué no se cobra (queda anotado).'; } return; } const keepA1 = m.a1, keepA2 = m.a2; applyEdits(m); if (keepA1 != null) { m.a1 = keepA1; m.a2 = keepA2; } } } catch (e) { if (A.logError) A.logError('ppEdit', e); } return prev.apply(this, arguments); }; });
+  ['ppGo', 'ppDebt'].forEach(k => { const prev = A.acts[k]; if (prev) A.acts[k] = function () { try { const m = S.modal; if (m && m.type === 'pcPay') { const nw = Object.keys(m.ed || {}).filter(id => m.ed[id].mode === 'free' && !m.ed[id].off && !String(m.ed[id].why || '').trim())[0]; if (nw) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Contá por qué no se cobra (queda anotado).'; } return; }
+        const wi = $('#ppWhyAll'); if (wi) m.whyAll = wi.value; if (m.edit && edChanged(m) && !String(m.whyAll || '').trim()) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Escribí por qué corregiste el cobro: lo ve el dueño.'; } if (wi) wi.focus(); return; } const keepA1 = m.a1, keepA2 = m.a2; applyEdits(m); if (keepA1 != null) { m.a1 = keepA1; m.a2 = keepA2; } } } catch (e) { if (A.logError) A.logError('ppEdit', e); } return prev.apply(this, arguments); }; });
 
   /* =====================================================================
      estilos (solo tokens del tema)
@@ -275,6 +279,7 @@
     '.pp-tot{display:flex;justify-content:space-between;align-items:baseline;font-size:1.05rem;margin-top:4px}.pp-tot b{font-size:1.5rem;color:var(--accent)}.pp-prev{margin:2px 0;color:var(--ink-2);font-size:.88rem}' +
     '.pp-b{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}.pp-more{margin:8px 0 0;text-align:center;color:var(--ink-2);font-size:.85rem}' +
     '.po-why{display:flex;flex-direction:column;gap:2px;margin-top:6px;font-size:.82rem;color:var(--ink-2)}.po-why input,.pp-why{font:inherit;font-size:.9rem;padding:5px 8px;border:1px solid var(--warn,#e8a33d);border-radius:8px;background:var(--surface);color:var(--ink);margin-top:4px}' +
+    '.pp-whyall{margin:10px 0 0}.pp-whyall small{color:var(--ink-2);font-weight:400}.po-whyb{background:none;border:0;padding:2px 0;margin-top:4px;color:var(--accent);font:inherit;font-size:.82rem;cursor:pointer;text-align:left}.po-why.opt input{border-color:var(--line)}' +
     '.pp-edit{margin:0 0 8px}.pp-ed{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:0 0 10px}.pp-er{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}.pp-er:first-of-type{border-top:0}.pp-er.pp-off .pp-el b{text-decoration:line-through;opacity:.6}' +
     '.pp-el{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.pp-el small{color:var(--ink-2);font-size:.8rem}.pp-el select{max-width:100%}.pp-er .po-amt{flex:0 0 118px;display:flex;align-items:center;gap:4px}.pp-er .po-amt input{width:100%;min-width:0}.pp-el b{font-size:.95rem;line-height:1.25}.pp-addsel{margin-top:8px;width:100%}' +
     '@media (max-width:600px){#ppPopHost{inset:auto 10px 10px 10px;width:auto}.pw-btns{grid-template-columns:1fr}.pw-b{min-height:0}}';

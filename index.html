@@ -8184,10 +8184,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.7';
+  A.VERSION = '1.8';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.62.0';
+  A.VBUILD = '1.63.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -15329,7 +15329,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       else { const t = { id: A.uid(), cond: null, tooth: null, faces: '', label: it.label, price: it.price, status: 'hecho', planDate: null, doneDate: d, pro: m.pro, bid: null }; pd.tx.push(t); A.onTxDone(pid, t); made.push(t); }
       /* el cargo que se acaba de crear: importe confirmado y a quién le toca cobrarlo */
       pd.ledger.slice(before).filter(e => e.type === 'cargo' && !e.voided).forEach(e => {
-        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } if (it.free || (it.os && it.os.mode === 'free')) { e.free = 1; e.freeWhy = String(it.why || '').trim(); e.desc = (e.desc || it.label) + ' · no se cobra: ' + e.freeWhy; if (!e.os && !(+e.amount > 0)) e.cobOk = 'bonif'; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
+        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } if (it.free || (it.os && it.os.mode === 'free')) { e.free = 1; e.freeWhy = String(it.why || '').trim(); e.desc = (e.desc || it.label) + ' · no se cobra: ' + e.freeWhy; if (!e.os && !(+e.amount > 0)) e.cobOk = 'bonif'; } else if (String(it.why || '').trim()) { e.why = String(it.why).trim(); e.desc = (e.desc || it.label) + ' · aclaración: ' + e.why; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
         if (a) e.apptId = a.id; if (curSede() && !e.loc) e.loc = curSede();
       });
     });
@@ -15432,8 +15432,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.ppSplit = () => { ppSync(); const m = S.modal, want = m.tot + (m.addPrev ? m.prev : 0); m.split = !m.split; if (m.split) { m.a1 = Math.round(want / 2); m.a2 = want - m.a1; } else { m.a1 = want; m.a2 = 0; } A.renderModal(); };
   const settle = (pd, ids, how, pagoId) => pd.ledger.forEach(e => { if (ids.indexOf(e.id) >= 0) { e.cobOk = how; e.cobDone = new Date().toISOString(); e.cobDoneBy = who(); if (pagoId) e.pagoId = pagoId; } });
   A.acts.ppGo = () => {
-    ppSync(); const m = S.modal, pid = m.pid, pd = A.pd(pid), d = today(), its = pd.ledger.filter(e => m.ids.indexOf(e.id) >= 0);
-    const lines = [[m.a1, m.m1]].concat(m.split ? [[m.a2, m.m2]] : []).filter(l => l[0] > 0);
+    ppSync(); if (A.plBeforePay) A.plBeforePay(); const m = S.modal, pid = m.pid, pd = A.pd(pid), d = today(), its = pd.ledger.filter(e => m.ids.indexOf(e.id) >= 0);
+    const lines = (m.plLines ? m.plLines.map(l => [l.total, l.meth, l]) : [[m.a1, m.m1]].concat(m.split ? [[m.a2, m.m2]] : [])).filter(l => l[0] > 0);
     if (!lines.length) { const o = $('#ppMsg'); o.className = 'hint bad'; o.textContent = 'Escribí cuánto paga.'; return; }
     /* a quién se le atribuye el cobro: el profesional con más importe en lo que se cobra */
     const by = {}; its.forEach(e => { by[e.pro] = (by[e.pro] || 0) + e.amount; }); const pro = Object.keys(by).sort((x, y) => by[y] - by[x])[0] || (A.PAT(pid) || {}).pro;
@@ -15442,6 +15442,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let first = null;
     lines.forEach(l => {
       const e = { id: A.uid(), date: d, type: 'pago', amount: l[0], desc: its.length ? 'Cobro de prácticas' : 'Cobro', method: l[1], pro, rcp: 'R-' + pnum(pid) + '-' + (++pd.rcpSeq), by: who(), pcIds: m.ids.slice() };
+      if (l[2]) { if (l[2].n > 1) { e.cuotas = l[2].n; e.desc += ' · ' + l[2].n + ' cuotas'; } if (l[2].rec) { e.rec = l[2].rec; e.recPct = l[2].pct; } }
       if (curSede()) e.loc = curSede(); else if (its[0] && its[0].loc) e.loc = its[0].loc;
       if (room) e.room = room.name; if (ap) e.apptId = ap.id;
       pd.ledger.push(e); if (!first) first = e;
@@ -18317,6 +18318,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.8', b: '1.63.0', d: '2026-11-17', items: [
+      { t: 'Cobrar con varios medios de pago a la vez (por ejemplo, una parte en efectivo y el resto con tarjeta), también en «Cobrar antes de atender».', top: true },
+      { t: 'Recargos por cuotas de tarjeta y descuentos por medio de pago, fijos para cada consultorio: Ajustes › Medios de pago y recargos. Si se cambian en un cobro, pide el motivo.' },
+      { t: 'Toda corrección o aclaración en un cobro lleva su motivo y el dueño la ve en Caja › Historial › Correcciones.' }] },
     { v: '1.7', b: '1.62.0', d: '2026-11-17', items: [
       { t: 'Al anotar lo que hiciste en la evolución, primero te pregunta: «¿Cobra secretaría o lo cobro yo?». A recepción le aparece un cartel con lo que escribiste y lo que hay que cobrar, y lo puede corregir.', top: true },
       { t: 'Entiende varias prácticas juntas: «arreglo en 24, 25 y 33 por oclusal, por mesial y por distal, y limpieza».' },
@@ -20964,6 +20969,8 @@ const OVMenu = (function () {
           MODES.filter(x => x[0] !== 'cos' || o.cos > 0 || o.mode === 'cos').map(x => '<option value="' + x[0] + '"' + (o.mode === x[0] ? ' selected' : '') + '>' + esc(modeTxt(x[0], it)) + '</option>').join('') + '</select></label>';
       } else sub = '<small>Particular</small><label class="po-cop"><span class="sr">Qué paga el paciente</span><select data-chg="poFree" data-i="' + i + '"><option value="">Se cobra</option><option value="1"' + (it.free ? ' selected' : '') + '>No le cobro nada</option></select></label>';
       if (it.free || (o && o.mode === 'free')) sub += '<label class="po-why"><span>¿Por qué no se le cobra? (queda anotado)</span><input data-in="poWhy" data-i="' + i + '" value="' + esc(it.why || '') + '" placeholder="Ej.: garantía de un arreglo anterior, cortesía, familiar"></label>';
+      else if (it.whyOpen || it.why) sub += '<label class="po-why opt"><span>Aclaración para el dueño (opcional)</span><input data-in="poWhy" data-i="' + i + '" value="' + esc(it.why || '') + '" placeholder="Ej.: le hice precio por ser familiar del Dr."></label>';
+      else sub += '<button type="button" class="po-whyb" data-act="poWhyOn" data-i="' + i + '">✎ Aclarar</button>';
       return '<li class="' + (it.on ? '' : 'off') + '"><label class="po-chk"><input type="checkbox" data-chg="poOn" data-i="' + i + '"' + (it.on ? ' checked' : '') + ' aria-label="Incluir ' + esc(it.label) + '"></label><span class="po-l"><b>' + esc(it.label) + '</b>' + sub + '</span>' +
         '<span class="po-amt"><small class="po-al">Paciente</small><span aria-hidden="true">$</span><input inputmode="numeric" data-in="poAmt" data-i="' + i + '" value="' + (it.pay || 0) + '" aria-label="Lo que paga el paciente por ' + esc(it.label) + '"></span></li>';
     }).join('') + '</ul>';
@@ -21009,6 +21016,7 @@ const OVMenu = (function () {
   };
   A.chg.poFree = el => { sync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it) return; it.free = !!el.value; it.pay = payOf(it); A.renderModal(); };
   A.ins.poWhy = el => { const it = S.modal.items[+el.getAttribute('data-i')]; if (it) it.why = el.value; };
+  A.acts.poWhyOn = el => { sync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (!it) return; it.whyOpen = true; A.renderModal(); const n = $('[data-in="poWhy"][data-i="' + el.getAttribute('data-i') + '"]'); if (n) n.focus(); };
   A.chg.poLearn = el => { S.modal.learn = el.checked; };
   A.acts.poCosDef = el => {
     sync(); const v = el.getAttribute('data-v'); A.CFG.copDef = v; A.save();
@@ -23144,13 +23152,15 @@ const OVMenu = (function () {
   function checks() {
     const t = T(), out = [], c = C();
     const worked = d => pays().some(p => p.date === d) || moves().some(m => m.date === d) || (A.day ? A.day(d).some(a => a.type !== 'block' && a.status === 'atendido') : false);
-    for (let i = c.firstUse ? 7 : 1; i >= 1; i--) { const d = A.add(t, -i); if (worked(d) && !closeOf(d) && (!c.firstUse || d >= c.firstUse)) { out.push({ lvl: 'bad', txt: 'No se cerró la caja del ' + dayName(d) + '.', act: 'cjCloseOpen', args: { 'data-d': d }, btn: 'Cerrarla ahora' }); break; } }
+    for (let i = c.firstUse ? 7 : 1; i >= 1; i--) { const d = A.add(t, -i); if (worked(d) && !closeOf(d) && (!c.firstUse || d >= c.firstUse)) { out.push({ lvl: 'bad', txt: 'No se cerró la caja ' + (dayName(d) === 'ayer' ? 'de ayer' : 'del ' + dayName(d)) + '.', act: 'cjCloseOpen', args: { 'data-d': d }, btn: 'Cerrarla ahora' }); break; } }
     if (!openOf(t) && !closeOf(t) && worked(t)) out.push({ lvl: 'warn', txt: 'Todavía no abriste la caja de hoy (contar la plata del cajón).', act: 'cjOpenOpen', btn: 'Abrir la caja' });
     const cl = closeOf(t); if (cl && cl.flow != null && Math.round(dayEf(t).net) !== Math.round(cl.flow)) out.push({ lvl: 'warn', txt: 'Hubo movimientos en efectivo después de cerrar la caja de hoy.', act: 'cjSub', args: { 'data-s': 'hist' }, btn: 'Ver' });
     try { const dc = A.dayControl ? A.dayControl(t) : null; const n = dc ? (dc.sinCobro || []).length : 0; if (n) out.push({ lvl: 'warn', txt: plural(n, 'paciente atendido hoy no tiene', 'pacientes atendidos hoy no tienen') + ' cobro ni deuda anotada.', act: 'cjCtl', btn: 'Ver quiénes' }); } catch (e) { /* nada */ }
     const tc = pays().filter(p => p.needConf && !p.ac && p.date >= confFrom()); if (tc.length) out.push({ lvl: 'warn', txt: plural(tc.length, 'transferencia') + ' para confirmar que llegaron al banco (' + money(tc.reduce((s, p) => s + p.amt, 0)) + ').', act: 'cjSub', args: { 'data-s': 'plata' }, btn: 'Revisar' });
     const venc = c.moves.filter(m => m.status === 'pendiente' && m.type === 'egreso' && (m.due || m.date) < t); if (venc.length) out.push({ lvl: 'bad', txt: plural(venc.length, 'cuenta vencida', 'cuentas vencidas') + ' para pagar (' + money(venc.reduce((s, m) => s + +m.amount, 0)) + ').', act: 'cjSub', args: { 'data-s': 'pagar' }, btn: 'Ver' });
     try { const cu = (A.upcomingCuotas ? A.upcomingCuotas(0) : []).filter(x => x.late); if (cu.length) out.push({ lvl: 'warn', txt: plural(cu.length, 'cuota vencida', 'cuotas vencidas') + ' de pacientes.', act: 'cjSub', args: { 'data-s': 'deben' }, btn: 'Ver' }); } catch (e) { /* nada */ }
+    if (boss()) { let nc = 0; (A.allPids ? A.allPids() : []).forEach(id => { const pd = A.pd(id); (pd && pd.ledger || []).forEach(e => { if (e.date === t && !e.voided && ((e.type === 'ajuste' && (e.rcpFix || e.plOver || e.free)) || (e.type === 'cargo' && (e.freeWhy || e.why)))) nc++; }); });
+      if (nc) out.push({ lvl: 'warn', txt: plural(nc, 'corrección o aclaración', 'correcciones o aclaraciones') + ' en cobros de hoy (cada una con su motivo).', act: 'cjCorr', btn: 'Ver' }); }
     return out;
   }
   A.cjChecks = checks;
@@ -23502,6 +23512,12 @@ const OVMenu = (function () {
     C().adj.forEach(j => { if (inR(j.date)) R.push({ d: j.date, k: 'cor', t: 'Corrección · ' + accName(j.acc), s: (j.why || '') + (j.by ? ' · ' + j.by : ''), amt: +j.amt }); });
     C().voids.forEach(m => { if (inR(m.date) || (m.void && inR(m.void.at.slice(0, 10)))) R.push({ d: m.date, k: 'cor', t: 'Anulado · ' + (m.desc || ''), s: 'anuló ' + ((m.void || {}).by || '') + ' el ' + A.fmtDMY(((m.void || {}).at || '').slice(0, 10)) + ': ' + ((m.void || {}).why || ''), amt: 0, show: money(m.amount), voided: 1 }); });
     (A.allPids ? A.allPids() : []).forEach(id => { const pd = A.pd(id); (pd && pd.ledger || []).forEach(e => { if (e.type === 'pago' && e.voided && !e.anula && e.voidWhy && inR(e.date)) R.push({ d: e.date, k: 'cor', t: 'Cobro anulado · ' + ((A.PAT(id) || {}).name || ''), s: 'anuló ' + (e.voidBy || '') + ': ' + e.voidWhy, amt: 0, show: money(e.amount), voided: 1 }); }); });
+    /* correcciones y aclaraciones hechas al cobrar (para que el dueño las vea) */
+    (A.allPids ? A.allPids() : []).forEach(id => { const pd = A.pd(id), nm = (A.PAT(id) || {}).name || ''; (pd && pd.ledger || []).forEach(e => {
+      if (!inR(e.date) || e.voided) return;
+      if (e.type === 'ajuste' && (e.rcpFix || e.plOver || e.free)) R.push({ d: e.date, k: 'cor', t: 'Corrección en el cobro · ' + nm, s: String(e.desc || '') + (e.by ? ' · ' + e.by : ''), amt: +e.amount || 0, pid: id });
+      else if (e.type === 'cargo' && (e.freeWhy || e.why)) R.push({ d: e.date, k: 'cor', t: (e.freeWhy ? 'No se cobró · ' : 'Aclaración · ') + nm, s: (e.freeWhy || e.why) + ' · ' + String(e.desc || '').split(' · ').slice(0, 2).join(' · ') + (e.cobBy ? ' · ' + e.cobBy : ''), amt: 0, show: money(e.amount), pid: id });
+    }); });
     return R.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0));
   }
   function histHTML() {
@@ -23518,6 +23534,7 @@ const OVMenu = (function () {
     h += '<details class="cj-more"><summary>Registro completo de la caja (quién hizo qué)</summary>' + (LG.length ? '<div class="cj-rows">' + LG.map(l => '<div class="cj-row"><i class="cj-dot ' + (l.k === 'tarde' || l.k === 'anular' ? 'bad' : 'ok') + '"></i><div class="cj-who"><b>' + esc(l.txt) + '</b><small>' + esc(l.by || '') + ' · ' + esc(new Date(l.at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })) + '</small></div></div>').join('') + '</div>' : empty('Sin registros todavía.')) + '</details>';
     return h;
   }
+  A.acts.cjCorr = () => { S.tab = 'caja'; S.caja = S.caja || {}; S.caja.sub = 'hist'; S.caja.hr = 'hoy'; S.caja.hf = 'cor'; A.refresh(); window.scrollTo(0, 0); };
   A.acts.cjHr = el => { S.caja.hr = el.getAttribute('data-v'); A.refresh(); };
   A.acts.cjHf = el => { S.caja.hf = el.getAttribute('data-v'); A.refresh(); };
 
@@ -24134,6 +24151,7 @@ const OVMenu = (function () {
           (x.mode === 'free' ? '<input class="pp-why" data-in="ppEdWhy" data-id="' + e.id + '" value="' + esc(x.why || '') + '" placeholder="¿Por qué no se cobra? (obligatorio)" aria-label="Motivo">' : '') + '</span>' +
           '<span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-chg="ppEdAmt" data-id="' + e.id + '" value="' + (x.off ? 0 : x.amt) + '"' + (x.off ? ' disabled' : '') + ' aria-label="Importe"></span></div>';
       }).join('') + (m.add || []).map((a, i) => '<div class="pp-er pp-new"><span class="po-chk">+</span><span class="pp-el"><b>' + esc(a.label) + '</b><small>agregada ahora</small></span><span class="po-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-chg="ppAddAmt" data-i="' + i + '" value="' + a.amt + '" aria-label="Importe"></span><button class="btn small ghost" data-act="ppAddDel" data-i="' + i + '" aria-label="Quitar">✕</button></div>').join('') +
+        '<div class="field pp-whyall"><label for="ppWhyAll">¿Por qué lo corregís? <small>(obligatorio si cambiás algo · lo ve el dueño)</small></label><input id="ppWhyAll" data-in="ppWhyAll" value="' + esc(m.whyAll || '') + '" placeholder="Ej.: el doctor me avisó que la limpieza no se cobra"></div>' +
         '<select class="pp-addsel" data-chg="ppAdd" aria-label="Agregar otra práctica"><option value="">+ Agregar otra práctica…</option>' + (A.catCats ? A.catCats() : []).map(c => '<optgroup label="' + esc(c) + '">' + A.CAT.filter(x => x.cat === c).map(x => '<option value="' + esc(x.k) + '">' + esc(x.label) + ' · ' + money(x.price) + '</option>').join('') + '</optgroup>').join('') + '</select></div>';
     }
     if (!extra) return html;
@@ -24151,28 +24169,31 @@ const OVMenu = (function () {
   A.chg.ppEdOn = el => { const m = S.modal, x = edOf(m, el.getAttribute('data-id')); x.off = !el.checked; reTot(m); A.renderModal(); };
   A.chg.ppEdAmt = el => { const m = S.modal, x = edOf(m, el.getAttribute('data-id')); x.amt = Math.max(0, num(el.value)); reTot(m); A.renderModal(); };
   A.chg.ppEdMode = el => { const m = S.modal, id = el.getAttribute('data-id'), x = edOf(m, id), e = A.pd(m.pid).ledger.filter(y => y.id === id)[0] || {}; x.mode = el.value; if (x.mode === 'none' || x.mode === 'free') x.amt = 0; else if (x.amt === 0) x.amt = e.amount || 0; reTot(m); A.renderModal(); };
+  A.ins.ppWhyAll = el => { S.modal.whyAll = el.value; };
   A.ins.ppEdWhy = el => { const x = edOf(S.modal, el.getAttribute('data-id')); x.why = el.value; };
   A.chg.ppAdd = el => { const m = S.modal, c = A.CAT.filter(x => x.k === el.value)[0]; if (!c) return; (m.add = m.add || []).push({ k: c.k, label: c.label, amt: c.price || 0 }); reTot(m); A.renderModal(); };
   A.chg.ppAddAmt = el => { const m = S.modal, a = (m.add || [])[+el.getAttribute('data-i')]; if (a) { a.amt = Math.max(0, num(el.value)); reTot(m); A.renderModal(); } };
   A.acts.ppAddDel = el => { const m = S.modal; (m.add || []).splice(+el.getAttribute('data-i'), 1); reTot(m); A.renderModal(); };
   /* antes de cobrar (o de dejar la deuda): se graban las correcciones */
+  const edChanged = m => { if ((m.add || []).length) return true; const pd = A.pd(m.pid); return Object.keys(m.ed || {}).some(id => { const x = m.ed[id], e = pd.ledger.filter(y => y.id === id)[0] || {}; return x.off || (x.amt !== e.amount) || ((x.mode || '') !== (e.cop || (e.os ? 'cos' : ''))); }); };
   function applyEdits(m) {
     if (!m || (!m.ed && !(m.add || []).length)) return;
-    const pd = A.pd(m.pid), d = T(), by = who(), at = new Date().toISOString(), its = pd.ledger.filter(e => (m.ids || []).indexOf(e.id) >= 0), base = its[0] || {};
+    const pd = A.pd(m.pid), d = T(), by = who(), at = new Date().toISOString(), its = pd.ledger.filter(e => (m.ids || []).indexOf(e.id) >= 0), base = its[0] || {}, why = String(m.whyAll || '').trim();
     its.forEach(e => {
       const x = (m.ed || {})[e.id]; if (!x) return;
       const now = x.off ? 0 : x.amt, dlt = now - e.amount;
-      if (dlt) pd.ledger.push({ id: A.uid(), date: d, type: 'ajuste', amount: dlt, desc: (x.off ? 'No se cobra: ' : x.mode === 'free' ? 'Bonificado: ' : 'Corrección de importe: ') + String(e.desc || '').split(' · ').slice(0, 2).join(' · ') + (x.mode === 'none' ? ' (cubierto 100% por la obra social)' : x.mode === 'free' ? ' · motivo: ' + String(x.why || '').trim() : ''), pro: e.pro, adjFor: e.id, by, at, rcpFix: 1, free: x.mode === 'free' ? 1 : undefined, freeWhy: x.mode === 'free' ? String(x.why || '').trim() : undefined });
+      if (dlt) pd.ledger.push({ id: A.uid(), date: d, type: 'ajuste', amount: dlt, desc: (x.off ? 'No se cobra: ' : x.mode === 'free' ? 'Bonificado: ' : 'Corrección de importe: ') + String(e.desc || '').split(' · ').slice(0, 2).join(' · ') + (x.mode === 'none' ? ' (cubierto 100% por la obra social)' : x.mode === 'free' ? ' · motivo: ' + String(x.why || '').trim() : '') + (why ? ' · ' + why : ''), why: why || undefined, pro: e.pro, adjFor: e.id, by, at, rcpFix: 1, free: x.mode === 'free' ? 1 : undefined, freeWhy: x.mode === 'free' ? String(x.why || '').trim() : undefined });
       if (x.off) { e.cobOk = 'quitado'; e.cobDone = at; e.cobDoneBy = by; m.ids = m.ids.filter(i => i !== e.id); }
     });
     (m.add || []).forEach(a => {
-      const id = A.uid(); pd.ledger.push({ id, date: d, type: 'cargo', amount: a.amt, desc: a.label + ' · agregada en recepción', pro: base.pro || (A.PAT(m.pid) || {}).pro, cob: 'rcp', cobAt: at, cobBy: by, apptId: base.apptId, loc: base.loc, rcpFix: 1 });
+      const id = A.uid(); pd.ledger.push({ id, date: d, type: 'cargo', amount: a.amt, desc: a.label + ' · agregada en recepción' + (why ? ' · ' + why : ''), why: why || undefined, pro: base.pro || (A.PAT(m.pid) || {}).pro, cob: 'rcp', cobAt: at, cobBy: by, apptId: base.apptId, loc: base.loc, rcpFix: 1 });
       m.ids.push(id);
     });
-    if (A.cjLog) A.cjLog('cobro', 'Corrigió el cobro de ' + ((A.PAT(m.pid) || {}).name || '') + ' antes de cobrar');
+    if (A.cjLog) A.cjLog('correccion', 'Corrigió el cobro de ' + ((A.PAT(m.pid) || {}).name || '') + ' antes de cobrar' + (why ? ': ' + why : ''));
     m.ed = null; m.add = []; A.touchPd(m.pid);
   }
-  ['ppGo', 'ppDebt'].forEach(k => { const prev = A.acts[k]; if (prev) A.acts[k] = function () { try { const m = S.modal; if (m && m.type === 'pcPay') { const nw = Object.keys(m.ed || {}).filter(id => m.ed[id].mode === 'free' && !m.ed[id].off && !String(m.ed[id].why || '').trim())[0]; if (nw) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Contá por qué no se cobra (queda anotado).'; } return; } const keepA1 = m.a1, keepA2 = m.a2; applyEdits(m); if (keepA1 != null) { m.a1 = keepA1; m.a2 = keepA2; } } } catch (e) { if (A.logError) A.logError('ppEdit', e); } return prev.apply(this, arguments); }; });
+  ['ppGo', 'ppDebt'].forEach(k => { const prev = A.acts[k]; if (prev) A.acts[k] = function () { try { const m = S.modal; if (m && m.type === 'pcPay') { const nw = Object.keys(m.ed || {}).filter(id => m.ed[id].mode === 'free' && !m.ed[id].off && !String(m.ed[id].why || '').trim())[0]; if (nw) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Contá por qué no se cobra (queda anotado).'; } return; }
+        const wi = $('#ppWhyAll'); if (wi) m.whyAll = wi.value; if (m.edit && edChanged(m) && !String(m.whyAll || '').trim()) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = 'Escribí por qué corregiste el cobro: lo ve el dueño.'; } if (wi) wi.focus(); return; } const keepA1 = m.a1, keepA2 = m.a2; applyEdits(m); if (keepA1 != null) { m.a1 = keepA1; m.a2 = keepA2; } } } catch (e) { if (A.logError) A.logError('ppEdit', e); } return prev.apply(this, arguments); }; });
 
   /* =====================================================================
      estilos (solo tokens del tema)
@@ -24194,9 +24215,228 @@ const OVMenu = (function () {
     '.pp-tot{display:flex;justify-content:space-between;align-items:baseline;font-size:1.05rem;margin-top:4px}.pp-tot b{font-size:1.5rem;color:var(--accent)}.pp-prev{margin:2px 0;color:var(--ink-2);font-size:.88rem}' +
     '.pp-b{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}.pp-more{margin:8px 0 0;text-align:center;color:var(--ink-2);font-size:.85rem}' +
     '.po-why{display:flex;flex-direction:column;gap:2px;margin-top:6px;font-size:.82rem;color:var(--ink-2)}.po-why input,.pp-why{font:inherit;font-size:.9rem;padding:5px 8px;border:1px solid var(--warn,#e8a33d);border-radius:8px;background:var(--surface);color:var(--ink);margin-top:4px}' +
+    '.pp-whyall{margin:10px 0 0}.pp-whyall small{color:var(--ink-2);font-weight:400}.po-whyb{background:none;border:0;padding:2px 0;margin-top:4px;color:var(--accent);font:inherit;font-size:.82rem;cursor:pointer;text-align:left}.po-why.opt input{border-color:var(--line)}' +
     '.pp-edit{margin:0 0 8px}.pp-ed{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:0 0 10px}.pp-er{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}.pp-er:first-of-type{border-top:0}.pp-er.pp-off .pp-el b{text-decoration:line-through;opacity:.6}' +
     '.pp-el{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.pp-el small{color:var(--ink-2);font-size:.8rem}.pp-el select{max-width:100%}.pp-er .po-amt{flex:0 0 118px;display:flex;align-items:center;gap:4px}.pp-er .po-amt input{width:100%;min-width:0}.pp-el b{font-size:.95rem;line-height:1.25}.pp-addsel{margin-top:8px;width:100%}' +
     '@media (max-width:600px){#ppPopHost{inset:auto 10px 10px 10px;width:auto}.pw-btns{grid-template-columns:1fr}.pw-b{min-height:0}}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.8: cobrar con varios medios de pago a la vez, recargos por cuotas configurados en cada consultorio (Ajustes) y toda corrección con su motivo ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const money = n => A.money(Math.round(n || 0));
+  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10); return isNaN(n) ? 0 : n; };
+  const pnum = v => { const s = String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.').replace(/[−–]/g, '-'); const n = parseFloat(s); return isFinite(n) ? n : null; };
+  const pctTxt = p => (p > 0 ? '+' : p < 0 ? '−' : '') + String(Math.round(Math.abs(p) * 100) / 100).replace('.', ',') + '%';
+  const who = () => { try { return (A.actor && A.actor().who) || ''; } catch (e) { return ''; } };
+  const boss = () => (A.isBoss ? A.isBoss() : true);
+  const METHS = () => (A.METHODS || ['Efectivo', 'Transferencia', 'Débito', 'Crédito', 'Mercado Pago']).filter(x => !/obra social/i.test(x));
+  const CUOTAS = [1, 2, 3, 4, 5, 6, 9, 10, 12, 18, 24];
+
+  /* =====================================================================
+     1. RECARGOS DE CADA CONSULTORIO
+     A.CFG.payRates = { 'Crédito': { p: 0, cuo: true, c: { 1: 10, 2: 25, 3: 25, 6: 25 } }, 'Efectivo': { p: -5 } … }
+     ===================================================================== */
+  const RATES = () => A.CFG.payRates || {};
+  const hasCuotas = meth => !!(RATES()[meth] && RATES()[meth].cuo) || (/cr[eé]dito/i.test(meth) && !(RATES()[meth] && RATES()[meth].cuo === false));
+  A.payRate = (meth, n) => {
+    const r = RATES()[meth]; if (!r) return 0;
+    if (hasCuotas(meth) && r.c) { const k = Object.keys(r.c).map(Number).filter(x => x <= (n || 1) && r.c[x] !== '' && r.c[x] != null).sort((a, b) => b - a)[0]; if (k != null) return +r.c[k] || 0; }
+    return +r.p || 0;
+  };
+  const configured = () => Object.keys(RATES()).some(k => { const r = RATES()[k]; return (+r.p) || (r.c && Object.keys(r.c).some(x => +r.c[x])); });
+  A.acts.payRatesOpen = () => { if (A.hideDrawer) A.hideDrawer(); S.modal = { type: 'payRates', back: S.modal && S.modal.type !== 'ajustes' ? S.modal : null }; A.renderModal(); };
+  MF.payRates = m => {
+    const R = RATES(), ok = boss();
+    let b = '<p class="m-lead">Lo que se le suma (recargo) o se le descuenta al paciente según cómo paga. Queda fijo para este consultorio: la secretaria no tiene que acordarse ni hacer cuentas. Si en un cobro se cambia, la app pide el motivo.</p>';
+    b += '<div class="pr-list">' + METHS().map(k => {
+      const r = R[k] || {}, cuo = hasCuotas(k);
+      return '<section class="pr-m"><div class="pr-mh"><b>' + esc(k) + '</b>' + (ok ? '<label class="pr-cuo"><input type="checkbox" data-pr="' + esc(k) + '" data-f="cuo"' + (cuo ? ' checked' : '') + '> Se paga en cuotas</label>' : '') + '</div>' +
+        (cuo ? '<div class="pr-cs">' + CUOTAS.map(n => '<label class="pr-c"><span>' + (n === 1 ? '1 pago' : n + ' cuotas') + '</span><span class="pr-in"><input inputmode="decimal" data-pr="' + esc(k) + '" data-f="c" data-n="' + n + '" value="' + (r.c && r.c[n] != null ? String(r.c[n]).replace('.', ',') : '') + '" placeholder="—"' + (ok ? '' : ' disabled') + ' aria-label="Recargo con ' + esc(k) + ' en ' + n + ' cuotas"><i>%</i></span></label>').join('') + '</div><small class="pr-h">Si dejás una vacía, se usa la de menos cuotas que tenga valor.</small>'
+          : '<label class="pr-c one"><span>Recargo o descuento</span><span class="pr-in"><input inputmode="decimal" data-pr="' + esc(k) + '" data-f="p" value="' + (r.p ? String(r.p).replace('.', ',') : '') + '" placeholder="0"' + (ok ? '' : ' disabled') + ' aria-label="Recargo con ' + esc(k) + '"><i>%</i></span></label>') + '</section>';
+    }).join('') + '</div>';
+    b += '<p class="hint">Para un <b>descuento</b> poné el número con un menos adelante (por ejemplo, −10 = 10% de descuento pagando en efectivo).</p>';
+    if (!ok) b += '<p class="hint warn">Solo el dueño o la administración pueden cambiar estos valores.</p>';
+    return A.modalShell('Medios de pago y recargos', b, '<button class="btn" data-act="payRatesClose">' + (ok ? 'Cancelar' : 'Cerrar') + '</button>' + (ok ? '<button class="btn primary" data-act="payRatesSave">Guardar</button>' : ''));
+  };
+  document.addEventListener('change', e => { const t = e.target; if (t && t.getAttribute && t.getAttribute('data-f') === 'cuo' && S.modal && S.modal.type === 'payRates') { readRates(); A.renderModal(); } }, true);
+  function readRates() {
+    const R = JSON.parse(JSON.stringify(RATES()));
+    A.$$('#modalHost [data-pr]').forEach(i => {
+      const k = i.getAttribute('data-pr'), f = i.getAttribute('data-f'), r = R[k] = R[k] || {};
+      if (f === 'cuo') r.cuo = i.checked;
+      else if (f === 'p') { const v = pnum(i.value); r.p = v == null ? 0 : v; }
+      else if (f === 'c') { r.c = r.c || {}; const v = pnum(i.value); if (v == null) delete r.c[i.getAttribute('data-n')]; else r.c[i.getAttribute('data-n')] = v; }
+    });
+    A.CFG.payRates = R;
+  }
+  A.acts.payRatesSave = () => {
+    readRates(); A.save(); if (A.cjLog) A.cjLog('config', 'Cambió los recargos por medio de pago y cuotas');
+    const back = S.modal.back; S.modal = back || null; A.renderModal(); A.toast('Recargos guardados para este consultorio.');
+  };
+  A.acts.payRatesClose = () => { const back = S.modal.back; S.modal = back || null; A.renderModal(); };
+  /* entrada en Ajustes › Consultorio (solo dueño o administración) */
+  function mountMenu() {
+    if (!boss() || document.getElementById('drPayRates')) return;
+    const ref = document.querySelector('#gearMenu .aj-sec .dnav[data-act="osOpen"]') || document.querySelector('#gearMenu .aj-sec .dnav[data-act="catalogOpen"]'); if (!ref) return;
+    const b = ref.cloneNode(true); b.id = 'drPayRates'; b.setAttribute('data-act', 'payRatesOpen'); [].slice.call(b.attributes).forEach(a => { if (/^data-/.test(a.name) && a.name !== 'data-act') b.removeAttribute(a.name); });
+    const t = b.querySelector('.t') || b.querySelector('span'); if (t) t.innerHTML = 'Medios de pago y recargos<small>Recargo por cuotas de tarjeta, descuento en efectivo</small>';
+    ref.after(b);
+  }
+  mountMenu(); setTimeout(mountMenu, 1500);
+  const arPrev = A.afterRefresh; A.afterRefresh = () => { if (arPrev) arPrev(); try { mountMenu(); } catch (e) { /* nada */ } };
+
+  /* =====================================================================
+     2. VARIOS MEDIOS DE PAGO
+     m.pl = [{ meth, amt (parte del precio; la última línea es «el resto»), n (cuotas), pct (null = el del consultorio), why }]
+     ===================================================================== */
+  const initPl = (m, meth) => { if (!m.pl) m.pl = [{ meth: meth || 'Efectivo', amt: 0, n: 1, pct: null, why: '' }]; return m.pl; };
+  A.payLines = (m, base) => {
+    const L = initPl(m), out = []; let left = base;
+    L.forEach((l, i) => {
+      const last = i === L.length - 1, b = last ? Math.max(0, left) : Math.max(0, Math.min(l.amt || 0, left));
+      left -= b;
+      const n = hasCuotas(l.meth) ? (l.n || 1) : 1, def = A.payRate(l.meth, n), pct = l.pct == null ? def : l.pct;
+      const rec = Math.round(b * pct / 100), total = b + rec;
+      out.push({ i, meth: l.meth, base: b, n, pct, def, over: l.pct != null && Math.abs(l.pct - def) > 0.001, why: l.why || '', rec, total, each: n > 1 ? Math.ceil(total / n) : total, last });
+    });
+    return out;
+  };
+  A.payLinesHTML = (m, base) => {
+    const L = A.payLines(m, base), multi = L.length > 1, rec = L.reduce((s, l) => s + l.rec, 0), tot = L.reduce((s, l) => s + l.total, 0);
+    let h = '<div class="pl-box"><div class="pl-hd">¿Cómo paga?</div>';
+    L.forEach(l => {
+      h += '<div class="pl-ln"><div class="pl-r1"><select data-chg="plMeth" data-i="' + l.i + '" aria-label="Medio de pago">' + METHS().map(x => '<option' + (x === l.meth ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select>' +
+        (multi ? (l.last ? '<span class="pl-rest">el resto: <b>' + money(l.base) + '</b></span>' : '<span class="po-amt pl-amt"><span aria-hidden="true">$</span><input inputmode="numeric" data-chg="plAmt" data-i="' + l.i + '" value="' + (l.base || '') + '" placeholder="¿cuánto?" aria-label="Cuánto paga con ' + esc(l.meth) + '"></span>') : '') +
+        (multi ? '<button type="button" class="pl-x" data-act="plDel" data-i="' + l.i + '" aria-label="Quitar este medio">✕</button>' : '') + '</div>';
+      h += '<div class="pl-r2">' + (hasCuotas(l.meth) ? '<select data-chg="plN" data-i="' + l.i + '" aria-label="Cuotas">' + CUOTAS.map(n => '<option value="' + n + '"' + (n === l.n ? ' selected' : '') + '>' + (n === 1 ? '1 pago' : n + ' cuotas') + '</option>').join('') + '</select>' : '') +
+        '<label class="pl-pct"><span>' + (l.pct < 0 ? 'Descuento' : 'Recargo') + '</span><span class="pr-in"><input inputmode="decimal" data-chg="plPct" data-i="' + l.i + '" value="' + String(l.pct).replace('.', ',') + '" aria-label="Recargo o descuento en %"><i>%</i></span></label>' +
+        '<span class="pl-res">' + (l.rec ? (l.rec > 0 ? '+ ' : '− ') + money(Math.abs(l.rec)) + ' → ' : '') + 'paga <b>' + money(l.total) + '</b>' + (l.n > 1 ? ' (' + l.n + ' cuotas de ' + money(l.each) + ')' : '') + '</span></div>';
+      if (l.over) h += '<div class="pl-over"><small>El consultorio tiene ' + pctTxt(l.def) + ' para ' + esc(l.meth) + (l.n > 1 ? ' en ' + l.n + ' cuotas' : '') + '. ¿Por qué lo cambiás? <button type="button" class="pl-reset" data-act="plReset" data-i="' + l.i + '">Volver a ' + pctTxt(l.def) + '</button></small><input data-in="plWhy" data-i="' + l.i + '" value="' + esc(l.why) + '" placeholder="Obligatorio · lo ve el dueño (ej.: promo del banco)"></div>';
+    });
+    h += '<button type="button" class="btn small ghost pl-add" data-act="plAdd">+ Pagar una parte con otro medio</button>';
+    h += '<div class="pl-sum"><span>Precio ' + money(base) + (rec ? ' · ' + (rec > 0 ? 'recargos +' : 'descuentos −') + money(Math.abs(rec)) : '') + '</span><b>Paga en total ' + money(tot) + '</b></div>';
+    if (!configured() && boss()) h += '<p class="hint pl-cfg">Todavía no cargaste los recargos de la tarjeta para este consultorio. <button type="button" class="btn small" data-act="payRatesOpen">Configurarlos</button></p>';
+    return h + '</div>';
+  };
+  let plT = 0;
+  const plRe = () => { clearTimeout(plT); plT = setTimeout(() => { if (!S.modal) return; const b = $('#modalHost .m-body'), t = b ? b.scrollTop : 0, f = document.activeElement, fk = f && f.getAttribute ? [f.getAttribute('data-chg') || f.getAttribute('data-in'), f.getAttribute('data-i')] : null; A.renderModal(); const b2 = $('#modalHost .m-body'); if (b2) b2.scrollTop = t; if (fk && fk[0]) { const n = document.querySelector('#modalHost [data-chg="' + fk[0] + '"][data-i="' + fk[1] + '"], #modalHost [data-in="' + fk[0] + '"][data-i="' + fk[1] + '"]'); if (n && n.focus) n.focus(); } }, 0); };
+  const plSync = () => { const m = S.modal; if (!m || !m.pl) return; A.$$('[data-in="plWhy"]').forEach(i => { const l = m.pl[+i.getAttribute('data-i')]; if (l) l.why = i.value; }); };
+  A.chg.plMeth = el => { plSync(); const l = S.modal.pl[+el.getAttribute('data-i')]; if (!l) return; l.meth = el.value; l.pct = null; l.why = ''; if (!hasCuotas(l.meth)) l.n = 1; plRe(); };
+  A.chg.plAmt = el => { plSync(); const l = S.modal.pl[+el.getAttribute('data-i')]; if (l) l.amt = num(el.value); plRe(); };
+  A.chg.plN = el => { plSync(); const l = S.modal.pl[+el.getAttribute('data-i')]; if (!l) return; l.n = +el.value || 1; l.pct = null; l.why = ''; plRe(); };
+  A.chg.plPct = el => { plSync(); const l = S.modal.pl[+el.getAttribute('data-i')]; if (!l) return; const v = pnum(el.value); l.pct = v == null ? null : v; plRe(); };
+  A.ins.plWhy = el => { const l = S.modal.pl[+el.getAttribute('data-i')]; if (l) l.why = el.value; };
+  A.acts.plReset = el => { plSync(); const l = S.modal.pl[+el.getAttribute('data-i')]; if (l) { l.pct = null; l.why = ''; } plRe(); };
+  A.acts.plAdd = () => {
+    plSync(); const m = S.modal, base = baseOf(m), L = A.payLines(m, base), half = L.length === 1 ? Math.round(base / 2 / 100) * 100 : 0;
+    if (L.length === 1) m.pl[0].amt = half || 0; else { const last = m.pl[m.pl.length - 1]; last.amt = L[L.length - 1].base; }
+    const used = m.pl.map(l => l.meth), next = METHS().filter(x => used.indexOf(x) < 0)[0] || 'Efectivo';
+    m.pl.push({ meth: /cr[eé]dito/i.test(METHS().join(' ')) && used.indexOf('Crédito') < 0 ? 'Crédito' : next, amt: 0, n: 1, pct: null, why: '' }); plRe();
+  };
+  A.acts.plDel = el => { plSync(); const m = S.modal; m.pl.splice(+el.getAttribute('data-i'), 1); if (m.pl.length === 1) m.pl[0].amt = 0; plRe(); };
+  const plCheck = (m, base) => {
+    plSync(); const L = A.payLines(m, base);
+    const sumNotLast = L.slice(0, -1).reduce((s, l) => s + l.base, 0);
+    if (L.length > 1 && L.slice(0, -1).some(l => !l.base)) return 'Poné cuánto paga con cada medio (el último se completa solo con el resto).';
+    if (L.length > 1 && sumNotLast >= base) return 'Lo que pusiste en los primeros medios ya cubre todo el precio: sacá uno o bajá el importe.';
+    const nw = L.filter(l => l.over && !String(l.why).trim())[0]; if (nw) return 'Contá por qué cambiaste el recargo de ' + nw.meth + ': lo ve el dueño.';
+    return '';
+  };
+  /* asentar los recargos/descuentos en la cuenta del paciente (así la plata cierra) */
+  const bookRec = (pid, L, extra) => {
+    const pd = A.pd(pid), at = new Date().toISOString(), by = who();
+    L.forEach(l => {
+      if (!l.rec) return;
+      pd.ledger.push(Object.assign({ id: A.uid(), date: A.today(), type: 'ajuste', amount: l.rec, desc: (l.rec > 0 ? 'Recargo ' : 'Descuento ') + pctTxt(l.pct).replace('+', '') + ' por pagar ' + money(l.base) + ' con ' + l.meth + (l.n > 1 ? ' en ' + l.n + ' cuotas' : '') + (l.over ? ' · cambiado a mano (lista: ' + pctTxt(l.def) + '): ' + l.why : ''), adj: { k: 'pl', p: l.pct, n: l.n, base: l.base, meth: l.meth, def: l.def }, plOver: l.over ? 1 : undefined, why: l.over ? l.why : undefined, by, at }, extra || {}));
+      if (l.over && A.cjLog) A.cjLog('correccion', 'Cambió el recargo de ' + l.meth + ' de ' + pctTxt(l.def) + ' a ' + pctTxt(l.pct) + ' (' + ((A.PAT(pid) || {}).name || '') + '): ' + l.why);
+    });
+  };
+
+  /* ---------- en «Cobrar» (lo que mandó el odontólogo) ---------- */
+  const baseOf = m => (m && m.type === 'pcPay') ? (m.tot + (m.addPrev ? m.prev : 0)) : m && m.type === 'preCob' ? m.lines.reduce((s, l) => s + (l.amt || 0) * (l.qty || 1), 0) : 0;
+  const pcPrev = MF.pcPay;
+  MF.pcPay = m => {
+    initPl(m, m.m1); m.adj = { k: 'none' }; m.split = false;
+    let h = pcPrev(m); const base = baseOf(m);
+    h = h.replace('<div class="hint" id="ppMsg">', () => A.payLinesHTML(m, base) + '<div class="hint" id="ppMsg">');
+    return h.replace(/(data-act="ppGo"[^>]*>)Cobrar</, (a, b) => b + 'Cobrar ' + money(A.payLines(m, base).reduce((s, l) => s + l.total, 0)) + '<');
+  };
+  const ppPrev = A.acts.ppGo;
+  A.acts.ppGo = function () {
+    const m = S.modal; if (!m || m.type !== 'pcPay' || !m.pl) return ppPrev.apply(this, arguments);
+    const base = baseOf(m), err = plCheck(m, base);
+    if (err) { const o = $('#ppMsg'); if (o) { o.className = 'hint bad'; o.textContent = err; } return; }
+    const L = A.payLines(m, base);
+    m.plLines = L.filter(l => l.total > 0);
+    m._plBook = () => bookRec(m.pid, L, { pcIds: (m.ids || []).slice() });
+    return ppPrev.apply(this, arguments);
+  };
+  /* el ajuste se asienta justo antes de crear los pagos (después de las correcciones de recepción) */
+  const settleHook = () => {
+    const m = S.modal; if (!m || !m._plBook) return;
+    const rec = (m.plLines || []).reduce((s, l) => s + l.rec, 0); m._plBook(); m._plBook = null; m.tot = m.tot + rec;
+  };
+  const ddPrev = A.acts.ppDebt;
+  if (ddPrev) A.acts.ppDebt = function () { const m = S.modal; if (m) m.plLines = null; return ddPrev.apply(this, arguments); };
+  /* el recargo va a la cuenta cuando se crean los pagos: lo hace este hook que app40 llama si existe */
+  A.plBeforePay = settleHook;
+
+  /* ---------- en «Cobrar antes de atender» ---------- */
+  const preRender = MF.preCob;
+  if (preRender) MF.preCob = m => {
+    initPl(m, m.meth);
+    let h = preRender(m); const base = baseOf(m);
+    h = h.replace(/<div class="field pc-meth">[\s\S]*?<\/select><\/div>/, () => A.payLinesHTML(m, base));
+    const tot = A.payLines(m, base).reduce((s, l) => s + l.total, 0);
+    return h.replace(/(id="pcGoBtn">)Cobrar [^<]*/, (a, b) => b + 'Cobrar ' + money(tot));
+  };
+  /* al cambiar el importe de una práctica, se redibuja el «¿cómo paga?» cuando se sale del campo */
+  document.addEventListener('change', e => { const t = e.target; if (t && t.getAttribute && t.getAttribute('data-in') === 'pcAmt' && S.modal && S.modal.type === 'preCob') { const p = A.ins.pcAmt; if (p) p(t); plRe(); } }, true);
+  const pcGoPrev = A.acts.pcGo;
+  if (pcGoPrev) A.acts.pcGo = function () {
+    const m = S.modal; if (!m || m.type !== 'preCob' || !m.pl) return pcGoPrev.apply(this, arguments);
+    A.$$('[data-in="pcAmt"]').forEach(i => { const l = m.lines[+i.getAttribute('data-i')]; if (l) l.amt = num(i.value); });
+    const base = baseOf(m), err = base > 0 ? plCheck(m, base) : '';
+    if (err) { const o = $('#pcMsg'); if (o) o.textContent = err; return; }
+    const L = base > 0 ? A.payLines(m, base).filter(l => l.total > 0) : [];
+    const pid = m.pid, pd = A.pd(pid), n0 = (pd.pre || []).length;
+    m.meth = L[0] ? L[0].meth : m.meth;
+    const r = pcGoPrev.apply(this, arguments);
+    try {
+      const rr = (pd.pre || [])[n0]; if (!rr || !L.length) return r;
+      const first = pd.ledger.filter(e => e.id === rr.payIds[0])[0]; if (!first) return r;
+      const one = l => ({ amount: l.total, method: l.meth, cuotas: l.n > 1 ? l.n : undefined, rec: l.rec || undefined, recPct: l.rec ? l.pct : undefined });
+      Object.assign(first, one(L[0])); if (L[0].n > 1) first.desc += ' · ' + L[0].n + ' cuotas';
+      L.slice(1).forEach(l => {
+        pd.rcpSeq = (pd.rcpSeq || 0) + 1;
+        const e = Object.assign({}, first, one(l), { id: A.uid(), rcp: String(first.rcp || '').replace(/-\d+$/, '-' + pd.rcpSeq), desc: String(first.desc || '').replace(/ · \d+ cuotas$/, '') + (l.n > 1 ? ' · ' + l.n + ' cuotas' : '') });
+        pd.ledger.push(e); rr.payIds.push(e.id);
+      });
+      bookRec(pid, L, { pre: rr.id });
+      rr.paidTotal = L.reduce((s, l) => s + l.total, 0); rr.methods = L.map(l => l.meth + (l.n > 1 ? ' ' + l.n + 'c' : '') + ' ' + money(l.total)).join(' + ');
+      pd.ledger.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+      A.touchPd(pid); A.save(); A.refresh();
+    } catch (e) { if (A.logError) A.logError('plPre', e); }
+    return r;
+  };
+
+  /* estilos (solo tokens del tema) */
+  const css = document.createElement('style');
+  css.textContent = '.m-body:has(.pl-box) .pp-row,.m-body:has(.pl-box) [data-act="ppSplit"],.m-body:has(.pl-box) .aj-box{display:none!important}' +
+    '.pl-box{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:10px 0 6px;background:var(--surface)}.pl-hd{font-weight:700;margin-bottom:6px}' +
+    '.pl-ln{padding:8px 0;border-top:1px solid var(--line)}.pl-ln:first-of-type{border-top:0;padding-top:0}' +
+    '.pl-r1{display:flex;gap:8px;align-items:center}.pl-r1 select{flex:1;min-width:0}.pl-amt{flex:0 0 130px;display:flex;align-items:center;gap:4px}.pl-amt input{width:100%;min-width:0}.pl-rest{flex:0 0 auto;font-size:.9rem;color:var(--ink-2)}.pl-rest b{color:var(--ink)}' +
+    '.pl-x{background:none;border:0;color:var(--ink-2);font-size:1rem;cursor:pointer;padding:4px 6px}' +
+    '.pl-r2{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:6px;font-size:.9rem}.pl-pct{display:flex;align-items:center;gap:6px;color:var(--ink-2)}' +
+    '.pr-in{display:inline-flex;align-items:center;gap:2px}.pr-in input{width:62px;text-align:right;padding:4px 6px}.pr-in i{font-style:normal;color:var(--ink-2)}.pl-res{margin-left:auto}' +
+    '.pl-over{margin-top:6px;display:flex;flex-direction:column;gap:4px}.pl-over small{color:var(--ink-2)}.pl-over input{border:1px solid var(--warn,#e8a33d);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--ink);font:inherit;font-size:.9rem}.pl-reset{background:none;border:0;color:var(--accent);cursor:pointer;font:inherit;font-size:.85rem;padding:0 0 0 4px}' +
+    '.pl-add{margin-top:6px}.pl-sum{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:8px;padding-top:8px}.pl-sum span{color:var(--ink-2);font-size:.9rem}.pl-sum b{font-size:1.15rem}' +
+    '.pr-c>span:first-child{border:0!important;background:none!important;padding:0!important;box-shadow:none!important;min-height:0!important}.pr-list{display:flex;flex-direction:column;gap:10px}.pr-m{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--surface)}.pr-mh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.pr-cuo{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--ink-2)}.pr-cs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px}.pr-c{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:.9rem}.pr-c.one{max-width:280px}.pr-h{display:block;margin-top:4px;color:var(--ink-2);font-size:.78rem}' +
+    '@media (max-width:600px){.pr-cs{grid-template-columns:1fr}.pl-amt{flex-basis:112px}}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

@@ -184,7 +184,7 @@
       else { const t = { id: A.uid(), cond: null, tooth: null, faces: '', label: it.label, price: it.price, status: 'hecho', planDate: null, doneDate: d, pro: m.pro, bid: null }; pd.tx.push(t); A.onTxDone(pid, t); made.push(t); }
       /* el cargo que se acaba de crear: importe confirmado y a quién le toca cobrarlo */
       pd.ledger.slice(before).filter(e => e.type === 'cargo' && !e.voided).forEach(e => {
-        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } if (it.free || (it.os && it.os.mode === 'free')) { e.free = 1; e.freeWhy = String(it.why || '').trim(); e.desc = (e.desc || it.label) + ' · no se cobra: ' + e.freeWhy; if (!e.os && !(+e.amount > 0)) e.cobOk = 'bonif'; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
+        e.amount = it.pay; if (it.os) { e.os = it.os.id || e.os; e.osCov = (it.os.cov || 0) * (it.qty || 1); e.cop = it.os.mode || 'cos'; } if (it.free || (it.os && it.os.mode === 'free')) { e.free = 1; e.freeWhy = String(it.why || '').trim(); e.desc = (e.desc || it.label) + ' · no se cobra: ' + e.freeWhy; if (!e.os && !(+e.amount > 0)) e.cobOk = 'bonif'; } else if (String(it.why || '').trim()) { e.why = String(it.why).trim(); e.desc = (e.desc || it.label) + ' · aclaración: ' + e.why; } e.cob = k === 'later' ? 'pro' : k; e.cobAt = new Date().toISOString(); e.cobBy = who();
         if (a) e.apptId = a.id; if (curSede() && !e.loc) e.loc = curSede();
       });
     });
@@ -287,8 +287,8 @@
   A.acts.ppSplit = () => { ppSync(); const m = S.modal, want = m.tot + (m.addPrev ? m.prev : 0); m.split = !m.split; if (m.split) { m.a1 = Math.round(want / 2); m.a2 = want - m.a1; } else { m.a1 = want; m.a2 = 0; } A.renderModal(); };
   const settle = (pd, ids, how, pagoId) => pd.ledger.forEach(e => { if (ids.indexOf(e.id) >= 0) { e.cobOk = how; e.cobDone = new Date().toISOString(); e.cobDoneBy = who(); if (pagoId) e.pagoId = pagoId; } });
   A.acts.ppGo = () => {
-    ppSync(); const m = S.modal, pid = m.pid, pd = A.pd(pid), d = today(), its = pd.ledger.filter(e => m.ids.indexOf(e.id) >= 0);
-    const lines = [[m.a1, m.m1]].concat(m.split ? [[m.a2, m.m2]] : []).filter(l => l[0] > 0);
+    ppSync(); if (A.plBeforePay) A.plBeforePay(); const m = S.modal, pid = m.pid, pd = A.pd(pid), d = today(), its = pd.ledger.filter(e => m.ids.indexOf(e.id) >= 0);
+    const lines = (m.plLines ? m.plLines.map(l => [l.total, l.meth, l]) : [[m.a1, m.m1]].concat(m.split ? [[m.a2, m.m2]] : [])).filter(l => l[0] > 0);
     if (!lines.length) { const o = $('#ppMsg'); o.className = 'hint bad'; o.textContent = 'Escribí cuánto paga.'; return; }
     /* a quién se le atribuye el cobro: el profesional con más importe en lo que se cobra */
     const by = {}; its.forEach(e => { by[e.pro] = (by[e.pro] || 0) + e.amount; }); const pro = Object.keys(by).sort((x, y) => by[y] - by[x])[0] || (A.PAT(pid) || {}).pro;
@@ -297,6 +297,7 @@
     let first = null;
     lines.forEach(l => {
       const e = { id: A.uid(), date: d, type: 'pago', amount: l[0], desc: its.length ? 'Cobro de prácticas' : 'Cobro', method: l[1], pro, rcp: 'R-' + pnum(pid) + '-' + (++pd.rcpSeq), by: who(), pcIds: m.ids.slice() };
+      if (l[2]) { if (l[2].n > 1) { e.cuotas = l[2].n; e.desc += ' · ' + l[2].n + ' cuotas'; } if (l[2].rec) { e.rec = l[2].rec; e.recPct = l[2].pct; } }
       if (curSede()) e.loc = curSede(); else if (its[0] && its[0].loc) e.loc = its[0].loc;
       if (room) e.room = room.name; if (ap) e.apptId = ap.id;
       pd.ledger.push(e); if (!first) first = e;

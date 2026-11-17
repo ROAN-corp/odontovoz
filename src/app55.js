@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.8', b: '1.63.0', d: '2026-11-17', items: [
+      { t: 'Cobrar con varios medios de pago a la vez (por ejemplo, una parte en efectivo y el resto con tarjeta), también en «Cobrar antes de atender».', top: true },
+      { t: 'Recargos por cuotas de tarjeta y descuentos por medio de pago, fijos para cada consultorio: Ajustes › Medios de pago y recargos. Si se cambian en un cobro, pide el motivo.' },
+      { t: 'Toda corrección o aclaración en un cobro lleva su motivo y el dueño la ve en Caja › Historial › Correcciones.' }] },
     { v: '1.7', b: '1.62.0', d: '2026-11-17', items: [
       { t: 'Al anotar lo que hiciste en la evolución, primero te pregunta: «¿Cobra secretaría o lo cobro yo?». A recepción le aparece un cartel con lo que escribiste y lo que hay que cobrar, y lo puede corregir.', top: true },
       { t: 'Entiende varias prácticas juntas: «arreglo en 24, 25 y 33 por oclusal, por mesial y por distal, y limpieza».' },
