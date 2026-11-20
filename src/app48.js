@@ -7,10 +7,11 @@
 
   /* ---------- grupos de la pantalla de Ajustes ---------- */
   const GROUPS = [
-    { t: 'Consultorio', k: ['cfgOpen:centro', 'locsOpen', 'catalogOpen', 'osOpen', 'stkOpen', 'tnOpen', 'importOpen', 'hcpOpen'] },
-    { t: 'La app en este equipo', k: ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall'] },
-    { t: 'Cuenta y datos', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'plOpen', 'tmOpen', 'cfgOpen:datos', 'hcxOpen', 'archOpen', 'testWipeOpen', 'modeOpen', 'acctOpen'] },
-    { t: 'Ayuda', k: ['newsOpen', 'fbOpen', 'tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
+    /* 2026-11-20: Consultorio en orden de primeros pasos (ver app93) */
+    { t: 'Consultorio', c: 'cons', k: ['cfgOpen:centro', 'locsOpen', 'tmOpen', 'catalogOpen', 'osOpen', 'stkOpen', 'importOpen', 'tnOpen', 'payRatesOpen', 'hcpOpen'] },
+    { t: 'La app en este equipo', c: 'app', k: ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall'] },
+    { t: 'Cuenta y datos', c: 'cta', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'plOpen', 'cfgOpen:datos', 'hcxOpen', 'archOpen', 'testWipeOpen', 'modeOpen', 'acctOpen'] },
+    { t: 'Ayuda', c: 'ayu', k: ['newsOpen', 'fbOpen', 'tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
   ];
   const keyOf = b => { const a = b.getAttribute('data-act'); return a === 'cfgOpen' ? 'cfgOpen:' + (b.getAttribute('data-t') || 'centro') : a; };
   function items() {
@@ -24,13 +25,13 @@
     A.$$('#gearMenu .aj-sec').forEach(x => x.classList.add('aj-collapsed'));
     return all;
   }
-  const rowHTML = b => {
+  const rowHTML = (b, k) => {
     const attrs = Array.from(b.attributes).filter(a => /^data-/.test(a.name)).map(a => a.name + '="' + esc(a.value) + '"').join(' ');
     const svg = b.querySelector('svg'), t = b.querySelector('.t') || b.querySelector('span');
     let title = b.textContent; if (t) { const c = t.cloneNode(true); c.querySelectorAll('small').forEach(x => x.remove()); title = c.textContent; }
     if (b.getAttribute('data-act') === 'changeAccount') title = 'Tipo de cuenta: ' + String(title).trim();
     const sub = t && t.querySelector('small') ? t.querySelector('small').textContent : '';
-    return '<button class="aj-row" ' + attrs + ' data-aj="1">' + (svg ? svg.outerHTML : GEAR) + '<span class="aj-t"><b>' + esc(String(title).trim()) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="aj-go" aria-hidden="true">›</span></button>';
+    return '<button class="aj-row" ' + attrs + ' data-aj="1">' + (svg ? svg.outerHTML : GEAR) + (A.ps && k ? A.ps.badge(k) : '') + '<span class="aj-t"><b>' + esc(String(title).trim()) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="aj-go" aria-hidden="true">›</span></button>';
   };
   MF.ajustes = () => {
     const all = items(), used = {};
@@ -45,9 +46,10 @@
     const extra = Object.keys(all).filter(k => !GROUPS.some(g => g.k.indexOf(k) >= 0) && all[k].closest('.aj-sec'));
     let b = '<div class="aj">';
     GROUPS.forEach(g => {
-      const rows = g.k.filter(k => all[k]).map(k => rowHTML(all[k]));
-      if (g.t === 'Consultorio') extra.forEach(k => rows.push(rowHTML(all[k])));
-      if (rows.length) b += '<section class="aj-g"><h3>' + esc(g.t) + '</h3><div class="aj-list">' + rows.join('') + '</div></section>';
+      const rows = g.k.filter(k => all[k]).map(k => rowHTML(all[k], k));
+      if (g.t === 'Consultorio') extra.forEach(k => rows.push(rowHTML(all[k], k)));
+      const head = g.c === 'cons' && A.ps ? A.ps.head() : '';
+      if (rows.length) b += '<section class="aj-g aj-' + g.c + '"><h3>' + esc(g.t) + (g.c === 'cons' && A.ps && A.ps.on() ? '<small> · primeros pasos</small>' : '') + '</h3>' + head + '<div class="aj-list">' + rows.join('') + '</div></section>';
     });
     b += '<p class="aj-ver">OdontoVoz ' + esc(A.VERSION || '') + '</p></div>';
     return A.modalShell('Ajustes', b, '<button class="btn primary" data-act="ajClose">Listo</button>', true);
@@ -115,11 +117,15 @@
   const css = document.createElement('style');
   css.textContent = [
     '#gearMenu .aj-sec.aj-collapsed > .dnav:not(#drAjustes) { display: none !important; }',
-    '.aj { display: flex; flex-direction: column; gap: 18px; }',
-    '.aj-g h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); margin: 0 0 8px 4px; }',
-    '.aj-list { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }',
+    '.aj { display: flex; flex-direction: column; gap: 16px; }',
+    '.aj-g { --ajc: var(--accent); padding: 12px 10px 10px; border-radius: 20px; border: 1.5px solid color-mix(in srgb, var(--ajc) 32%, var(--line)); background: color-mix(in srgb, var(--ajc) 7%, var(--surface)); }',
+    '.aj-app { --ajc: var(--ok); } .aj-cta { --ajc: var(--warn); } .aj-ayu { --ajc: var(--ink-2); }',
+    '.aj-g h3 { display: flex; align-items: center; gap: 8px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); margin: 0 0 10px 6px; }',
+    '.aj-g h3::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ajc); flex: none; }',
+    '.aj-g h3 small { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--ink-2); font-size: 12.5px; }',
+    '.aj-list { display: flex; flex-direction: column; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ajc) 22%, var(--line)); border-radius: 14px; overflow: hidden; }',
     '.aj-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; min-height: 56px; background: none; border: 0; border-top: 1px solid var(--line); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }',
-    '.aj-row:first-child { border-top: 0; } .aj-row:hover { background: var(--bg); }',
+    '.aj-row:first-child { border-top: 0; } .aj-row:hover { background: color-mix(in srgb, var(--ajc) 6%, var(--surface)); }',
     '.aj-row svg { width: 22px; height: 22px; flex: none; color: var(--accent); }',
     '.aj-t { flex: 1; min-width: 0; display: flex; flex-direction: column; } .aj-t b { font-weight: 600; font-size: 15.5px; } .aj-t small { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
     '.aj-go { font-size: 22px; color: var(--ink-2); flex: none; }',

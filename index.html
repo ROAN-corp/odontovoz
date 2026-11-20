@@ -8195,10 +8195,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.10.1';
+  A.VERSION = '1.11';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.65.1';
+  A.VBUILD = '1.66.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -16778,10 +16778,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* ---------- grupos de la pantalla de Ajustes ---------- */
   const GROUPS = [
-    { t: 'Consultorio', k: ['cfgOpen:centro', 'locsOpen', 'catalogOpen', 'osOpen', 'stkOpen', 'tnOpen', 'importOpen', 'hcpOpen'] },
-    { t: 'La app en este equipo', k: ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall'] },
-    { t: 'Cuenta y datos', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'plOpen', 'tmOpen', 'cfgOpen:datos', 'hcxOpen', 'archOpen', 'testWipeOpen', 'modeOpen', 'acctOpen'] },
-    { t: 'Ayuda', k: ['newsOpen', 'fbOpen', 'tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
+    /* 2026-11-20: Consultorio en orden de primeros pasos (ver app93) */
+    { t: 'Consultorio', c: 'cons', k: ['cfgOpen:centro', 'locsOpen', 'tmOpen', 'catalogOpen', 'osOpen', 'stkOpen', 'importOpen', 'tnOpen', 'payRatesOpen', 'hcpOpen'] },
+    { t: 'La app en este equipo', c: 'app', k: ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall'] },
+    { t: 'Cuenta y datos', c: 'cta', k: ['planOpen', 'changeAccount', 'empOn', 'empOff', 'plOpen', 'cfgOpen:datos', 'hcxOpen', 'archOpen', 'testWipeOpen', 'modeOpen', 'acctOpen'] },
+    { t: 'Ayuda', c: 'ayu', k: ['newsOpen', 'fbOpen', 'tutVid', 'tutorialOpen', 'voiceHelp', 'supportOpen'] }
   ];
   const keyOf = b => { const a = b.getAttribute('data-act'); return a === 'cfgOpen' ? 'cfgOpen:' + (b.getAttribute('data-t') || 'centro') : a; };
   function items() {
@@ -16795,13 +16796,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     A.$$('#gearMenu .aj-sec').forEach(x => x.classList.add('aj-collapsed'));
     return all;
   }
-  const rowHTML = b => {
+  const rowHTML = (b, k) => {
     const attrs = Array.from(b.attributes).filter(a => /^data-/.test(a.name)).map(a => a.name + '="' + esc(a.value) + '"').join(' ');
     const svg = b.querySelector('svg'), t = b.querySelector('.t') || b.querySelector('span');
     let title = b.textContent; if (t) { const c = t.cloneNode(true); c.querySelectorAll('small').forEach(x => x.remove()); title = c.textContent; }
     if (b.getAttribute('data-act') === 'changeAccount') title = 'Tipo de cuenta: ' + String(title).trim();
     const sub = t && t.querySelector('small') ? t.querySelector('small').textContent : '';
-    return '<button class="aj-row" ' + attrs + ' data-aj="1">' + (svg ? svg.outerHTML : GEAR) + '<span class="aj-t"><b>' + esc(String(title).trim()) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="aj-go" aria-hidden="true">›</span></button>';
+    return '<button class="aj-row" ' + attrs + ' data-aj="1">' + (svg ? svg.outerHTML : GEAR) + (A.ps && k ? A.ps.badge(k) : '') + '<span class="aj-t"><b>' + esc(String(title).trim()) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="aj-go" aria-hidden="true">›</span></button>';
   };
   MF.ajustes = () => {
     const all = items(), used = {};
@@ -16816,9 +16817,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const extra = Object.keys(all).filter(k => !GROUPS.some(g => g.k.indexOf(k) >= 0) && all[k].closest('.aj-sec'));
     let b = '<div class="aj">';
     GROUPS.forEach(g => {
-      const rows = g.k.filter(k => all[k]).map(k => rowHTML(all[k]));
-      if (g.t === 'Consultorio') extra.forEach(k => rows.push(rowHTML(all[k])));
-      if (rows.length) b += '<section class="aj-g"><h3>' + esc(g.t) + '</h3><div class="aj-list">' + rows.join('') + '</div></section>';
+      const rows = g.k.filter(k => all[k]).map(k => rowHTML(all[k], k));
+      if (g.t === 'Consultorio') extra.forEach(k => rows.push(rowHTML(all[k], k)));
+      const head = g.c === 'cons' && A.ps ? A.ps.head() : '';
+      if (rows.length) b += '<section class="aj-g aj-' + g.c + '"><h3>' + esc(g.t) + (g.c === 'cons' && A.ps && A.ps.on() ? '<small> · primeros pasos</small>' : '') + '</h3>' + head + '<div class="aj-list">' + rows.join('') + '</div></section>';
     });
     b += '<p class="aj-ver">OdontoVoz ' + esc(A.VERSION || '') + '</p></div>';
     return A.modalShell('Ajustes', b, '<button class="btn primary" data-act="ajClose">Listo</button>', true);
@@ -16886,11 +16888,15 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const css = document.createElement('style');
   css.textContent = [
     '#gearMenu .aj-sec.aj-collapsed > .dnav:not(#drAjustes) { display: none !important; }',
-    '.aj { display: flex; flex-direction: column; gap: 18px; }',
-    '.aj-g h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); margin: 0 0 8px 4px; }',
-    '.aj-list { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }',
+    '.aj { display: flex; flex-direction: column; gap: 16px; }',
+    '.aj-g { --ajc: var(--accent); padding: 12px 10px 10px; border-radius: 20px; border: 1.5px solid color-mix(in srgb, var(--ajc) 32%, var(--line)); background: color-mix(in srgb, var(--ajc) 7%, var(--surface)); }',
+    '.aj-app { --ajc: var(--ok); } .aj-cta { --ajc: var(--warn); } .aj-ayu { --ajc: var(--ink-2); }',
+    '.aj-g h3 { display: flex; align-items: center; gap: 8px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink); margin: 0 0 10px 6px; }',
+    '.aj-g h3::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--ajc); flex: none; }',
+    '.aj-g h3 small { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--ink-2); font-size: 12.5px; }',
+    '.aj-list { display: flex; flex-direction: column; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ajc) 22%, var(--line)); border-radius: 14px; overflow: hidden; }',
     '.aj-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; min-height: 56px; background: none; border: 0; border-top: 1px solid var(--line); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }',
-    '.aj-row:first-child { border-top: 0; } .aj-row:hover { background: var(--bg); }',
+    '.aj-row:first-child { border-top: 0; } .aj-row:hover { background: color-mix(in srgb, var(--ajc) 6%, var(--surface)); }',
     '.aj-row svg { width: 22px; height: 22px; flex: none; color: var(--accent); }',
     '.aj-t { flex: 1; min-width: 0; display: flex; flex-direction: column; } .aj-t b { font-weight: 600; font-size: 15.5px; } .aj-t small { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
     '.aj-go { font-size: 22px; color: var(--ink-2); flex: none; }',
@@ -18329,6 +18335,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.11', b: '1.66.0', d: '2026-11-20', items: [
+      { t: 'Primeros pasos: una guía en el inicio te dice qué falta configurar (paso 3 de 7, por ejemplo).', top: true },
+      { t: 'Ajustes más claros: cada sección en su recuadro de color, y Consultorio ordenado por pasos.', top: true },
+      { t: '«Equipo e invitaciones» ahora está en Ajustes › Consultorio, debajo de Centro y profesionales.' }] },
     { v: '1.10.1', b: '1.65.1', d: '2026-11-17', items: [
       { t: 'Los aranceles aceptan centavos: escribí por ejemplo 12.500,50.', top: true }] },
     { v: '1.10', b: '1.65.0', d: '2026-11-17', items: [
@@ -24901,6 +24911,127 @@ const OVMenu = (function () {
     '#updPop .up-ic{width:52px;height:52px;margin:0 auto 8px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:28px;line-height:52px;font-weight:700}' +
     '#updPop h2{font-size:1.15rem;margin:4px 0 8px}#updPop h2 span{color:var(--ink-2);font-weight:500;font-size:.95rem}#updPop p{margin:0 0 14px;color:var(--ink-2)}' +
     '#updPop .up-b{display:flex;flex-direction:column;gap:8px}#updPop .up-b .btn{width:100%;padding:12px;font-size:1rem}#updPop small{display:block;margin-top:10px;color:var(--ink-2);font-size:.8rem}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.11: primeros pasos (configuración inicial guiada: Ajustes › Consultorio numerado, tarjeta en el inicio y avisos) ===== */
+(function () {
+  'use strict';
+  const A = window.App, $ = A.$, S = A.S, esc = A.esc;
+
+  /* pasos en orden (las claves son las de las filas de Ajustes, ver GROUPS de app48) */
+  const STEPS = [
+    { k: 'cfgOpen:centro', n: 'Centro, profesionales y horarios', act: 'cfgOpen', t: 'centro' },
+    { k: 'tmOpen', n: 'Equipo e invitaciones', act: 'teamOpen', need: () => !!(A.cloud && A.cloud.session) },
+    { k: 'catalogOpen', n: 'Prácticas y aranceles', act: 'catalogOpen' },
+    { k: 'osOpen', n: 'Obras sociales y aranceles', act: 'osOpen' },
+    { k: 'stkOpen', n: 'Stock de insumos', act: 'stkOpen', data: true, done: () => { const st = (A.EMP && A.EMP.stock) || {}; return Object.keys(st).some(c => c !== '_cfg' && Array.isArray(st[c]) && st[c].length > 0); } },
+    { k: 'tnOpen', n: 'Turnero online', act: 'tnOpen' },
+    { k: 'payRatesOpen', n: 'Medios de pago y recargos', act: 'payRatesOpen' }
+  ];
+  const OPT = { importOpen: 1, hcpOpen: 1 };   /* solo si vienen de otro sistema o de papel */
+
+  const boss = () => { try { return !A.isBoss || A.isBoss(); } catch (e) { return true; } };
+  const lite = () => { try { return !!(A.liteOn && A.liteOn()); } catch (e) { return false; } };
+  const marks = () => { A.CFG = A.CFG || {}; const m = A.CFG.steps; return (m && typeof m === 'object') ? m : (A.CFG.steps = {}); };
+  const list = () => STEPS.filter(s => A.acts[s.act] && (!s.need || s.need()));
+  const isDone = s => { const m = marks()[s.k]; return m === 'skip' || (!s.data && !!m) || !!(s.done && s.done()); };
+  function state() {
+    const L = list(), d = L.filter(isDone).length, next = L.filter(s => !isDone(s))[0] || null;
+    return { L, d, n: L.length, next, idx: next ? L.indexOf(next) + 1 : 0 };
+  }
+  const on = () => boss() && !lite();
+  const save = () => { try { A.save(); } catch (e) { /* nada */ } };
+
+  /* ---------- lo que usa Ajustes (app48) ---------- */
+  A.ps = {
+    on: () => on() && state().next !== null,
+    badge(k) {
+      if (!on()) return '';
+      if (OPT[k]) return '<span class="aj-n aj-opt" title="Opcional">opc.</span>';
+      const L = list(), i = L.findIndex(s => s.k === k); if (i < 0) return '';
+      return isDone(L[i]) ? '<span class="aj-n aj-ok" title="Listo">✓</span>' : '<span class="aj-n" title="Paso ' + (i + 1) + '">' + (i + 1) + '</span>';
+    },
+    head() {
+      if (!on()) return '';
+      const st = state(); if (!st.next) return '';
+      return '<div class="ps-strip"><div class="ps-top"><b>Configuración inicial: ' + st.d + ' de ' + st.n + ' listos</b><span>Sigue el paso ' + st.idx + ': ' + esc(st.next.n) + '</span></div>' + bar(st) +
+        '<div class="ps-btns"><button class="btn primary small" data-act="psGo">Seguir con el paso ' + st.idx + '</button><button class="btn small" data-act="psSkip">Ya lo hice / no lo uso</button></div></div>';
+    },
+    state
+  };
+  const bar = st => '<div class="ps-bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + st.n + '" aria-valuenow="' + st.d + '"><i style="width:' + Math.round(100 * st.d / Math.max(1, st.n)) + '%"></i></div>';
+
+  /* ---------- abrir el paso que sigue ---------- */
+  A.acts.psGo = () => {
+    const st = state(); if (!st.next) return;
+    const el = document.createElement('button'); el.setAttribute('data-act', st.next.act); if (st.next.t) el.setAttribute('data-t', st.next.t);
+    visit(st.next.k); if (A.hideDrawer) A.hideDrawer();
+    S._ajBack = true;   /* al cerrar la ventana vuelve a Ajustes, con el avance */
+    try { A.acts[st.next.act](el); } catch (e) { S._ajBack = false; }
+  };
+  A.acts.psSkip = () => { const st = state(); if (!st.next) return; marks()[st.next.k] = 'skip'; save(); drop(st.next.k); A.toast('Paso ' + st.idx + ' marcado como listo.'); if (S.modal && S.modal.type === 'ajustes') A.renderModal(); paint(); };
+  A.acts.psHide = () => { marks()._hide = Date.now(); save(); paint(); A.toast('Listo. La guía sigue en Ajustes › Consultorio.'); };
+
+  /* entrar a un paso cuenta como hecho (salvo stock, que necesita al menos un insumo) */
+  function visit(k) {
+    const s = STEPS.filter(x => x.k === k)[0]; if (!s || s.data || !on()) return;
+    const m = marks(); if (m[k]) return; m[k] = Date.now(); save(); drop(k);
+  }
+  const keyOf = b => { const a = b.getAttribute('data-act'); return a === 'cfgOpen' ? 'cfgOpen:' + (b.getAttribute('data-t') || 'centro') : a === 'teamOpen' ? 'tmOpen' : a; };
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-act]'); if (b) { try { visit(keyOf(b)); } catch (x) { /* nada */ } } }, true);
+
+  /* ---------- tarjeta en el inicio ---------- */
+  function paint() {
+    const v = document.getElementById('view-inicio'); if (!v) return;
+    const old = v.querySelector('.ps-card');
+    const st = state(), show = on() && st.next && !marks()._hide && S.tab === 'inicio';
+    if (!show) { if (old) old.remove(); return; }
+    const sig = st.d + '/' + st.n + '/' + st.next.k;
+    if (old && old.getAttribute('data-sig') === sig) return;
+    const d = document.createElement('section'); d.className = 'ps-card'; d.setAttribute('aria-label', 'Primeros pasos'); d.setAttribute('data-sig', sig);
+    d.innerHTML = '<button class="ps-x" data-act="psHide" aria-label="Ocultar la guía">×</button>' +
+      '<span class="ps-k">Primeros pasos</span><b class="ps-h">' + (st.d ? 'Te falta configurar el paso ' + st.idx + ' de ' + st.n : 'Configurá OdontoVoz en ' + st.n + ' pasos') + '</b>' +
+      '<span class="ps-s">' + esc(st.next.n) + '</span>' + bar(st) +
+      '<div class="ps-btns"><button class="btn primary small" data-act="psGo">' + (st.d ? 'Seguir' : 'Empezar') + '</button><button class="btn small" data-act="ajOpen">Ver todos los pasos</button></div>';
+    if (old) { old.replaceWith(d); return; }
+    const host = v.querySelector('.home') || v, hi = host.querySelector('.home-hi');
+    if (hi) hi.after(d); else host.prepend(d);
+  }
+
+  /* ---------- aviso en la casilla (uno por paso pendiente) ---------- */
+  const drop = k => { try { if (A.nfDrop) A.nfDrop('ps:' + k); } catch (e) { /* nada */ } };
+  let nfT = 0;
+  function notify() {
+    if (!A.nfAdd || !on()) return;
+    const st = state();
+    st.L.forEach(s => { if (isDone(s)) drop(s.k); });
+    if (!st.next) return;
+    A.nfAdd({ id: 'ps:' + st.next.k, k: 'info', t: 'Falta configurar el paso ' + st.idx + ' de ' + st.n, b: st.next.n, act: 'psGo', args: {}, at: Date.now() });
+  }
+
+  const arPrev = A.afterRefresh;
+  A.afterRefresh = function () {
+    const r = arPrev ? arPrev.apply(this, arguments) : undefined;
+    try { paint(); } catch (e) { /* nada */ }
+    clearTimeout(nfT); nfT = setTimeout(() => { try { notify(); } catch (e) { /* nada */ } }, 3000);
+    return r;
+  };
+  try { new MutationObserver(() => { try { paint(); } catch (e) { /* nada */ } }).observe(document.getElementById('view-inicio') || document.body, { childList: true }); } catch (e) { /* nada */ }
+
+  const css = document.createElement('style');
+  css.textContent = [
+    '.aj-n { flex: none; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700; background: var(--accent-soft); color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); }',
+    '.aj-n.aj-ok { background: color-mix(in srgb, var(--ok) 16%, var(--surface)); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--line)); }',
+    '.aj-n.aj-opt { font-weight: 600; font-size: 11px; background: var(--surface-2); color: var(--ink-2); border-color: var(--line); }',
+    '.ps-strip { margin: 0 0 10px; padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); }',
+    '.ps-top { display: flex; flex-direction: column; gap: 2px; font-size: 14px; } .ps-top span { color: var(--ink-2); font-size: 13px; }',
+    '.ps-bar { height: 8px; border-radius: 4px; background: var(--surface-2); margin: 8px 0; overflow: hidden; } .ps-bar i { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width .3s; }',
+    '.ps-btns { display: flex; flex-wrap: wrap; gap: 6px; }',
+    '.ps-card { position: relative; margin: 10px 0 12px; padding: 12px 40px 12px 14px; border-radius: 16px; border: 1.5px solid color-mix(in srgb, var(--accent) 35%, var(--line)); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); display: flex; flex-direction: column; gap: 2px; }',
+    '.ps-card .ps-k { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); font-weight: 700; }',
+    '.ps-card .ps-h { font-size: 15.5px; } .ps-card .ps-s { font-size: 14px; color: var(--ink-2); }',
+    '.ps-card .ps-x { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border: 0; background: transparent; font-size: 20px; color: var(--ink-2); cursor: pointer; border-radius: 8px; }'
+  ].join('\n');
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

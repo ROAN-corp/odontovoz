@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.11', b: '1.66.0', d: '2026-11-20', items: [
+      { t: 'Primeros pasos: una guía en el inicio te dice qué falta configurar (paso 3 de 7, por ejemplo).', top: true },
+      { t: 'Ajustes más claros: cada sección en su recuadro de color, y Consultorio ordenado por pasos.', top: true },
+      { t: '«Equipo e invitaciones» ahora está en Ajustes › Consultorio, debajo de Centro y profesionales.' }] },
     { v: '1.10.1', b: '1.65.1', d: '2026-11-17', items: [
       { t: 'Los aranceles aceptan centavos: escribí por ejemplo 12.500,50.', top: true }] },
     { v: '1.10', b: '1.65.0', d: '2026-11-17', items: [

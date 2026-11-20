@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.11 · Ajustes en recuadros y primeros pasos (20/11/2026)
+
+- `app48`: cada sección de Ajustes va en un recuadro con su color (Consultorio = acento, La app = `--ok`, Cuenta = `--warn`, Ayuda = gris). Consultorio en orden de pasos: Centro y profesionales (+ Mis consultorios), Equipo e invitaciones (salió de Cuenta y datos), Prácticas, Obras sociales, Stock, Mudanza, Turnero online, Medios de pago, Historias en papel.
+- `app93` (nuevo): `A.ps` con los pasos (centro, equipo —solo con cuenta en la nube—, prácticas, obras sociales, stock, turnero, medios de pago; mudanza e historias en papel son opcionales). Marca en `A.CFG.steps` (se sincroniza): entrar a un paso lo da por hecho, salvo stock (necesita un insumo cargado); «Ya lo hice / no lo uso» = `skip`. Números/✓ en las filas, franja de avance arriba de Consultorio, tarjeta `.ps-card` en el inicio (× = `_hide`) y aviso `ps:<paso>` en la casilla. Solo dueño o administración, no en LITE.
+
 ## OdontoVoz 1.10.1 · aranceles con centavos (17/11/2026)
 
 - `index.html`: `A.parseMoney(texto)` («12.500», «12500,50», «12.500,5», «1234.56») y `A.moneyIn(n)` (para mostrar en un campo, con coma); `A.money` muestra centavos solo si el importe los tiene. Usados en aranceles de obra social (`osAr`, `app7`), planes (`ospV`, `app91`), catálogo (`catEdit`) y valores por pieza (`aranEdit`), con `inputmode="decimal"`. Los demás campos de cobro siguen en pesos enteros. Prueba: `tdec.py`.
