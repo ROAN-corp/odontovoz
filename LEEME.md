@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.16 · Atrás a la pantalla anterior y gráficos (20/11/2026)
+
+- `app98` (nuevo): `A.navRecord` redefinido: la clave es la pantalla (`tab`, y en la ficha también el paciente), sin pestaña de la ficha ni sección de la caja; volver a una pantalla ya visitada corta la pila ahí; Inicio la reinicia. `A.back` (app5) sigue igual.
+- Gráficos optativos por equipo (LS `odontovoz.charts.caja` / `.liq`): `.ovc-wrap` debajo de `.cash-top` (o arriba de la vista) con «Ver en gráficos» y selector de mes (`S._ovcM`, `ovcMonth`). Caja: cobrado del mes (vs. anterior), cantidad, promedio, barras por día, por medio de pago y por profesional. Liquidaciones: producción, cobrado y diferencia; producción/cobrado por profesional, prácticas que más facturaron (por `desc` hasta « · »), cobrado de 6 meses. Datos de `A.allPids()` + `A.pd(id).ledger` (caché 4 s), SVG con colores del tema.
+
 ## OdontoVoz 1.15 · ficha: anamnesis, antecedentes, menú de secciones (20/11/2026)
 
 - `app85`: el resumen nuevo (tarjeta «Abrir ficha completa» + cuenta) también para el panel `pat` (paciente abierto desde el buscador), no solo `appt`.

@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.16', b: '1.71.0', d: '2026-11-20', items: [
+      { t: 'El botón Atrás te lleva a la pantalla anterior (por ejemplo, de la ficha a la agenda), sin pasar por cada pestaña que tocaste.', top: true },
+      { t: 'Caja y Liquidaciones: botón «Ver en gráficos» con lo cobrado por día, por medio de pago, por profesional y más.', top: true }] },
     { v: '1.15', b: '1.70.0', d: '2026-11-20', items: [
       { t: 'Anamnesis más completa y por grupos: VIH, hepatitis B o C, tuberculosis, coagulación, alergia a AINE, válvula protésica y más.', top: true },
       { t: 'Al lado de las alertas aparecen chiquitos los antecedentes (bruxismo, fuma, asma…).', top: true },
