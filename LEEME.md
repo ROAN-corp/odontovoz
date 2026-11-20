@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.17.3 · arreglo al elegir paciente en el turno nuevo (20/11/2026)
+
+- `app94`: los chips de horarios libres usaban la acción `naPick`, la misma que elige al paciente de la lista (`index.html`), y la pisaban: tocar un paciente no hacía nada. Ahora es `naTimePick`. **Ojo:** antes de crear un `A.acts.X` nuevo, buscar con grep que no exista.
+
 ## OdontoVoz 1.17.2 · plan de tratamiento y accesos centrados (20/11/2026)
 
 - `app16` `planHTML`: «Mostrar costos» / «Ofrecer cuotas» como chips `.tp-opts` arriba (las cuotas en `.tp-finbox`); fases dentro de `.tp-phases` (grilla de tarjetas con color por orden) con el botón «+ Agregar fase» como tarjeta punteada; la evaluación (`details.tp-sec`) va después de las fases y cerrada (dice «cargada» si tiene texto). Estilos en `app100`.

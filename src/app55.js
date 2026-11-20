@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.17.3', b: '1.72.3', d: '2026-11-20', items: [
+      { t: 'Arreglo: en el turno nuevo ya se puede elegir al paciente de la lista de sugerencias.', top: true }] },
     { v: '1.17.2', b: '1.72.2', d: '2026-11-20', items: [
       { t: 'Plan de tratamiento renovado: a lo ancho, cada fase en su tarjeta de color y la evaluación al final, cerrada.', top: true },
       { t: 'Accesos directos centrados: con muchos ya no se salen del recuadro.' }] },

@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Versión actual: **1.17.2** (compilación 1.72.2), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
+Leé esto antes de tocar nada. Versión actual: **1.17.3** (compilación 1.72.3), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -54,6 +54,7 @@ Leé esto antes de tocar nada. Versión actual: **1.17.2** (compilación 1.72.2)
 - Comparar datos de la nube siempre con `J()` de `cloud.js`, nunca `JSON.stringify`.
 - En `css.textContent = '…' + '…'` una coma en lugar de `+` deja solo el último pedazo.
 - Si cambia la primera línea de un módulo, `inline-src.js` lo agrega como nuevo: borrar el bloque viejo de `index.html`.
+- Antes de crear un `A.acts.X` / `A.chg.X` nuevo, buscar con grep que ese nombre no exista (en 1.12 `naPick` pisó la elección de paciente del turno nuevo).
 - Antes de subir, `git pull --rebase` de `main` (puede haber otra conversación trabajando).
 - Las capturas de Playwright guardarlas en el borrador (scratchpad), nunca dentro del repo.
 

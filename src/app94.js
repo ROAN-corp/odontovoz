@@ -134,12 +134,12 @@
     const free = [];
     (A.hoursFor(P, date) || []).forEach(r => { for (let t = r[0]; t + dur <= r[1]; t += step) if (!(isToday && t < nowMin) && !items.some(b => b.start < t + dur && t < b.start + b.dur)) free.push(t); });
     let box = $('#naFree'); if (!box) { box = document.createElement('div'); box.id = 'naFree'; box.className = 'na-free'; tm.after(box); }
-    box.innerHTML = free.length ? '<span class="na-fl">Libres ese día · tocá uno</span><div class="na-fc">' + free.map(t => '<button type="button" class="na-chip' + (t === cur ? ' on' : '') + '" data-act="naPick" data-t="' + t + '">' + A.mm(t) + '</button>').join('') + '</div>'
+    box.innerHTML = free.length ? '<span class="na-fl">Libres ese día · tocá uno</span><div class="na-fc">' + free.map(t => '<button type="button" class="na-chip' + (t === cur ? ' on' : '') + '" data-act="naTimePick" data-t="' + t + '">' + A.mm(t) + '</button>').join('') + '</div>'
       : '<span class="na-fl">No quedan horarios libres ese día para ' + esc(P.short || P.name) + '.</span>';
     const on = box.querySelector('.na-chip.on'), fc = box.querySelector('.na-fc');
     if (on && fc) fc.scrollLeft = on.offsetLeft - fc.clientWidth / 2 + on.clientWidth / 2;
   }
-  A.acts.naPick = el => {
+  A.acts.naTimePick = el => {
     const t = +el.getAttribute('data-t'), h = $('#naH'), m = $('#naMi'); if (!h || !m) return;
     h.value = String(Math.floor(t / 60)); m.value = String(t % 60);
     h.dispatchEvent(new Event('change', { bubbles: true }));
