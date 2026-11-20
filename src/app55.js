@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.12.1', b: '1.67.1', d: '2026-11-20', items: [
+      { t: 'Arreglo: al destildar prácticas en «Prácticas de hoy» ya no se tapa la ventana con una franja rayada.', top: true }] },
     { v: '1.12', b: '1.67.0', d: '2026-11-20', items: [
       { t: 'Las ventanas se pueden minimizar (botón –) y quedan en una burbuja que movés por la pantalla. En la PC también se arrastran.', top: true },
       { t: 'Turno nuevo más prolijo: el tipo en una sola fila y los horarios libres del día para tocar.', top: true },

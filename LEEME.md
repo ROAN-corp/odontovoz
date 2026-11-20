@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.12.1 · arreglo al destildar prácticas (20/11/2026)
+
+- `app40`/`app74`: la fila destildada de `MF.pracOk` usaba la clase genérica `off` (en la agenda es la franja rayada con `position:absolute`) y tapaba la ventana; ahora es `po-off`. Lo mismo en la tabla de sueldos de Empresa (`app28`, `emp-off`). `app94`: con todas destildadas, «Cobrar ahora/después» avisa en vez de no hacer nada.
+
 ## OdontoVoz 1.12 · ventanas movibles y minimizables, turno nuevo y botones de voz (20/11/2026)
 
 - `app94` (nuevo): marco de ventanas más lindo (bordes 20 px, encabezado con tinte del acento). Botón `.m-min` (–) en toda ventana con × salvo `NO_MIN`: `A.acts.mMin` guarda `S.modal` + lo escrito (`snap`/`unsnap` por orden de campos) en `A._mini` y muestra la burbuja `#mBub` (arrastrable, posición en LS `odontovoz.bubPos`); `mMax` la reabre (si hay otra abierta, cambian de lugar), `mBubX` la descarta. Una sola burbuja. En pantallas de 700 px o más la ventana se arrastra desde el encabezado (`S._mPos`, se repone en cada `renderModal`; el clic que sigue a un arrastre se descarta para que no cierre por el fondo).

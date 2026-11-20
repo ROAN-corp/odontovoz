@@ -128,6 +128,16 @@
   document.addEventListener('change', e => { const id = e.target && e.target.id; if (S.modal && S.modal.type === 'newAppt' && /^(naPro|naDate|naDur|naH|naMi)$/.test(id || '')) setTimeout(freeChips, 0); });
   document.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-act="naStep"],[data-act="naNextFree"],[data-act="naKind"],[data-act="qbGo"],[data-act="qbBack"]')) setTimeout(() => { freeChips(); kindHint(); }, 0); });
 
+  /* prácticas de hoy: si se destildaron todas, avisar en vez de no hacer nada */
+  const poPrev = A.acts.poGo;
+  if (poPrev) A.acts.poGo = function (el) {
+    const m = S.modal, k = el && el.getAttribute && el.getAttribute('data-k');
+    if (m && m.type === 'pracOk' && Array.isArray(m.items) && m.items.length && !m.items.some(i => i.on) && (k === 'pro' || k === 'rcp' || k === 'later')) {
+      A.toast('Destildaste todas las prácticas. Tildá las que querés cobrar, o tocá «Solo nota, sin cobrar».'); return;
+    }
+    return poPrev.apply(this, arguments);
+  };
+
   /* después de dibujar cualquier ventana */
   const rmPrev = A.renderModal;
   A.renderModal = function () {
