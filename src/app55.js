@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.12', b: '1.67.0', d: '2026-11-20', items: [
+      { t: 'Las ventanas se pueden minimizar (botón –) y quedan en una burbuja que movés por la pantalla. En la PC también se arrastran.', top: true },
+      { t: 'Turno nuevo más prolijo: el tipo en una sola fila y los horarios libres del día para tocar.', top: true },
+      { t: 'Los botones de voz son más chicos, se arrastran y se pueden achicar todavía más.' }] },
     { v: '1.11', b: '1.66.0', d: '2026-11-20', items: [
       { t: 'Primeros pasos: una guía en el inicio te dice qué falta configurar (paso 3 de 7, por ejemplo).', top: true },
       { t: 'Ajustes más claros: cada sección en su recuadro de color, y Consultorio ordenado por pasos.', top: true },

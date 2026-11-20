@@ -135,6 +135,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.12 · ventanas movibles y minimizables, turno nuevo y botones de voz (20/11/2026)
+
+- `app94` (nuevo): marco de ventanas más lindo (bordes 20 px, encabezado con tinte del acento). Botón `.m-min` (–) en toda ventana con × salvo `NO_MIN`: `A.acts.mMin` guarda `S.modal` + lo escrito (`snap`/`unsnap` por orden de campos) en `A._mini` y muestra la burbuja `#mBub` (arrastrable, posición en LS `odontovoz.bubPos`); `mMax` la reabre (si hay otra abierta, cambian de lugar), `mBubX` la descarta. Una sola burbuja. En pantallas de 700 px o más la ventana se arrastra desde el encabezado (`S._mPos`, se repone en cada `renderModal`; el clic que sigue a un arrastre se descarta para que no cierre por el fondo).
+- Turno nuevo: `.na-kind` en una fila tipo pestañas (Turno / Sobreturno / Bloquear / Nota) con la explicación debajo (`.na-khint`); −15 a la izquierda de la hora; chips `#naFree` con los horarios libres del día (paso = `A.slotOf`, máx. 30 min; hoy no muestra horas pasadas), `naPick` los pone en `#naH`/`#naMi`.
+- Voz: micrófono 50 px y manos libres 38 px; `#vdock` se arrastra (LS `odontovoz.vdPos`, con límites de pantalla) y se achica con `.vd-min` (`vdMini`, LS `odontovoz.vdMini`: queda un micrófono chiquito semitransparente que al tocarlo se agranda).
+
 ## OdontoVoz 1.11 · Ajustes en recuadros y primeros pasos (20/11/2026)
 
 - `app48`: cada sección de Ajustes va en un recuadro con su color (Consultorio = acento, La app = `--ok`, Cuenta = `--warn`, Ayuda = gris). Consultorio en orden de pasos: Centro y profesionales (+ Mis consultorios), Equipo e invitaciones (salió de Cuenta y datos), Prácticas, Obras sociales, Stock, Mudanza, Turnero online, Medios de pago, Historias en papel.
