@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.13 · inicio, nombre como botón y ventanita del turno (20/11/2026)
+
+- `app95` (nuevo): en el inicio se quita `.home-new` y el «+ Dar un turno» de `.hd-card` pasa a «Ir a la agenda» (`tab` agenda). Título `.hk-head` «Accesos directos» con «Cambiar» (`homeEditGo` de `app18`) arriba de `.home-actions.icons`, que va en un recuadro con un color por acceso (acento, ok, warn, red, gris, en ciclo). `.blk .nm` con aspecto de botón. `#tpop` con marco, franja y tinte `--tpc` elegible abajo (`.tp-tint`, `tpTint`, LS `odontovoz.popTint`, por equipo); la ventana de estado (`stMenu`) usa el mismo color (`.tp-tinted`).
+
 ## OdontoVoz 1.12.1 · arreglo al destildar prácticas (20/11/2026)
 
 - `app40`/`app74`: la fila destildada de `MF.pracOk` usaba la clase genérica `off` (en la agenda es la franja rayada con `position:absolute`) y tapaba la ventana; ahora es `po-off`. Lo mismo en la tabla de sueldos de Empresa (`app28`, `emp-off`). `app94`: con todas destildadas, «Cobrar ahora/después» avisa en vez de no hacer nada.

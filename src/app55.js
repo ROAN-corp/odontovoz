@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.13', b: '1.68.0', d: '2026-11-20', items: [
+      { t: 'Inicio: los accesos directos van en un recuadro con colores y se cambian con «Cambiar». Para dar un turno, entrá a la agenda.', top: true },
+      { t: 'En la agenda, el nombre del paciente es un botón: tocalo para ver su ficha resumida.', top: true },
+      { t: 'La ventanita del turno tiene un marco nuevo y podés elegirle el color.' }] },
     { v: '1.12.1', b: '1.67.1', d: '2026-11-20', items: [
       { t: 'Arreglo: al destildar prácticas en «Prácticas de hoy» ya no se tapa la ventana con una franja rayada.', top: true }] },
     { v: '1.12', b: '1.67.0', d: '2026-11-20', items: [
