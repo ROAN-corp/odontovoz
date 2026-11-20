@@ -135,6 +135,14 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.20 · foto del paciente, arreglo del pintado por caras y fases completas (20/11/2026)
+
+- **Arreglo (error de la 1.19):** el `rect.selbox` del diente seleccionado tenía relleno, quedaba encima de las caras y frenaba el segundo toque en el mismo diente. Ahora lleva `pointer-events: none` (`app102`). Probado: 24 O, D y V y 23 M y O, alternando, en PC y celular.
+- **Foto del paciente** (`src/app103.js`): reusa `pd.avatar`, `pd.photoOK` y `pd.photoConsent`, que ya existían. Tocando la foto o las iniciales en la ficha resumida o la ficha completa (`A.avatarHTML` envuelto en `button.av-btn`, `data-act="avEdit"`), se abre una ventana para autorizar, sacar la foto (`capture="user"`), elegirla de la galería o quitarla. Se guarda un JPEG cuadrado de 256 px (unos 6 KB) dentro de `pd`, que se sincroniza como siempre. La foto chiquita aparece en `.res[data-pid]` (el buscador) y en `.prow[data-pid]` (la lista de Pacientes) gracias a un `MutationObserver`. Sin autorización se muestran las iniciales.
+- **Plan de tratamiento:** el nombre de la fase (`input.tp-phn`) va en su propia línea (`flex-basis: 100%`) y ya no se corta cuando aparecen los costos.
+- **«Ficha completa»** (`#panelHost .fc-btn`) con degradado y sombra, como los botones principales.
+- Compilación 1.75.0.
+
 ## OdontoVoz 1.19 · aspecto premium (20/11/2026)
 
 - Rediseño **solo estético**, aprobado por Rodrigo a partir de capturas de antes y después. No cambia ids, `data-act` ni la lógica.

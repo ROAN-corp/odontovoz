@@ -98,7 +98,7 @@
     '.odon .ov-fis { fill: none; stroke: color-mix(in srgb, var(--ink-2) 40%, transparent); stroke-width: .9; stroke-linecap: round; pointer-events: none; }',
     '.odon .num { font-family: var(--f-body); font-size: 11px; font-weight: 600; fill: color-mix(in srgb, var(--ink-2) 85%, transparent); }',
     '.odon.armed .face:hover { stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 55%, transparent)); }',
-    '.odon .selbox { stroke: var(--accent); stroke-width: 2.2; fill: color-mix(in srgb, var(--accent) 7%, transparent); rx: 10; }',
+    '.odon .selbox { stroke: var(--accent); stroke-width: 2.2; fill: color-mix(in srgb, var(--accent) 7%, transparent); rx: 10; pointer-events: none; }',
     '.odon .midline { stroke: color-mix(in srgb, var(--line) 90%, var(--ink-2)); stroke-dasharray: 2 5; stroke-linecap: round; }',
     '.odon .xmark { stroke-width: 3.2; }',
     '.odon .badge rect { rx: 4; }',

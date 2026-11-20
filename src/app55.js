@@ -6,9 +6,14 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.20', b: '1.75.0', d: '2026-11-20', items: [
+      { t: 'Foto del paciente: tocá su cara (o sus iniciales) en la ficha para sacarle una foto o elegirla de la galería. Aparece en el buscador y en la lista de pacientes. Es opcional y pide la autorización del paciente.', top: true },
+      { t: 'Arreglo: en el odontograma se pueden volver a pintar varias caras seguidas del mismo diente y saltar entre dientes libremente.', top: true },
+      { t: 'En el plan de tratamiento, el nombre de cada fase se ve completo aunque se muestren los costos.' },
+      { t: 'El botón «Ficha completa» de la ficha resumida tiene el estilo nuevo.' }] },
     { v: '1.19', b: '1.74.0', d: '2026-11-20', items: [
-      { t: 'OdontoVoz se renovó por fuera: letra nueva más legible, colores y sombras más prolijos, botones más cómodos y un micrófono más visible. Todo funciona igual que antes.', top: true },
-      { t: 'Odontograma con dientes color marfil, con forma y surcos según la pieza (incisivo, canino, premolar o molar). Se tocan y se dictan igual.', top: true }] },
+      { t: 'OdontoVoz se renovó por fuera: letra nueva más legible, colores y sombras más prolijos, botones más cómodos y un micrófono más visible. Todo funciona igual que antes.' },
+      { t: 'Odontograma con dientes color marfil, con forma y surcos según la pieza (incisivo, canino, premolar o molar). Se tocan y se dictan igual.' }] },
     { v: '1.18.2', b: '1.73.2', d: '2026-11-20', items: [
       { t: 'En la computadora podés mandar los recordatorios con la app de WhatsApp de escritorio (también Business): todo va a la misma ventana, sin abrir una pestaña por paciente. Se elige en Ajustes › WhatsApp para recordatorios.' }] },
     { v: '1.18.1', b: '1.73.1', d: '2026-11-20', items: [
