@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.14', b: '1.69.0', d: '2026-11-20', items: [
+      { t: 'Menú más ordenado: cada opción en su recuadro y Laboratorio más arriba.', top: true },
+      { t: '«Tu cuenta», «Ayuda» y «Turnos por internet» se despliegan al tocarlos.', top: true }] },
     { v: '1.13', b: '1.68.0', d: '2026-11-20', items: [
       { t: 'Inicio: los accesos directos van en un recuadro con colores y se cambian con «Cambiar». Para dar un turno, entrá a la agenda.', top: true },
       { t: 'En la agenda, el nombre del paciente es un botón: tocalo para ver su ficha resumida.', top: true },

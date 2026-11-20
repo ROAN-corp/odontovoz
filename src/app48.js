@@ -17,12 +17,14 @@
   function items() {
     const seen = {}, all = {};
     A.$$('#gearMenu .aj-sec').forEach(x => x.classList.remove('aj-collapsed'));
+    const shut = A.$$('#gearMenu .dr-shut'); shut.forEach(x => x.classList.remove('dr-shut'));   /* secciones plegadas del menú (app96) */
     A.$$('#gearMenu .dr-sec .dnav, #gearMenu .dr-nav .dnav').forEach(b => {
       const k = keyOf(b); if (!k || seen[k] || b.id === 'drAjustes') return;
       if (b.hidden || b.classList.contains('lt-hide') || getComputedStyle(b).display === 'none') return;
       seen[k] = 1; all[k] = b;
     });
     A.$$('#gearMenu .aj-sec').forEach(x => x.classList.add('aj-collapsed'));
+    shut.forEach(x => x.classList.add('dr-shut'));
     return all;
   }
   const rowHTML = (b, k) => {

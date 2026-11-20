@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.14 · menú en recuadros y secciones desplegables (20/11/2026)
+
+- `app96` (nuevo): `.dr-nav` ordenada por `ORDER` (Inicio, Agenda, Pacientes, Laboratorio, Caja, Stock, Empresa, Liquidaciones; el resto al final). Turnero online y Autogestión por WhatsApp (con etiqueta «pronto») pasan a la sección nueva `.dr-more` «Turnos por internet», al fondo. Las secciones con `.dr-lbl` (salvo Ajustes y Cerrar sesión) se pliegan: `dr-fold`/`dr-shut`, `drSec`, cerradas por defecto, estado por equipo en LS `odontovoz.drOpen.<sección>`. Opciones con borde y el ícono en un cuadrito de color; secciones como tarjetas. `app48` `items()` también abre las `.dr-shut` un instante para leer las filas de Ajustes.
+
 ## OdontoVoz 1.13 · inicio, nombre como botón y ventanita del turno (20/11/2026)
 
 - `app95` (nuevo): en el inicio se quita `.home-new` y el «+ Dar un turno» de `.hd-card` pasa a «Ir a la agenda» (`tab` agenda). Título `.hk-head` «Accesos directos» con «Cambiar» (`homeEditGo` de `app18`) arriba de `.home-actions.icons`, que va en un recuadro con un color por acceso (acento, ok, warn, red, gris, en ciclo). `.blk .nm` con aspecto de botón. `#tpop` con marco, franja y tinte `--tpc` elegible abajo (`.tp-tint`, `tpTint`, LS `odontovoz.popTint`, por equipo); la ventana de estado (`stMenu`) usa el mismo color (`.tp-tinted`).
