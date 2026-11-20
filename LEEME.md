@@ -135,6 +135,15 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.19 · aspecto premium (20/11/2026)
+
+- Rediseño **solo estético**, aprobado por Rodrigo a partir de capturas de antes y después. No cambia ids, `data-act` ni la lógica.
+- `src/app102.js`: pone su CSS **al final del `<body>`** (los estilos base están en el body; si se pone en el `<head>`, pierde). Trae la paleta en `:root` y en modo oscuro (sistema y `data-theme`), `--accent-2` y `--accent-glow` derivados de `--accent`, así que respeta los colores de Apariencia (`data-acc`/`data-bg` tienen más especificidad). También mejora las sombras en capas, los botones (40 px, o 44 en pantallas táctiles), las pestañas y los segmentados, las tarjetas, los campos con anillo de foco, las ventanas con fondo desenfocado y el micrófono con halo y pulso.
+- Letra: **Inter** en todo (texto, títulos y números tabulares). Se cambió el enlace de Google Fonts y `--f-display`/`--f-body`/`--f-mono` en `index.html`.
+- Odontograma: un `<svg id="ovDefs">` con los degradados (`ovEnamel`, `ovEnamelDark`, `ovTodo`, `ovDone`, `ovGloss`). Un `MutationObserver` (con rAF) suma a cada pieza `rect.ov-crown`, `path.ov-fis` y `rect.ov-gloss` según el tipo (incisivo, canino, premolar o molar), todos con `pointer-events: none`. También recorta las caras con `clip-path: inset(0 round Npx)`. Las 5 caras y sus `data-t`/`data-f` no cambian. En la vista chica del celular (`.tight`) van solo el contorno y el recorte.
+- Probado: tocar una cara y dictar «caries oclusal del 35» guardan igual; 9 pantallas en celular y PC, en claro y oscuro, sin errores.
+- Compilación 1.74.0.
+
 ## OdontoVoz 1.18.2 · app de WhatsApp de escritorio en la PC (20/11/2026)
 
 - La 1.18.1 no alcanzó: WhatsApp Web corta el vínculo con la página que lo abre (Cross-Origin-Opener-Policy), así que el navegador pierde la pestaña con nombre y abre otra cada vez. Desde una web no se puede evitar.

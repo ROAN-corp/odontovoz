@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Versión actual: **1.18** (compilación 1.73.0), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
+Leé esto antes de tocar nada. Versión actual: **1.19** (compilación 1.74.0), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Versión actual: **1.18** (compilación 1.73.0), 
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39, app40, app41, app42, app43, app44, app45, app46, app47, app48, app49, app50, app51, app52, app53, app54, app55 … app101). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39, app40, app41, app42, app43, app44, app45, app46, app47, app48, app49, app50, app51, app52, app53, app54, app55 … app102). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -50,6 +50,8 @@ Leé esto antes de tocar nada. Versión actual: **1.18** (compilación 1.73.0), 
 
 ## Ojo (errores que ya pasaron)
 - El `MF.pracOk` visible es el de `app74`. Las cadenas de envoltorios (`poGo`, `ppGo`, `pracParse`) se encadenan por orden de módulo.
+- Aspecto «premium» (1.19): `app102` (CSS al final del body, letra Inter, degradados y adornos del odontograma con `MutationObserver`). Los estilos nuevos que tengan que pisar a los base van al final del `<body>`, no al `<head>`.
+- WhatsApp en la PC (1.18.2): `app51` (`odontovoz.waPc`: WhatsApp Web o la app de escritorio `whatsapp://`). WhatsApp Web no deja reusar su pestaña.
 - Solo tokens del tema en CSS (`--surface`, `--surface-2`, `--ink`, `--ink-2`, `--line`, `--accent`, `--accent-ink`, `--accent-soft`, `--ok`, `--warn`, `--red`); nunca `#fff` fijo. Evitar clases genéricas (`off`, `on`, `bad`).
 - Comparar datos de la nube siempre con `J()` de `cloud.js`, nunca `JSON.stringify`.
 - En `css.textContent = '…' + '…'` una coma en lugar de `+` deja solo el último pedazo.

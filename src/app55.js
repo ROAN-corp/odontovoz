@@ -6,12 +6,15 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.19', b: '1.74.0', d: '2026-11-20', items: [
+      { t: 'OdontoVoz se renovó por fuera: letra nueva más legible, colores y sombras más prolijos, botones más cómodos y un micrófono más visible. Todo funciona igual que antes.', top: true },
+      { t: 'Odontograma con dientes color marfil, con forma y surcos según la pieza (incisivo, canino, premolar o molar). Se tocan y se dictan igual.', top: true }] },
     { v: '1.18.2', b: '1.73.2', d: '2026-11-20', items: [
-      { t: 'En la computadora podés mandar los recordatorios con la app de WhatsApp de escritorio (también Business): todo va a la misma ventana, sin abrir una pestaña por paciente. Se elige en Ajustes › WhatsApp para recordatorios.', top: true }] },
+      { t: 'En la computadora podés mandar los recordatorios con la app de WhatsApp de escritorio (también Business): todo va a la misma ventana, sin abrir una pestaña por paciente. Se elige en Ajustes › WhatsApp para recordatorios.' }] },
     { v: '1.18.1', b: '1.73.1', d: '2026-11-20', items: [
       { t: 'En la computadora, la app intenta reusar la misma pestaña de WhatsApp Web.' }] },
     { v: '1.18', b: '1.73.0', d: '2026-11-20', items: [
-      { t: 'Cobros, pagos y precios aceptan centavos (por ejemplo 75.000,50).', top: true },
+      { t: 'Cobros, pagos y precios aceptan centavos (por ejemplo 75.000,50).' },
       { t: 'Stock renovado: kit recomendado según cuántos odontólogos atienden, botones grandes y el pedido se puede tildar, editar y mandar desde una barra fija.' }] },
     { v: '1.17.4', b: '1.72.4', d: '2026-11-20', items: [
       { t: 'En el resumen del paciente, si debe, hay un botón «Cobrar deuda» para registrar el pago al toque.', top: true },
