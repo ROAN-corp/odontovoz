@@ -6,10 +6,13 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.21', b: '1.76.0', d: '2026-11-20', items: [
+      { t: 'Nuevo en la ficha (Datos e historia): «Facturado a obras sociales». Anotás mes por mes qué le facturaste a la obra social (prácticas y piezas) para no volver a facturarlo por error. Queda como un registro continuo, aparte de la evolución.', top: true },
+      { t: 'La última nota de facturación aparece en la ficha resumida, debajo de «Abrir ficha completa».' }] },
     { v: '1.20.3', b: '1.75.3', d: '2026-11-20', items: [
       { t: 'Arreglo: el logo al lado de «Buen día» ya no parpadea ni desaparece cuando la app se sincroniza.' }] },
     { v: '1.20.2', b: '1.75.2', d: '2026-11-20', items: [
-      { t: 'En el celular, los 4 accesos directos del inicio entran en una sola fila.', top: true },
+      { t: 'En el celular, los 4 accesos directos del inicio entran en una sola fila.' },
       { t: 'Stock de insumos mantiene el mismo tamaño al pasar de una pestaña a otra (antes se achicaba en «Movimientos»).' }] },
     { v: '1.20.1', b: '1.75.1', d: '2026-11-20', items: [
       { t: 'Más fluido al desplazarse en Ajustes, en las ventanas y en la ficha (sobre todo en celulares Android).' },

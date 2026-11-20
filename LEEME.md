@@ -135,6 +135,14 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.21 · notas de facturación a obras sociales (20/11/2026)
+
+- Pedido de Rodrigo: un registro continuo por paciente de lo que se le facturó a la obra social, para no facturar dos veces lo mismo.
+- `src/app106.js`: tarjeta «Facturado a obras sociales» en Ficha › Datos e historia, debajo de «Motivo de la consulta». Cada nota tiene el mes facturado (`type=month`), la obra social (por defecto la del paciente, salvo Particular) y el texto libre. Se guarda en `pd.factNotes` (`{id, mes, os, txt, at, by}`, con `by` = `A.actor().who`) y se sincroniza con la ficha. Se ordena del mes más nuevo al más viejo y se puede editar o borrar (con confirmación en la misma tarjeta). Lo que se está escribiendo queda como borrador si la ficha se redibuja. No toca cobros, caja ni liquidaciones.
+- En la ficha resumida, la última nota va dentro de `.fc-card` (otro módulo reordena los bloques del panel) y al tocarla se abre la ficha en Datos.
+- Probado en celular y PC: agregar, ordenar, editar, borrar, borrador tras `A.refresh()`, persistencia tras recargar y ficha resumida, sin errores.
+- Compilación 1.76.0.
+
 ## OdontoVoz 1.20.3 · el logo del saludo ya no desaparece (20/11/2026)
 
 - El logo de «Buen día» lo agregaba `app18` (`mountLogo`) solo en `afterRefresh`. `app6` (cada minuto) y `app35` (al sincronizar) llaman a `A.render.inicio()` directamente, así que el logo desaparecía hasta el próximo refresco completo. Ahora un `MutationObserver` sobre `#view-inicio` lo repone antes de pintar, sin parpadeo. Probado: después de `A.render.inicio()` el logo está en el mismo cuadro.
