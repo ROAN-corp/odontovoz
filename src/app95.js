@@ -54,12 +54,7 @@
     '.hk-head { display: flex; align-items: center; justify-content: space-between; margin: 6px 4px 4px; }',
     '.hk-head span { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-2); font-weight: 700; }',
     '.hk-ed { border: 0; background: none; color: var(--accent); font: 600 12.5px inherit; cursor: pointer; padding: 4px 6px; border-radius: 8px; } .hk-ed:hover { background: var(--accent-soft); }',
-    '#view-inicio .home-actions.icons { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 10px 6px 8px; box-shadow: 0 1px 0 rgba(8, 20, 24, .03); }',
-    '#view-inicio .home-actions.icons .ha { --hc: var(--accent); }',
-    '#view-inicio .home-actions.icons .ha:nth-child(5n+2) { --hc: var(--ok); } #view-inicio .home-actions.icons .ha:nth-child(5n+3) { --hc: var(--warn); }',
-    '#view-inicio .home-actions.icons .ha:nth-child(5n+4) { --hc: var(--red); } #view-inicio .home-actions.icons .ha:nth-child(5n+5) { --hc: var(--ink-2); }',
-    '#view-inicio .home-actions.icons .ha svg { background: color-mix(in srgb, var(--hc) 12%, var(--surface)) !important; border: 1.5px solid color-mix(in srgb, var(--hc) 38%, var(--line)) !important; color: var(--hc) !important; border-radius: 16px; }',
-    '#view-inicio .home-actions.icons .ha:hover svg { background: color-mix(in srgb, var(--hc) 20%, var(--surface)) !important; }',
+    '#view-inicio .home-actions.icons { background: color-mix(in srgb, var(--accent) 3%, var(--surface)); border: 1px solid var(--line); border-radius: 18px; padding: 10px 6px 8px; }',
     '.hd-card .hd-go { display: inline-flex; align-items: center; gap: 6px; } .hd-card .hd-go svg { width: 16px; height: 16px; }',
     /* nombre del paciente en el turno: como un botón (abre la ficha resumida) */
     '.blk .nm { display: inline-block; max-width: 100%; padding: 0 7px; border-radius: 7px; background: color-mix(in srgb, var(--surface) 78%, transparent); border: 1px solid color-mix(in srgb, currentColor 22%, transparent); box-shadow: 0 1px 2px rgba(8, 20, 24, .08); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; line-height: 1.45; }',

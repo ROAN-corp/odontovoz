@@ -8195,10 +8195,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.16';
+  A.VERSION = '1.16.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.71.0';
+  A.VBUILD = '1.71.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18337,6 +18337,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.16.1', b: '1.71.1', d: '2026-11-20', items: [
+      { t: 'En la PC también se arrastran la ventanita del turno, «Para cobrar» y el resumen del paciente.', top: true },
+      { t: 'Los íconos de los accesos directos vuelven a su color de siempre.' }] },
     { v: '1.16', b: '1.71.0', d: '2026-11-20', items: [
       { t: 'El botón Atrás te lleva a la pantalla anterior (por ejemplo, de la ficha a la agenda), sin pasar por cada pestaña que tocaste.', top: true },
       { t: 'Caja y Liquidaciones: botón «Ver en gráficos» con lo cobrado por día, por medio de pago, por profesional y más.', top: true }] },
@@ -25110,6 +25113,26 @@ const OVMenu = (function () {
     }
   }
 
+  /* 1.16.1: las otras ventanitas flotantes (la del turno, «Para cobrar», el resumen del paciente…) también se arrastran */
+  const FLOAT = '#tpop, .pp-pop, #panelHost .panel, #waPick, #updPop .up-card';
+  const busyTarget = t => !!(t.closest && t.closest('button, a, input, select, textarea, label, [data-act], [contenteditable], [role="button"], .od-wrap, .odonto, svg'));
+  function wireFloats() {
+    if (!wide()) return;
+    document.querySelectorAll(FLOAT).forEach(el => {
+      if (el._ovFloat) return; el._ovFloat = 1; el.classList.add('ov-float');
+      dragger(el, () => { const t = (el.style.translate || '0px 0px').split(' ').map(parseFloat); return { x: t[0] || 0, y: t[1] || 0, r: el.getBoundingClientRect() }; },
+        (st, dx, dy) => {
+          const r = st.r, nx = clamp(st.x + dx, st.x - r.left - r.width + 120, st.x + window.innerWidth - r.left - 120), ny = clamp(st.y + dy, st.y - r.top, st.y + window.innerHeight - r.top - 60);
+          el.style.translate = nx + 'px ' + ny + 'px';
+        }, () => { }, e => wide() && !busyTarget(e.target));
+    });
+  }
+  try {
+    const mo = new MutationObserver(() => { try { wireFloats(); } catch (e) { /* nada */ } });
+    mo.observe(document.body, { childList: true });
+    const ph = document.getElementById('panelHost'); if (ph) mo.observe(ph, { childList: true, subtree: true });
+  } catch (e) { /* nada */ }
+
   /* guardar y reponer lo escrito en la ventana (los datos que todavía no se guardaron) */
   const fields = md => Array.from(md.querySelectorAll('input,select,textarea')).filter(i => i.type !== 'file');
   const snap = md => fields(md).map(i => ({ id: i.id, t: i.type, v: i.value, c: i.checked }));
@@ -25206,7 +25229,7 @@ const OVMenu = (function () {
     const prevType = S._mPos && S._mPos.type;
     const r = rmPrev.apply(this, arguments);
     if (!S.modal || S.modal.type !== prevType) S._mPos = null;
-    try { decorate(); kindHint(); freeChips(); } catch (e) { /* nada */ }
+    try { decorate(); kindHint(); freeChips(); wireFloats(); } catch (e) { /* nada */ }
     return r;
   };
 
@@ -25240,6 +25263,7 @@ const OVMenu = (function () {
     '.m-head { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 9%, var(--surface)), var(--surface)); border-bottom: 1px solid color-mix(in srgb, var(--accent) 16%, var(--line)); }',
     '.m-head h2 { flex: 1; min-width: 0; } .m-head.m-drag { cursor: grab; user-select: none; } .m-head.m-drag:active { cursor: grabbing; }',
     '.m-foot { background: color-mix(in srgb, var(--accent) 3%, var(--surface)); }',
+    '@media (min-width: 700px) { .ov-float { cursor: grab; } .ov-float:active { cursor: grabbing; } .ov-float input, .ov-float textarea, .ov-float select { cursor: auto; } .ov-float button, .ov-float a, .ov-float [data-act] { cursor: pointer; } }',
     '.m-min { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 10px; cursor: pointer; }',
     '.m-min svg { width: 18px; height: 18px; } .m-min:hover { color: var(--accent); border-color: var(--accent); }',
     /* burbuja */
@@ -25328,12 +25352,7 @@ const OVMenu = (function () {
     '.hk-head { display: flex; align-items: center; justify-content: space-between; margin: 6px 4px 4px; }',
     '.hk-head span { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-2); font-weight: 700; }',
     '.hk-ed { border: 0; background: none; color: var(--accent); font: 600 12.5px inherit; cursor: pointer; padding: 4px 6px; border-radius: 8px; } .hk-ed:hover { background: var(--accent-soft); }',
-    '#view-inicio .home-actions.icons { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 10px 6px 8px; box-shadow: 0 1px 0 rgba(8, 20, 24, .03); }',
-    '#view-inicio .home-actions.icons .ha { --hc: var(--accent); }',
-    '#view-inicio .home-actions.icons .ha:nth-child(5n+2) { --hc: var(--ok); } #view-inicio .home-actions.icons .ha:nth-child(5n+3) { --hc: var(--warn); }',
-    '#view-inicio .home-actions.icons .ha:nth-child(5n+4) { --hc: var(--red); } #view-inicio .home-actions.icons .ha:nth-child(5n+5) { --hc: var(--ink-2); }',
-    '#view-inicio .home-actions.icons .ha svg { background: color-mix(in srgb, var(--hc) 12%, var(--surface)) !important; border: 1.5px solid color-mix(in srgb, var(--hc) 38%, var(--line)) !important; color: var(--hc) !important; border-radius: 16px; }',
-    '#view-inicio .home-actions.icons .ha:hover svg { background: color-mix(in srgb, var(--hc) 20%, var(--surface)) !important; }',
+    '#view-inicio .home-actions.icons { background: color-mix(in srgb, var(--accent) 3%, var(--surface)); border: 1px solid var(--line); border-radius: 18px; padding: 10px 6px 8px; }',
     '.hd-card .hd-go { display: inline-flex; align-items: center; gap: 6px; } .hd-card .hd-go svg { width: 16px; height: 16px; }',
     /* nombre del paciente en el turno: como un botón (abre la ficha resumida) */
     '.blk .nm { display: inline-block; max-width: 100%; padding: 0 7px; border-radius: 7px; background: color-mix(in srgb, var(--surface) 78%, transparent); border: 1px solid color-mix(in srgb, currentColor 22%, transparent); box-shadow: 0 1px 2px rgba(8, 20, 24, .08); cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; line-height: 1.45; }',

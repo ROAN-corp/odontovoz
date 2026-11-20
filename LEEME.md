@@ -135,6 +135,10 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.16.1 · ventanitas flotantes movibles y accesos sin colores (20/11/2026)
+
+- `app94`: `wireFloats()` hace arrastrables (pantallas de 700 px o más, con la propiedad CSS `translate` para no pisar animaciones) `#tpop`, `.pp-pop`, `#panelHost .panel`, `#waPick` y `#updPop .up-card`; se arrastra desde cualquier parte que no sea botón, campo, enlace, `[data-act]` u odontograma. `app95`: se quitan los colores por acceso del inicio (quedan como antes, con el recuadro suave).
+
 ## OdontoVoz 1.16 · Atrás a la pantalla anterior y gráficos (20/11/2026)
 
 - `app98` (nuevo): `A.navRecord` redefinido: la clave es la pantalla (`tab`, y en la ficha también el paciente), sin pestaña de la ficha ni sección de la caja; volver a una pantalla ya visitada corta la pila ahí; Inicio la reinicia. `A.back` (app5) sigue igual.

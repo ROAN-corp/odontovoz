@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.16.1', b: '1.71.1', d: '2026-11-20', items: [
+      { t: 'En la PC también se arrastran la ventanita del turno, «Para cobrar» y el resumen del paciente.', top: true },
+      { t: 'Los íconos de los accesos directos vuelven a su color de siempre.' }] },
     { v: '1.16', b: '1.71.0', d: '2026-11-20', items: [
       { t: 'El botón Atrás te lleva a la pantalla anterior (por ejemplo, de la ficha a la agenda), sin pasar por cada pestaña que tocaste.', top: true },
       { t: 'Caja y Liquidaciones: botón «Ver en gráficos» con lo cobrado por día, por medio de pago, por profesional y más.', top: true }] },

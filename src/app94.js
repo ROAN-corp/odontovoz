@@ -48,6 +48,26 @@
     }
   }
 
+  /* 1.16.1: las otras ventanitas flotantes (la del turno, «Para cobrar», el resumen del paciente…) también se arrastran */
+  const FLOAT = '#tpop, .pp-pop, #panelHost .panel, #waPick, #updPop .up-card';
+  const busyTarget = t => !!(t.closest && t.closest('button, a, input, select, textarea, label, [data-act], [contenteditable], [role="button"], .od-wrap, .odonto, svg'));
+  function wireFloats() {
+    if (!wide()) return;
+    document.querySelectorAll(FLOAT).forEach(el => {
+      if (el._ovFloat) return; el._ovFloat = 1; el.classList.add('ov-float');
+      dragger(el, () => { const t = (el.style.translate || '0px 0px').split(' ').map(parseFloat); return { x: t[0] || 0, y: t[1] || 0, r: el.getBoundingClientRect() }; },
+        (st, dx, dy) => {
+          const r = st.r, nx = clamp(st.x + dx, st.x - r.left - r.width + 120, st.x + window.innerWidth - r.left - 120), ny = clamp(st.y + dy, st.y - r.top, st.y + window.innerHeight - r.top - 60);
+          el.style.translate = nx + 'px ' + ny + 'px';
+        }, () => { }, e => wide() && !busyTarget(e.target));
+    });
+  }
+  try {
+    const mo = new MutationObserver(() => { try { wireFloats(); } catch (e) { /* nada */ } });
+    mo.observe(document.body, { childList: true });
+    const ph = document.getElementById('panelHost'); if (ph) mo.observe(ph, { childList: true, subtree: true });
+  } catch (e) { /* nada */ }
+
   /* guardar y reponer lo escrito en la ventana (los datos que todavía no se guardaron) */
   const fields = md => Array.from(md.querySelectorAll('input,select,textarea')).filter(i => i.type !== 'file');
   const snap = md => fields(md).map(i => ({ id: i.id, t: i.type, v: i.value, c: i.checked }));
@@ -144,7 +164,7 @@
     const prevType = S._mPos && S._mPos.type;
     const r = rmPrev.apply(this, arguments);
     if (!S.modal || S.modal.type !== prevType) S._mPos = null;
-    try { decorate(); kindHint(); freeChips(); } catch (e) { /* nada */ }
+    try { decorate(); kindHint(); freeChips(); wireFloats(); } catch (e) { /* nada */ }
     return r;
   };
 
@@ -178,6 +198,7 @@
     '.m-head { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 9%, var(--surface)), var(--surface)); border-bottom: 1px solid color-mix(in srgb, var(--accent) 16%, var(--line)); }',
     '.m-head h2 { flex: 1; min-width: 0; } .m-head.m-drag { cursor: grab; user-select: none; } .m-head.m-drag:active { cursor: grabbing; }',
     '.m-foot { background: color-mix(in srgb, var(--accent) 3%, var(--surface)); }',
+    '@media (min-width: 700px) { .ov-float { cursor: grab; } .ov-float:active { cursor: grabbing; } .ov-float input, .ov-float textarea, .ov-float select { cursor: auto; } .ov-float button, .ov-float a, .ov-float [data-act] { cursor: pointer; } }',
     '.m-min { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 10px; cursor: pointer; }',
     '.m-min svg { width: 18px; height: 18px; } .m-min:hover { color: var(--accent); border-color: var(--accent); }',
     /* burbuja */
