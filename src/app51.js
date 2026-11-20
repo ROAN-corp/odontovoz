@@ -45,10 +45,22 @@
   const ua = navigator.userAgent || '';
   const desktop = !window.OV_NATIVE && !/Android|iPhone|iPad|iPod|Mobile/i.test(ua) && !(/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
   const WIN = 'odontovoz-whatsapp';
-  let waWin = null;
+  let waWin = null, nWeb = 0, tipped = false;
+  /* 1.18.2: WhatsApp Web corta el vínculo con la pestaña que lo abre, así que la PC puede usar la app de WhatsApp de escritorio (una sola ventana) */
+  const PCKEY = 'odontovoz.waPc'; const pcPref = () => LS.get(PCKEY, 'web'); /* web | app */
+  function deskGo(w) {
+    const url = 'whatsapp://send?' + (w.phone ? 'phone=' + w.phone + '&' : '') + 'text=' + encodeURIComponent(w.text);
+    A._waLast = url;
+    let left = false; const onBlur = () => { left = true; };
+    window.addEventListener('blur', onBlur, { once: true });
+    location.href = url;
+    setTimeout(() => { window.removeEventListener('blur', onBlur); if (!left && document.hasFocus()) A.toast('Si no se abrió WhatsApp, instalá la app de WhatsApp para la computadora (o volvé a WhatsApp Web en Ajustes › WhatsApp para recordatorios).'); }, 2500);
+  }
   function webGo(w) {
+    if (pcPref() === 'app') { deskGo(w); return; }
     const url = 'https://web.whatsapp.com/send?' + (w.phone ? 'phone=' + w.phone + '&' : '') + 'text=' + encodeURIComponent(w.text);
     A._waLast = url;
+    if (++nWeb === 2 && !tipped) { tipped = true; setTimeout(() => A.toast('¿Se abre una pestaña por cada mensaje? Usá la app de WhatsApp de la computadora: Ajustes › WhatsApp para recordatorios.'), 600); }
     try { if (waWin && !waWin.closed) { waWin.location.href = url; try { waWin.focus(); } catch (e) { /* nada */ } return; } } catch (e) { /* nada */ }
     waWin = open0.call(window, url, WIN);
   }
@@ -76,6 +88,15 @@
     A.S.modal = { type: 'waCfg' }; A.renderModal();
   };
   A.modalFns.waCfg = () => {
+    if (desktop) {
+      const q = pcPref(), o2 = [['web', 'WhatsApp Web (navegador)'], ['app', 'App de WhatsApp de la computadora']];
+      return A.modalShell('WhatsApp para recordatorios',
+        '<p class="hint">Elegí dónde se abren los recordatorios, presupuestos y avisos en esta computadora.</p>' +
+        '<div class="seg wp-seg" role="group" aria-label="WhatsApp">' + o2.map(x => '<button data-act="waPcSet" data-v="' + x[0] + '" aria-pressed="' + (q === x[0]) + '">' + esc(x[1]) + '</button>').join('') + '</div>' +
+        '<p class="hint"><b>App de la computadora:</b> todos los mensajes van a la misma ventana, sin abrir pestañas. Sirve también para cuentas de WhatsApp Business. Si no la tenés, bajala gratis de <b>whatsapp.com/download</b> (o de Microsoft Store), abrila y escaneá el código QR con el celular, como en WhatsApp Web. La primera vez el navegador pregunta «¿Abrir WhatsApp?»: tildá «Permitir siempre» y aceptá.</p>' +
+        '<p class="hint"><b>WhatsApp Web:</b> WhatsApp no deja que otra página reuse su pestaña, así que puede abrirse una pestaña nueva por cada mensaje.</p>',
+        '<button class="btn primary" data-act="closeModal">Listo</button>');
+    }
     const p = pref(), o = [['ask', 'Preguntar cada vez'], ['wa', 'WhatsApp'], ['biz', 'WhatsApp Business']];
     return A.modalShell('WhatsApp para recordatorios',
       '<p class="hint">Elegí con qué WhatsApp se abren los recordatorios, presupuestos y avisos que mandás desde la app. Vale para este equipo.</p>' +
@@ -84,6 +105,7 @@
       '<p class="hint">En la app instalada (APK) hace falta la versión 1.38.2 o más nueva para abrir WhatsApp Business.</p>',
       '<button class="btn primary" data-act="closeModal">Listo</button>');
   };
+  A.acts.waPcSet = el => { LS.set(PCKEY, el.getAttribute('data-v')); A.renderModal(); A.toast('Listo: ' + el.textContent + '.'); };
   A.acts.waSet = el => { LS.set(KEY, el.getAttribute('data-v')); A.renderModal(); A.toast('Listo: ' + el.textContent + '.'); };
 
   /* entrada en el menú (queda dentro de Ajustes › La app en este equipo) */
@@ -91,7 +113,7 @@
   function menu() {
     if ($('#drWaCfg')) return;
     const ref = $('#gearMenu .dnav[data-act="notifOpen"]') || $('#gearMenu .dnav[data-act="appearOpen"]'); if (!ref) return;
-    ref.insertAdjacentHTML('afterend', '<button class="dnav" id="drWaCfg" data-act="waCfg">' + WA_IC + '<span class="t">WhatsApp para recordatorios<small>WhatsApp o WhatsApp Business</small></span></button>');
+    ref.insertAdjacentHTML('afterend', '<button class="dnav" id="drWaCfg" data-act="waCfg">' + WA_IC + '<span class="t">WhatsApp para recordatorios<small>' + (desktop ? 'WhatsApp Web o la app de la computadora' : 'WhatsApp o WhatsApp Business') + '</small></span></button>');
   }
   const arPrev = A.afterRefresh;
   A.afterRefresh = function () { if (arPrev) arPrev.apply(this, arguments); try { menu(); } catch (e) { /* nada */ } };

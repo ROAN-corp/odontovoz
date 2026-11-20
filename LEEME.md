@@ -135,6 +135,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.18.2 · app de WhatsApp de escritorio en la PC (20/11/2026)
+
+- La 1.18.1 no alcanzó: WhatsApp Web corta el vínculo con la página que lo abre (Cross-Origin-Opener-Policy), así que el navegador pierde la pestaña con nombre y abre otra cada vez. Desde una web no se puede evitar.
+- Nuevo en Ajustes › WhatsApp para recordatorios (solo en la PC, clave local `odontovoz.waPc`: `web` | `app`): «App de WhatsApp de la computadora» abre `whatsapp://send?phone=…&text=…` en la app de escritorio (sirve para Business), siempre en la misma ventana. Si a los 2,5 s la página no perdió el foco, avisa que hay que instalar la app. Con WhatsApp Web, al segundo mensaje de la sesión aparece un aviso que sugiere la app. Cambios en `src/app51.js` (`deskGo`, `A.acts.waPcSet`).
+- Compilación 1.73.2.
+
 ## OdontoVoz 1.18.1 · una sola pestaña de WhatsApp Web en la PC (20/11/2026)
 
 - En la computadora (web, no celular), todo enlace de WhatsApp de la app (recordatorios, presupuestos, avisos) se abre en **una sola pestaña con nombre** (`odontovoz-whatsapp`) apuntando a `web.whatsapp.com/send?phone=…&text=…`. Si la pestaña sigue abierta se reusa; si se cerró, se abre otra. Cambio en `src/app51.js` (`webGo`, dentro del enrutador central de WhatsApp). En Android e iPhone sigue igual.
