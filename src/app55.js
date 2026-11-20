@@ -6,8 +6,12 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.21.1', b: '1.76.1', d: '2026-11-20', items: [
+      { t: 'Arriba de la ficha completa se ve también el N° de afiliado (edad · DNI · obra social · N° afiliado · teléfono).', top: true },
+      { t: 'En la ficha resumida: el N° de afiliado en «Datos principales» y las últimas 3 notas de la evolución clínica, debajo de «Qué hice hoy».', top: true },
+      { t: '«Facturado a obras sociales» pasó al final de la ficha, más compacto: se anota con «+ Anotar facturación».' }] },
     { v: '1.21', b: '1.76.0', d: '2026-11-20', items: [
-      { t: 'Nuevo en la ficha (Datos e historia): «Facturado a obras sociales». Anotás mes por mes qué le facturaste a la obra social (prácticas y piezas) para no volver a facturarlo por error. Queda como un registro continuo, aparte de la evolución.', top: true },
+      { t: 'Nuevo en la ficha (Datos e historia): «Facturado a obras sociales». Anotás mes por mes qué le facturaste a la obra social (prácticas y piezas) para no volver a facturarlo por error. Queda como un registro continuo, aparte de la evolución.' },
       { t: 'La última nota de facturación aparece en la ficha resumida, debajo de «Abrir ficha completa».' }] },
     { v: '1.20.3', b: '1.75.3', d: '2026-11-20', items: [
       { t: 'Arreglo: el logo al lado de «Buen día» ya no parpadea ni desaparece cuando la app se sincroniza.' }] },

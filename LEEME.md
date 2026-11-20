@@ -135,6 +135,14 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.21.1 · N° de afiliado a la vista y últimas evoluciones en la resumida (20/11/2026)
+
+- **Facturado a obras sociales** (`app106`): pasó al final de Datos e historia (después de datos, anamnesis y evolución). Es más compacto: el formulario se abre con «+ Anotar facturación» (`ofnNew`) y se cierra al guardar o cancelar.
+- **Encabezado de la ficha** (`src/app107.js`): edad · DNI · obra social (con plan) · N° afiliado (`p.afil`; si falta, dice «sin cargar» en ámbar) · teléfono. Para los Particular no se muestra el N° de afiliado.
+- **Ficha resumida:** `dt/dd.kv-afil` debajo de «Cobertura» y el bloque `.evo3` con las últimas 3 notas de `pd.notes` (sin las anuladas `n.void`, ordenadas por fecha), solo para el rol profesional. Va debajo de «Qué hice hoy» y se reubica en cada pasada (`renderPanel`, `rAF` y 150 ms), porque otros módulos agregan bloques después. Se oculta la línea vieja «Últimas notas: …», que quedaba repetida.
+- Probado en celular y PC: encabezado, orden de la ficha, formulario oculto y agregar nota, afiliado en la resumida, 3 últimas sin la anulada y actualización al guardar desde «Qué hice hoy».
+- Compilación 1.76.1.
+
 ## OdontoVoz 1.21 · notas de facturación a obras sociales (20/11/2026)
 
 - Pedido de Rodrigo: un registro continuo por paciente de lo que se le facturó a la obra social, para no facturar dos veces lo mismo.

@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.21';
+  A.VERSION = '1.21.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.76.0';
+  A.VBUILD = '1.76.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18434,8 +18434,12 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.21.1', b: '1.76.1', d: '2026-11-20', items: [
+      { t: 'Arriba de la ficha completa se ve también el N° de afiliado (edad · DNI · obra social · N° afiliado · teléfono).', top: true },
+      { t: 'En la ficha resumida: el N° de afiliado en «Datos principales» y las últimas 3 notas de la evolución clínica, debajo de «Qué hice hoy».', top: true },
+      { t: '«Facturado a obras sociales» pasó al final de la ficha, más compacto: se anota con «+ Anotar facturación».' }] },
     { v: '1.21', b: '1.76.0', d: '2026-11-20', items: [
-      { t: 'Nuevo en la ficha (Datos e historia): «Facturado a obras sociales». Anotás mes por mes qué le facturaste a la obra social (prácticas y piezas) para no volver a facturarlo por error. Queda como un registro continuo, aparte de la evolución.', top: true },
+      { t: 'Nuevo en la ficha (Datos e historia): «Facturado a obras sociales». Anotás mes por mes qué le facturaste a la obra social (prácticas y piezas) para no volver a facturarlo por error. Queda como un registro continuo, aparte de la evolución.' },
       { t: 'La última nota de facturación aparece en la ficha resumida, debajo de «Abrir ficha completa».' }] },
     { v: '1.20.3', b: '1.75.3', d: '2026-11-20', items: [
       { t: 'Arreglo: el logo al lado de «Buen día» ya no parpadea ni desaparece cuando la app se sincroniza.' }] },
@@ -26546,6 +26550,7 @@ const OVMenu = (function () {
   const thisMonth = () => A.today().slice(0, 7);
   let edit = null, delAsk = null; /* id en edición / id que pide confirmar borrado */
   let draft = null; /* lo que se está escribiendo: sobrevive si la ficha se redibuja (sincronización) */
+  let formOpen = false; /* 1.21.1: el formulario se abre con «+ Anotar facturación» */
   document.addEventListener('input', e => {
     const f = e.target && e.target.closest && e.target.closest('.ofn-form'); if (!f) return;
     draft = { pid: f.getAttribute('data-pid'), edit, mes: ($('#ofnMes') || {}).value, os: ($('#ofnOs') || {}).value, txt: ($('#ofnTxt') || {}).value };
@@ -26555,13 +26560,15 @@ const OVMenu = (function () {
     const p = A.PAT(pid) || {}, L = sorted(pid), d = draft && draft.pid === pid && draft.edit === edit ? draft : null;
     let e = edit && list(pid).filter(x => x.id === edit)[0];
     if (d) e = Object.assign({}, e || {}, { mes: d.mes, os: d.os, txt: d.txt, _d: 1 });
-    let h = '<section class="card ofn-card" id="ofnCard"><div class="ofn-head"><h2>Facturado a obras sociales <span class="count">' + L.length + '</span></h2></div>' +
-      '<p class="hint" style="margin:0 0 8px">Anotá lo que le facturaste a la obra social (prácticas y piezas) para no volver a facturarlo por error. Es aparte de la evolución y no cambia cobros ni liquidaciones.</p>' +
-      '<form class="ofn-form" data-sub="ofnSave" data-pid="' + esc(pid) + '">' +
+    const show = formOpen || !!edit || !!d;
+    let h = '<section class="card ofn-card" id="ofnCard"><div class="ofn-head"><h2>Facturado a obras sociales <span class="count">' + L.length + '</span></h2>' +
+      (show ? '' : '<button class="btn small" data-act="ofnNew">+ Anotar facturación</button>') + '</div>' +
+      '<p class="hint ofn-hint">Lo que le facturaste a la obra social, para no repetirlo. No cambia cobros ni liquidaciones.</p>' +
+      (!show ? '' : '<form class="ofn-form" data-sub="ofnSave" data-pid="' + esc(pid) + '">' +
       '<div class="ofn-row"><label class="field"><span>Mes facturado</span><input class="inp" type="month" id="ofnMes" value="' + esc(e && e.mes ? e.mes : thisMonth()) + '" required></label>' +
       '<label class="field"><span>Obra social</span><input class="inp" id="ofnOs" value="' + esc(e ? e.os : (p.cov && !/particular/i.test(p.cov) ? p.cov : '')) + '" placeholder="Ej.: OSDE" autocomplete="off"></label></div>' +
-      '<label class="field"><span>Qué facturaste</span><textarea class="inp" id="ofnTxt" rows="3" required placeholder="Ej.: consulta 01.01 · arreglo pieza 36 (OD) y 46 (MOD) · limpieza">' + esc(e ? e.txt : '') + '</textarea></label>' +
-      '<div class="row-btns"><button class="btn primary" type="submit">' + (edit ? 'Guardar cambios' : 'Agregar nota') + '</button>' + (edit || (e && e._d) ? '<button class="btn ghost" type="button" data-act="ofnCancel">Cancelar</button>' : '') + '</div></form>';
+      '<label class="field"><span>Qué facturaste</span><textarea class="inp" id="ofnTxt" rows="2" required placeholder="Ej.: consulta 01.01 · arreglo pieza 36 (OD) y 46 (MOD) · limpieza">' + esc(e ? e.txt : '') + '</textarea></label>' +
+      '<div class="row-btns"><button class="btn primary" type="submit">' + (edit ? 'Guardar cambios' : 'Agregar nota') + '</button>' + '<button class="btn ghost" type="button" data-act="ofnCancel">Cancelar</button></div></form>');
     if (L.length) {
       h += '<ol class="ofn-list">' + L.map(n => '<li class="ofn-it' + (n.id === edit ? ' ofn-ed' : '') + '"><div class="ofn-top"><b>' + esc(mesTxt(n.mes)) + '</b>' + (n.os ? '<span class="chip acc">' + esc(n.os) + '</span>' : '') +
         '<span class="ofn-acts">' + (delAsk === n.id
@@ -26577,11 +26584,10 @@ const OVMenu = (function () {
     const body = $('#fichaBody'); if (!body) return;
     const old = $('#ofnCard'), html = sectionHTML(S.fichaPid);
     if (old) { old.outerHTML = html; return; }
-    const after = body.querySelector('.mv-card');
-    if (after) after.insertAdjacentHTML('afterend', html); else body.insertAdjacentHTML('afterbegin', html);
+    body.insertAdjacentHTML('beforeend', html); /* 1.21.1: al fondo, después de datos, anamnesis y evolución */
   }
   const fichaPrev = A.render.ficha;
-  A.render.ficha = function () { const r = fichaPrev.apply(this, arguments); try { if (S.fichaPid !== mount._pid) { edit = null; delAsk = null; draft = null; mount._pid = S.fichaPid; } mount(); } catch (e) { /* nada */ } return r; };
+  A.render.ficha = function () { const r = fichaPrev.apply(this, arguments); try { if (S.fichaPid !== mount._pid) { edit = null; delAsk = null; draft = null; formOpen = false; mount._pid = S.fichaPid; } mount(); } catch (e) { /* nada */ } return r; };
 
   A.subs.ofnSave = (form, e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -26591,11 +26597,12 @@ const OVMenu = (function () {
     const L = list(pid), cur = edit && L.filter(x => x.id === edit)[0];
     if (cur) Object.assign(cur, { mes, os, txt, at: A.today(), by: who() || cur.by });
     else L.push({ id: A.uid(), mes, os, txt, at: A.today(), by: who() });
-    const was = !!cur; edit = null; delAsk = null; draft = null;
+    const was = !!cur; edit = null; delAsk = null; draft = null; formOpen = false;
     A.touchPd(pid); mount(); A.toast(was ? 'Nota de facturación actualizada.' : 'Nota de facturación agregada.');
   };
   A.acts.ofnEdit = el => { edit = el.getAttribute('data-id'); delAsk = null; draft = null; mount(); const t = $('#ofnTxt'); if (t) { t.focus(); t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } };
-  A.acts.ofnCancel = () => { edit = null; draft = null; mount(); };
+  A.acts.ofnCancel = () => { edit = null; draft = null; formOpen = false; mount(); };
+  A.acts.ofnNew = () => { formOpen = true; edit = null; mount(); const t = $('#ofnTxt'); if (t) t.focus(); };
   A.acts.ofnAsk = el => { delAsk = el.getAttribute('data-id'); mount(); };
   A.acts.ofnNo = () => { delAsk = null; mount(); };
   A.acts.ofnDel = el => {
@@ -26625,23 +26632,97 @@ const OVMenu = (function () {
   css.id = 'ovApp106';
   css.textContent = [
     '.ofn-card h2 .count { font-size: 13px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); border-radius: 999px; padding: 1px 8px; margin-left: 4px; vertical-align: 2px; }',
-    '.ofn-form { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }',
+    '.ofn-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; }',
+    '.ofn-card h2 { font-size: 17px; }',
+    '.ofn-hint { margin: 2px 0 8px !important; font-size: 12.5px; }',
+    '.ofn-form { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }',
     '.ofn-row { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr); gap: 10px; }',
     '@media (max-width: 480px) { .ofn-row { grid-template-columns: minmax(0, 1fr); } }',
-    '.ofn-form textarea { resize: vertical; min-height: 72px; font: inherit; }',
-    '.ofn-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }',
-    '.ofn-it { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 4px; }',
+    '.ofn-form textarea { resize: vertical; min-height: 56px; font: inherit; }',
+    '.ofn-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }',
+    '.ofn-it { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; padding: 7px 10px; background: var(--surface); display: flex; flex-direction: column; gap: 2px; }',
     '.ofn-it.ofn-ed { border-color: var(--accent); background: var(--accent-soft); }',
     '.ofn-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }',
-    '.ofn-acts { margin-left: auto; display: flex; gap: 12px; align-items: center; font-size: 14px; }',
+    '.ofn-acts { margin-left: auto; display: flex; gap: 12px; align-items: center; font-size: 13px; }',
+    '.ofn-top .chip { font-size: 11px; padding: 1px 8px; }',
     '.ofn-q { color: var(--red); font-weight: 600; }',
     '.ofn-txt { white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }',
-    '.ofn-meta { font-size: 12.5px; color: var(--ink-2); }',
+    '.ofn-meta { font-size: 11.5px; color: var(--ink-2); }',
     '.ofn-empty { margin: 10px 0 0; }',
     '#panelHost .ofn-mini { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 12px; background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; }',
     '#panelHost .ofn-mini:hover { border-color: var(--accent); }',
     '.ofn-mini-l { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); font-weight: 700; }',
     '.ofn-mini-t { font-size: 13.5px; color: var(--ink-2); }'
+  ].join('\n');
+  document.body.appendChild(css);
+})();
+/* ===== 1.21.1: datos abreviados con N° de afiliado en la ficha y en la ficha resumida, y las últimas 3 evoluciones en la resumida ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, esc = A.esc, $ = q => document.querySelector(q);
+  const isPart = cov => !cov || /particular/i.test(cov);
+  const covTxt = p => (p.cov || 'Particular') + (p.plan && !isPart(p.cov) && String(p.cov).indexOf(p.plan) < 0 ? ' ' + p.plan : '');
+
+  /* encabezado de la ficha completa: edad · DNI · obra social · N° afiliado · teléfono */
+  function head() {
+    if (S.tab !== 'ficha' || !S.fichaPid) return;
+    const p = A.PAT(S.fichaPid), sub = $('#view-ficha .fh .sub'); if (!p || !sub) return;
+    const bits = [];
+    if (p.age != null && p.age !== '') bits.push(esc(p.age) + ' años');
+    if (p.dni) bits.push('DNI ' + esc(p.dni));
+    bits.push(esc(covTxt(p)));
+    if (!isPart(p.cov)) bits.push(p.afil ? 'N° afiliado <b class="mono">' + esc(p.afil) + '</b>' : '<span class="fh-noafil">N° afiliado sin cargar</span>');
+    if (p.phone) bits.push(esc(p.phone));
+    const html = bits.join(' · ');
+    if (sub.innerHTML !== html) sub.innerHTML = html;
+  }
+  const fichaPrev = A.render.ficha;
+  A.render.ficha = function () { const r = fichaPrev.apply(this, arguments); try { head(); } catch (e) { /* nada */ } return r; };
+
+  /* ficha resumida: N° afiliado en «Datos principales» y las últimas 3 notas de la evolución clínica */
+  const lastNotes = pid => {
+    const n = ((A.pd(pid) || {}).notes || []).map((x, i) => ({ x, i })).filter(o => !o.x.void); /* sin las anuladas */
+    n.sort((a, b) => (a.x.date === b.x.date ? a.i - b.i : a.x.date < b.x.date ? 1 : -1)); /* notas nuevas van al principio con la misma fecha */
+    return n.slice(0, 3).map(o => o.x);
+  };
+  function panel() {
+    const pn = S.panel, pid = pn && (pn.type === 'pat' ? pn.pid : pn.type === 'appt' ? (A.apptById(pn.id) || {}).pid : null);
+    const p = pid && A.PAT(pid); if (!p) return;
+    const dp = [].slice.call(document.querySelectorAll('#panelHost .block')).filter(b => { const h = b.querySelector('h3'); return h && /Datos principales/i.test(h.textContent); })[0];
+    if (dp && !dp.querySelector('.kv-afil')) {
+      const dts = [].slice.call(dp.querySelectorAll('dl.kv dt')), cob = dts.filter(d => /Cobertura/i.test(d.textContent))[0];
+      if (cob && cob.nextElementSibling && !isPart(p.cov)) cob.nextElementSibling.insertAdjacentHTML('afterend', '<dt class="kv-afil">N° afiliado</dt><dd class="mono kv-afil">' + (p.afil ? esc(p.afil) : '<span class="fh-noafil">sin cargar</span>') + '</dd>');
+    }
+    if (S.role !== 'profesional') return; /* la evolución es dato clínico: solo para profesionales */
+    /* debajo de «Qué hice hoy» (donde se escribe la evolución desde la resumida); si no está, debajo de «Datos principales».
+       Otros módulos agregan bloques un instante después, por eso se reubica en cada pasada. */
+    const at = $('#panelHost .block.quick') || dp || $('#panelHost .fc-card'); if (!at) return;
+    const ex = $('#panelHost .evo3');
+    if (ex && ex.previousElementSibling === at && ex.getAttribute('data-n') === String(((A.pd(pid) || {}).notes || []).length)) return;
+    if (ex) ex.remove();
+    const L = lastNotes(pid);
+    const h = '<div class="block evo3" data-n="' + (((A.pd(pid) || {}).notes || []).length) + '"><h3>Evolución clínica · últimas ' + Math.min(3, L.length || 3) + '</h3>' +
+      (L.length ? '<ol class="evo3-list">' + L.map(n => '<li><div class="evo3-m">' + esc(A.fmtDMY(n.date)) + (n.pro && A.PRO(n.pro) ? ' · ' + esc(A.PRO(n.pro).short) : '') + (n.auto ? ' · automática' : '') + '</div><div class="evo3-t">' + esc(n.text) + '</div></li>').join('') + '</ol>'
+        : '<p class="hint" style="margin:0">Todavía no hay notas en la evolución.</p>') +
+      '<button class="lnk evo3-all" data-act="openFicha" data-pid="' + esc(pid) + '" data-tab="datos">Ver la evolución completa ›</button></div>';
+    at.insertAdjacentHTML('afterend', h);
+    /* la línea corta «Últimas notas: …» de «Qué hice hoy» queda repetida: se oculta */
+    [].slice.call(document.querySelectorAll('#panelHost .block.quick .small-note')).forEach(x => { if (/^\s*Últimas notas/.test(x.textContent)) x.hidden = true; });
+  }
+  const panelPrev = A.renderPanel;
+  A.renderPanel = function () { const r = panelPrev.apply(this, arguments); const go = () => { try { panel(); } catch (e) { /* nada */ } }; go(); requestAnimationFrame(go); setTimeout(go, 150); return r; };
+
+  const css = document.createElement('style');
+  css.id = 'ovApp107';
+  css.textContent = [
+    '.fh-noafil { color: var(--warn); font-style: italic; }',
+    '.fh .sub b.mono { font-weight: 600; }',
+    '#panelHost .evo3 { gap: 6px; }',
+    '#panelHost .evo3-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }',
+    '#panelHost .evo3-list li { border-left: 3px solid var(--accent); padding: 4px 0 4px 10px; }',
+    '#panelHost .evo3-m { font-size: 12px; color: var(--ink-2); font-weight: 600; }',
+    '#panelHost .evo3-t { font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }',
+    '#panelHost .evo3-all { align-self: flex-start; font-size: 13.5px; }'
   ].join('\n');
   document.body.appendChild(css);
 })();
