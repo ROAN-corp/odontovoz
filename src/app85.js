@@ -57,7 +57,8 @@
       const btn = head.querySelector('.fc-btn') || Object.assign(document.createElement('button'), { className: 'fc-btn', textContent: 'Ficha completa ›' });
       btn.setAttribute('data-act', 'openFicha'); btn.setAttribute('data-pid', pid); btn.classList.add('fc-big'); btn.textContent = 'Abrir ficha completa ›';
       card.appendChild(btn);
-      card.insertAdjacentHTML('beforeend', acctHTML(pid) + '<button class="btn small fc-pay" data-act="openFicha" data-pid="' + pid + '" data-tab="cuenta">Cobrar / ver cuenta</button>');
+      const debe = A.saldo(pid);
+      card.insertAdjacentHTML('beforeend', acctHTML(pid) + (debe > 0 ? '<button class="btn fc-debt" data-act="debtPay" data-pid="' + pid + '">💵 Cobrar deuda · ' + A.money(debe) + '</button>' : '') + '<button class="btn small fc-pay" data-act="openFicha" data-pid="' + pid + '" data-tab="cuenta">' + (debe > 0 ? 'Ver la cuenta' : 'Cobrar / ver cuenta') + '</button>');
     }
     /* la fila «Cuenta» de datos principales ya está en la tarjeta */
     if (datos) datos.querySelectorAll('dt').forEach(dt => { if (/^Cuenta$/i.test(dt.textContent.trim()) && dt.nextElementSibling) { dt.nextElementSibling.remove(); dt.remove(); } });
@@ -72,4 +73,9 @@
     const host = document.getElementById('panelHost');
   if (host && window.MutationObserver) new MutationObserver(() => { if (!busy) run(); }).observe(host, { childList: true, subtree: true });
   A.panelArrange = run;
+  /* 1.17.4: cobrar la deuda directo desde el resumen (por ejemplo, el paciente viene solo a pagar lo que debía) */
+  A.acts.debtPay = el => { const pid = el.getAttribute('data-pid'); if (!pid) return; const s = A.saldo(pid); S.modal = { type: 'cobro', pid, amt: s > 0 ? s : '' }; A.renderModal(); };
+  const css2 = document.createElement('style');
+  css2.textContent = '#panelHost .fc-debt{display:flex;justify-content:center;width:100%;padding:10px 14px;font-size:15.5px;font-weight:700;border-radius:12px;border:1.5px solid var(--red);background:color-mix(in srgb,var(--red) 10%,var(--surface));color:var(--red)}#panelHost .fc-debt:hover{background:color-mix(in srgb,var(--red) 16%,var(--surface))}';
+  document.head.appendChild(css2);
 })();

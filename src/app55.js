@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.17.4', b: '1.72.4', d: '2026-11-20', items: [
+      { t: 'En el resumen del paciente, si debe, hay un botón «Cobrar deuda» para registrar el pago al toque.', top: true },
+      { t: 'En «Para cobrar», el nombre del paciente abre su ficha resumida.', top: true }] },
     { v: '1.17.3', b: '1.72.3', d: '2026-11-20', items: [
       { t: 'Arreglo: en el turno nuevo ya se puede elegir al paciente de la lista de sugerencias.', top: true }] },
     { v: '1.17.2', b: '1.72.2', d: '2026-11-20', items: [

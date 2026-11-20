@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.17.4 · cobrar deuda desde el resumen y nombre en Para cobrar (20/11/2026)
+
+- `app85`: si `A.saldo(pid) > 0`, la tarjeta del resumen (turno o paciente) muestra «💵 Cobrar deuda · $X» (`debtPay` → modal `cobro` con el saldo cargado; el pago se descuenta de la deuda como cualquier cobro).
+- `app40`: en `A.pcHTML` el nombre es un botón (`pcOpenPat` → panel `pat`, la ficha resumida) para ir a la cuenta y corregir o cancelar.
+
 ## OdontoVoz 1.17.3 · arreglo al elegir paciente en el turno nuevo (20/11/2026)
 
 - `app94`: los chips de horarios libres usaban la acción `naPick`, la misma que elige al paciente de la lista (`index.html`), y la pisaban: tocar un paciente no hacía nada. Ahora es `naTimePick`. **Ojo:** antes de crear un `A.acts.X` nuevo, buscar con grep que no exista.
