@@ -38,6 +38,7 @@ Leé esto antes de tocar nada. Versión actual: **1.10.1** (compilación 1.65.1)
 
 ## Datos de negocio
 - Precios en dólares (USD 1 = $1.570, `DOLAR` en `src/app25.js`): Profesional USD 17 (+3 por consultorio extra), Centro USD 35 (+3 por profesional extra), Empresa USD 82. Prueba 7 días (14 para las primeras 50). Mantener iguales `PLAN` de `app19.js`, `PRICE`/`USD` de `app25.js`, `ov_limits()` del SQL, `DEF` de `admin.html`, tarjetas de `sitio/index.html` y `sitio/terminos.html`.
+- **Registro DNDA (hecho):** OdontoVoz 1.0 inscripto en el Registro de Obra Publicada – Software el 18/11/2026, legajo **RL-2026-111680189-APN-DNDA#MJ** (expediente EX-2026-110910062- -APN-DNDA#MJ; constancia RE-2026-111680201-APN-DNDA#MJ en TAD; obra `OdontoVoz-1.0-deposito.zip`, SHA-256 cf24222f…).
 - Soporte WhatsApp: Rodrigo 5492984513279 y Angel 5492984764428 (`A.SUPPORT` en `src/app5.js`).
 
 ## Mapa rápido de módulos (lo más tocado últimamente)
@@ -61,7 +62,6 @@ Leé esto antes de tocar nada. Versión actual: **1.10.1** (compilación 1.65.1)
 - Publicar = subir versión (ver arriba), `inline-src`, tests, commit, push y avisar en una o dos líneas.
 
 ## Pendiente
-- **DNDA** (software): expediente EX-2026-110910062- -APN-DNDA#MJ; obra subida el 17/11/2026 (`OdontoVoz-1.0-deposito.zip`, SHA-256 cf24222f…). Falta solo esperar la notificación en TAD.
 - **Marca INPI** ODONTOVOZ (14/11/2026, clases 9 y 42, a nombre de Rodrigo): esperar números de acta y notificaciones.
 - **Play Store**: D-U-N-S pedido el 17/11/2026 (hasta 30 días hábiles; datos: BOBADILLA RODRIGO NICOLAS, CUIT 20-36871177-3, Manuel Belgrano 155, Allen, Río Negro 8328). Ya listo de nuestro lado: `.aab` con API 36 (`.github/workflows/play.yml`), capturas en `play/`, textos y formularios en `docs/PLAY.md`. Después: cuenta de Play Console de empresa (la crea y paga el usuario), «Usar mi propia clave» con `odontovoz-firma.jks` (nunca subirlo), cuenta de prueba para revisores (la crea el usuario).
 - **IA de historias de papel**: el usuario crea la clave en console.anthropic.com (límite USD 10/mes) y la pega en Supabase › Edge Functions › Secrets como `ANTHROPIC_API_KEY`. Después probar con 20–30 historias y recién ahí poner precio.
