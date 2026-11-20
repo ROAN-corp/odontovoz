@@ -117,7 +117,7 @@
     '#view-ficha .card { border-radius: 16px; border-color: color-mix(in srgb, var(--accent) 14%, var(--line)); }',
     '#view-ficha .card > h2 { display: flex; align-items: center; gap: 8px; } #view-ficha .card > h2::before { content: ""; width: 4px; height: 1.05em; border-radius: 2px; background: var(--accent); flex: none; }',
     /* menú de secciones: en la PC, botones con ícono en dos filas, sin desplazar */
-    '#view-ficha > .ftabs.ft-pro { position: sticky; top: var(--appbar-h, 56px); z-index: 20; display: flex; flex-wrap: wrap; gap: 6px; overflow: visible; padding: 8px; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(6px); box-shadow: 0 2px 10px rgba(8, 20, 24, .06); }',
+    '#view-ficha > .ftabs.ft-pro { position: sticky; top: var(--appbar-h, 56px); z-index: 20; display: flex; flex-wrap: wrap; gap: 6px; overflow: visible; padding: 8px; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 2px 10px rgba(8, 20, 24, .06); }',
     '#view-ficha > .ftabs.ft-pro .ftab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 14px; white-space: nowrap; }',
     '#view-ficha > .ftabs.ft-pro .ftab svg { width: 17px; height: 17px; color: var(--accent); flex: none; }',
     '#view-ficha > .ftabs.ft-pro .ftab::after { display: none !important; }',

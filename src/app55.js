@@ -6,9 +6,12 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.20.1', b: '1.75.1', d: '2026-11-20', items: [
+      { t: 'Más fluido al desplazarse en Ajustes, en las ventanas y en la ficha (sobre todo en celulares Android).', top: true },
+      { t: 'En la computadora, la ventanita de un turno ya no queda cortada en los últimos turnos del día: siempre entra entera en la pantalla.' }] },
     { v: '1.20', b: '1.75.0', d: '2026-11-20', items: [
       { t: 'Foto del paciente: tocá su cara (o sus iniciales) en la ficha para sacarle una foto o elegirla de la galería. Aparece en el buscador y en la lista de pacientes. Es opcional y pide la autorización del paciente.', top: true },
-      { t: 'Arreglo: en el odontograma se pueden volver a pintar varias caras seguidas del mismo diente y saltar entre dientes libremente.', top: true },
+      { t: 'Arreglo: en el odontograma se pueden volver a pintar varias caras seguidas del mismo diente y saltar entre dientes libremente.' },
       { t: 'En el plan de tratamiento, el nombre de cada fase se ve completo aunque se muestren los costos.' },
       { t: 'El botón «Ficha completa» de la ficha resumida tiene el estilo nuevo.' }] },
     { v: '1.19', b: '1.74.0', d: '2026-11-20', items: [

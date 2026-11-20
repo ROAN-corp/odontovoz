@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.20';
+  A.VERSION = '1.20.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.75.0';
+  A.VBUILD = '1.75.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18428,9 +18428,12 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.20.1', b: '1.75.1', d: '2026-11-20', items: [
+      { t: 'Más fluido al desplazarse en Ajustes, en las ventanas y en la ficha (sobre todo en celulares Android).', top: true },
+      { t: 'En la computadora, la ventanita de un turno ya no queda cortada en los últimos turnos del día: siempre entra entera en la pantalla.' }] },
     { v: '1.20', b: '1.75.0', d: '2026-11-20', items: [
       { t: 'Foto del paciente: tocá su cara (o sus iniciales) en la ficha para sacarle una foto o elegirla de la galería. Aparece en el buscador y en la lista de pacientes. Es opcional y pide la autorización del paciente.', top: true },
-      { t: 'Arreglo: en el odontograma se pueden volver a pintar varias caras seguidas del mismo diente y saltar entre dientes libremente.', top: true },
+      { t: 'Arreglo: en el odontograma se pueden volver a pintar varias caras seguidas del mismo diente y saltar entre dientes libremente.' },
       { t: 'En el plan de tratamiento, el nombre de cada fase se ve completo aunque se muestren los costos.' },
       { t: 'El botón «Ficha completa» de la ficha resumida tiene el estilo nuevo.' }] },
     { v: '1.19', b: '1.74.0', d: '2026-11-20', items: [
@@ -25696,7 +25699,7 @@ const OVMenu = (function () {
     '#view-ficha .card { border-radius: 16px; border-color: color-mix(in srgb, var(--accent) 14%, var(--line)); }',
     '#view-ficha .card > h2 { display: flex; align-items: center; gap: 8px; } #view-ficha .card > h2::before { content: ""; width: 4px; height: 1.05em; border-radius: 2px; background: var(--accent); flex: none; }',
     /* menú de secciones: en la PC, botones con ícono en dos filas, sin desplazar */
-    '#view-ficha > .ftabs.ft-pro { position: sticky; top: var(--appbar-h, 56px); z-index: 20; display: flex; flex-wrap: wrap; gap: 6px; overflow: visible; padding: 8px; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(6px); box-shadow: 0 2px 10px rgba(8, 20, 24, .06); }',
+    '#view-ficha > .ftabs.ft-pro { position: sticky; top: var(--appbar-h, 56px); z-index: 20; display: flex; flex-wrap: wrap; gap: 6px; overflow: visible; padding: 8px; margin: 0 0 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 2px 10px rgba(8, 20, 24, .06); }',
     '#view-ficha > .ftabs.ft-pro .ftab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 14px; white-space: nowrap; }',
     '#view-ficha > .ftabs.ft-pro .ftab svg { width: 17px; height: 17px; color: var(--accent); flex: none; }',
     '#view-ficha > .ftabs.ft-pro .ftab::after { display: none !important; }',
@@ -26237,7 +26240,7 @@ const OVMenu = (function () {
     '.mono, .num, time { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }',
     'button, .btn, .tab, .chip, .inp, .card, .ha, .seg button { transition: background-color .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease), transform .12s var(--ease), color .18s var(--ease); }',
     '/* ---- barra superior ---- */',
-    '.top { background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }',
+    '.top { background: var(--bg); border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }',
     '.searchbox input { border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-sm); border-color: var(--line); padding-top: 10px; padding-bottom: 10px; }',
     '.searchbox input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); outline: none; }',
     '/* ---- botones ---- */',
@@ -26271,7 +26274,9 @@ const OVMenu = (function () {
     '.inp:focus, .field input:focus, .field select:focus, .field textarea:focus, .modal .field input:focus, .modal .field select:focus, .modal .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); outline: none; }',
     '.field > label, .field > span:first-child, label.lbl { font-size: 12.5px; font-weight: 600; color: var(--ink-2); letter-spacing: .01em; }',
     '/* ---- modales ---- */',
-    '.modal-scrim { background: rgba(9, 22, 26, .42); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }',
+    '.modal-scrim { background: rgba(9, 22, 26, .5); }',
+    '.m-body { overscroll-behavior: contain; }',
+    '.modal .card, .modal .block, .modal .ha, .modal .hd-card, .modal .ps-card { box-shadow: var(--shadow-sm); }',
     '.modal { border-radius: var(--r-xl); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--line) 60%, transparent); }',
     '.m-head { padding-block: 18px 14px !important; border-bottom: 1px solid var(--line); }',
     '.m-head h2, .m-head h3 { font-size: 19px; }',
@@ -26470,6 +26475,33 @@ const OVMenu = (function () {
   ].join('\n');
   document.body.appendChild(css);
   later();
+})();
+/* ===== 1.20.1: la ventanita del turno (en la PC) siempre entra entera en la pantalla, aunque crezca después de abrirse ===== */
+(function () {
+  'use strict';
+  /* app38 la ubica junto al clic midiendo su alto al aparecer; después otros módulos le suman cosas (cobrar antes, consultorio, color)
+     y en los últimos turnos del día quedaba cortada abajo. Acá se reacomoda cada vez que cambia de tamaño. */
+  const M = 10;
+  function fit(el) {
+    if (!el || el.classList.contains('sheet') || !el.isConnected) return;
+    const H = window.innerHeight;
+    el.style.maxHeight = (H - 2 * M) + 'px'; el.style.overflowY = 'auto'; el.style.overscrollBehavior = 'contain';
+    const r = el.getBoundingClientRect(), top = parseFloat(el.style.top);
+    if (isNaN(top)) return;
+    if (r.bottom > H - M) el.style.top = Math.max(M - (r.top - top), top - (r.bottom - (H - M))) + 'px';
+    else if (r.top < M) el.style.top = (top + (M - r.top)) + 'px';
+  }
+  let ro = null, seen = null;
+  function watch() {
+    const el = document.getElementById('tpop');
+    if (el === seen) return; seen = el;
+    if (ro) { ro.disconnect(); ro = null; }
+    if (!el) return;
+    fit(el);
+    if (window.ResizeObserver) { ro = new ResizeObserver(() => fit(el)); ro.observe(el); }
+  }
+  try { new MutationObserver(watch).observe(document.body, { childList: true }); } catch (e) { /* nada */ }
+  window.addEventListener('resize', () => { const el = document.getElementById('tpop'); if (el) fit(el); });
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

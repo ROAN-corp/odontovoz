@@ -135,6 +135,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.20.1 · desplazamiento más fluido y ventana del turno entera (20/11/2026)
+
+- **Fluidez:** se sacó `backdrop-filter` (desenfoque) de `.top` y `.modal-scrim` (`app102`, agregado en la 1.19) y de la barra de pestañas de la ficha (`app97`). Ahora llevan fondos sólidos. Dentro de las ventanas, las tarjetas usan `--shadow-sm` y `.m-body` lleva `overscroll-behavior: contain`. En Android, el desenfoque sobre contenido que se desplaza se recalcula en cada cuadro. Ojo: la prueba local no tiene placa de video, así que la mejora no se pudo medir en números.
+- **Ventana del turno en la PC** (`#tpop`, `src/app104.js`): `app38` la ubica midiendo su alto al abrirse, pero después otros módulos le suman contenido y en los últimos turnos quedaba hasta 100 px fuera de la pantalla. Un `ResizeObserver` la reacomoda (`top`) y le pone `max-height: 100vh - 20px` con desplazamiento interno. En el celular (hoja de abajo) no cambia.
+- Compilación 1.75.1.
+
 ## OdontoVoz 1.20 · foto del paciente, arreglo del pintado por caras y fases completas (20/11/2026)
 
 - **Arreglo (error de la 1.19):** el `rect.selbox` del diente seleccionado tenía relleno, quedaba encima de las caras y frenaba el segundo toque en el mismo diente. Ahora lleva `pointer-events: none` (`app102`). Probado: 24 O, D y V y 23 M y O, alternando, en PC y celular.
