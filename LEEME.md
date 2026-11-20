@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.17.2 · plan de tratamiento y accesos centrados (20/11/2026)
+
+- `app16` `planHTML`: «Mostrar costos» / «Ofrecer cuotas» como chips `.tp-opts` arriba (las cuotas en `.tp-finbox`); fases dentro de `.tp-phases` (grilla de tarjetas con color por orden) con el botón «+ Agregar fase» como tarjeta punteada; la evaluación (`details.tp-sec`) va después de las fases y cerrada (dice «cargada» si tiene texto). Estilos en `app100`.
+- `app99`: los accesos del inicio en `flex-wrap` centrado y a lo ancho del recuadro (antes la grilla fija se salía con 7 u 8 accesos).
+
 ## OdontoVoz 1.17.1 · recargos preestablecidos y arreglos del turno nuevo (20/11/2026)
 
 - `sitio/recargos/preset.json` (se publica en odontovoz.com.ar/recargos/preset.json): valores de referencia (crédito 1 pago +2,2% = 1,8% + IVA de la ley 25.065; 3 cuotas +9,1% y 6 cuotas +18,7% según coeficientes de Cuotas MiPyME de Payway/Cabal; débito, efectivo, transferencia y Mercado Pago en 0; el BCRA no permite recargo con débito). **Para actualizarlos, editar ese archivo** (y la copia `BUILTIN` de `app100`).

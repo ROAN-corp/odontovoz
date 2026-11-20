@@ -43,17 +43,16 @@
 
   function planHTML(pid) {
     const p = tp(pid), list = items(pid), T = totals(list), pd = A.pd(pid), logo = A.CFG.logo;
-    let h = '<section class="card tp-card"><div class="tp-head"><h2>Plan de tratamiento</h2><div class="row-btns">' +
+    let h = '<section class="card tp-card tp-wide"><div class="tp-head"><h2>Plan de tratamiento</h2><div class="row-btns">' +
       '<button class="btn small" data-act="pdfPlanTp">PDF</button><button class="btn small" data-act="tpWa">' + WAICON + ' WhatsApp</button>' +
       '<button class="btn small ghost" data-act="tpMore" aria-label="Más opciones del plan">⋯</button></div></div>';
     if (T.n) h += '<div class="tp-prog"><div class="tp-bar"><i style="width:' + Math.round(T.nd * 100 / T.n) + '%"></i></div><span><b>' + T.nd + '</b> de ' + T.n + ' realizados' + (p.prices ? ' · ' + A.money(T.done) + ' de ' + A.money(T.tot) : '') + '</span></div>';
-    h += '<details class="tp-sec"' + (p.dx || p.notes ? '' : '') + ' open><summary>Evaluación y observaciones para el paciente <span class="muted">(opcional)</span></summary>' +
-      '<div class="field"><label for="tpDx">Diagnóstico / lo que vi en la evaluación</label><textarea id="tpDx" rows="2" data-chg="tpField" data-k="dx" placeholder="Ej.: gingivitis generalizada, caries en 16 y 36, 46 con lesión periapical.">' + esc(p.dx || '') + '</textarea></div>' +
-      '<div class="field"><label for="tpNotes">Indicaciones y observaciones</label><textarea id="tpNotes" rows="2" data-chg="tpField" data-k="notes" placeholder="Ej.: cepillado 3 veces por día con técnica de Bass; turnos cada 15 días; la duración estimada es de 3 meses.">' + esc(p.notes || '') + '</textarea></div>' +
-      '<label class="chk"><input type="checkbox" data-chg="tpPrices"' + (p.prices ? ' checked' : '') + '> Mostrar costos al lado de cada tratamiento (y en el PDF)</label>' +
-      (p.prices ? '<label class="chk"><input type="checkbox" data-chg="tpFin"' + (p.fin ? ' checked' : '') + '> Ofrecer planes de pago en cuotas (contado, 3, 6, 9 y 12 cuotas, en el PDF y en WhatsApp)</label>' + (p.fin ? tpFinHTML(pid) : '') : '') + '</details>';
+    /* 1.17.2: opciones del plan arriba, a la vista; la evaluación va al final y cerrada */
+    h += '<div class="tp-opts"><label class="tp-opt"><input type="checkbox" data-chg="tpPrices"' + (p.prices ? ' checked' : '') + '> Mostrar costos</label>' +
+      (p.prices ? '<label class="tp-opt"><input type="checkbox" data-chg="tpFin"' + (p.fin ? ' checked' : '') + '> Ofrecer cuotas</label>' : '') + '</div>' + (p.prices && p.fin ? '<div class="tp-finbox">' + tpFinHTML(pid) + '</div>' : '');
     if (p.virgin) h += '<details class="tp-guide"><summary>¿Cómo armar el plan? Guía rápida</summary><ol>' + TEMPLATE.map(f => '<li><b>' + esc(f.name) + ':</b> ' + esc(f.hint) + '</li>').join('') + '</ol><p class="hint">Las fases son una plantilla orientativa: cambiales el nombre, borralas o sumá otras. Lo que marcás como «planificado» en el odontograma entra solo en la fase que corresponde; lo podés pasar a otra.</p></details>';
     const chk = sel[pid] || (sel[pid] = {});
+    h += '<div class="tp-phases">';
     p.phases.forEach((f, fi) => {
       const L = list.filter(x => x.ph === f.id), t = totals(L);
       h += '<div class="tp-ph" data-ph="' + f.id + '"><div class="tp-phh"><input class="tp-phn" data-chg="tpPhName" data-ph="' + f.id + '" value="' + esc(f.name) + '" aria-label="Nombre de la fase">' +
@@ -63,7 +62,11 @@
       h += L.length ? '<ul class="tp-list">' + L.map(x => itemHTML(pid, x.t, p, chk)).join('') + '</ul>' : '';
       h += '<button class="btn small ghost tp-add" data-act="tpAdd" data-ph="' + f.id + '">+ Agregar tratamiento</button></div>';
     });
-    h += '<div class="row-btns" style="margin-top:10px"><button class="btn small" data-act="tpPhNew">+ Agregar fase</button>' + (p.virgin ? '' : '<button class="btn small ghost" data-act="tpTemplate">Volver a la plantilla de fases</button>') + '</div>';
+    h += '<button class="tp-phnew" data-act="tpPhNew">+ Agregar fase</button></div>';
+    h += '<details class="tp-sec"' + (p.dx || p.notes ? ' data-has="1"' : '') + '><summary>Evaluación y observaciones para el paciente <span class="muted">(opcional' + (p.dx || p.notes ? ' · cargada' : '') + ')</span></summary>' +
+      '<div class="tp-secg"><div class="field"><label for="tpDx">Diagnóstico / lo que vi en la evaluación</label><textarea id="tpDx" rows="3" data-chg="tpField" data-k="dx" placeholder="Ej.: gingivitis generalizada, caries en 16 y 36, 46 con lesión periapical.">' + esc(p.dx || '') + '</textarea></div>' +
+      '<div class="field"><label for="tpNotes">Indicaciones y observaciones</label><textarea id="tpNotes" rows="3" data-chg="tpField" data-k="notes" placeholder="Ej.: cepillado 3 veces por día con técnica de Bass; turnos cada 15 días; la duración estimada es de 3 meses.">' + esc(p.notes || '') + '</textarea></div></div></details>';
+    h += '<div class="row-btns" style="margin-top:10px">' + (p.virgin ? '' : '<button class="btn small ghost" data-act="tpTemplate">Volver a la plantilla de fases</button>') + '</div>';
     h += '<div class="tp-logo">' + (logo && logo.src ? '<img src="' + esc(logo.src) + '" alt="Logo del consultorio">' : '<span class="tp-nologo">Sin logo</span>') + '<div><b>Logo del consultorio</b><span class="hint" style="margin:0">Sale arriba en todos los PDF: plan, presupuestos, recetas e historia clínica.</span><div class="row-btns"><label class="btn small filebtn">' + (logo ? 'Cambiar logo' : 'Subir logo') + '<input type="file" accept="image/*" hidden data-chg="tpLogo"></label>' + (logo ? '<button class="btn small ghost" data-act="tpLogoDel">Quitar</button>' : '') + '</div></div></div>';
     h += '<div class="small-note">Tildá tratamientos para armar un presupuesto solo con esos; si no tildás ninguno, entra todo lo pendiente.</div></section>';
     return h;

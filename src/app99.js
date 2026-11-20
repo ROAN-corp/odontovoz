@@ -150,7 +150,9 @@
     /* accesos: × y centrados en la PC */
     '#view-inicio .home-actions.editing, #view-inicio .home-actions.editing .ha { overflow: visible !important; } #view-inicio .home-actions.editing .ha { position: relative; }',
     '.hk-x { position: absolute; top: 2px; right: calc(50% - 36px); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--red); color: var(--surface); font: 700 15px/1 inherit; box-shadow: 0 1px 4px rgba(8, 20, 24, .25); cursor: pointer; z-index: 2; }',
-    '@media (min-width: 700px) { #view-inicio .home-actions.icons { grid-template-columns: repeat(var(--hk, 5), 104px) !important; justify-content: center; } }',
+    /* 1.17.2: en fila que se acomoda sola y centrada (con muchos accesos ya no se salen del recuadro) */
+    '#view-inicio .home-actions.icons { display: flex !important; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 8px 4px; width: 100% !important; max-width: none !important; box-sizing: border-box; margin-left: 0 !important; margin-right: 0 !important; }',
+    '#view-inicio .home-actions.icons .ha { flex: 0 1 100px !important; min-width: 74px; max-width: 110px; }',
     /* resumen de datos y anamnesis */
     '.ov-sumcard.ov-ro > :not(h2):not(.ov-sum):not(.row-btns) { display: none !important; }',
     '.ov-sumcard.ov-ro > .row-btns { margin-top: 8px; }',

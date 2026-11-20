@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.17.1';
+  A.VERSION = '1.17.2';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.72.1';
+  A.VBUILD = '1.72.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10100,17 +10100,16 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   function planHTML(pid) {
     const p = tp(pid), list = items(pid), T = totals(list), pd = A.pd(pid), logo = A.CFG.logo;
-    let h = '<section class="card tp-card"><div class="tp-head"><h2>Plan de tratamiento</h2><div class="row-btns">' +
+    let h = '<section class="card tp-card tp-wide"><div class="tp-head"><h2>Plan de tratamiento</h2><div class="row-btns">' +
       '<button class="btn small" data-act="pdfPlanTp">PDF</button><button class="btn small" data-act="tpWa">' + WAICON + ' WhatsApp</button>' +
       '<button class="btn small ghost" data-act="tpMore" aria-label="Más opciones del plan">⋯</button></div></div>';
     if (T.n) h += '<div class="tp-prog"><div class="tp-bar"><i style="width:' + Math.round(T.nd * 100 / T.n) + '%"></i></div><span><b>' + T.nd + '</b> de ' + T.n + ' realizados' + (p.prices ? ' · ' + A.money(T.done) + ' de ' + A.money(T.tot) : '') + '</span></div>';
-    h += '<details class="tp-sec"' + (p.dx || p.notes ? '' : '') + ' open><summary>Evaluación y observaciones para el paciente <span class="muted">(opcional)</span></summary>' +
-      '<div class="field"><label for="tpDx">Diagnóstico / lo que vi en la evaluación</label><textarea id="tpDx" rows="2" data-chg="tpField" data-k="dx" placeholder="Ej.: gingivitis generalizada, caries en 16 y 36, 46 con lesión periapical.">' + esc(p.dx || '') + '</textarea></div>' +
-      '<div class="field"><label for="tpNotes">Indicaciones y observaciones</label><textarea id="tpNotes" rows="2" data-chg="tpField" data-k="notes" placeholder="Ej.: cepillado 3 veces por día con técnica de Bass; turnos cada 15 días; la duración estimada es de 3 meses.">' + esc(p.notes || '') + '</textarea></div>' +
-      '<label class="chk"><input type="checkbox" data-chg="tpPrices"' + (p.prices ? ' checked' : '') + '> Mostrar costos al lado de cada tratamiento (y en el PDF)</label>' +
-      (p.prices ? '<label class="chk"><input type="checkbox" data-chg="tpFin"' + (p.fin ? ' checked' : '') + '> Ofrecer planes de pago en cuotas (contado, 3, 6, 9 y 12 cuotas, en el PDF y en WhatsApp)</label>' + (p.fin ? tpFinHTML(pid) : '') : '') + '</details>';
+    /* 1.17.2: opciones del plan arriba, a la vista; la evaluación va al final y cerrada */
+    h += '<div class="tp-opts"><label class="tp-opt"><input type="checkbox" data-chg="tpPrices"' + (p.prices ? ' checked' : '') + '> Mostrar costos</label>' +
+      (p.prices ? '<label class="tp-opt"><input type="checkbox" data-chg="tpFin"' + (p.fin ? ' checked' : '') + '> Ofrecer cuotas</label>' : '') + '</div>' + (p.prices && p.fin ? '<div class="tp-finbox">' + tpFinHTML(pid) + '</div>' : '');
     if (p.virgin) h += '<details class="tp-guide"><summary>¿Cómo armar el plan? Guía rápida</summary><ol>' + TEMPLATE.map(f => '<li><b>' + esc(f.name) + ':</b> ' + esc(f.hint) + '</li>').join('') + '</ol><p class="hint">Las fases son una plantilla orientativa: cambiales el nombre, borralas o sumá otras. Lo que marcás como «planificado» en el odontograma entra solo en la fase que corresponde; lo podés pasar a otra.</p></details>';
     const chk = sel[pid] || (sel[pid] = {});
+    h += '<div class="tp-phases">';
     p.phases.forEach((f, fi) => {
       const L = list.filter(x => x.ph === f.id), t = totals(L);
       h += '<div class="tp-ph" data-ph="' + f.id + '"><div class="tp-phh"><input class="tp-phn" data-chg="tpPhName" data-ph="' + f.id + '" value="' + esc(f.name) + '" aria-label="Nombre de la fase">' +
@@ -10120,7 +10119,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       h += L.length ? '<ul class="tp-list">' + L.map(x => itemHTML(pid, x.t, p, chk)).join('') + '</ul>' : '';
       h += '<button class="btn small ghost tp-add" data-act="tpAdd" data-ph="' + f.id + '">+ Agregar tratamiento</button></div>';
     });
-    h += '<div class="row-btns" style="margin-top:10px"><button class="btn small" data-act="tpPhNew">+ Agregar fase</button>' + (p.virgin ? '' : '<button class="btn small ghost" data-act="tpTemplate">Volver a la plantilla de fases</button>') + '</div>';
+    h += '<button class="tp-phnew" data-act="tpPhNew">+ Agregar fase</button></div>';
+    h += '<details class="tp-sec"' + (p.dx || p.notes ? ' data-has="1"' : '') + '><summary>Evaluación y observaciones para el paciente <span class="muted">(opcional' + (p.dx || p.notes ? ' · cargada' : '') + ')</span></summary>' +
+      '<div class="tp-secg"><div class="field"><label for="tpDx">Diagnóstico / lo que vi en la evaluación</label><textarea id="tpDx" rows="3" data-chg="tpField" data-k="dx" placeholder="Ej.: gingivitis generalizada, caries en 16 y 36, 46 con lesión periapical.">' + esc(p.dx || '') + '</textarea></div>' +
+      '<div class="field"><label for="tpNotes">Indicaciones y observaciones</label><textarea id="tpNotes" rows="3" data-chg="tpField" data-k="notes" placeholder="Ej.: cepillado 3 veces por día con técnica de Bass; turnos cada 15 días; la duración estimada es de 3 meses.">' + esc(p.notes || '') + '</textarea></div></div></details>';
+    h += '<div class="row-btns" style="margin-top:10px">' + (p.virgin ? '' : '<button class="btn small ghost" data-act="tpTemplate">Volver a la plantilla de fases</button>') + '</div>';
     h += '<div class="tp-logo">' + (logo && logo.src ? '<img src="' + esc(logo.src) + '" alt="Logo del consultorio">' : '<span class="tp-nologo">Sin logo</span>') + '<div><b>Logo del consultorio</b><span class="hint" style="margin:0">Sale arriba en todos los PDF: plan, presupuestos, recetas e historia clínica.</span><div class="row-btns"><label class="btn small filebtn">' + (logo ? 'Cambiar logo' : 'Subir logo') + '<input type="file" accept="image/*" hidden data-chg="tpLogo"></label>' + (logo ? '<button class="btn small ghost" data-act="tpLogoDel">Quitar</button>' : '') + '</div></div></div>';
     h += '<div class="small-note">Tildá tratamientos para armar un presupuesto solo con esos; si no tildás ninguno, entra todo lo pendiente.</div></section>';
     return h;
@@ -18346,6 +18349,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.17.2', b: '1.72.2', d: '2026-11-20', items: [
+      { t: 'Plan de tratamiento renovado: a lo ancho, cada fase en su tarjeta de color y la evaluación al final, cerrada.', top: true },
+      { t: 'Accesos directos centrados: con muchos ya no se salen del recuadro.' }] },
     { v: '1.17.1', b: '1.72.1', d: '2026-11-20', items: [
       { t: 'Medios de pago y recargos: botón «Usar valores preestablecidos» con valores de referencia actualizados (después los cambiás).', top: true },
       { t: 'Turno nuevo: ya no se marcan Bloquear y Nota al cambiar de Turno a Sobreturno; hora y duración sin superponerse; la ventana no cambia de tamaño. La ficha resumida queda fija.' }] },
@@ -25905,7 +25911,9 @@ const OVMenu = (function () {
     /* accesos: × y centrados en la PC */
     '#view-inicio .home-actions.editing, #view-inicio .home-actions.editing .ha { overflow: visible !important; } #view-inicio .home-actions.editing .ha { position: relative; }',
     '.hk-x { position: absolute; top: 2px; right: calc(50% - 36px); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--red); color: var(--surface); font: 700 15px/1 inherit; box-shadow: 0 1px 4px rgba(8, 20, 24, .25); cursor: pointer; z-index: 2; }',
-    '@media (min-width: 700px) { #view-inicio .home-actions.icons { grid-template-columns: repeat(var(--hk, 5), 104px) !important; justify-content: center; } }',
+    /* 1.17.2: en fila que se acomoda sola y centrada (con muchos accesos ya no se salen del recuadro) */
+    '#view-inicio .home-actions.icons { display: flex !important; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 8px 4px; width: 100% !important; max-width: none !important; box-sizing: border-box; margin-left: 0 !important; margin-right: 0 !important; }',
+    '#view-inicio .home-actions.icons .ha { flex: 0 1 100px !important; min-width: 74px; max-width: 110px; }',
     /* resumen de datos y anamnesis */
     '.ov-sumcard.ov-ro > :not(h2):not(.ov-sum):not(.row-btns) { display: none !important; }',
     '.ov-sumcard.ov-ro > .row-btns { margin-top: 8px; }',
@@ -26030,7 +26038,36 @@ const OVMenu = (function () {
     '#modalHost .na-fixed .na-time { flex-wrap: nowrap; min-width: 0; } #modalHost .na-fixed .na-time select { min-width: 0 !important; flex: 1 1 0 !important; max-width: none !important; }',
     '#modalHost .na-fixed .na-fc { flex-wrap: wrap; overflow-x: visible; max-height: 84px; overflow-y: auto; }',
     '#modalHost .na-fixed .row2, #modalHost .na-fixed .row3 { min-width: 0; } #modalHost .na-fixed .field { min-width: 0; }',
-    '#modalHost .na-fixed .field select, #modalHost .na-fixed .field input { max-width: 100%; }'
+    '#modalHost .na-fixed .field select, #modalHost .na-fixed .field input { max-width: 100%; }',
+    /* 1.17.2: plan de tratamiento a lo ancho, fases como tarjetas en grilla */
+    '#fichaBody .tp-card.tp-wide { grid-column: 1 / -1; width: 100%; max-width: none; box-sizing: border-box; }',
+    '#fichaBody .tp-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }',
+    '#fichaBody .tp-head h2 { margin: 0; } #fichaBody .tp-head .row-btns { margin: 0; }',
+    '#fichaBody .tp-prog { margin: 10px 0 6px; }',
+    '.tp-opts { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }',
+    '.tp-opt { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13.5px; cursor: pointer; }',
+    '.tp-opt:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--accent); font-weight: 600; }',
+    '.tp-finbox { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }',
+    '#fichaBody .tp-guide { margin: 0 0 12px; }',
+    '.tp-phases { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; align-items: start; margin: 4px 0 12px; }',
+    '.tp-phases .tp-ph { --pc: var(--accent); display: flex; flex-direction: column; gap: 6px; margin: 0 !important; padding: 12px !important; border: 1px solid color-mix(in srgb, var(--pc) 28%, var(--line)) !important; border-top: 4px solid var(--pc) !important; border-radius: 16px; background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 7%, var(--surface)), var(--surface) 90px); min-width: 0; }',
+    '.tp-phases .tp-ph:nth-child(4n+1) { --pc: var(--red); } .tp-phases .tp-ph:nth-child(4n+2) { --pc: var(--accent); } .tp-phases .tp-ph:nth-child(4n+3) { --pc: var(--warn); } .tp-phases .tp-ph:nth-child(4n+4) { --pc: var(--ok); }',
+    '.tp-phases .tp-phh { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; border: 0 !important; padding: 0 !important; margin: 0 !important; }',
+    '.tp-phases .tp-phn { flex: 1 1 120px; min-width: 0; font-weight: 700; font-size: 15px; border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 4px 6px; color: var(--ink); }',
+    '.tp-phases .tp-phn:hover, .tp-phases .tp-phn:focus { border-color: var(--line); background: var(--surface); }',
+    '.tp-phases .tp-pha { display: flex; gap: 6px; margin-left: auto; font-size: 12.5px; }',
+    '.tp-phases .tp-hint { font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }',
+    '.tp-phases .tp-list { margin: 2px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }',
+    '.tp-phases .tp-it { display: grid !important; grid-template-columns: auto 1fr; align-items: start; gap: 4px 8px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }',
+    '.tp-phases .tp-it > .tp-main { min-width: 0; } .tp-phases .tp-it .tp-lbl { width: 100%; font-weight: 600; } .tp-phases .tp-it .tp-meta { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; } .tp-phases .tp-it .tp-meta select { max-width: 100%; }',
+    '.tp-phases .tp-it > .tp-pr, .tp-phases .tp-it > .tp-acts { grid-column: 2; } .tp-phases .tp-it > .tp-pr { width: 120px; } .tp-phases .tp-it > .tp-acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }',
+    '.tp-phases .tp-add { align-self: flex-start; margin-top: auto; }',
+    '.tp-phnew { min-height: 120px; border: 2px dashed color-mix(in srgb, var(--accent) 35%, var(--line)); border-radius: 16px; background: transparent; color: var(--accent); font: 600 15px inherit; cursor: pointer; }',
+    '.tp-phnew:hover { background: var(--accent-soft); }',
+    '#fichaBody .tp-sec { margin: 4px 0 10px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); }',
+    '#fichaBody .tp-sec > summary { cursor: pointer; font-weight: 600; } #fichaBody .tp-sec[data-has] > summary { color: var(--accent); }',
+    '.tp-secg { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }',
+    '#fichaBody .tp-logo { max-width: 560px; }'
   ].join('\n');
   document.head.appendChild(css);
 })();

@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.17.2', b: '1.72.2', d: '2026-11-20', items: [
+      { t: 'Plan de tratamiento renovado: a lo ancho, cada fase en su tarjeta de color y la evaluación al final, cerrada.', top: true },
+      { t: 'Accesos directos centrados: con muchos ya no se salen del recuadro.' }] },
     { v: '1.17.1', b: '1.72.1', d: '2026-11-20', items: [
       { t: 'Medios de pago y recargos: botón «Usar valores preestablecidos» con valores de referencia actualizados (después los cambiás).', top: true },
       { t: 'Turno nuevo: ya no se marcan Bloquear y Nota al cambiar de Turno a Sobreturno; hora y duración sin superponerse; la ventana no cambia de tamaño. La ficha resumida queda fija.' }] },
