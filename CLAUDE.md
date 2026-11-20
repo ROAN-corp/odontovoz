@@ -63,6 +63,7 @@ Leé esto antes de tocar nada. Versión actual: **1.18** (compilación 1.73.0), 
 - Publicar = subir versión (ver arriba), `inline-src`, tests, commit, push y avisar en una o dos líneas.
 
 ## Pendiente
+- **Migración a la cuenta de Claude de la empresa** (20/11/2026): pasos y mensaje inicial en `docs/MIGRACION.md`. Prueba de pantallas: `python3 tests/ui/humo.py /tmp/ov-humo`.
 - **Marca INPI** ODONTOVOZ (14/11/2026, clases 9 y 42, a nombre de Rodrigo): esperar números de acta y notificaciones.
 - **Play Store**: D-U-N-S pedido el 17/11/2026 (hasta 30 días hábiles; datos: BOBADILLA RODRIGO NICOLAS, CUIT 20-36871177-3, Manuel Belgrano 155, Allen, Río Negro 8328). Ya listo de nuestro lado: `.aab` con API 36 (`.github/workflows/play.yml`), capturas en `play/`, textos y formularios en `docs/PLAY.md`. Después: cuenta de Play Console de empresa (la crea y paga el usuario), «Usar mi propia clave» con `odontovoz-firma.jks` (nunca subirlo), cuenta de prueba para revisores (la crea el usuario).
 - **IA de historias de papel**: el usuario crea la clave en console.anthropic.com (límite USD 10/mes) y la pega en Supabase › Edge Functions › Secrets como `ANTHROPIC_API_KEY`. Después probar con 20–30 historias y recién ahí poner precio.

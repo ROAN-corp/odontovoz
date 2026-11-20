@@ -113,3 +113,14 @@ Se movió desde CLAUDE.md el 19/11/2026 para que cada conversación gaste menos.
 - Ojo: si se cambia la primera línea de un módulo, `inline-src.js` lo agrega como módulo nuevo y deja el viejo: borrá el bloque viejo de `index.html`.
 - Ojo: hubo dos conversaciones trabajando en paralelo. Antes de subir, traé lo último de `main` y trabajá sobre eso.
 
+
+## Sesión del 20/11/2026 (1.11 → 1.18; detalle en LEEME.md)
+- 1.11 (`app93`, `app48`): Ajustes en recuadros de color; Consultorio ordenado por pasos; guía «Primeros pasos» (`A.ps`, `A.CFG.steps`, tarjeta en el inicio y aviso `ps:`).
+- 1.12 (`app94`): ventanas que se minimizan en burbuja (`mMin`/`mMax`) y se arrastran en PC; turno nuevo compacto con horarios libres (`naTimePick`); botones de voz chicos, movibles y achicables. 1.12.1: clase `off` → `po-off` en `pracOk` (tapaba la ventana).
+- 1.13 (`app95`): sin «Dar un turno» en el inicio; «Accesos directos» con «Cambiar»; nombre del paciente como botón en la agenda; `#tpop` con color elegible.
+- 1.14 (`app96`): menú en recuadros, Laboratorio más arriba, «Turnos por internet» al fondo, secciones plegables.
+- 1.15 (`app97`): anamnesis ampliada y agrupada (`A.ANAM`, `A.alertsOf`, `A.antecOf`), antecedentes junto a las alertas, menú de secciones de la ficha; resumen nuevo también desde el buscador (`app85`).
+- 1.16 (`app98`): Atrás vuelve a la pantalla anterior (`A.navRecord`); gráficos optativos en Caja y Liquidaciones. 1.16.1: ventanitas flotantes arrastrables (`wireFloats`).
+- 1.17 (`app99`): × en accesos al editar; datos personales y anamnesis en resumen con «Editar» (envuelve `secSave`); estilo degradé (`odontovoz.grad`); «Bloquear todo el día» y días bloqueados marcados en el calendario; el toque en la grilla respeta `A.slotOf`. 1.17.1 (`app100`): recargos preestablecidos (`sitio/recargos/preset.json`), arreglos del turno nuevo, ficha resumida fija. 1.17.2: plan de tratamiento en tarjetas por fase. 1.17.3: `naPick` duplicado. 1.17.4: «Cobrar deuda» en el resumen y nombre clickeable en «Para cobrar».
+- 1.18 (`app101`, `app43`): centavos en todos los importes (`A.parseMoney`, teclado decimal); stock con kits por tamaño, tarjetas de acciones y pedido editable con barra fija.
+- Pruebas de pantalla: `tests/ui/humo.py` (Playwright, celular y PC; ver `docs/MIGRACION.md`).
