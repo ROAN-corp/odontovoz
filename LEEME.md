@@ -135,6 +135,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.17 · ficha en resumen, bloqueo del día, toques en la grilla (20/11/2026)
+
+- `index.html` `gbClick` (y el pegar de `app38`): el horario tocado se redondea al intervalo del profesional (`A.slotOf`), no a 15 min.
+- `app34`: «Todo el día» en la duración del bloqueo y botón `qbDay` «Bloquear todo el día» (desde el primer horario al último del profesional, o 8 a 20; marca `allDay`).
+- `app99` (nuevo): × (`hkDel`) en cada acceso mientras se editan (guarda en `odontovoz.home` y vuelve a montar); en la PC los accesos van en columnas fijas centradas. Ficha › Datos: «Datos personales» (si tiene nombre, apellido y DNI o teléfono) y «Anamnesis» (si tiene algo cargado o `hc.saved`) se muestran como resumen (`.ov-ro` + `.ov-sum`, armado leyendo los campos) con «Editar…» (`roEdit`); en edición, los botones «Guardar …» que ya existían (`secSave` de `app12`, envuelto; la anamnesis marca `hc.saved`). Motivo vacío más chico; fotos y radiografías con ícono, degradé y miniaturas de 112 px. Estilo degradé por equipo en Apariencia (LS `odontovoz.grad`, `body.ov-grad`, `--gc`). Días con bloqueos (sin notas) marcados en la tira, el mes y el calendario de la derecha: `.ov-dblk` rayado rojo si es el día entero (`allDay` o 6 h o más), `.ov-pblk` con candadito si es parcial; respeta el profesional elegido.
+
 ## OdontoVoz 1.16.1 · ventanitas flotantes movibles y accesos sin colores (20/11/2026)
 
 - `app94`: `wireFloats()` hace arrastrables (pantallas de 700 px o más, con la propiedad CSS `translate` para no pisar animaciones) `#tpop`, `.pp-pop`, `#panelHost .panel`, `#waPick` y `#updPop .up-card`; se arrastra desde cualquier parte que no sea botón, campo, enlace, `[data-act]` u odontograma. `app95`: se quitan los colores por acceso del inicio (quedan como antes, con el recuadro suave).

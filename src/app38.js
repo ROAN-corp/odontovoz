@@ -109,7 +109,7 @@
   A.acts.gbClick = (el, ev) => {
     if (!clip) return gbPrev(el, ev);
     const rect = el.getBoundingClientRect(), y = ev && ev.clientY != null ? ev.clientY - rect.top : 0, g0 = parseInt(el.getAttribute('data-g0'), 10);
-    const start = g0 + Math.max(0, Math.floor(y / 28)) * 15, to = { date: el.getAttribute('data-date'), pro: el.getAttribute('data-pro'), start };
+    const stp = Math.max(5, Math.min(60, (A.slotOf ? A.slotOf(A.PRO(el.getAttribute('data-pro'))) : 30) || 30)), start = g0 + Math.max(0, Math.floor((y / 28 * 15) / stp)) * stp, to = { date: el.getAttribute('data-date'), pro: el.getAttribute('data-pro'), start };
     const c = clip; clip = null; paintClip();
     const a = A.apptById(c.id); if (!a) return;
     if (c.mode === 'cut') { A.tryMove(a.id, to); return; }

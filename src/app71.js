@@ -12,9 +12,9 @@
   A.durTxt = durTxt;
   const fixDur = sel => {
     if (!sel || sel._ovDur) return; sel._ovDur = 1;
-    const cur = parseInt(sel.value, 10) || 30, end = Array.prototype.filter.call(sel.options, o => o.value === 'end')[0];
+    const cur = parseInt(sel.value, 10) || 30, end = Array.prototype.filter.call(sel.options, o => o.value === 'end')[0], day = Array.prototype.filter.call(sel.options, o => o.value === 'day')[0];
     const L = DURS.slice(); if (L.indexOf(cur) < 0) { L.push(cur); L.sort((a, b) => a - b); }
-    sel.innerHTML = L.map(m => '<option value="' + m + '"' + (m === cur ? ' selected' : '') + '>' + durTxt(m) + '</option>').join('') + (end ? end.outerHTML : '');
+    sel.innerHTML = L.map(m => '<option value="' + m + '"' + (m === cur ? ' selected' : '') + '>' + durTxt(m) + '</option>').join('') + (end ? end.outerHTML : '') + (day ? day.outerHTML : '');
     if (end && end.selected) sel.value = 'end';
   };
   const fixAll = () => ['#naDur', '#apDur', '#ltNu', '#qbDur'].forEach(id => fixDur($(id)));

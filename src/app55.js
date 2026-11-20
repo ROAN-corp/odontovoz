@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.17', b: '1.72.0', d: '2026-11-20', items: [
+      { t: 'Ficha: datos personales y anamnesis quedan como resumen al guardar, con «Editar» para cambiarlos. Así la evolución queda más arriba.', top: true },
+      { t: 'Bloquear todo el día con un botón, y los días bloqueados se ven en el calendario.', top: true },
+      { t: 'Al tocar la agenda, el turno cae en el horario configurado (cada 30 min, por ejemplo). Accesos directos con × al editarlos. Estilo degradé en Apariencia.' }] },
     { v: '1.16.1', b: '1.71.1', d: '2026-11-20', items: [
       { t: 'En la PC también se arrastran la ventanita del turno, «Para cobrar» y el resumen del paciente.', top: true },
       { t: 'Los íconos de los accesos directos vuelven a su color de siempre.' }] },

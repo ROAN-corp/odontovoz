@@ -193,9 +193,10 @@
     const body = kinds +
       '<p class="qb-when"><b>' + esc(A.fmtLong(f.date)) + '</b> · ' + esc(p.name) + '</p>' +
       '<div class="row2"><div class="field"><label>Desde</label><div class="na-time"><select id="qbH" aria-label="Hora">' + hs + '</select><span>:</span><select id="qbMi" aria-label="Minutos">' + ms + '</select></div></div>' +
-      '<div class="field"><label for="qbDur">' + (note ? 'Duración' : 'Cuánto tiempo') + '</label><select id="qbDur">' + durs.map(d => '<option value="' + d + '"' + (d === f.dur ? ' selected' : '') + '>' + (d < 60 ? d + ' min' : (d / 60) + (d === 60 ? ' hora' : ' horas')) + '</option>').join('') + (end && end > f.start ? '<option value="end">Hasta el final (' + A.mm(end) + ')</option>' : '') + '</select></div></div>' +
+      '<div class="field"><label for="qbDur">' + (note ? 'Duración' : 'Cuánto tiempo') + '</label><select id="qbDur">' + durs.map(d => '<option value="' + d + '"' + (d === f.dur ? ' selected' : '') + '>' + (d < 60 ? d + ' min' : (d / 60) + (d === 60 ? ' hora' : ' horas')) + '</option>').join('') + (end && end > f.start ? '<option value="end">Hasta el final (' + A.mm(end) + ')</option>' : '') + (note ? '' : '<option value="day">Todo el día</option>') + '</select></div></div>' +
       (pros.length > 1 && !note ? '<div class="field"><label for="qbPro">Profesional</label><select id="qbPro">' + pros.map(x => '<option value="' + x.id + '"' + (x.id === f.pro ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '<option value="all">Todos los profesionales</option></select></div>' : '<input type="hidden" id="qbPro" value="' + esc(f.pro) + '">') +
       '<div class="field"><label for="qbLab">' + (note ? 'Mensaje' : 'Motivo o mensaje <span class="opt">opcional</span>') + '</label><input id="qbLab" maxlength="120" placeholder="' + (note ? 'Ej.: llamar a Pérez para confirmar' : 'Ej.: no citar, estoy de curso') + '" value="' + esc(f.label) + '"></div>' +
+      (note ? '' : '<button type="button" class="btn qb-day" data-act="qbDay">🔒 Bloquear todo el día</button>') +
       '<div class="qb-chips">' + (note ? NOTE_OPTS : BL_OPTS).map(o => '<button type="button" class="pill" data-act="qbChip" data-v="' + esc(o) + '">' + esc(o) + '</button>').join('') + '</div>' +
       '<p class="hint">' + (note ? 'La nota se ve en la agenda de todos los equipos y <b>no ocupa el horario</b>: se pueden dar turnos igual.' : 'Nadie va a poder dar un turno común en ese horario (en todos los equipos). Un sobreturno sí, si hace falta.') + '</p><div id="qbMsg" class="hint bad"></div>';
     return A.modalShell(note ? 'Nota en la agenda' : 'Bloquear horario', body, '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="qbSave">' + (note ? 'Guardar nota' : '🔒 Bloquear') + '</button>');
@@ -205,6 +206,7 @@
     const f = S.modal.f, start = $('#qbH') ? (+$('#qbH').value) * 60 + (+$('#qbMi').value) : f.start;
     S.modal = null; A.openNewAppt({ pro: (($('#qbPro') || {}).value || f.pro).replace('all', '') || f.pro, date: f.date, start, sobre: el.getAttribute('data-k') === '1' });
   };
+  A.acts.qbDay = () => { const d = $('#qbDur'); if (!d) return; d.value = 'day'; A.acts.qbSave(); };
   A.acts.qbSave = () => {
     const m = S.modal; if (!m || m.type !== 'qblock') return;
     const f = m.f, note = m.note, start = (+$('#qbH').value) * 60 + (+$('#qbMi').value), dv = $('#qbDur').value, lab = ($('#qbLab').value || '').trim();
@@ -212,6 +214,11 @@
     const pv = ($('#qbPro') || {}).value || f.pro, targets = pv === 'all' ? A.visPros() : [A.PRO(pv)], made = [], by = who();
     targets.forEach(p => {
       let dur = dv === 'end' ? 0 : parseInt(dv, 10) || 30;
+      if (dv === 'day') {   /* 1.17: todo el día (desde el primer horario hasta el último de ese profesional; si no atiende, 8 a 20) */
+        const hr = A.hoursFor(p, f.date) || [], s0 = hr.length ? Math.min(...hr.map(r => r[0])) : 480, e0 = hr.length ? Math.max(...hr.map(r => r[1])) : 1200;
+        const it = { id: A.uid(), type: 'block', allDay: true, label: lab || 'Día bloqueado', pro: p.id, date: f.date, start: s0, dur: e0 - s0, status: 'confirmado', at: new Date().toISOString() };
+        if (by) it.by = by; if (A.empSede && A.empSede()) it.loc = A.empSede(); made.push(it); return;
+      }
       if (dv === 'end') { const r = A.hoursFor(p, f.date).filter(x => start >= x[0] && start < x[1])[0]; dur = r ? r[1] - start : 60; }
       const it = { id: A.uid(), type: 'block', label: lab || (note ? 'Nota' : 'Bloqueado'), pro: p.id, date: f.date, start, dur, status: 'confirmado', at: new Date().toISOString() };
       if (by) it.by = by;
