@@ -1,0 +1,13 @@
+{
+  "v": 1,
+  "updated": "2026-11-20",
+  "source": "Cuotas MiPyME (Payway y Cabal) para 3 y 6 cuotas; comisión máxima por ley 25.065 para crédito en 1 pago (1,8% + IVA); BCRA: el pago con débito no lleva recargo.",
+  "note": "Recargo que cubre lo que te descuenta la tarjeta, para que cobres lo mismo que de contado. Para más de 6 cuotas cada banco o procesador tiene su tasa: consultala y cargala a mano.",
+  "rates": {
+    "Efectivo": { "p": 0 },
+    "Transferencia": { "p": 0 },
+    "Débito": { "p": 0 },
+    "Crédito": { "cuo": true, "c": { "1": 2.2, "3": 9.1, "6": 18.7 } },
+    "Mercado Pago": { "p": 0 }
+  }
+}

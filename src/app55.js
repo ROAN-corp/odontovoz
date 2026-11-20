@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.17.1', b: '1.72.1', d: '2026-11-20', items: [
+      { t: 'Medios de pago y recargos: botón «Usar valores preestablecidos» con valores de referencia actualizados (después los cambiás).', top: true },
+      { t: 'Turno nuevo: ya no se marcan Bloquear y Nota al cambiar de Turno a Sobreturno; hora y duración sin superponerse; la ventana no cambia de tamaño. La ficha resumida queda fija.' }] },
     { v: '1.17', b: '1.72.0', d: '2026-11-20', items: [
       { t: 'Ficha: datos personales y anamnesis quedan como resumen al guardar, con «Editar» para cambiarlos. Así la evolución queda más arriba.', top: true },
       { t: 'Bloquear todo el día con un botón, y los días bloqueados se ven en el calendario.', top: true },

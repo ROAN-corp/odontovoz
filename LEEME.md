@@ -135,6 +135,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.17.1 · recargos preestablecidos y arreglos del turno nuevo (20/11/2026)
+
+- `sitio/recargos/preset.json` (se publica en odontovoz.com.ar/recargos/preset.json): valores de referencia (crédito 1 pago +2,2% = 1,8% + IVA de la ley 25.065; 3 cuotas +9,1% y 6 cuotas +18,7% según coeficientes de Cuotas MiPyME de Payway/Cabal; débito, efectivo, transferencia y Mercado Pago en 0; el BCRA no permite recargo con débito). **Para actualizarlos, editar ese archivo** (y la copia `BUILTIN` de `app100`).
+- `app100` (nuevo): en `MF.payRates` caja «¿No sabés qué porcentajes poner?» + `prPreset` (baja el JSON, si no hay internet usa la copia; reemplaza esos medios en `A.CFG.payRates` sin guardar; «Cancelar» lo deshace con `m.prev`). Turno nuevo: `.na-fixed`, la hora va en su propia fila (no se pisa con la duración), horarios libres en varias líneas; Bloquear/Nota (`qblock`) toman la altura mínima del turno nuevo.
+- `app20`: `naKind` solo marca los botones Turno/Sobreturno (antes marcaba también Bloquear/Nota). `app94`: la ficha resumida (`#panelHost .panel`) ya no se arrastra.
+
 ## OdontoVoz 1.17 · ficha en resumen, bloqueo del día, toques en la grilla (20/11/2026)
 
 - `index.html` `gbClick` (y el pegar de `app38`): el horario tocado se redondea al intervalo del profesional (`A.slotOf`), no a 15 min.

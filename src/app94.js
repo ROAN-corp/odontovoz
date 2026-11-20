@@ -49,7 +49,7 @@
   }
 
   /* 1.16.1: las otras ventanitas flotantes (la del turno, «Para cobrar», el resumen del paciente…) también se arrastran */
-  const FLOAT = '#tpop, .pp-pop, #panelHost .panel, #waPick, #updPop .up-card';
+  const FLOAT = '#tpop, .pp-pop, #waPick, #updPop .up-card';   /* la ficha resumida (#panelHost) queda fija a pedido del usuario */
   const busyTarget = t => !!(t.closest && t.closest('button, a, input, select, textarea, label, [data-act], [contenteditable], [role="button"], .od-wrap, .odonto, svg'));
   function wireFloats() {
     if (!wide()) return;

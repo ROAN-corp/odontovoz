@@ -69,7 +69,7 @@
   A.acts.naStep = el => setTime(readTime() + parseInt(el.getAttribute('data-d'), 10));
   A.acts.naKind = el => {
     const on = el.getAttribute('data-k') === '1', cb = $('#naSobre'); if (cb) cb.checked = on; if (S.modal && S.modal.f) S.modal.f.sobre = on;
-    document.querySelectorAll('.na-kind button').forEach(b => b.setAttribute('aria-pressed', String((b.getAttribute('data-k') === '1') === on)));
+    document.querySelectorAll('.na-kind button[data-act="naKind"]').forEach(b => b.setAttribute('aria-pressed', String((b.getAttribute('data-k') === '1') === on)));
     const ttl = document.querySelector('#modalHost .modal h2, #modalHost h2'); if (ttl && /^Nuevo (sobre)?turno$/.test(ttl.textContent)) ttl.textContent = on ? 'Nuevo sobreturno' : 'Nuevo turno';
     const msg = $('#naMsg'); if (msg) { msg.textContent = ''; msg.className = 'hint'; }
     occ();
