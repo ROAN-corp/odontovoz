@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.20.2';
+  A.VERSION = '1.20.3';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.75.2';
+  A.VBUILD = '1.75.3';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -11061,6 +11061,12 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function mountLogo() {
     const hi = document.querySelector('#view-inicio .home-hi h1'); if (hi && !hi.querySelector('.ov-mark')) hi.insertAdjacentHTML('afterbegin', LOGO);
   }
+  /* 1.20.3: el inicio también se redibuja sin pasar por afterRefresh (cada minuto y al sincronizar) y el logo desaparecía.
+     El observador corre antes de pintar, así que el logo se repone sin parpadeo. */
+  try {
+    const vi = document.getElementById('view-inicio');
+    if (vi) new MutationObserver(() => { try { mountLogo(); } catch (e) { /* nada */ } }).observe(vi, { childList: true, subtree: true });
+  } catch (e) { /* nada */ }
 
   /* =====================================================================
      7) AYUDA: caja de comentarios y sugerencias
@@ -18428,6 +18434,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.20.3', b: '1.75.3', d: '2026-11-20', items: [
+      { t: 'Arreglo: el logo al lado de «Buen día» ya no parpadea ni desaparece cuando la app se sincroniza.' }] },
     { v: '1.20.2', b: '1.75.2', d: '2026-11-20', items: [
       { t: 'En el celular, los 4 accesos directos del inicio entran en una sola fila.', top: true },
       { t: 'Stock de insumos mantiene el mismo tamaño al pasar de una pestaña a otra (antes se achicaba en «Movimientos»).' }] },

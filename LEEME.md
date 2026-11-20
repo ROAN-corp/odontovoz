@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.20.3 · el logo del saludo ya no desaparece (20/11/2026)
+
+- El logo de «Buen día» lo agregaba `app18` (`mountLogo`) solo en `afterRefresh`. `app6` (cada minuto) y `app35` (al sincronizar) llaman a `A.render.inicio()` directamente, así que el logo desaparecía hasta el próximo refresco completo. Ahora un `MutationObserver` sobre `#view-inicio` lo repone antes de pintar, sin parpadeo. Probado: después de `A.render.inicio()` el logo está en el mismo cuadro.
+- Compilación 1.75.3.
+
 ## OdontoVoz 1.20.2 · Stock con altura fija y accesos en una fila (20/11/2026)
 
 - `src/app105.js`. **Stock:** la ventana (`.modal:has(#stkHost)`) tiene altura fija (`100dvh - 16px` en el celular, `100dvh - 32px` con tope de 900 px en la PC). Antes, en «Movimientos», pasaba de 828 a 289 px de alto.

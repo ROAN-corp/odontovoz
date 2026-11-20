@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Versión actual: **1.20.2** (compilación 1.75.2), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
+Leé esto antes de tocar nada. Versión actual: **1.20.3** (compilación 1.75.3), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -53,6 +53,7 @@ Leé esto antes de tocar nada. Versión actual: **1.20.2** (compilación 1.75.2)
 - Aspecto «premium» (1.19): `app102` (CSS al final del body, letra Inter, degradados y adornos del odontograma con `MutationObserver`). Los estilos nuevos que tengan que pisar a los base van al final del `<body>`, no al `<head>`.
 - Foto del paciente (1.20): `app103` (`pd.avatar` + `pd.photoOK`, ventana `avEdit`, foto chiquita en buscador y lista). Ojo: en el odontograma, todo adorno encima de las caras necesita `pointer-events: none` (en 1.19 el `selbox` con relleno frenaba los toques).
 - WhatsApp en la PC (1.18.2): `app51` (`odontovoz.waPc`: WhatsApp Web o la app de escritorio `whatsapp://`). WhatsApp Web no deja reusar su pestaña.
+- El inicio se redibuja también sin `afterRefresh` (`app6` cada minuto, `app35` al sincronizar): lo que se agregue al inicio después de dibujarlo tiene que reponerse con un `MutationObserver`, no solo en `afterRefresh` (1.20.3, logo del saludo).
 - No usar `backdrop-filter` (desenfoque) en barras fijas ni fondos de ventanas: traba el desplazamiento en Android (sacado en 1.20.1).
 - Solo tokens del tema en CSS (`--surface`, `--surface-2`, `--ink`, `--ink-2`, `--line`, `--accent`, `--accent-ink`, `--accent-soft`, `--ok`, `--warn`, `--red`); nunca `#fff` fijo. Evitar clases genéricas (`off`, `on`, `bad`).
 - Comparar datos de la nube siempre con `J()` de `cloud.js`, nunca `JSON.stringify`.

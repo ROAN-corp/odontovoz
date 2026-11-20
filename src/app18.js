@@ -194,6 +194,12 @@
   function mountLogo() {
     const hi = document.querySelector('#view-inicio .home-hi h1'); if (hi && !hi.querySelector('.ov-mark')) hi.insertAdjacentHTML('afterbegin', LOGO);
   }
+  /* 1.20.3: el inicio también se redibuja sin pasar por afterRefresh (cada minuto y al sincronizar) y el logo desaparecía.
+     El observador corre antes de pintar, así que el logo se repone sin parpadeo. */
+  try {
+    const vi = document.getElementById('view-inicio');
+    if (vi) new MutationObserver(() => { try { mountLogo(); } catch (e) { /* nada */ } }).observe(vi, { childList: true, subtree: true });
+  } catch (e) { /* nada */ }
 
   /* =====================================================================
      7) AYUDA: caja de comentarios y sugerencias
