@@ -39,9 +39,13 @@
   let busy = false;
   function arrange() {
     const panel = document.querySelector('#panelHost .panel');
-    if (!panel || !S.panel || S.panel.type !== 'appt' || A.CFG.panelOld === true) return;
-    const a = A.apptById(S.panel.id); if (!a || a.type === 'block' || !a.pid) return;
-    const pid = a.pid, head = panel.querySelector(':scope > .panel-head'); if (!head) return;
+    if (!panel || !S.panel || (S.panel.type !== 'appt' && S.panel.type !== 'pat') || A.CFG.panelOld === true) return;
+    /* 1.15: también al abrir un paciente desde el buscador (panel «pat»), no solo desde el turno */
+    let pid = null;
+    if (S.panel.type === 'pat') pid = S.panel.pid;
+    else { const a = A.apptById(S.panel.id); if (!a || a.type === 'block' || !a.pid) return; pid = a.pid; }
+    if (!pid || !A.PAT(pid)) return;
+    const head = panel.querySelector(':scope > .panel-head'); if (!head) return;
     const kids = [...panel.children];
     const sena = kids.find(e => e.classList.contains('sena-block'));
     const datos = kids.find(e => e.classList.contains('block') && H3(e, /^Datos principales/i));

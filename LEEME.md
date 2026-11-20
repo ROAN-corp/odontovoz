@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.15 · ficha: anamnesis, antecedentes, menú de secciones (20/11/2026)
+
+- `app85`: el resumen nuevo (tarjeta «Abrir ficha completa» + cuenta) también para el panel `pat` (paciente abierto desde el buscador), no solo `appt`.
+- `app97` (nuevo): `A.ANAM` reordenada por grupos (`NEW`: corazón y sangre, metabólicas, infecciones e inmunidad, alergias, otras, hábitos) con claves nuevas `endocard`, `coag`, `acv`, `anemia`, `tiroides`, `gastro`, `vih`, `tbc`, `inmuno`, `cancer`, `aines`, `alergOtra`, `psiq`, `respBucal`, `onico`; `hepatitis` pasa a alerta. `A.alertsOf` redefinida (usa el 3.er valor de `A.ANAM`) y `A.antecOf(pid)` (marcadas que no son alerta). `.antec-strip` (ámbar, chiquita) después de cada `.alert-strip` (ficha y panel). Casillas con títulos de grupo (`.anam-g`) cuando la lista tiene 20+. Menú de secciones: `.ftabs.ft-pro` con íconos, en 2 filas y fijo arriba en la PC; en el celular `.fsel` (sección actual + «Secciones (n) ▾») despliega una grilla de 3 columnas (`fselToggle`). Encabezado `.fh` y tarjetas con tinte del acento.
+
 ## OdontoVoz 1.14 · menú en recuadros y secciones desplegables (20/11/2026)
 
 - `app96` (nuevo): `.dr-nav` ordenada por `ORDER` (Inicio, Agenda, Pacientes, Laboratorio, Caja, Stock, Empresa, Liquidaciones; el resto al final). Turnero online y Autogestión por WhatsApp (con etiqueta «pronto») pasan a la sección nueva `.dr-more` «Turnos por internet», al fondo. Las secciones con `.dr-lbl` (salvo Ajustes y Cerrar sesión) se pliegan: `dr-fold`/`dr-shut`, `drSec`, cerradas por defecto, estado por equipo en LS `odontovoz.drOpen.<sección>`. Opciones con borde y el ícono en un cuadrito de color; secciones como tarjetas. `app48` `items()` también abre las `.dr-shut` un instante para leer las filas de Ajustes.
