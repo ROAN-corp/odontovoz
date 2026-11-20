@@ -3708,7 +3708,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.addTx = el => { S.modal = { type: 'addTx', mode: el.getAttribute('data-mode') }; A.renderModal(); };
   A.chg.atCat = el => { const c = A.CAT.filter(x => x.k === el.value)[0]; if (c) { $('#atLab').value = c.label; $('#atPrice').value = c.price; } else { $('#atLab').value = ''; $('#atLab').focus(); } };
   A.acts.atSave = () => {
-    const lab = $('#atLab').value.trim(), price = parseInt($('#atPrice').value.replace(/\D/g, ''), 10), tooth = parseInt($('#atTooth').value, 10), pid = S.fichaPid, mode = S.modal.mode;
+    const lab = $('#atLab').value.trim(), price = A.parseMoney($('#atPrice').value), tooth = parseInt($('#atTooth').value, 10), pid = S.fichaPid, mode = S.modal.mode;
     if (!lab || !(price >= 0)) { $('#atMsg').textContent = 'Completá la descripción y el importe.'; return; }
     if ($('#atTooth').value && !A.P.validTooth(tooth)) { $('#atMsg').textContent = 'La pieza ' + tooth + ' no existe (numeración FDI, 11–48).'; return; }
     const pd = A.pd(pid), t = { id: A.uid(), cond: null, tooth: tooth || null, faces: '', label: lab + (tooth ? ' · pieza ' + tooth : ''), price, status: mode === 'done' ? 'hecho' : 'plan', planDate: A.today(), doneDate: mode === 'done' ? A.today() : null, pro: A.PAT(pid).pro, bid: null, manual: true };
@@ -3800,7 +3800,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.cobroNew = () => { const s = A.saldo(S.fichaPid); S.modal = { type: 'cobro', pid: S.fichaPid, amt: s > 0 ? s : '' }; A.renderModal(); };
   MF.cobro = m => A.modalShell('Registrar cobro · ' + A.PAT(m.pid).name, '<div class="row2">' + amountField(m.amt) + '<div class="field"><label for="mvMeth">Medio de pago</label><select id="mvMeth">' + A.METHODS.map(x => '<option>' + x + '</option>').join('') + '</select></div></div><div class="row2"><div class="field"><label for="mvDate">Fecha</label><input id="mvDate" type="date" value="' + A.today() + '"></div><div class="field"><label for="mvNote">Concepto</label><input id="mvNote" value="Cobro"></div></div><label class="chk"><input type="checkbox" id="mvSign"> Pedir la firma digital del paciente en este recibo</label><div class="hint">Saldo actual: ' + A.money(A.saldo(m.pid)) + '. Se genera un recibo interno numerado.</div><div id="mvMsg" class="hint bad"></div>', '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="cobroSave">Registrar y ver recibo</button>');
   A.acts.cobroSave = () => {
-    const amt = parseInt($('#mvAmt').value.replace(/\D/g, ''), 10); if (!(amt > 0)) { $('#mvMsg').textContent = 'Ingresá un importe mayor a cero.'; return; }
+    const amt = A.parseMoney($('#mvAmt').value); if (!(amt > 0)) { $('#mvMsg').textContent = 'Ingresá un importe mayor a cero.'; return; }
     const pid = S.modal.pid, pd = A.pd(pid), e = { id: A.uid(), date: $('#mvDate').value || A.today(), type: 'pago', amount: amt, desc: $('#mvNote').value || 'Cobro', method: $('#mvMeth').value, pro: A.PAT(pid).pro, rcp: 'R-' + pnum(pid) + '-' + (++pd.rcpSeq) };
     pd.ledger.push(e); pd.ledger.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)); A.touchPd(pid); const wantSign = $('#mvSign') && $('#mvSign').checked; if (wantSign) { S.modal = null; A.renderModal(); A.refresh(); A.startSign({ pid, kind: 'recibo', link: { ledgerId: e.id } }); return; } S.modal = { type: 'receipt', pid, id: e.id }; A.renderModal(); A.refresh(); A.renderModal();
   };
@@ -3814,13 +3814,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.cargoNew = () => { S.modal = { type: 'cargo', pid: S.fichaPid }; A.renderModal(); };
   MF.cargo = m => A.modalShell('Agregar cargo', '<div class="field"><label for="mvDesc">Concepto</label><input id="mvDesc" list="cgOpts" placeholder="Ej.: Radiografía panorámica"><datalist id="cgOpts">' + A.CAT.map(c => '<option>' + esc(c.label) + '</option>').join('') + '</datalist></div><div class="row2">' + amountField('') + '<div class="field"><label for="mvDate">Fecha</label><input id="mvDate" type="date" value="' + A.today() + '"></div></div><div id="mvMsg" class="hint bad"></div>', '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="cargoSave">Agregar cargo</button>');
   A.acts.cargoSave = () => {
-    const amt = parseInt($('#mvAmt').value.replace(/\D/g, ''), 10), d = $('#mvDesc').value.trim(); if (!d || !(amt > 0)) { $('#mvMsg').textContent = 'Completá concepto e importe.'; return; }
+    const amt = A.parseMoney($('#mvAmt').value), d = $('#mvDesc').value.trim(); if (!d || !(amt > 0)) { $('#mvMsg').textContent = 'Completá concepto e importe.'; return; }
     const pid = S.modal.pid, pd = A.pd(pid); pd.ledger.push({ id: A.uid(), date: $('#mvDate').value || A.today(), type: 'cargo', amount: amt, desc: d, pro: A.PAT(pid).pro }); pd.ledger.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)); A.touchPd(pid); S.modal = null; A.renderModal(); A.refresh();
   };
   A.acts.ajusteNew = () => { S.modal = { type: 'ajuste', pid: S.fichaPid }; A.renderModal(); };
   MF.ajuste = m => A.modalShell('Descuento o ajuste', '<div class="field"><label for="ajKind">Tipo</label><select id="ajKind"><option value="-1">Descuento / bonificación</option><option value="1">Recargo o interés por mora</option><option value="1x">Ajuste por inflación</option></select></div><div class="row2">' + amountField('') + '<div class="field"><label for="mvNote">Motivo</label><input id="mvNote" placeholder="Ej.: bonificación por pronto pago"></div></div><div id="mvMsg" class="hint bad"></div>', '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="ajusteSave">Registrar</button>');
   A.acts.ajusteSave = () => {
-    const amt = parseInt($('#mvAmt').value.replace(/\D/g, ''), 10), k = $('#ajKind').value; if (!(amt > 0)) { $('#mvMsg').textContent = 'Ingresá un importe.'; return; }
+    const amt = A.parseMoney($('#mvAmt').value), k = $('#ajKind').value; if (!(amt > 0)) { $('#mvMsg').textContent = 'Ingresá un importe.'; return; }
     const sign = k === '-1' ? -1 : 1, label = { '-1': 'Descuento', '1': 'Recargo por mora', '1x': 'Ajuste por inflación' }[k], pid = S.modal.pid, pd = A.pd(pid);
     pd.ledger.push({ id: A.uid(), date: A.today(), type: 'ajuste', amount: sign * amt, desc: label + ($('#mvNote').value ? ': ' + $('#mvNote').value : ''), pro: A.PAT(pid).pro }); A.touchPd(pid); S.modal = null; A.renderModal(); A.refresh();
   };
@@ -3897,7 +3897,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (c) { $('#atLab').value = c.label; $('#atPrice').value = c.price; nw.hidden = true; } else { $('#atLab').value = ''; $('#atPrice').value = ''; nw.hidden = false; $('#atLab').focus(); }
   };
   A.acts.atSave = () => {
-    const lab = $('#atLab').value.trim(), price = parseInt($('#atPrice').value.replace(/\D/g, ''), 10), tooth = parseInt($('#atTooth').value, 10), pid = S.fichaPid, mode = S.modal.mode;
+    const lab = $('#atLab').value.trim(), price = A.parseMoney($('#atPrice').value), tooth = parseInt($('#atTooth').value, 10), pid = S.fichaPid, mode = S.modal.mode;
     if (!lab || !(price >= 0)) { $('#atMsg').textContent = 'Completá la descripción y el importe.'; return; }
     if ($('#atTooth').value && !A.P.validTooth(tooth)) { $('#atMsg').textContent = 'La pieza ' + tooth + ' no existe (numeración FDI, 11–48).'; return; }
     const sel = A.CAT.filter(x => x.k === $('#atCat').value)[0], cat = sel ? sel.cat : $('#atNewCat').value;
@@ -3987,11 +3987,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.modalAfter.sena = () => A.ins.senaCalc();
   A.acts.senaPct = el => { const m = S.modal, b = bud(m.pid, m.bid); $('#snAmt').value = Math.round(b.total * parseInt(el.getAttribute('data-p'), 10) / 100 / 1000) * 1000; A.ins.senaCalc(); };
   A.ins.senaCalc = () => {
-    const m = S.modal; if (!m || m.type !== 'sena' || !$('#snPrev')) return; const b = bud(m.pid, m.bid), a = parseInt($('#snAmt').value.replace(/\D/g, ''), 10) || 0;
+    const m = S.modal; if (!m || m.type !== 'sena' || !$('#snPrev')) return; const b = bud(m.pid, m.bid), a = A.parseMoney($('#snAmt').value) || 0;
     $('#snPrev').innerHTML = '<table class="tbl"><tbody><tr><td>Total del presupuesto</td><td class="num">' + A.money(b.total) + '</td></tr><tr><td>Seña</td><td class="num">−' + A.money(a) + '</td></tr><tr><td><b>Saldo a pagar</b></td><td class="num"><b>' + A.money(Math.max(0, b.total - a)) + '</b></td></tr></tbody></table>';
   };
   A.acts.senaSave = () => {
-    const m = S.modal, pid = m.pid, b = bud(pid, m.bid), amt = parseInt($('#snAmt').value.replace(/\D/g, ''), 10);
+    const m = S.modal, pid = m.pid, b = bud(pid, m.bid), amt = A.parseMoney($('#snAmt').value);
     if (!(amt > 0)) { $('#snMsg').textContent = 'Ingresá el importe de la seña.'; return; } if (amt >= b.total) { $('#snMsg').textContent = 'La seña tiene que ser menor al total del presupuesto (' + A.money(b.total) + ').'; return; }
     const pd = A.pd(pid), date = $('#snDate').value || A.today(), e = { id: A.uid(), date, type: 'pago', amount: amt, desc: 'Seña del presupuesto ' + b.num, method: $('#snMeth').value, pro: A.PAT(pid).pro, rcp: 'R-' + pnum(pid) + '-' + (++pd.rcpSeq), sena: true, bid: b.id };
     pd.ledger.push(e); pd.ledger.sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0)); b.sena = { amount: amt, date, ledgerId: e.id, docId: null }; A.touchPd(pid);
@@ -4697,7 +4697,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       '<div class="row2"><div class="field" id="mvDueF"' + (f.status === 'pendiente' ? '' : ' hidden') + '><label for="mvDue">Vence</label><input id="mvDue" type="date" value="' + esc(f.due || A.add(A.today(), 15)) + '"></div>' + (!ing ? '<label class="chk"><input type="checkbox" id="mvFijo"' + (f.fijo ? ' checked' : '') + '> Gasto fijo (se repite todos los meses)</label>' : '') + '</div><div id="mvMsg" class="hint bad"></div>',
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="mvSave">Guardar</button>');
   };
-  function readMv() { const f = S.modal.f; f.cat = $('#mvCat').value; f.amount = parseInt($('#mvAmt').value.replace(/\D/g, ''), 10) || 0; f.desc = $('#mvDesc').value.trim(); f.date = $('#mvDate').value || A.today(); f.method = $('#mvMeth').value; f.status = $('#mvSt').value; f.due = $('#mvDue') ? $('#mvDue').value : f.due; f.fijo = $('#mvFijo') ? $('#mvFijo').checked : f.fijo; }
+  function readMv() { const f = S.modal.f; f.cat = $('#mvCat').value; f.amount = A.parseMoney($('#mvAmt').value) || 0; f.desc = $('#mvDesc').value.trim(); f.date = $('#mvDate').value || A.today(); f.method = $('#mvMeth').value; f.status = $('#mvSt').value; f.due = $('#mvDue') ? $('#mvDue').value : f.due; f.fijo = $('#mvFijo') ? $('#mvFijo').checked : f.fijo; }
   A.acts.mvType = el => { readMv(); const f = S.modal.f; f.type = el.getAttribute('data-t'); f.cat = ''; A.renderModal(); };
   A.chg.mvSt = el => { $('#mvDueF').hidden = el.value !== 'pendiente'; };
   A.acts.mvSave = () => {
@@ -4746,14 +4746,14 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
   A.chg.clDate = el => { S.caja.cdate = el.value || A.today(); A.refresh(); };
   A.ins.clCalc = () => {
-    if ($('#clOpen') && !$('#clOpen').disabled) { const o = parseInt($('#clOpen').value.replace(/\D/g, ''), 10) || 0; S.caja.copen = o; }
+    if ($('#clOpen') && !$('#clOpen').disabled) { const o = A.parseMoney($('#clOpen').value) || 0; S.caja.copen = o; }
     const c = $('#clCount'), d = $('#clDiff'), ex = $('#clExp'); if (ex) ex.textContent = A.money(expNow()); if (!c || !d) return;
-    if (!c.value) { d.textContent = ''; return; } const diff = (parseInt(c.value.replace(/\D/g, ''), 10) || 0) - expNow(); d.className = 'hint ' + (diff === 0 ? '' : 'warn'); d.textContent = diff === 0 ? 'La caja cierra justa.' : (diff > 0 ? 'Sobran ' : 'Faltan ') + A.money(Math.abs(diff));
+    if (!c.value) { d.textContent = ''; return; } const diff = (A.parseMoney(c.value) || 0) - expNow(); d.className = 'hint ' + (diff === 0 ? '' : 'warn'); d.textContent = diff === 0 ? 'La caja cierra justa.' : (diff > 0 ? 'Sobran ' : 'Faltan ') + A.money(Math.abs(diff));
   };
-  function expNow() { const o = parseInt(($('#clOpen') || { value: 0 }).value.replace(/\D/g, ''), 10) || 0; return o + (S.caja._base || 0); }
+  function expNow() { const o = A.parseMoney(($('#clOpen') || { value: 0 }).value) || 0; return o + (S.caja._base || 0); }
   A.acts.clSave = () => {
-    const d = S.caja.cdate || A.today(), counted = parseInt(($('#clCount').value || '').replace(/\D/g, ''), 10); if (isNaN(counted)) { $('#clDiff').className = 'hint bad'; $('#clDiff').textContent = 'Ingresá el efectivo contado.'; return; }
-    const open = parseInt($('#clOpen').value.replace(/\D/g, ''), 10) || 0, exp = expNow();
+    const d = S.caja.cdate || A.today(), counted = (/\d/.test($('#clCount').value || '') ? A.parseMoney($('#clCount').value) : NaN); if (isNaN(counted)) { $('#clDiff').className = 'hint bad'; $('#clDiff').textContent = 'Ingresá el efectivo contado.'; return; }
+    const open = A.parseMoney($('#clOpen').value) || 0, exp = expNow();
     S.cash.closes.push({ id: A.uid(), date: d, open, expected: exp, counted, diff: counted - exp, note: $('#clNote').value.trim(), ts: new Date().toISOString() }); A.save(); A.refresh(); A.toast('Caja del ' + A.fmtDMY(d) + ' cerrada.');
   };
   A.acts.clReopen = () => { const d = S.caja.cdate || A.today(); S.cash.closes = S.cash.closes.filter(c => c.date !== d); A.save(); A.refresh(); };
@@ -4849,7 +4849,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (i >= 0) cfg.rules[i] = r; else cfg.rules.push(r); A.save(); A.refresh();
   };
   A.acts.liqDedAdd = () => {
-    const d = $('#ldDesc').value.trim(), a = parseInt($('#ldAmt').value.replace(/\D/g, ''), 10); if (!d || !(a > 0)) { A.toast('Completá el concepto y el importe del descuento.'); return; }
+    const d = $('#ldDesc').value.trim(), a = A.parseMoney($('#ldAmt').value); if (!d || !(a > 0)) { A.toast('Completá el concepto y el importe del descuento.'); return; }
     const k = A.liqKey(S.liq.pro, month()); (S.liq.ded[k] = S.liq.ded[k] || []).push({ id: A.uid(), desc: d, amount: a }); A.save(); A.refresh();
   };
   A.acts.liqDedDel = el => { const k = A.liqKey(S.liq.pro, month()); S.liq.ded[k] = (S.liq.ded[k] || []).filter(d => d.id !== el.getAttribute('data-id')); A.save(); A.refresh(); };
@@ -6421,7 +6421,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.snQuick = el => { const i = $('#asAmt'); if (i) i.value = el.getAttribute('data-v'); };
   function dropSenaLedger(a) { if (!a.sena || !a.sena.ledgerId) return; const pd = A.pd(a.pid); pd.ledger = pd.ledger.filter(e => e.id !== a.sena.ledgerId); A.touchPd(a.pid); }
   A.acts.asSave = () => {
-    const a = A.apptById(S.modal.id), amt = parseInt(($('#asAmt').value || '').replace(/\D/g, ''), 10) || 0, method = $('#asMeth').value;
+    const a = A.apptById(S.modal.id), amt = A.parseMoney(($('#asAmt').value || '')) || 0, method = $('#asMeth').value;
     if (!(amt > 0)) { $('#asMsg').textContent = 'Ingresá el importe de la seña.'; return; }
     dropSenaLedger(a);
     const pd = A.pd(a.pid), e = { id: A.uid(), date: A.today(), type: 'pago', amount: amt, desc: 'Seña del turno del ' + A.fmtDMY(a.date) + ' ' + A.mm(a.start), method, pro: a.pro, sena: true, apptId: a.id };
@@ -7664,7 +7664,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd, V = A.voice;
   A.VERSION = '6.2';
   const N = s => A.norm(s);
-  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   const WA_IC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 12 12 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.2z"/></svg>';
 
   /* =====================================================================
@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.17.4';
+  A.VERSION = '1.18';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.72.4';
+  A.VBUILD = '1.73.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10182,7 +10182,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.chg.tpPhName = el => { const pid = pidNow(), p = tp(pid), f = p.phases.filter(x => x.id === el.getAttribute('data-ph'))[0]; if (!f) return; f.name = el.value.trim() || f.name; tpSave(pid, p); };
   A.chg.tpSel = el => { const pid = pidNow(); (sel[pid] = sel[pid] || {})[el.getAttribute('data-id')] = el.checked; keepScroll(() => {}); };
   A.chg.tpLabel = el => { const t = txById(el.getAttribute('data-id')); if (!t || !el.value.trim()) return; t.label = el.value.trim(); A.touchPd(pidNow()); };
-  A.chg.tpPrice = el => { const t = txById(el.getAttribute('data-id')), v = parseInt(String(el.value).replace(/\D/g, ''), 10); if (t && v >= 0) { t.price = v; A.touchPd(pidNow()); } keepScroll(() => {}); };
+  A.chg.tpPrice = el => { const t = txById(el.getAttribute('data-id')), v = A.parseMoney(String(el.value)); if (t && v >= 0) { t.price = v; A.touchPd(pidNow()); } keepScroll(() => {}); };
   A.chg.tpPh = el => keepScroll(() => { const pid = pidNow(), t = txById(el.getAttribute('data-id')), p = tp(pid); if (!t) return; t.ph = el.value; if (p.virgin) tpSave(pid, p); A.touchPd(pid); });
   A.acts.tpAdd = el => { S.tpAddPh = el.getAttribute('data-ph'); A.acts.addTx(fake({ 'data-mode': 'plan' })); };
   /* lo que se agrega desde «+ Agregar tratamiento» entra en esa fase */
@@ -11892,7 +11892,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   A.chg.liqMode = el => { const c = A.liqCfg(S.liq.pro); c.mode = el.value; if (el.value !== 'pct') c.mod = c.mod || { by: 'hora', price: 0 }; A.save(); A.refresh(); };
   A.chg.liqModBy = el => { const c = A.liqCfg(S.liq.pro); c.mod = c.mod || {}; c.mod.by = el.value; A.save(); A.refresh(); };
-  A.chg.liqModPrice = el => { const c = A.liqCfg(S.liq.pro); c.mod = c.mod || { by: 'hora' }; c.mod.price = parseInt(String(el.value).replace(/\D/g, ''), 10) || 0; A.save(); A.refresh(); };
+  A.chg.liqModPrice = el => { const c = A.liqCfg(S.liq.pro); c.mod = c.mod || { by: 'hora' }; c.mod.price = A.parseMoney(String(el.value)) || 0; A.save(); A.refresh(); };
 
   document.head.insertAdjacentHTML('beforeend', '<style>' +
     '#drPlan span{display:flex;flex-direction:column;align-items:flex-start}#drPlan small{font-size:12px;color:var(--accent);font-weight:600}' +
@@ -15325,7 +15325,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
           : '<button class="btn" data-act="poGo" data-k="rcp">Mandar a recepción</button><button class="btn primary" data-act="poGo" data-k="pro">Cobrar yo</button>');
     return A.modalShell('Prácticas de hoy', b, f);
   };
-  const poSync = () => { const m = S.modal; if (!m || m.type !== 'pracOk') return; A.$$('[data-in="poAmt"]').forEach(i => { const it = m.items[+i.getAttribute('data-i')]; if (it) it.pay = parseInt(String(i.value).replace(/\D/g, ''), 10) || 0; }); };
+  const poSync = () => { const m = S.modal; if (!m || m.type !== 'pracOk') return; A.$$('[data-in="poAmt"]').forEach(i => { const it = m.items[+i.getAttribute('data-i')]; if (it) it.pay = A.parseMoney(String(i.value)) || 0; }); };
   A.ins.poAmt = () => { poSync(); const m = S.modal, t = $('#poTot'); if (t) t.textContent = money(m.items.filter(i => i.on).reduce((s, i) => s + (i.pay || 0), 0)); };
   A.chg.poOn = el => { poSync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (it) it.on = el.checked; A.renderModal(); };
   A.chg.poAdd = el => {
@@ -15449,7 +15449,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     b += '<button class="btn small ghost" data-act="ppSplit">' + (m.split ? 'Un solo medio de pago' : 'Paga con dos medios') + '</button><div class="hint" id="ppMsg"></div>';
     return A.modalShell('Cobrar', b, '<button class="btn" data-act="closeModal">Cancelar</button>' + (its.length ? '<button class="btn ghost" data-act="ppDebt">Queda debiendo</button>' : '') + '<button class="btn primary" data-act="ppGo">Cobrar</button>');
   };
-  const ppSync = () => { const m = S.modal; A.$$('[data-in="ppAmt"]').forEach(i => { m[i.getAttribute('data-k')] = parseInt(String(i.value).replace(/\D/g, ''), 10) || 0; }); };
+  const ppSync = () => { const m = S.modal; A.$$('[data-in="ppAmt"]').forEach(i => { m[i.getAttribute('data-k')] = A.parseMoney(String(i.value)) || 0; }); };
   const ppHint = () => { const m = S.modal, want = m.tot + (m.addPrev ? m.prev : 0), got = m.a1 + (m.split ? m.a2 : 0), o = $('#ppMsg'); if (!o) return; o.className = 'hint' + (got < want ? ' warn' : ''); o.textContent = got < want ? 'Faltan ' + money(want - got) + ': queda como deuda en su cuenta.' : got > want ? 'Paga ' + money(got - want) + ' de más: queda a favor.' : ''; };
   A.ins.ppAmt = () => { ppSync(); ppHint(); };
   A.chg.ppMeth = el => { ppSync(); S.modal[el.getAttribute('data-k')] = el.value; };
@@ -15849,7 +15849,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     else if (isEmp()) h += '<p class="stk-where">Stock de <b>' + esc(sedeName(sd)) + '</b></p>';
     h += '<div class="seg stk-tabs" role="tablist">' + TABS.filter(t => t[0] !== 'rec' || canCfg()).map(t => '<button type="button" role="tab" data-act="stkTab" data-t="' + t[0] + '" aria-pressed="' + (st.tab === t[0]) + '">' + t[1] + (t[0] === 'comprar' ? (n => n ? ' <span class="stk-n">' + n + '</span>' : '')(L.filter(i => status(i) !== 'ok').length) : '') + '</button>').join('') + '</div>';
     if (!L.length) {
-      return h + '<div class="stk-empty"><p><b>Todavía no cargaste insumos' + (isEmp() ? ' en ' + esc(sedeName(sd)) : '') + '.</b></p><p>Podés empezar con el catálogo sugerido: ' + CAT.length + ' insumos odontológicos comunes, con cuántos usos rinde cada uno. Después contás lo que tenés y listo. Todo se puede cambiar o borrar.</p><div class="row-btns"><button class="btn primary" data-act="stkSeed">Cargar el catálogo sugerido</button><button class="btn" data-act="stkNew">Cargar un insumo a mano</button></div></div>';
+      return h + '<div class="stk-empty"><p><b>Todavía no cargaste insumos' + (isEmp() ? ' en ' + esc(sedeName(sd)) : '') + '.</b></p><p>Empezá con un <b>kit recomendado</b> según cuántos odontólogos atienden: carga ' + CAT.length + ' insumos comunes con el mínimo y lo que conviene tener. Después contás lo que tenés y la app arma el pedido. Todo se puede cambiar o borrar.</p>' + kitHTML() + '</div>';
     }
     if (st.tab === 'comprar') return h + buyHTML(sd, L);
     if (st.tab === 'mov') return h + movHTML(L);
@@ -15861,7 +15861,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const nLow = L.filter(i => status(i) !== 'ok').length, nExp = L.filter(expSoon).length;
     h += '<div class="stk-sum"><span class="ok">' + L.filter(i => status(i) === 'ok').length + ' bien</span><span class="low">' + nLow + ' poco o nada</span>' + (nExp ? '<span class="exp">' + nExp + ' vence' + (nExp === 1 ? '' : 'n') + ' pronto</span>' : '') + '</div>';
     h += '<div class="stk-bar"><input type="search" placeholder="Buscar insumo…" value="' + esc(st.q || '') + '" data-in="stkQ" aria-label="Buscar insumo"><select data-chg="stkCat" aria-label="Categoría"><option value="">Todas</option>' + cats.map(c => '<option' + (c === st.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select><label class="chk"><input type="checkbox" data-chg="stkLow"' + (st.low ? ' checked' : '') + '> <span>Solo lo que falta</span></label></div>';
-    h += '<div class="row-btns stk-acts"><button class="btn small primary" data-act="stkIn">+ Llegó mercadería</button><button class="btn small" data-act="stkCount">Contar el stock</button><button class="btn small" data-act="stkUseM">Usé algo</button>' + (isEmp() && sedes().length > 1 ? '<button class="btn small" data-act="stkMove">Pasar a otro centro</button>' : '') + '<button class="btn small ghost" data-act="stkNew">+ Insumo nuevo</button>' + (canCfg() ? '<button class="btn small ghost" data-act="stkLevels">Cuándo avisar y cuánto pedir</button>' : '') + '</div>';
+    const TILE = (act, ic, t, sub, cls) => '<button class="stk-tile' + (cls ? ' ' + cls : '') + '" data-act="' + act + '"><span class="stk-ti" aria-hidden="true">' + ic + '</span><b>' + t + '</b><small>' + sub + '</small></button>';
+    h += '<div class="stk-tiles">' + TILE('stkIn', '📦', 'Llegó mercadería', 'Sumar lo que compraste', 'main') + TILE('stkUseM', '✋', 'Usé algo', 'Descontar a mano') + TILE('stkCount', '🔢', 'Contar el stock', 'Poner lo que hay') + TILE('stkNew', '＋', 'Insumo nuevo', 'Agregar a la lista') + (isEmp() && sedes().length > 1 ? TILE('stkMove', '🔁', 'Pasar a otro centro', 'Mover insumos') : '') + '</div>' +
+      '<div class="stk-more">' + (canCfg() ? '<button class="linkbtn" data-act="stkLevels">Cuándo avisar y cuánto pedir</button>' : '') + (canCfg() ? '<button class="linkbtn" data-act="stkKitOpen">Kit recomendado por tamaño</button>' : '') + '</div>';
     h += '<ul class="stk-list" id="stkList">' + listRows(vis) + '</ul>';
     return h;
   };
@@ -15873,6 +15875,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         '<span class="stk-meter"><i style="width:' + pct + '%"></i></span></span><span class="stk-r"><b>' + fq(i.qty) + '</b><small>' + esc(i.unit || '') + '</small>' + (dl != null ? '<small class="stk-dl">~' + dl + ' días</small>' : '') + (expSoon(i) ? '<small class="stk-ex">vence ' + A.fmtDMY(i.exp).slice(0, 5) + '</small>' : '') + '</span></button></li>';
     }).join('');
   }
+  /* 1.18: kits recomendados por tamaño (multiplican el mínimo del catálogo; «pedir hasta» = 3 veces el mínimo) */
+  const KITS = [['1', 'Consultorio de 1 odontólogo', 1], ['2', 'Consultorio de 2 odontólogos', 2], ['c', 'Centro (3 a 5 odontólogos)', 4], ['g', 'Centro grande (6 o más)', 7]];
+  const kitHTML = () => '<div class="stk-kits">' + KITS.map(k => '<button class="stk-kit" data-act="stkSeed" data-k="' + k[0] + '"><b>' + esc(k[1]) + '</b><small>' + (k[2] === 1 ? 'cantidades base' : 'cantidades ×' + k[2]) + '</small></button>').join('') + '</div>';
   /* lista de compras: lo que está bajo el mínimo o no llega a 30 días */
   function buyList(L) {
     return L.map(i => {
@@ -15881,14 +15886,24 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       return { i, need, why: i.qty <= 0 ? 'sin stock' : i.min > 0 && i.qty <= i.min ? 'bajo el mínimo' : daysLeft(i) != null && daysLeft(i) <= 30 ? 'alcanza ~' + daysLeft(i) + ' días' : '' };
     }).filter(x => x.need > 0 && x.why);
   }
+  const skip = () => S.stkSkip || (S.stkSkip = {}), qOv = () => S.stkQty || (S.stkQty = {});
+  const chosen = B => B.filter(x => !skip()[x.i.id]).map(x => Object.assign({}, x, { need: qOv()[x.i.id] != null ? qOv()[x.i.id] : x.need })).filter(x => x.need > 0);
   function buyHTML(sd, L) {
     const B = buyList(L);
     if (!B.length) return '<div class="stk-empty"><p><b>No falta nada.</b> Todos los insumos están arriba del mínimo y alcanzan para más de un mes con lo que se viene usando.</p></div>';
-    return '<p class="hint">Lo que conviene pedir' + (isEmp() ? ' para <b>' + esc(sedeName(sd)) + '</b>' : '') + ', calculado con el mínimo de cada insumo y con lo que se usó en los últimos 30 días.' + (canCfg() ? ' <button class="linkbtn" data-act="stkLevels">Cambiar cuándo avisar y cuánto pedir</button>' : '') + '</p><ul class="stk-buy">' +
-      B.map(x => '<li><span><b>' + esc(x.i.name) + '</b><small>Hay ' + fq(x.i.qty) + ' ' + esc(x.i.unit || '') + ' · ' + esc(x.why) + '</small></span><b class="stk-need">' + x.need + ' ' + esc(x.i.unit || '') + '</b></li>').join('') + '</ul>' +
-      ((A.partnerBuyHTML && A.partnerBuyHTML(buyText(sd, B))) || '<div class="row-btns"><a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(buyText(sd, B)) + '">Mandar el pedido por WhatsApp</a><button class="btn" data-act="stkBuyCopy">Copiar el pedido</button></div>');
+    const C = chosen(B), txt = buyText(sd, C);
+    return '<p class="hint">Lo que conviene pedir' + (isEmp() ? ' para <b>' + esc(sedeName(sd)) + '</b>' : '') + '. Destildá lo que no quieras pedir esta vez y cambiá las cantidades si hace falta.' + (canCfg() ? ' <button class="linkbtn" data-act="stkLevels">Cambiar cuándo avisar y cuánto pedir</button>' : '') + '</p>' +
+      '<div class="stk-ball"><button class="linkbtn" data-act="stkBuyAll" data-v="1">Tildar todo</button><button class="linkbtn" data-act="stkBuyAll" data-v="0">Destildar todo</button></div><ul class="stk-buy">' +
+      B.map(x => { const off = !!skip()[x.i.id], q = qOv()[x.i.id] != null ? qOv()[x.i.id] : x.need; return '<li class="' + (off ? 'stk-skip' : '') + '"><label class="stk-bchk"><input type="checkbox" data-chg="stkBuyOn" data-id="' + x.i.id + '"' + (off ? '' : ' checked') + ' aria-label="Pedir ' + esc(x.i.name) + '"></label><span class="stk-bl"><b>' + esc(x.i.name) + '</b><small>Hay ' + fq(x.i.qty) + ' ' + esc(x.i.unit || '') + ' · ' + esc(x.why) + '</small></span><span class="stk-bq"><input inputmode="decimal" data-chg="stkBuyQ" data-id="' + x.i.id + '" value="' + String(q).replace('.', ',') + '"' + (off ? ' disabled' : '') + ' aria-label="Cantidad a pedir"><small>' + esc(x.i.unit || '') + '</small></span></li>'; }).join('') + '</ul>' +
+      '<div class="stk-buybar"><span class="stk-bn"><b>' + C.length + '</b> de ' + B.length + ' en el pedido</span>' +
+      (C.length ? ((A.partnerBuyHTML && A.partnerBuyHTML(txt)) || '<a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(txt) + '">Mandar por WhatsApp</a><button class="btn" data-act="stkBuyCopy">Copiar</button>') : '<span class="hint" style="margin:0">Tildá al menos uno.</span>') + '</div>';
   }
-  const buyText = (sd, B) => 'Pedido de insumos · ' + (A.CLINIC || '') + (isEmp() ? ' · ' + sedeName(sd) : '') + ' · ' + A.fmtDMY(today()) + '\n' + B.map(x => '- ' + x.need + ' ' + (x.i.unit || '') + ' de ' + x.i.name).join('\n');
+  A.chg.stkBuyOn = el => { const id = el.getAttribute('data-id'); if (el.checked) delete skip()[id]; else skip()[id] = 1; paint(); };
+  A.chg.stkBuyQ = el => { const v = dec(el.value); qOv()[el.getAttribute('data-id')] = v > 0 ? v : 0; paint(); };
+  A.acts.stkBuyAll = el => { const on = el.getAttribute('data-v') === '1', sd = place(); buyList(list(sd).map(norm1)).forEach(x => { if (on) delete skip()[x.i.id]; else skip()[x.i.id] = 1; }); paint(); };
+  A.acts.stkKitOpen = () => { S.modal = { type: 'stkKit' }; A.renderModal(); };
+  MF.stkKit = () => A.modalShell('Kit recomendado', '<p class="m-lead">Ajusta el mínimo («avisar cuando queden») y «pedir hasta tener» de los insumos del catálogo según cuántos odontólogos atienden. Los que faltan se agregan con 0. No toca lo que contaste.</p>' + kitHTML(), '<button class="btn" data-act="stkBack">Volver</button>');
+  const buyText = (sd, B) => 'Pedido de insumos · ' + (A.CLINIC || '') + (isEmp() ? ' · ' + sedeName(sd) : '') + ' · ' + A.fmtDMY(today()) + '\n' + B.map(x => '- ' + String(x.need).replace('.', ',') + ' ' + (x.i.unit || '') + ' de ' + x.i.name).join('\n');
   function movHTML(L) {
     const all = []; L.forEach(i => i.mv.forEach(m => all.push({ i, m })));
     all.sort((a, b) => (a.m.at < b.m.at ? 1 : -1));
@@ -15923,13 +15938,15 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.chg.stkLow = el => { S.stk.low = el.checked; paint(); };
   /* 1.2: lo que falta (para el aviso del inicio y las colaboraciones) */
   A.stkLowList = () => { try { return list(place()).map(norm1).filter(i => status(i) !== 'ok'); } catch (e) { return []; } };
-  A.stkBuyText = () => { const sd = place(); return buyText(sd, buyList(list(sd).map(norm1))); };
-  A.acts.stkBuyCopy = async () => { const sd = place(), t = buyText(sd, buyList(list(sd).map(norm1))); try { await navigator.clipboard.writeText(t); A.toast('Pedido copiado.'); } catch (e) { A.toast(t); } };
-  A.acts.stkSeed = () => {
-    const sd = place(), L = list(sd);
-    CAT.forEach(c => { if (!byCk(sd, c[0])) L.push({ id: A.uid(), ck: c[0], name: c[1], cat: c[2], unit: c[3], uses: c[4], min: c[5], qty: 0, mv: [] }); });
+  A.stkBuyText = () => { const sd = place(); return buyText(sd, chosen(buyList(list(sd).map(norm1)))); };
+  A.acts.stkBuyCopy = async () => { const sd = place(), t = buyText(sd, chosen(buyList(list(sd).map(norm1)))); try { await navigator.clipboard.writeText(t); A.toast('Pedido copiado.'); } catch (e) { A.toast(t); } };
+  A.acts.stkSeed = el => {
+    const sd = place(), L = list(sd), kk = (el && el.getAttribute && el.getAttribute('data-k')) || '1', f = (KITS.filter(k => k[0] === kk)[0] || KITS[0])[2];
+    const mn = c => Math.max(c[5] > 0 ? 1 : 0, Math.round(c[5] * f * 10) / 10);
+    CAT.forEach(c => { const ex = byCk(sd, c[0]); if (!ex) L.push({ id: A.uid(), ck: c[0], name: c[1], cat: c[2], unit: c[3], uses: c[4], min: mn(c), par: mn(c) * 3, qty: 0, mv: [] }); else if (el && el.getAttribute) { ex.min = mn(c); ex.par = mn(c) * 3; } });
+    cfg().kit = kk;
     /* los insumos viejos del modo Empresa quedan, sin clave */
-    save(); S.stk.tab = 'lista'; paint(); A.toast('Catálogo cargado. Ahora tocá «Contar el stock» y poné lo que tenés.');
+    save(); S.stk.tab = 'lista'; if (S.modal && S.modal.type === 'stkKit') back(); else paint(); A.toast('Kit cargado. Ahora tocá «Contar el stock» y poné lo que tenés; en «Para comprar» queda el pedido.');
   };
   A.chg.stkRec = el => {
     const k = el.getAttribute('data-k'), ck = el.getAttribute('data-ck'), v = Math.max(0, dec(el.value)), c = cfg();
@@ -16065,6 +16082,32 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.stk-head{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}.stk-head span{color:var(--ink-2);font-size:13.5px}' +
     '.stk-pick button{all:unset;cursor:pointer;display:flex;flex-direction:column;padding:8px 10px;border:1px solid var(--line);border-radius:10px;width:100%;box-sizing:border-box}.stk-pick button:hover{border-color:var(--accent)}.stk-pick small{color:var(--ink-2);font-size:12px}';
   document.head.appendChild(css);
+  /* 1.18: estética del stock */
+  const css18 = document.createElement('style');
+  css18.textContent = [
+    '.stk-tabs { gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }',
+    '.stk-tabs button { border-radius: 10px !important; border: 0 !important; background: transparent !important; font-weight: 600; white-space: nowrap; }',
+    '.stk-tabs button[aria-pressed="true"] { background: var(--surface) !important; color: var(--accent); box-shadow: 0 1px 4px rgba(8, 20, 24, .12); }',
+    '.stk-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 10px 0 6px; }',
+    '.stk-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }',
+    '.stk-tile:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }',
+    '.stk-tile.main { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }',
+    '.stk-ti { font-size: 22px; line-height: 1; margin-bottom: 4px; } .stk-tile b { font-size: 14.5px; } .stk-tile small { font-size: 12px; color: var(--ink-2); }',
+    '.stk-more { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 10px; font-size: 13px; }',
+    '.stk-sum { display: flex; flex-wrap: wrap; gap: 6px; } .stk-sum span { padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }',
+    '.stk-kits { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-top: 10px; }',
+    '.stk-kit { display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 14px; border: 1.5px solid color-mix(in srgb, var(--accent) 35%, var(--line)); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }',
+    '.stk-kit:hover { background: var(--accent-soft); } .stk-kit small { color: var(--ink-2); font-size: 12.5px; }',
+    '.stk-ball { display: flex; gap: 14px; margin: 0 0 6px; font-size: 13px; }',
+    '.stk-buy li { display: grid !important; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }',
+    '.stk-buy li.stk-skip { opacity: .5; } .stk-bchk input { width: 20px; height: 20px; }',
+    '.stk-bl { display: flex; flex-direction: column; min-width: 0; } .stk-bl small { color: var(--ink-2); font-size: 12.5px; }',
+    '.stk-bq { display: flex; align-items: center; gap: 4px; } .stk-bq input { width: 70px; text-align: right; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 14px inherit; } .stk-bq small { color: var(--ink-2); font-size: 12px; }',
+    '.stk-buybar { position: sticky; bottom: -1px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); box-shadow: 0 -6px 18px rgba(8, 20, 24, .1); }',
+    '.stk-buybar .stk-bn { margin-right: auto; font-size: 13.5px; color: var(--ink-2); } .stk-buybar .stk-bn b { color: var(--ink); }',
+    '.stk-list .stk-row { border-radius: 12px; }'
+  ].join('\n');
+  document.head.appendChild(css18);
 })();
 /* ===== 1.34: una cuenta en varios lugares: elegir dónde trabajar, vincularse con un código y ver los turnos de los otros lugares en la propia agenda ===== */
 (function () {
@@ -16498,7 +16541,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.acts.ltPay = el => { S.modal = { type: 'ltPay', pid: el.getAttribute('data-pid') }; A.renderModal(); };
   MF.ltPay = m => A.modalShell('Registrar cobro · ' + A.PAT(m.pid).name, '<div class="lt-sheet"><div class="field"><label for="ltCa">Cuánto cobraste</label><input id="ltCa" class="lt-money" inputmode="numeric" placeholder="$"></div><p class="lt-lbl">¿Cómo te pagó?</p><div class="lt-meth" role="radiogroup">' + ['Efectivo', 'Transferencia', 'Débito', 'Crédito', 'Mercado Pago'].map((x, i) => '<label><input type="radio" name="ltCm" value="' + x + '"' + (i === 0 ? ' checked' : '') + '><span>' + x + '</span></label>').join('') + '</div><div id="ltCmsg" class="hint bad"></div></div>', '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary lt-big" data-act="ltPaySave">Guardar cobro</button>');
   A.acts.ltPaySave = () => {
-    const amt = parseInt((($('#ltCa') || {}).value || '').replace(/\D/g, ''), 10); if (!(amt > 0)) { $('#ltCmsg').textContent = 'Escribí el importe.'; return; }
+    const amt = A.parseMoney((($('#ltCa') || {}).value || '')); if (!(amt > 0)) { $('#ltCmsg').textContent = 'Escribí el importe.'; return; }
     const pid = S.modal.pid, pd = A.pd(pid), meth = (document.querySelector('input[name="ltCm"]:checked') || {}).value || 'Efectivo';
     pd.ledger.push({ id: A.uid(), date: A.today(), type: 'pago', amount: amt, desc: 'Cobro', method: meth, pro: A.PAT(pid).pro, rcp: 'R-' + (pid.replace(/\D/g, '') || '0') + '-' + (++pd.rcpSeq) });
     A.touchPd(pid); S.modal = null; A.renderModal(); A.toast('Cobro guardado: ' + A.money(amt) + ' (' + meth + ').'); A.refresh();
@@ -18351,6 +18394,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.18', b: '1.73.0', d: '2026-11-20', items: [
+      { t: 'Cobros, pagos y precios aceptan centavos (por ejemplo 75.000,50).', top: true },
+      { t: 'Stock renovado: kit recomendado según cuántos odontólogos atienden, botones grandes y el pedido se puede tildar, editar y mandar desde una barra fija.', top: true }] },
     { v: '1.17.4', b: '1.72.4', d: '2026-11-20', items: [
       { t: 'En el resumen del paciente, si debe, hay un botón «Cobrar deuda» para registrar el pago al toque.', top: true },
       { t: 'En «Para cobrar», el nombre del paciente abre su ficha resumida.', top: true }] },
@@ -19372,8 +19418,8 @@ const OVMenu = (function () {
       return undefined;
     };
   };
-  guard('cobroSave', () => parseInt((($('#mvAmt') || {}).value || '').replace(/\D/g, ''), 10), m => m.pid, '#mvMsg');
-  guard('ltPaySave', () => parseInt((($('#ltCa') || {}).value || '').replace(/\D/g, ''), 10), m => m.pid, '#ltCmsg');
+  guard('cobroSave', () => A.parseMoney((($('#mvAmt') || {}).value || '')), m => m.pid, '#mvMsg');
+  guard('ltPaySave', () => A.parseMoney((($('#ltCa') || {}).value || '')), m => m.pid, '#ltCmsg');
   A.acts.twinSame = () => { S.modal = null; A.renderModal(); A.toast('Listo: no se cargó de nuevo.'); };
   A.acts.twinOther = el => { if (S.modal) S.modal._twinOk = true; const a = el.getAttribute('data-a'); if (A.acts[a]) A.acts[a](); };
 
@@ -19520,7 +19566,7 @@ const OVMenu = (function () {
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="osPayGo">Guardar</button>');
   };
   A.acts.osPayGo = () => {
-    const m = S.modal, amt = parseInt((($('#opAmt') || {}).value || '').replace(/\D/g, ''), 10);
+    const m = S.modal, amt = A.parseMoney((($('#opAmt') || {}).value || ''));
     if (!(amt >= 0) || isNaN(amt)) { const x = $('#opMsg'); if (x) x.textContent = 'Poné el importe que pagó.'; return; }
     const P = A.osPayStore(); P[m.os] = P[m.os] || {};
     P[m.os][m.m] = { amt, date: ($('#opDate') || {}).value || A.today(), note: (($('#opNote') || {}).value || '').trim(), by: (A.actor && A.actor().who) || '', at: new Date().toISOString() };
@@ -19626,7 +19672,7 @@ const OVMenu = (function () {
   const BY = [['hora', 'por hora'], ['turno', 'por turno'], ['dia', 'por día']];
   const cfgOf = pid => { const c = A.liqCfg(pid); c.rules = c.rules || []; return c; };
   const baseOf = c => c.base || 'cobrado';
-  const num = v => parseInt(String(v || '').replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   /* lista de porcentajes: de 5 en 5, del 5% al 100% (y el valor actual si es otro, por ejemplo 37,5) */
   const pctSel = (attrs, val) => { const v = val == null ? '' : +val, L = []; for (let i = 5; i <= 100; i += 5) L.push(i); if (v !== '' && L.indexOf(v) < 0) { L.push(v); L.sort((a, b) => a - b); }
     return '<select ' + attrs + '>' + (v === '' ? '<option value="" selected>Elegí…</option>' : '') + L.map(n => '<option value="' + n + '"' + (n === v ? ' selected' : '') + '>' + String(n).replace('.', ',') + '%</option>').join('') + '</select>'; };
@@ -20381,7 +20427,7 @@ const OVMenu = (function () {
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(n || 0);
-  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   const MONL = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   const mName = m => MONL[+m.slice(5) - 1] + ' ' + m.slice(0, 4);
   const addM = (m, n) => { const d = new Date(+m.slice(0, 4), +m.slice(5) - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
@@ -20751,7 +20797,7 @@ const OVMenu = (function () {
   const ppPrev = A.acts.ppGo;
   if (ppPrev) A.acts.ppGo = function () {
     const m = S.modal; if (!m || !m.adj || m.adj.k === 'none') return ppPrev.apply(this, arguments);
-    A.$$('[data-in="ppAmt"]').forEach(i => { m[i.getAttribute('data-k')] = parseInt(String(i.value).replace(/\D/g, ''), 10) || 0; });
+    A.$$('[data-in="ppAmt"]').forEach(i => { m[i.getAttribute('data-k')] = A.parseMoney(String(i.value)) || 0; });
     const base = m.tot + (m.addPrev ? m.prev : 0), c = A.adjCalc(base, m.adj);
     if (!c.delta && m.adj.k !== 'cuo') return ppPrev.apply(this, arguments);
     book(m.pid, base, m.adj, m.m1, { pcIds: m.ids.slice() });
@@ -20947,7 +20993,7 @@ const OVMenu = (function () {
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(n || 0);
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
-  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   const isSolo = () => !!(A.isSolo && A.isSolo());
   const mb = () => (A.memberNow && A.memberNow()) || null;
   const canCfg = () => !mb() || mb().role === 'admin';
@@ -22185,7 +22231,7 @@ const OVMenu = (function () {
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(n || 0);
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
-  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   const mb = () => (A.memberNow && A.memberNow()) || null;
   const role = () => { const m = mb(); return m ? m.role : null; };
   const who = () => (A.actor && A.actor().who) || (mb() && mb().name) || (A.CFG && A.CFG.ownerName) || (S.setup && S.setup.doctor) || '';
@@ -23103,7 +23149,7 @@ const OVMenu = (function () {
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(Math.round(n || 0));
-  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? null : n; };
+  const num = v => /\d/.test(String(v == null ? '' : v)) ? A.parseMoney(v) : null;   /* 1.18: acepta centavos */
   const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
   const isEmp = () => S.setup && S.setup.type === 'empresa';
   const role = () => (A.isMember && A.isMember() && A.mbRole) ? A.mbRole() : 'dueno';
@@ -23731,7 +23777,7 @@ const OVMenu = (function () {
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(Math.round(n || 0));
-  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? null : n; };
+  const num = v => /\d/.test(String(v == null ? '' : v)) ? A.parseMoney(v) : null;   /* 1.18: acepta centavos */
   const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
   const boss = () => (A.isBoss ? A.isBoss() : true);
   const who = () => { try { return (A.actor && A.actor().who) || ''; } catch (e) { return ''; } };
@@ -24044,7 +24090,7 @@ const OVMenu = (function () {
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(Math.round(n || 0));
-  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? 0 : n; };
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
   const mb = () => (A.memberNow && A.memberNow()) || null;
   const role = () => { const m = mb(); return m ? m.role : null; };
@@ -24369,7 +24415,7 @@ const OVMenu = (function () {
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(Math.round(n || 0));
-  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10); return isNaN(n) ? 0 : n; };
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   const pnum = v => { const s = String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.').replace(/[−–]/g, '-'); const n = parseFloat(s); return isFinite(n) ? n : null; };
   const pctTxt = p => (p > 0 ? '+' : p < 0 ? '−' : '') + String(Math.round(Math.abs(p) * 100) / 100).replace('.', ',') + '%';
   const who = () => { try { return (A.actor && A.actor().who) || ''; } catch (e) { return ''; } };
@@ -26083,6 +26129,22 @@ const OVMenu = (function () {
     '#fichaBody .tp-logo { max-width: 560px; }'
   ].join('\n');
   document.head.appendChild(css);
+})();
+/* ===== 1.18: importes con centavos en todos lados (teclado con coma en el celular) ===== */
+(function () {
+  'use strict';
+  /* los campos de plata y cantidades pasan a teclado decimal; los de DNI, teléfono, PIN, pieza, fecha o edad quedan numéricos */
+  const KEEP = /dni|phone|tel|pin|tooth|pieza|birth|age|edad|year|anio|cuit|code|codigo/i;
+  function fix() {
+    document.querySelectorAll('input[inputmode="numeric"]').forEach(i => {
+      const tag = (i.id || '') + ' ' + (i.name || '') + ' ' + (i.getAttribute('data-in') || '') + ' ' + (i.getAttribute('data-chg') || '') + ' ' + (i.getAttribute('data-k') || '') + ' ' + (i.getAttribute('aria-label') || '');
+      if (KEEP.test(tag)) return;
+      i.setAttribute('inputmode', 'decimal');
+    });
+  }
+  let raf = 0;
+  try { new MutationObserver(() => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; fix(); }); }).observe(document.body, { childList: true, subtree: true }); } catch (e) { /* nada */ }
+  fix();
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

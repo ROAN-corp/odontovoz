@@ -5,7 +5,7 @@
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(Math.round(n || 0));
-  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d-]/g, ''), 10); return isNaN(n) ? null : n; };
+  const num = v => /\d/.test(String(v == null ? '' : v)) ? A.parseMoney(v) : null;   /* 1.18: acepta centavos */
   const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
   const isEmp = () => S.setup && S.setup.type === 'empresa';
   const role = () => (A.isMember && A.isMember() && A.mbRole) ? A.mbRole() : 'dueno';

@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.18 · centavos en todos los importes y stock renovado (20/11/2026)
+
+- Centavos: los lectores de importes pasan a `A.parseMoney` (núcleo: precio de práctica, seña, cobro, movimientos y cierre de caja, liquidación; módulos `app6`, `app16`, `app25`, `app40`, `app45`, `app62`, `app64`, `app72` y los `num` de `app8`, `app65`, `app70`, `app74`, `app80`, `app86`, `app87`, `app89`, `app90`). `app101` (nuevo) cambia `inputmode="numeric"` a `decimal` (teclado con coma) salvo DNI, teléfono, PIN, pieza, fecha o edad.
+- `app43` stock: kits por tamaño (`KITS`: 1 odontólogo ×1, 2 ×2, centro ×4, grande ×7 sobre el mínimo del catálogo; «pedir hasta» = 3 × mínimo) al empezar y desde «Kit recomendado por tamaño» (`stkKitOpen`, `MF.stkKit`; reajusta mínimos sin tocar lo contado). Acciones como tarjetas (`.stk-tiles`). «Para comprar»: tildar/destildar (`stkBuyOn`, `S.stkSkip`), cantidad editable con decimales (`stkBuyQ`, `S.stkQty`), «Tildar/Destildar todo» (`stkBuyAll`) y barra fija `.stk-buybar` con WhatsApp/Copiar (o el proveedor de `app82`); el texto del pedido usa solo lo tildado.
+
 ## OdontoVoz 1.17.4 · cobrar deuda desde el resumen y nombre en Para cobrar (20/11/2026)
 
 - `app85`: si `A.saldo(pid) > 0`, la tarjeta del resumen (turno o paciente) muestra «💵 Cobrar deuda · $X» (`debtPay` → modal `cobro` con el saldo cargado; el pago se descuenta de la deuda como cualquier cobro).

@@ -97,7 +97,7 @@
   const ppPrev = A.acts.ppGo;
   if (ppPrev) A.acts.ppGo = function () {
     const m = S.modal; if (!m || !m.adj || m.adj.k === 'none') return ppPrev.apply(this, arguments);
-    A.$$('[data-in="ppAmt"]').forEach(i => { m[i.getAttribute('data-k')] = parseInt(String(i.value).replace(/\D/g, ''), 10) || 0; });
+    A.$$('[data-in="ppAmt"]').forEach(i => { m[i.getAttribute('data-k')] = A.parseMoney(String(i.value)) || 0; });
     const base = m.tot + (m.addPrev ? m.prev : 0), c = A.adjCalc(base, m.adj);
     if (!c.delta && m.adj.k !== 'cuo') return ppPrev.apply(this, arguments);
     book(m.pid, base, m.adj, m.m1, { pcIds: m.ids.slice() });

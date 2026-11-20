@@ -157,7 +157,7 @@
           : '<button class="btn" data-act="poGo" data-k="rcp">Mandar a recepción</button><button class="btn primary" data-act="poGo" data-k="pro">Cobrar yo</button>');
     return A.modalShell('Prácticas de hoy', b, f);
   };
-  const poSync = () => { const m = S.modal; if (!m || m.type !== 'pracOk') return; A.$$('[data-in="poAmt"]').forEach(i => { const it = m.items[+i.getAttribute('data-i')]; if (it) it.pay = parseInt(String(i.value).replace(/\D/g, ''), 10) || 0; }); };
+  const poSync = () => { const m = S.modal; if (!m || m.type !== 'pracOk') return; A.$$('[data-in="poAmt"]').forEach(i => { const it = m.items[+i.getAttribute('data-i')]; if (it) it.pay = A.parseMoney(String(i.value)) || 0; }); };
   A.ins.poAmt = () => { poSync(); const m = S.modal, t = $('#poTot'); if (t) t.textContent = money(m.items.filter(i => i.on).reduce((s, i) => s + (i.pay || 0), 0)); };
   A.chg.poOn = el => { poSync(); const it = S.modal.items[+el.getAttribute('data-i')]; if (it) it.on = el.checked; A.renderModal(); };
   A.chg.poAdd = el => {
@@ -281,7 +281,7 @@
     b += '<button class="btn small ghost" data-act="ppSplit">' + (m.split ? 'Un solo medio de pago' : 'Paga con dos medios') + '</button><div class="hint" id="ppMsg"></div>';
     return A.modalShell('Cobrar', b, '<button class="btn" data-act="closeModal">Cancelar</button>' + (its.length ? '<button class="btn ghost" data-act="ppDebt">Queda debiendo</button>' : '') + '<button class="btn primary" data-act="ppGo">Cobrar</button>');
   };
-  const ppSync = () => { const m = S.modal; A.$$('[data-in="ppAmt"]').forEach(i => { m[i.getAttribute('data-k')] = parseInt(String(i.value).replace(/\D/g, ''), 10) || 0; }); };
+  const ppSync = () => { const m = S.modal; A.$$('[data-in="ppAmt"]').forEach(i => { m[i.getAttribute('data-k')] = A.parseMoney(String(i.value)) || 0; }); };
   const ppHint = () => { const m = S.modal, want = m.tot + (m.addPrev ? m.prev : 0), got = m.a1 + (m.split ? m.a2 : 0), o = $('#ppMsg'); if (!o) return; o.className = 'hint' + (got < want ? ' warn' : ''); o.textContent = got < want ? 'Faltan ' + money(want - got) + ': queda como deuda en su cuenta.' : got > want ? 'Paga ' + money(got - want) + ' de más: queda a favor.' : ''; };
   A.ins.ppAmt = () => { ppSync(); ppHint(); };
   A.chg.ppMeth = el => { ppSync(); S.modal[el.getAttribute('data-k')] = el.value; };

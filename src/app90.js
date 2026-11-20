@@ -5,7 +5,7 @@
   const $ = s => document.querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(Math.round(n || 0));
-  const num = v => { const n = parseInt(String(v == null ? '' : v).replace(/[^\d]/g, ''), 10); return isNaN(n) ? 0 : n; };
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   const pnum = v => { const s = String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.').replace(/[−–]/g, '-'); const n = parseFloat(s); return isFinite(n) ? n : null; };
   const pctTxt = p => (p > 0 ? '+' : p < 0 ? '−' : '') + String(Math.round(Math.abs(p) * 100) / 100).replace('.', ',') + '%';
   const who = () => { try { return (A.actor && A.actor().who) || ''; } catch (e) { return ''; } };

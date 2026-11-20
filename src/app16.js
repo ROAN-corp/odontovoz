@@ -125,7 +125,7 @@
   A.chg.tpPhName = el => { const pid = pidNow(), p = tp(pid), f = p.phases.filter(x => x.id === el.getAttribute('data-ph'))[0]; if (!f) return; f.name = el.value.trim() || f.name; tpSave(pid, p); };
   A.chg.tpSel = el => { const pid = pidNow(); (sel[pid] = sel[pid] || {})[el.getAttribute('data-id')] = el.checked; keepScroll(() => {}); };
   A.chg.tpLabel = el => { const t = txById(el.getAttribute('data-id')); if (!t || !el.value.trim()) return; t.label = el.value.trim(); A.touchPd(pidNow()); };
-  A.chg.tpPrice = el => { const t = txById(el.getAttribute('data-id')), v = parseInt(String(el.value).replace(/\D/g, ''), 10); if (t && v >= 0) { t.price = v; A.touchPd(pidNow()); } keepScroll(() => {}); };
+  A.chg.tpPrice = el => { const t = txById(el.getAttribute('data-id')), v = A.parseMoney(String(el.value)); if (t && v >= 0) { t.price = v; A.touchPd(pidNow()); } keepScroll(() => {}); };
   A.chg.tpPh = el => keepScroll(() => { const pid = pidNow(), t = txById(el.getAttribute('data-id')), p = tp(pid); if (!t) return; t.ph = el.value; if (p.virgin) tpSave(pid, p); A.touchPd(pid); });
   A.acts.tpAdd = el => { S.tpAddPh = el.getAttribute('data-ph'); A.acts.addTx(fake({ 'data-mode': 'plan' })); };
   /* lo que se agrega desde «+ Agregar tratamiento» entra en esa fase */

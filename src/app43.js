@@ -177,7 +177,7 @@
     else if (isEmp()) h += '<p class="stk-where">Stock de <b>' + esc(sedeName(sd)) + '</b></p>';
     h += '<div class="seg stk-tabs" role="tablist">' + TABS.filter(t => t[0] !== 'rec' || canCfg()).map(t => '<button type="button" role="tab" data-act="stkTab" data-t="' + t[0] + '" aria-pressed="' + (st.tab === t[0]) + '">' + t[1] + (t[0] === 'comprar' ? (n => n ? ' <span class="stk-n">' + n + '</span>' : '')(L.filter(i => status(i) !== 'ok').length) : '') + '</button>').join('') + '</div>';
     if (!L.length) {
-      return h + '<div class="stk-empty"><p><b>Todavía no cargaste insumos' + (isEmp() ? ' en ' + esc(sedeName(sd)) : '') + '.</b></p><p>Podés empezar con el catálogo sugerido: ' + CAT.length + ' insumos odontológicos comunes, con cuántos usos rinde cada uno. Después contás lo que tenés y listo. Todo se puede cambiar o borrar.</p><div class="row-btns"><button class="btn primary" data-act="stkSeed">Cargar el catálogo sugerido</button><button class="btn" data-act="stkNew">Cargar un insumo a mano</button></div></div>';
+      return h + '<div class="stk-empty"><p><b>Todavía no cargaste insumos' + (isEmp() ? ' en ' + esc(sedeName(sd)) : '') + '.</b></p><p>Empezá con un <b>kit recomendado</b> según cuántos odontólogos atienden: carga ' + CAT.length + ' insumos comunes con el mínimo y lo que conviene tener. Después contás lo que tenés y la app arma el pedido. Todo se puede cambiar o borrar.</p>' + kitHTML() + '</div>';
     }
     if (st.tab === 'comprar') return h + buyHTML(sd, L);
     if (st.tab === 'mov') return h + movHTML(L);
@@ -189,7 +189,9 @@
     const nLow = L.filter(i => status(i) !== 'ok').length, nExp = L.filter(expSoon).length;
     h += '<div class="stk-sum"><span class="ok">' + L.filter(i => status(i) === 'ok').length + ' bien</span><span class="low">' + nLow + ' poco o nada</span>' + (nExp ? '<span class="exp">' + nExp + ' vence' + (nExp === 1 ? '' : 'n') + ' pronto</span>' : '') + '</div>';
     h += '<div class="stk-bar"><input type="search" placeholder="Buscar insumo…" value="' + esc(st.q || '') + '" data-in="stkQ" aria-label="Buscar insumo"><select data-chg="stkCat" aria-label="Categoría"><option value="">Todas</option>' + cats.map(c => '<option' + (c === st.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select><label class="chk"><input type="checkbox" data-chg="stkLow"' + (st.low ? ' checked' : '') + '> <span>Solo lo que falta</span></label></div>';
-    h += '<div class="row-btns stk-acts"><button class="btn small primary" data-act="stkIn">+ Llegó mercadería</button><button class="btn small" data-act="stkCount">Contar el stock</button><button class="btn small" data-act="stkUseM">Usé algo</button>' + (isEmp() && sedes().length > 1 ? '<button class="btn small" data-act="stkMove">Pasar a otro centro</button>' : '') + '<button class="btn small ghost" data-act="stkNew">+ Insumo nuevo</button>' + (canCfg() ? '<button class="btn small ghost" data-act="stkLevels">Cuándo avisar y cuánto pedir</button>' : '') + '</div>';
+    const TILE = (act, ic, t, sub, cls) => '<button class="stk-tile' + (cls ? ' ' + cls : '') + '" data-act="' + act + '"><span class="stk-ti" aria-hidden="true">' + ic + '</span><b>' + t + '</b><small>' + sub + '</small></button>';
+    h += '<div class="stk-tiles">' + TILE('stkIn', '📦', 'Llegó mercadería', 'Sumar lo que compraste', 'main') + TILE('stkUseM', '✋', 'Usé algo', 'Descontar a mano') + TILE('stkCount', '🔢', 'Contar el stock', 'Poner lo que hay') + TILE('stkNew', '＋', 'Insumo nuevo', 'Agregar a la lista') + (isEmp() && sedes().length > 1 ? TILE('stkMove', '🔁', 'Pasar a otro centro', 'Mover insumos') : '') + '</div>' +
+      '<div class="stk-more">' + (canCfg() ? '<button class="linkbtn" data-act="stkLevels">Cuándo avisar y cuánto pedir</button>' : '') + (canCfg() ? '<button class="linkbtn" data-act="stkKitOpen">Kit recomendado por tamaño</button>' : '') + '</div>';
     h += '<ul class="stk-list" id="stkList">' + listRows(vis) + '</ul>';
     return h;
   };
@@ -201,6 +203,9 @@
         '<span class="stk-meter"><i style="width:' + pct + '%"></i></span></span><span class="stk-r"><b>' + fq(i.qty) + '</b><small>' + esc(i.unit || '') + '</small>' + (dl != null ? '<small class="stk-dl">~' + dl + ' días</small>' : '') + (expSoon(i) ? '<small class="stk-ex">vence ' + A.fmtDMY(i.exp).slice(0, 5) + '</small>' : '') + '</span></button></li>';
     }).join('');
   }
+  /* 1.18: kits recomendados por tamaño (multiplican el mínimo del catálogo; «pedir hasta» = 3 veces el mínimo) */
+  const KITS = [['1', 'Consultorio de 1 odontólogo', 1], ['2', 'Consultorio de 2 odontólogos', 2], ['c', 'Centro (3 a 5 odontólogos)', 4], ['g', 'Centro grande (6 o más)', 7]];
+  const kitHTML = () => '<div class="stk-kits">' + KITS.map(k => '<button class="stk-kit" data-act="stkSeed" data-k="' + k[0] + '"><b>' + esc(k[1]) + '</b><small>' + (k[2] === 1 ? 'cantidades base' : 'cantidades ×' + k[2]) + '</small></button>').join('') + '</div>';
   /* lista de compras: lo que está bajo el mínimo o no llega a 30 días */
   function buyList(L) {
     return L.map(i => {
@@ -209,14 +214,24 @@
       return { i, need, why: i.qty <= 0 ? 'sin stock' : i.min > 0 && i.qty <= i.min ? 'bajo el mínimo' : daysLeft(i) != null && daysLeft(i) <= 30 ? 'alcanza ~' + daysLeft(i) + ' días' : '' };
     }).filter(x => x.need > 0 && x.why);
   }
+  const skip = () => S.stkSkip || (S.stkSkip = {}), qOv = () => S.stkQty || (S.stkQty = {});
+  const chosen = B => B.filter(x => !skip()[x.i.id]).map(x => Object.assign({}, x, { need: qOv()[x.i.id] != null ? qOv()[x.i.id] : x.need })).filter(x => x.need > 0);
   function buyHTML(sd, L) {
     const B = buyList(L);
     if (!B.length) return '<div class="stk-empty"><p><b>No falta nada.</b> Todos los insumos están arriba del mínimo y alcanzan para más de un mes con lo que se viene usando.</p></div>';
-    return '<p class="hint">Lo que conviene pedir' + (isEmp() ? ' para <b>' + esc(sedeName(sd)) + '</b>' : '') + ', calculado con el mínimo de cada insumo y con lo que se usó en los últimos 30 días.' + (canCfg() ? ' <button class="linkbtn" data-act="stkLevels">Cambiar cuándo avisar y cuánto pedir</button>' : '') + '</p><ul class="stk-buy">' +
-      B.map(x => '<li><span><b>' + esc(x.i.name) + '</b><small>Hay ' + fq(x.i.qty) + ' ' + esc(x.i.unit || '') + ' · ' + esc(x.why) + '</small></span><b class="stk-need">' + x.need + ' ' + esc(x.i.unit || '') + '</b></li>').join('') + '</ul>' +
-      ((A.partnerBuyHTML && A.partnerBuyHTML(buyText(sd, B))) || '<div class="row-btns"><a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(buyText(sd, B)) + '">Mandar el pedido por WhatsApp</a><button class="btn" data-act="stkBuyCopy">Copiar el pedido</button></div>');
+    const C = chosen(B), txt = buyText(sd, C);
+    return '<p class="hint">Lo que conviene pedir' + (isEmp() ? ' para <b>' + esc(sedeName(sd)) + '</b>' : '') + '. Destildá lo que no quieras pedir esta vez y cambiá las cantidades si hace falta.' + (canCfg() ? ' <button class="linkbtn" data-act="stkLevels">Cambiar cuándo avisar y cuánto pedir</button>' : '') + '</p>' +
+      '<div class="stk-ball"><button class="linkbtn" data-act="stkBuyAll" data-v="1">Tildar todo</button><button class="linkbtn" data-act="stkBuyAll" data-v="0">Destildar todo</button></div><ul class="stk-buy">' +
+      B.map(x => { const off = !!skip()[x.i.id], q = qOv()[x.i.id] != null ? qOv()[x.i.id] : x.need; return '<li class="' + (off ? 'stk-skip' : '') + '"><label class="stk-bchk"><input type="checkbox" data-chg="stkBuyOn" data-id="' + x.i.id + '"' + (off ? '' : ' checked') + ' aria-label="Pedir ' + esc(x.i.name) + '"></label><span class="stk-bl"><b>' + esc(x.i.name) + '</b><small>Hay ' + fq(x.i.qty) + ' ' + esc(x.i.unit || '') + ' · ' + esc(x.why) + '</small></span><span class="stk-bq"><input inputmode="decimal" data-chg="stkBuyQ" data-id="' + x.i.id + '" value="' + String(q).replace('.', ',') + '"' + (off ? ' disabled' : '') + ' aria-label="Cantidad a pedir"><small>' + esc(x.i.unit || '') + '</small></span></li>'; }).join('') + '</ul>' +
+      '<div class="stk-buybar"><span class="stk-bn"><b>' + C.length + '</b> de ' + B.length + ' en el pedido</span>' +
+      (C.length ? ((A.partnerBuyHTML && A.partnerBuyHTML(txt)) || '<a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(txt) + '">Mandar por WhatsApp</a><button class="btn" data-act="stkBuyCopy">Copiar</button>') : '<span class="hint" style="margin:0">Tildá al menos uno.</span>') + '</div>';
   }
-  const buyText = (sd, B) => 'Pedido de insumos · ' + (A.CLINIC || '') + (isEmp() ? ' · ' + sedeName(sd) : '') + ' · ' + A.fmtDMY(today()) + '\n' + B.map(x => '- ' + x.need + ' ' + (x.i.unit || '') + ' de ' + x.i.name).join('\n');
+  A.chg.stkBuyOn = el => { const id = el.getAttribute('data-id'); if (el.checked) delete skip()[id]; else skip()[id] = 1; paint(); };
+  A.chg.stkBuyQ = el => { const v = dec(el.value); qOv()[el.getAttribute('data-id')] = v > 0 ? v : 0; paint(); };
+  A.acts.stkBuyAll = el => { const on = el.getAttribute('data-v') === '1', sd = place(); buyList(list(sd).map(norm1)).forEach(x => { if (on) delete skip()[x.i.id]; else skip()[x.i.id] = 1; }); paint(); };
+  A.acts.stkKitOpen = () => { S.modal = { type: 'stkKit' }; A.renderModal(); };
+  MF.stkKit = () => A.modalShell('Kit recomendado', '<p class="m-lead">Ajusta el mínimo («avisar cuando queden») y «pedir hasta tener» de los insumos del catálogo según cuántos odontólogos atienden. Los que faltan se agregan con 0. No toca lo que contaste.</p>' + kitHTML(), '<button class="btn" data-act="stkBack">Volver</button>');
+  const buyText = (sd, B) => 'Pedido de insumos · ' + (A.CLINIC || '') + (isEmp() ? ' · ' + sedeName(sd) : '') + ' · ' + A.fmtDMY(today()) + '\n' + B.map(x => '- ' + String(x.need).replace('.', ',') + ' ' + (x.i.unit || '') + ' de ' + x.i.name).join('\n');
   function movHTML(L) {
     const all = []; L.forEach(i => i.mv.forEach(m => all.push({ i, m })));
     all.sort((a, b) => (a.m.at < b.m.at ? 1 : -1));
@@ -251,13 +266,15 @@
   A.chg.stkLow = el => { S.stk.low = el.checked; paint(); };
   /* 1.2: lo que falta (para el aviso del inicio y las colaboraciones) */
   A.stkLowList = () => { try { return list(place()).map(norm1).filter(i => status(i) !== 'ok'); } catch (e) { return []; } };
-  A.stkBuyText = () => { const sd = place(); return buyText(sd, buyList(list(sd).map(norm1))); };
-  A.acts.stkBuyCopy = async () => { const sd = place(), t = buyText(sd, buyList(list(sd).map(norm1))); try { await navigator.clipboard.writeText(t); A.toast('Pedido copiado.'); } catch (e) { A.toast(t); } };
-  A.acts.stkSeed = () => {
-    const sd = place(), L = list(sd);
-    CAT.forEach(c => { if (!byCk(sd, c[0])) L.push({ id: A.uid(), ck: c[0], name: c[1], cat: c[2], unit: c[3], uses: c[4], min: c[5], qty: 0, mv: [] }); });
+  A.stkBuyText = () => { const sd = place(); return buyText(sd, chosen(buyList(list(sd).map(norm1)))); };
+  A.acts.stkBuyCopy = async () => { const sd = place(), t = buyText(sd, chosen(buyList(list(sd).map(norm1)))); try { await navigator.clipboard.writeText(t); A.toast('Pedido copiado.'); } catch (e) { A.toast(t); } };
+  A.acts.stkSeed = el => {
+    const sd = place(), L = list(sd), kk = (el && el.getAttribute && el.getAttribute('data-k')) || '1', f = (KITS.filter(k => k[0] === kk)[0] || KITS[0])[2];
+    const mn = c => Math.max(c[5] > 0 ? 1 : 0, Math.round(c[5] * f * 10) / 10);
+    CAT.forEach(c => { const ex = byCk(sd, c[0]); if (!ex) L.push({ id: A.uid(), ck: c[0], name: c[1], cat: c[2], unit: c[3], uses: c[4], min: mn(c), par: mn(c) * 3, qty: 0, mv: [] }); else if (el && el.getAttribute) { ex.min = mn(c); ex.par = mn(c) * 3; } });
+    cfg().kit = kk;
     /* los insumos viejos del modo Empresa quedan, sin clave */
-    save(); S.stk.tab = 'lista'; paint(); A.toast('Catálogo cargado. Ahora tocá «Contar el stock» y poné lo que tenés.');
+    save(); S.stk.tab = 'lista'; if (S.modal && S.modal.type === 'stkKit') back(); else paint(); A.toast('Kit cargado. Ahora tocá «Contar el stock» y poné lo que tenés; en «Para comprar» queda el pedido.');
   };
   A.chg.stkRec = el => {
     const k = el.getAttribute('data-k'), ck = el.getAttribute('data-ck'), v = Math.max(0, dec(el.value)), c = cfg();
@@ -393,4 +410,30 @@
     '.stk-head{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}.stk-head span{color:var(--ink-2);font-size:13.5px}' +
     '.stk-pick button{all:unset;cursor:pointer;display:flex;flex-direction:column;padding:8px 10px;border:1px solid var(--line);border-radius:10px;width:100%;box-sizing:border-box}.stk-pick button:hover{border-color:var(--accent)}.stk-pick small{color:var(--ink-2);font-size:12px}';
   document.head.appendChild(css);
+  /* 1.18: estética del stock */
+  const css18 = document.createElement('style');
+  css18.textContent = [
+    '.stk-tabs { gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }',
+    '.stk-tabs button { border-radius: 10px !important; border: 0 !important; background: transparent !important; font-weight: 600; white-space: nowrap; }',
+    '.stk-tabs button[aria-pressed="true"] { background: var(--surface) !important; color: var(--accent); box-shadow: 0 1px 4px rgba(8, 20, 24, .12); }',
+    '.stk-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 10px 0 6px; }',
+    '.stk-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }',
+    '.stk-tile:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }',
+    '.stk-tile.main { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }',
+    '.stk-ti { font-size: 22px; line-height: 1; margin-bottom: 4px; } .stk-tile b { font-size: 14.5px; } .stk-tile small { font-size: 12px; color: var(--ink-2); }',
+    '.stk-more { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 10px; font-size: 13px; }',
+    '.stk-sum { display: flex; flex-wrap: wrap; gap: 6px; } .stk-sum span { padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }',
+    '.stk-kits { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-top: 10px; }',
+    '.stk-kit { display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: 14px; border: 1.5px solid color-mix(in srgb, var(--accent) 35%, var(--line)); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }',
+    '.stk-kit:hover { background: var(--accent-soft); } .stk-kit small { color: var(--ink-2); font-size: 12.5px; }',
+    '.stk-ball { display: flex; gap: 14px; margin: 0 0 6px; font-size: 13px; }',
+    '.stk-buy li { display: grid !important; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }',
+    '.stk-buy li.stk-skip { opacity: .5; } .stk-bchk input { width: 20px; height: 20px; }',
+    '.stk-bl { display: flex; flex-direction: column; min-width: 0; } .stk-bl small { color: var(--ink-2); font-size: 12.5px; }',
+    '.stk-bq { display: flex; align-items: center; gap: 4px; } .stk-bq input { width: 70px; text-align: right; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 14px inherit; } .stk-bq small { color: var(--ink-2); font-size: 12px; }',
+    '.stk-buybar { position: sticky; bottom: -1px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); box-shadow: 0 -6px 18px rgba(8, 20, 24, .1); }',
+    '.stk-buybar .stk-bn { margin-right: auto; font-size: 13.5px; color: var(--ink-2); } .stk-buybar .stk-bn b { color: var(--ink); }',
+    '.stk-list .stk-row { border-radius: 12px; }'
+  ].join('\n');
+  document.head.appendChild(css18);
 })();

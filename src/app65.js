@@ -16,7 +16,7 @@
   const BY = [['hora', 'por hora'], ['turno', 'por turno'], ['dia', 'por día']];
   const cfgOf = pid => { const c = A.liqCfg(pid); c.rules = c.rules || []; return c; };
   const baseOf = c => c.base || 'cobrado';
-  const num = v => parseInt(String(v || '').replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   /* lista de porcentajes: de 5 en 5, del 5% al 100% (y el valor actual si es otro, por ejemplo 37,5) */
   const pctSel = (attrs, val) => { const v = val == null ? '' : +val, L = []; for (let i = 5; i <= 100; i += 5) L.push(i); if (v !== '' && L.indexOf(v) < 0) { L.push(v); L.sort((a, b) => a - b); }
     return '<select ' + attrs + '>' + (v === '' ? '<option value="" selected>Elegí…</option>' : '') + L.map(n => '<option value="' + n + '"' + (n === v ? ' selected' : '') + '>' + String(n).replace('.', ',') + '%</option>').join('') + '</select>'; };

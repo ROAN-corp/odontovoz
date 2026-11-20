@@ -82,7 +82,7 @@
   A.acts.snQuick = el => { const i = $('#asAmt'); if (i) i.value = el.getAttribute('data-v'); };
   function dropSenaLedger(a) { if (!a.sena || !a.sena.ledgerId) return; const pd = A.pd(a.pid); pd.ledger = pd.ledger.filter(e => e.id !== a.sena.ledgerId); A.touchPd(a.pid); }
   A.acts.asSave = () => {
-    const a = A.apptById(S.modal.id), amt = parseInt(($('#asAmt').value || '').replace(/\D/g, ''), 10) || 0, method = $('#asMeth').value;
+    const a = A.apptById(S.modal.id), amt = A.parseMoney(($('#asAmt').value || '')) || 0, method = $('#asMeth').value;
     if (!(amt > 0)) { $('#asMsg').textContent = 'Ingresá el importe de la seña.'; return; }
     dropSenaLedger(a);
     const pd = A.pd(a.pid), e = { id: A.uid(), date: A.today(), type: 'pago', amount: amt, desc: 'Seña del turno del ' + A.fmtDMY(a.date) + ' ' + A.mm(a.start), method, pro: a.pro, sena: true, apptId: a.id };

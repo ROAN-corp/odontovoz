@@ -6,7 +6,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const money = n => A.money(n || 0);
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
-  const num = v => parseInt(String(v == null ? '' : v).replace(/\D/g, ''), 10) || 0;
+  const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
   const isSolo = () => !!(A.isSolo && A.isSolo());
   const mb = () => (A.memberNow && A.memberNow()) || null;
   const canCfg = () => !mb() || mb().role === 'admin';

@@ -111,7 +111,7 @@
   };
   A.chg.liqMode = el => { const c = A.liqCfg(S.liq.pro); c.mode = el.value; if (el.value !== 'pct') c.mod = c.mod || { by: 'hora', price: 0 }; A.save(); A.refresh(); };
   A.chg.liqModBy = el => { const c = A.liqCfg(S.liq.pro); c.mod = c.mod || {}; c.mod.by = el.value; A.save(); A.refresh(); };
-  A.chg.liqModPrice = el => { const c = A.liqCfg(S.liq.pro); c.mod = c.mod || { by: 'hora' }; c.mod.price = parseInt(String(el.value).replace(/\D/g, ''), 10) || 0; A.save(); A.refresh(); };
+  A.chg.liqModPrice = el => { const c = A.liqCfg(S.liq.pro); c.mod = c.mod || { by: 'hora' }; c.mod.price = A.parseMoney(String(el.value)) || 0; A.save(); A.refresh(); };
 
   document.head.insertAdjacentHTML('beforeend', '<style>' +
     '#drPlan span{display:flex;flex-direction:column;align-items:flex-start}#drPlan small{font-size:12px;color:var(--accent);font-weight:600}' +

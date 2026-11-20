@@ -133,8 +133,8 @@
       return undefined;
     };
   };
-  guard('cobroSave', () => parseInt((($('#mvAmt') || {}).value || '').replace(/\D/g, ''), 10), m => m.pid, '#mvMsg');
-  guard('ltPaySave', () => parseInt((($('#ltCa') || {}).value || '').replace(/\D/g, ''), 10), m => m.pid, '#ltCmsg');
+  guard('cobroSave', () => A.parseMoney((($('#mvAmt') || {}).value || '')), m => m.pid, '#mvMsg');
+  guard('ltPaySave', () => A.parseMoney((($('#ltCa') || {}).value || '')), m => m.pid, '#ltCmsg');
   A.acts.twinSame = () => { S.modal = null; A.renderModal(); A.toast('Listo: no se cargó de nuevo.'); };
   A.acts.twinOther = el => { if (S.modal) S.modal._twinOk = true; const a = el.getAttribute('data-a'); if (A.acts[a]) A.acts[a](); };
 

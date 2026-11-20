@@ -241,7 +241,7 @@
   A.acts.ltPay = el => { S.modal = { type: 'ltPay', pid: el.getAttribute('data-pid') }; A.renderModal(); };
   MF.ltPay = m => A.modalShell('Registrar cobro · ' + A.PAT(m.pid).name, '<div class="lt-sheet"><div class="field"><label for="ltCa">Cuánto cobraste</label><input id="ltCa" class="lt-money" inputmode="numeric" placeholder="$"></div><p class="lt-lbl">¿Cómo te pagó?</p><div class="lt-meth" role="radiogroup">' + ['Efectivo', 'Transferencia', 'Débito', 'Crédito', 'Mercado Pago'].map((x, i) => '<label><input type="radio" name="ltCm" value="' + x + '"' + (i === 0 ? ' checked' : '') + '><span>' + x + '</span></label>').join('') + '</div><div id="ltCmsg" class="hint bad"></div></div>', '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary lt-big" data-act="ltPaySave">Guardar cobro</button>');
   A.acts.ltPaySave = () => {
-    const amt = parseInt((($('#ltCa') || {}).value || '').replace(/\D/g, ''), 10); if (!(amt > 0)) { $('#ltCmsg').textContent = 'Escribí el importe.'; return; }
+    const amt = A.parseMoney((($('#ltCa') || {}).value || '')); if (!(amt > 0)) { $('#ltCmsg').textContent = 'Escribí el importe.'; return; }
     const pid = S.modal.pid, pd = A.pd(pid), meth = (document.querySelector('input[name="ltCm"]:checked') || {}).value || 'Efectivo';
     pd.ledger.push({ id: A.uid(), date: A.today(), type: 'pago', amount: amt, desc: 'Cobro', method: meth, pro: A.PAT(pid).pro, rcp: 'R-' + (pid.replace(/\D/g, '') || '0') + '-' + (++pd.rcpSeq) });
     A.touchPd(pid); S.modal = null; A.renderModal(); A.toast('Cobro guardado: ' + A.money(amt) + ' (' + meth + ').'); A.refresh();

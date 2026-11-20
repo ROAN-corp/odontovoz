@@ -100,7 +100,7 @@
       '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="osPayGo">Guardar</button>');
   };
   A.acts.osPayGo = () => {
-    const m = S.modal, amt = parseInt((($('#opAmt') || {}).value || '').replace(/\D/g, ''), 10);
+    const m = S.modal, amt = A.parseMoney((($('#opAmt') || {}).value || ''));
     if (!(amt >= 0) || isNaN(amt)) { const x = $('#opMsg'); if (x) x.textContent = 'Poné el importe que pagó.'; return; }
     const P = A.osPayStore(); P[m.os] = P[m.os] || {};
     P[m.os][m.m] = { amt, date: ($('#opDate') || {}).value || A.today(), note: (($('#opNote') || {}).value || '').trim(), by: (A.actor && A.actor().who) || '', at: new Date().toISOString() };
