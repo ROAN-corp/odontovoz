@@ -6,8 +6,11 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.20.2', b: '1.75.2', d: '2026-11-20', items: [
+      { t: 'En el celular, los 4 accesos directos del inicio entran en una sola fila.', top: true },
+      { t: 'Stock de insumos mantiene el mismo tamaño al pasar de una pestaña a otra (antes se achicaba en «Movimientos»).' }] },
     { v: '1.20.1', b: '1.75.1', d: '2026-11-20', items: [
-      { t: 'Más fluido al desplazarse en Ajustes, en las ventanas y en la ficha (sobre todo en celulares Android).', top: true },
+      { t: 'Más fluido al desplazarse en Ajustes, en las ventanas y en la ficha (sobre todo en celulares Android).' },
       { t: 'En la computadora, la ventanita de un turno ya no queda cortada en los últimos turnos del día: siempre entra entera en la pantalla.' }] },
     { v: '1.20', b: '1.75.0', d: '2026-11-20', items: [
       { t: 'Foto del paciente: tocá su cara (o sus iniciales) en la ficha para sacarle una foto o elegirla de la galería. Aparece en el buscador y en la lista de pacientes. Es opcional y pide la autorización del paciente.', top: true },

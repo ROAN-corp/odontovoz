@@ -135,6 +135,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.20.2 · Stock con altura fija y accesos en una fila (20/11/2026)
+
+- `src/app105.js`. **Stock:** la ventana (`.modal:has(#stkHost)`) tiene altura fija (`100dvh - 16px` en el celular, `100dvh - 32px` con tope de 900 px en la PC). Antes, en «Movimientos», pasaba de 828 a 289 px de alto.
+- **Accesos directos del inicio:** `app99` les daba una base de 100 px y en el celular el cuarto bajaba a otra fila. Ahora cada uno ocupa un cuarto del ancho, con un máximo de 110 px. Probado a 360, 390 y 1366 px de ancho: una sola fila en los tres.
+- Compilación 1.75.2.
+
 ## OdontoVoz 1.20.1 · desplazamiento más fluido y ventana del turno entera (20/11/2026)
 
 - **Fluidez:** se sacó `backdrop-filter` (desenfoque) de `.top` y `.modal-scrim` (`app102`, agregado en la 1.19) y de la barra de pestañas de la ficha (`app97`). Ahora llevan fondos sólidos. Dentro de las ventanas, las tarjetas usan `--shadow-sm` y `.m-body` lleva `overscroll-behavior: contain`. En Android, el desenfoque sobre contenido que se desplaza se recalcula en cada cuadro. Ojo: la prueba local no tiene placa de video, así que la mejora no se pudo medir en números.
