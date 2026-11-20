@@ -6,9 +6,11 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.18.1', b: '1.73.1', d: '2026-11-20', items: [
+      { t: 'En la computadora, los recordatorios y mensajes de WhatsApp usan una sola pestaña de WhatsApp Web: ya no se abre una nueva por cada paciente.', top: true }] },
     { v: '1.18', b: '1.73.0', d: '2026-11-20', items: [
       { t: 'Cobros, pagos y precios aceptan centavos (por ejemplo 75.000,50).', top: true },
-      { t: 'Stock renovado: kit recomendado según cuántos odontólogos atienden, botones grandes y el pedido se puede tildar, editar y mandar desde una barra fija.', top: true }] },
+      { t: 'Stock renovado: kit recomendado según cuántos odontólogos atienden, botones grandes y el pedido se puede tildar, editar y mandar desde una barra fija.' }] },
     { v: '1.17.4', b: '1.72.4', d: '2026-11-20', items: [
       { t: 'En el resumen del paciente, si debe, hay un botón «Cobrar deuda» para registrar el pago al toque.', top: true },
       { t: 'En «Para cobrar», el nombre del paciente abre su ficha resumida.', top: true }] },

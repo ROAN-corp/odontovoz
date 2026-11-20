@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.18.1 · una sola pestaña de WhatsApp Web en la PC (20/11/2026)
+
+- En la computadora (web, no celular), todo enlace de WhatsApp de la app (recordatorios, presupuestos, avisos) se abre en **una sola pestaña con nombre** (`odontovoz-whatsapp`) apuntando a `web.whatsapp.com/send?phone=…&text=…`. Si la pestaña sigue abierta se reusa; si se cerró, se abre otra. Cambio en `src/app51.js` (`webGo`, dentro del enrutador central de WhatsApp). En Android e iPhone sigue igual.
+- Compilación 1.73.1.
+
 ## OdontoVoz 1.18 · centavos en todos los importes y stock renovado (20/11/2026)
 
 - Centavos: los lectores de importes pasan a `A.parseMoney` (núcleo: precio de práctica, seña, cobro, movimientos y cierre de caja, liquidación; módulos `app6`, `app16`, `app25`, `app40`, `app45`, `app62`, `app64`, `app72` y los `num` de `app8`, `app65`, `app70`, `app74`, `app80`, `app86`, `app87`, `app89`, `app90`). `app101` (nuevo) cambia `inputmode="numeric"` a `decimal` (teclado con coma) salvo DNI, teléfono, PIN, pieza, fecha o edad.

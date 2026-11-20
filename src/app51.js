@@ -41,8 +41,20 @@
       if (k !== 'x') go(u, w, k);
     });
   }
+  /* 1.18.1: en la computadora, todos los WhatsApp van a UNA sola pestaña de WhatsApp Web (se reusa en vez de abrir una nueva cada vez) */
+  const ua = navigator.userAgent || '';
+  const desktop = !window.OV_NATIVE && !/Android|iPhone|iPad|iPod|Mobile/i.test(ua) && !(/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  const WIN = 'odontovoz-whatsapp';
+  let waWin = null;
+  function webGo(w) {
+    const url = 'https://web.whatsapp.com/send?' + (w.phone ? 'phone=' + w.phone + '&' : '') + 'text=' + encodeURIComponent(w.text);
+    A._waLast = url;
+    try { if (waWin && !waWin.closed) { waWin.location.href = url; try { waWin.focus(); } catch (e) { /* nada */ } return; } } catch (e) { /* nada */ }
+    waWin = open0.call(window, url, WIN);
+  }
   function route(u) {
     const w = parse(u); if (!w) return false;
+    if (desktop) { webGo(w); return true; }
     if (!android) return false;
     const p = pref();
     if (p === 'ask') pick(u, w); else go(u, w, p);
