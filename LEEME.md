@@ -135,6 +135,16 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.21.3 · revisión de la mudanza segura sobre una base que ya cambió (23/11/2026)
+
+- Pregunta de Rodrigo: ¿se rompe algo si reviso la mudanza después de haber cargado pacientes, evoluciones y cambios? Ajustes en `app53`:
+  - **Pacientes que faltan:** antes se creaban solos. Ahora solo si se tilda «Crear estos N pacientes» (`m.create`). Si la ficha se renombró, se le cambió el DNI o se unió con otra, no se encuentra, y crearla la duplicaba.
+  - **Cada pase se puede destildar** (`mrPair`, `m.skip`). Los nombres llevan el DNI, para distinguir homónimos.
+  - **Deshacer:** la corrección se guarda en `localStorage` `odontovoz.mudUndo` (ids de notas y turnos con `from`/`to`). «Deshacer» está en el resumen final y al abrir la revisión (`mrUndo`).
+  - Las notas pasadas a mano con «No es de este paciente» quedan marcadas `n.mvd` (`app108`) y la revisión no las toca. Las anuladas y las escritas en OdontoVoz (sin `imp`) ya se excluían.
+- Probado sobre una base modificada (evolución mal puesta, nota propia, anulada, pasada a mano, paciente renombrado): solo se movió la mal puesta, no se duplicó la renombrada y «Deshacer» dejó todo como estaba.
+- Compilación 1.76.3.
+
 ## OdontoVoz 1.21.2 · mudanza sin evoluciones cruzadas (23/11/2026)
 
 - Rodrigo encontró, en la evolución de algunos pacientes, notas que eran de otros, traídas con la mudanza. Hubo dos causas y las dos se arreglaron.

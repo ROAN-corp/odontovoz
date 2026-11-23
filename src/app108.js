@@ -37,6 +37,7 @@
     const toP = A.PAT(m.to) || {}, fromP = A.PAT(m.from) || {};
     a.notes = a.notes.filter(x => x !== n); b.notes = b.notes || []; b.notes.push(n);
     if (n.odon) delete n.odon;
+    n.mvd = { at: A.today(), from: m.from }; /* corregida a mano: «Revisar una mudanza ya hecha» no la vuelve a mover */
     b.notes.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
     if (A.alog) { A.alog(m.from, 'mudanza', 'Una evolución del ' + A.fmtDMY(n.date) + ' pasó a la ficha de ' + (toP.name || '') + ' (no era de este paciente).'); A.alog(m.to, 'mudanza', 'Llegó una evolución del ' + A.fmtDMY(n.date) + ' desde la ficha de ' + (fromP.name || '') + ' (había quedado ahí por la mudanza).'); }
     A.touchPd(m.from); A.touchPd(m.to); A.saveNow && A.saveNow();

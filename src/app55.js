@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.21.3', b: '1.76.3', d: '2026-11-23', items: [
+      { t: '«Revisar una mudanza ya hecha» es más segura: solo mueve lo que trajo la mudanza (no toca lo que cargaste vos, lo anulado ni lo que pasaste a mano), podés destildar cada pase, no crea pacientes salvo que lo pidas y se puede deshacer.', top: true }] },
     { v: '1.21.2', b: '1.76.2', d: '2026-11-23', items: [
       { t: 'Mudanza más segura: si no se puede saber con certeza de qué paciente es una evolución o un turno (dos pacientes con el mismo nombre, datos que no coinciden), ya no se adivina. No se carga y al final te muestra la lista.', top: true },
       { t: 'En la evolución, las notas traídas del sistema anterior tienen «No es de este paciente»: la pasás a la ficha correcta buscando al paciente, o la anulás.', top: true },
