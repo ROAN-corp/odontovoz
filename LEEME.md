@@ -135,6 +135,14 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.21.2 · mudanza sin evoluciones cruzadas (23/11/2026)
+
+- Rodrigo encontró, en la evolución de algunos pacientes, notas que eran de otros, traídas con la mudanza. Hubo dos causas y las dos se arreglaron.
+- **Asistente** (`sitio/mudanza.js`, `add`): los registros se guardaban por su número interno (`id`). Dos listados distintos del sistema anterior con el mismo número se **mezclaban** con `Object.assign`: el texto de una evolución quedaba con el paciente de otra, o se perdía. Ahora `ident()` junta la identidad (paciente, DNI, nombre y, en notas y turnos, la fecha, el texto o la hora) y `clash()` la compara: si no coincide, el registro se guarda aparte (`id~1`). Probado con 5 respuestas: antes quedaban 2 evoluciones (se perdían B y C), ahora quedan 4, sin repetidas.
+- **Importación** (`app53`, `match()`): **ya no adivina**. Antes, con dos pacientes del mismo nombre y sin DNI se elegía el primero (`l[0]`), y un número del sistema anterior se aceptaba aunque el nombre fuera de otra persona. Ahora devuelve `{p}` si es seguro, `{amb}` si es dudoso (no se carga y va a la lista) o `{}` si no hay ninguno (se crea el paciente). Mismo nombre con otro DNI cuenta como otra persona. El resumen final muestra «No se cargaron N evoluciones…» con la lista y el motivo. Probado: las 2 notas peligrosas quedan afuera y las 3 claras entran en su ficha. Antes, la ambigua iba al primer homónimo y la contradictoria a Ana.
+- **Corregir lo ya importado** (`src/app108.js` + botón en `app15`): las notas `imp` tienen «No es de este paciente». Se busca al paciente y se pasa la nota a esa ficha (con `alog` en las dos y aviso si ya estaba en el odontograma), o «No sé de quién es: anularla» (abre la anulación de siempre con el motivo escrito). Sigue estando «Revisar una mudanza ya hecha» (con el .json original).
+- Compilación 1.76.2.
+
 ## OdontoVoz 1.21.1 · N° de afiliado a la vista y últimas evoluciones en la resumida (20/11/2026)
 
 - **Facturado a obras sociales** (`app106`): pasó al final de Datos e historia (después de datos, anamnesis y evolución). Es más compacto: el formulario se abre con «+ Anotar facturación» (`ofnNew`) y se cierra al guardar o cancelar.

@@ -6,9 +6,13 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.21.2', b: '1.76.2', d: '2026-11-23', items: [
+      { t: 'Mudanza más segura: si no se puede saber con certeza de qué paciente es una evolución o un turno (dos pacientes con el mismo nombre, datos que no coinciden), ya no se adivina. No se carga y al final te muestra la lista.', top: true },
+      { t: 'En la evolución, las notas traídas del sistema anterior tienen «No es de este paciente»: la pasás a la ficha correcta buscando al paciente, o la anulás.', top: true },
+      { t: 'El asistente de mudanza ya no mezcla dos registros distintos del sistema anterior que tengan el mismo número interno.' }] },
     { v: '1.21.1', b: '1.76.1', d: '2026-11-20', items: [
-      { t: 'Arriba de la ficha completa se ve también el N° de afiliado (edad · DNI · obra social · N° afiliado · teléfono).', top: true },
-      { t: 'En la ficha resumida: el N° de afiliado en «Datos principales» y las últimas 3 notas de la evolución clínica, debajo de «Qué hice hoy».', top: true },
+      { t: 'Arriba de la ficha completa se ve también el N° de afiliado (edad · DNI · obra social · N° afiliado · teléfono).' },
+      { t: 'En la ficha resumida: el N° de afiliado en «Datos principales» y las últimas 3 notas de la evolución clínica, debajo de «Qué hice hoy».' },
       { t: '«Facturado a obras sociales» pasó al final de la ficha, más compacto: se anota con «+ Anotar facturación».' }] },
     { v: '1.21', b: '1.76.0', d: '2026-11-20', items: [
       { t: 'Nuevo en la ficha (Datos e historia): «Facturado a obras sociales». Anotás mes por mes qué le facturaste a la obra social (prácticas y piezas) para no volver a facturarlo por error. Queda como un registro continuo, aparte de la evolución.' },

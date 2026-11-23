@@ -53,11 +53,30 @@
     if (t === 'appt') return g(/^(id|id turno|id cita|codigo)$/) || (g(K.date) + '|' + g(K.time) + '|' + g(K.who));
     return g(/^(id|id evolucion|codigo)$/) || (g(K.date) + '|' + g(K.text).slice(0, 60) + '|' + g(K.who));
   };
+  /* de quién es un registro: DNI, nombre y número de paciente (solo lo que trae) */
+  function ident(f, t) {
+    var r = {};
+    Object.keys(f).forEach(function (k) {
+      var n = N(k), v = f[k]; if (v == null || typeof v === 'object') return; v = N(v); if (!v) return;
+      if (t === 'pat' ? (K.pid.test(n) || K.name.test(n)) : (/paciente|patient/.test(n) || K.pid.test(n))) r[n] = v;
+      /* y el contenido: misma fecha y mismo texto (evolución) o misma fecha y hora (turno) = mismo registro */
+      else if (t === 'note' && (K.date.test(n) || K.text.test(n))) r[n] = v.slice(0, 200);
+      else if (t === 'appt' && (K.date.test(n) || K.time.test(n))) r[n] = v;
+    });
+    return r;
+  }
+  /* ¿son de personas distintas? (algún dato de identidad que traen los dos no coincide) */
+  function clash(a, b) { for (var k in a) if (Object.prototype.hasOwnProperty.call(b, k) && a[k] !== b[k]) return true; return false; }
   function add(o, from) {
     var t = kind(o); if (!t) return 0;
     var f = flat(o, 0), id = idOf(f, t); if (!id) return 0;
     var bag = t === 'pat' ? M.pats : t === 'appt' ? M.appts : M.notes;
-    var isNew = !bag[id]; bag[id] = Object.assign(bag[id] || {}, f); return isNew ? 1 : 0;
+    /* 1.21.2: dos listados distintos del sistema anterior pueden usar el mismo número interno para registros diferentes.
+       Antes se mezclaban en uno (el texto de una evolución con el paciente de otra). Ahora, si los datos del paciente no
+       coinciden, se guarda aparte. */
+    var me = ident(f, t), key = id, n = 0;
+    while (bag[key] && clash(ident(bag[key], t), me)) { n++; key = id + '~' + n; }
+    var isNew = !bag[key]; bag[key] = Object.assign(bag[key] || {}, f); return isNew ? 1 : 0;
   }
   function walk(x, depth) {   // busca listas de registros en cualquier respuesta
     if (!x || depth > 6) return 0;

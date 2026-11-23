@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.21.1';
+  A.VERSION = '1.21.2';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.76.1';
+  A.VBUILD = '1.76.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -9911,6 +9911,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (isVoid(n)) h += '<div class="ev-why">Anulada el ' + A.fmtDMY(n.void.date) + (n.void.by ? ' por ' + esc((A.PRO(n.void.by) || {}).short || '') : '') + ': ' + esc(n.void.why) + '</div>';
     h += '<div class="ev-acts">' + (long && !N(f.q) ? '<button class="lnk" data-act="evOpen" data-id="' + n.id + '">' + (f.open[n.id] ? 'Ver menos' : 'Ver completa') + '</button>' : '') +
       '<button class="lnk" data-act="evCopy" data-id="' + n.id + '">Copiar</button>' +
+      (n.imp && !isVoid(n) ? '<button class="lnk" data-act="mvnAsk" data-id="' + n.id + '">No es de este paciente</button>' : '') +
       (isVoid(n) ? '<button class="lnk" data-act="evRestore" data-id="' + n.id + '">Quitar la anulación</button>' :
         canDelete(n) ? '<button class="lnk bad" data-act="evDelAsk" data-id="' + n.id + '">Borrar</button>' : '<button class="lnk bad" data-act="evVoidAsk" data-id="' + n.id + '">Anular</button>') + '</div></li>';
     return h;
@@ -17974,16 +17975,35 @@ const OVMenu = (function () {
   const words = s => N(String(s || '').replace(',', ' ')).split(' ').filter(w => w.length > 1);
   const sameName = (a, b) => { const x = words(a), y = words(b); if (!x.length || !y.length) return false; const [s1, l1] = x.length <= y.length ? [x, y] : [y, x]; return s1.filter(w => l1.indexOf(w) >= 0).length >= Math.min(2, s1.length); };
   const fullName = x => x.last + ' ' + x.first;
-  function findPat(k, byRid) {
-    if (k.rid && byRid[k.rid]) return byRid[k.rid];
+  /* 1.21.2: nunca se adivina. Devuelve {p} si hay una ficha segura; {amb} si hay más de una posible o los datos se contradicen
+     (mismo número del sistema anterior pero otro nombre, mismo DNI pero otra persona, dos pacientes con el mismo nombre…);
+     {} si no hay ninguna (ahí sí se crea el paciente). Antes, con dos pacientes del mismo nombre se elegía el primero. */
+  const digits = s => String(s || '').replace(/\D/g, '');
+  function match(k, byRid) {
+    byRid = byRid || {};
+    const ok = p => !k.name || sameName(k.name, fullName(p));
+    if (k.rid && byRid[k.rid]) return ok(byRid[k.rid]) ? { p: byRid[k.rid] } : { amb: 'el número de paciente del sistema anterior es de otra persona' };
     if (k.dni && k.dni.length >= 6) {
-      const l = A.PATS.filter(x => String(x.dni).replace(/\D/g, '') === k.dni);
-      if (l.length === 1 && (!k.name || sameName(k.name, fullName(l[0])))) return l[0];
-      if (l.length > 1 && k.name) { const m = l.filter(x => nameKey(fullName(x)) === nameKey(k.name)); if (m.length === 1) return m[0]; const f = l.filter(x => sameName(k.name, fullName(x))); if (f.length === 1) return f[0]; }
+      const l = A.PATS.filter(x => !x.deleted && digits(x.dni) === k.dni);
+      if (l.length === 1 && ok(l[0])) return { p: l[0] };
+      if (l.length > 1) {
+        if (!k.name) return { amb: 'hay ' + l.length + ' pacientes con ese DNI' };
+        const m = l.filter(x => nameKey(fullName(x)) === nameKey(k.name)); if (m.length === 1) return { p: m[0] };
+        const f = l.filter(x => sameName(k.name, fullName(x))); if (f.length === 1) return { p: f[0] };
+        if (f.length > 1) return { amb: 'hay ' + f.length + ' pacientes con ese DNI y nombre parecido' };
+      }
     }
-    if (k.name) { const nk = nameKey(k.name); const l = A.PATS.filter(x => nameKey(fullName(x)) === nk); if (l.length === 1) return l[0]; if (l.length > 1 && k.dni) { const d = l.filter(x => String(x.dni).replace(/\D/g, '') === k.dni); if (d.length === 1) return d[0]; } if (l.length) return l[0]; }
-    return null;
+    if (k.name) {
+      const l = A.PATS.filter(x => !x.deleted && nameKey(fullName(x)) === nameKey(k.name));
+      if (l.length === 1) { const d = digits(l[0].dni); return k.dni && d.length >= 6 && d !== k.dni ? {} : { p: l[0] }; } /* mismo nombre pero otro DNI: es otra persona */
+      if (l.length > 1) {
+        if (k.dni) { const d = l.filter(x => digits(x.dni) === k.dni); if (d.length === 1) return { p: d[0] }; }
+        return { amb: 'hay ' + l.length + ' pacientes que se llaman igual' };
+      }
+    }
+    return {};
   }
+  const findPat = (k, byRid) => match(k, byRid).p || null;
   A._mudFind = findPat; A._mudPatKey = o => patKey(o); A._mudVal = (o, re) => val(o, re); A._mudRE = RE; A._mudDate = v => parseDate(v); A._mudNameKey = nameKey; A._mudSame = sameName;
   function proFor(name) {
     const pros = A.PROS || []; if (!pros.length) return null;
@@ -17996,11 +18016,14 @@ const OVMenu = (function () {
   function importExtra(extra, past) {
     const today = A.today(), byRid = {};
     /* pacientes del archivo por su id del sistema anterior (para turnos que solo traen el id) */
-    (extra.ridPats || []).forEach(x => { const p = findPat({ dni: x.p.dni, name: x.p.last + ', ' + x.p.first }, {}); if (p) byRid[x.rid] = p; });
+    (extra.ridPats || []).forEach(x => { const p = findPat({ dni: digits(x.p.dni), name: x.p.last + ', ' + x.p.first }, {}); if (p) byRid[x.rid] = p; });
     let ap = 0, apSkip = 0, nt = 0, created = 0;
+    const doubt = [];   /* lo que no se cargó porque no se sabe con certeza de quién es */
     const touched = {};
-    const ensure = k => {
-      let p = findPat(k, byRid);
+    const ensure = (k, o, kind) => {
+      const r = match(k, byRid);
+      if (r.amb) { doubt.push({ kind, k, why: r.amb, date: parseDate(val(o, RE.date)) || '', text: kind === 'nota' ? val(o, RE.text).slice(0, 140) : (val(o, RE.time) || '') }); return null; }
+      let p = r.p || null;
       if (!p && k.name) {
         const nm = k.name.indexOf(',') >= 0 ? { last: k.name.split(',')[0], first: k.name.split(',').slice(1).join(' ') } : { last: k.name.split(/\s+/).slice(-1)[0], first: k.name.split(/\s+/).slice(0, -1).join(' ') || '-' };
         const T = s => String(s || '').toLowerCase().replace(/(^|[\s'-])([a-zñáéíóúü])/g, (x, a, b) => a + b.toUpperCase()).trim();
@@ -18014,7 +18037,7 @@ const OVMenu = (function () {
       if (!d || t == null) { apSkip++; return; }
       if (d < today && !past) return;
       const st = N(val(o, RE.status)); if (/cancel|anulad|suspend/.test(st) && d >= today) { apSkip++; return; }
-      const p = ensure(patKey(o)); if (!p) { apSkip++; return; }
+      const p = ensure(patKey(o), o, 'turno'); if (!p) { apSkip++; return; }
       const pro = proFor(val(o, RE.pro)); if (!pro) { apSkip++; return; }
       const list = A.day(d);
       if (list.some(a => a.pid === p.id && a.start === t)) { apSkip++; return; }
@@ -18026,7 +18049,7 @@ const OVMenu = (function () {
     });
     extra.notes.forEach(o => {
       const text = val(o, RE.text); if (!text) return;
-      const p = ensure(patKey(o)); if (!p) return;
+      const p = ensure(patKey(o), o, 'nota'); if (!p) return;
       const d = parseDate(val(o, RE.date)) || today, pd = A.pd(p.id);
       pd.notes = pd.notes || [];
       if (pd.notes.some(x => x.imp && x.date === d && x.text.indexOf(text.slice(0, 60)) >= 0)) return;
@@ -18034,7 +18057,7 @@ const OVMenu = (function () {
       touched[p.id] = 1; nt++;
     });
     Object.keys(touched).forEach(pid => { const pd = A.pd(pid); pd.notes.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)); A.touchPd(pid); });
-    return { ap, apSkip, nt, created };
+    return { ap, apSkip, nt, created, doubt };
   }
 
   /* resumen final con turnos y evoluciones */
@@ -18044,6 +18067,13 @@ const OVMenu = (function () {
     if (m.ap != null) {
       h = h.replace('</div>', '</div><div class="stats"><div class="stat"><b>' + m.ap + '</b>turnos cargados</div><div class="stat"><b>' + m.nt + '</b>evoluciones</div>' + (m.created ? '<div class="stat"><b>' + m.created + '</b>pacientes que solo estaban en la agenda</div>' : '') + '</div>');
       h = h.replace(/Lo que no venía en el archivo \(odontogramas, imágenes, turnos\)/, 'Lo que no venía en el archivo (odontogramas, imágenes)');
+      const D = m.doubt || [];
+      if (D.length) {
+        const nN = D.filter(x => x.kind === 'nota').length, nT = D.length - nN;
+        h = h.replace('<div class="stats">', '<div class="mu-doubt"><b>No se cargaron ' + [nN ? nN + ' evolucion' + (nN === 1 ? '' : 'es') : '', nT ? nT + ' turno' + (nT === 1 ? '' : 's') : ''].filter(Boolean).join(' y ') + '</b> porque no se pudo saber con certeza de qué paciente eran. Así no se mezcla nada en la historia clínica de otro paciente.' +
+          '<details><summary>Ver cuáles (' + D.length + ')</summary><ul class="pd-list">' + D.slice(0, 80).map(x => '<li><b>' + esc(x.k.name || 'Sin nombre') + '</b>' + (x.k.dni ? ' · DNI ' + esc(x.k.dni) : '') + (x.date ? ' · ' + esc(A.fmtDMY(x.date)) : '') + ' · ' + (x.kind === 'nota' ? 'evolución' : 'turno') + (x.text ? ': «' + esc(x.text) + (x.text.length >= 140 ? '…' : '') + '»' : '') + ' <span class="hint">(' + esc(x.why) + ')</span></li>').join('') + (D.length > 80 ? '<li>… y ' + (D.length - 80) + ' más</li>' : '') + '</ul>' +
+          '<p class="hint">Para traerlas, corregí en el sistema anterior el DNI o el nombre de esos pacientes (o borrá el paciente repetido acá) y volvé a hacer la mudanza: lo que ya se cargó no se duplica.</p></details></div><div class="stats">');
+      }
     }
     return h;
   };
@@ -18068,7 +18098,8 @@ const OVMenu = (function () {
     '.mu-free { align-self: flex-start; background: #f6c453; color: #08484b; border-radius: 999px; padding: 2px 10px; font-weight: 800; font-size: 12px; }',
     '.mu-alt { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }',
     '.mu-extra { border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; margin: 10px 0; background: var(--surface); } .mu-extra ul { margin: 6px 0; padding-left: 18px; }',
-    '.mu-chk { display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; font-size: 14px; } .mu-chk input { width: 18px; height: 18px; margin-top: 2px; flex: none; }'
+    '.mu-chk { display: flex; gap: 8px; align-items: flex-start; margin-top: 6px; font-size: 14px; } .mu-chk input { width: 18px; height: 18px; margin-top: 2px; flex: none; }',
+    '.mu-doubt { border: 1px solid var(--warn); background: var(--warn-soft); border-radius: 12px; padding: 10px 12px; margin: 10px 0; font-size: 14px; } .mu-doubt summary { cursor: pointer; margin-top: 6px; font-weight: 600; } .mu-doubt .pd-list { max-height: 260px; overflow: auto; font-size: 13px; }'
   ].join('\n');
   document.head.appendChild(css);
 
@@ -18434,9 +18465,13 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.21.2', b: '1.76.2', d: '2026-11-23', items: [
+      { t: 'Mudanza más segura: si no se puede saber con certeza de qué paciente es una evolución o un turno (dos pacientes con el mismo nombre, datos que no coinciden), ya no se adivina. No se carga y al final te muestra la lista.', top: true },
+      { t: 'En la evolución, las notas traídas del sistema anterior tienen «No es de este paciente»: la pasás a la ficha correcta buscando al paciente, o la anulás.', top: true },
+      { t: 'El asistente de mudanza ya no mezcla dos registros distintos del sistema anterior que tengan el mismo número interno.' }] },
     { v: '1.21.1', b: '1.76.1', d: '2026-11-20', items: [
-      { t: 'Arriba de la ficha completa se ve también el N° de afiliado (edad · DNI · obra social · N° afiliado · teléfono).', top: true },
-      { t: 'En la ficha resumida: el N° de afiliado en «Datos principales» y las últimas 3 notas de la evolución clínica, debajo de «Qué hice hoy».', top: true },
+      { t: 'Arriba de la ficha completa se ve también el N° de afiliado (edad · DNI · obra social · N° afiliado · teléfono).' },
+      { t: 'En la ficha resumida: el N° de afiliado en «Datos principales» y las últimas 3 notas de la evolución clínica, debajo de «Qué hice hoy».' },
       { t: '«Facturado a obras sociales» pasó al final de la ficha, más compacto: se anota con «+ Anotar facturación».' }] },
     { v: '1.21', b: '1.76.0', d: '2026-11-20', items: [
       { t: 'Nuevo en la ficha (Datos e historia): «Facturado a obras sociales». Anotás mes por mes qué le facturaste a la obra social (prácticas y piezas) para no volver a facturarlo por error. Queda como un registro continuo, aparte de la evolución.' },
@@ -26723,6 +26758,62 @@ const OVMenu = (function () {
     '#panelHost .evo3-m { font-size: 12px; color: var(--ink-2); font-weight: 600; }',
     '#panelHost .evo3-t { font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }',
     '#panelHost .evo3-all { align-self: flex-start; font-size: 13.5px; }'
+  ].join('\n');
+  document.body.appendChild(css);
+})();
+/* ===== 1.21.2: «No es de este paciente»: una evolución traída del sistema anterior se pasa a la ficha correcta (o se anula) ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, esc = A.esc, MF = A.modalFns, $ = q => document.querySelector(q);
+  const noteOf = (pid, id) => ((A.pd(pid) || {}).notes || []).filter(n => n.id === id)[0] || null;
+
+  A.acts.mvnAsk = el => { S.modal = { type: 'mvn', from: S.fichaPid, id: el.getAttribute('data-id'), q: '' }; A.renderModal(); setTimeout(() => { const i = $('#mvnQ'); if (i) i.focus(); }, 50); };
+  function results(m) {
+    const q = String(m.q || '').trim();
+    if (A.norm(q).length < 2) return '<p class="hint" style="margin:0">Escribí al menos 2 letras del nombre, el apellido o el DNI.</p>';
+    const r = (A.searchPats(q, 8) || []).filter(p => p.id !== m.from);
+    if (!r.length) return '<p class="hint" style="margin:0">No encontré pacientes con eso.</p>';
+    return '<div class="mvn-res">' + r.map(p => '<button class="mvn-p" data-act="mvnPick" data-pid="' + esc(p.id) + '">' + (A.avatarSm ? A.avatarSm(p.id, 'av-sm') : '') + '<span><b>' + esc(p.name) + '</b><small>DNI ' + esc(p.dni || '—') + ' · ' + esc(p.cov || 'Particular') + '</small></span></button>').join('') + '</div>';
+  }
+  MF.mvn = m => {
+    const n = noteOf(m.from, m.id), from = A.PAT(m.from) || {};
+    if (!n) return A.modalShell('Evolución', '<p>No encontré esa nota.</p>', '<button class="btn" data-act="closeModal">Cerrar</button>');
+    const to = m.to && A.PAT(m.to);
+    let b = '<div class="mvn-note"><div class="mvn-m">' + esc(A.fmtDMY(n.date)) + ' · en la ficha de <b>' + esc(from.name || '') + '</b></div><div class="mvn-t">' + esc(n.text.length > 400 ? n.text.slice(0, 400) + '…' : n.text) + '</div></div>';
+    if (to) {
+      b += '<p>¿Pasar esta evolución a la ficha de <b>' + esc(to.name) + '</b> (DNI ' + esc(to.dni || '—') + ')?</p>' +
+        (n.odon ? '<p class="pd-warn">Esta nota ya se había pasado al odontograma de ' + esc(from.name || '') + '. Después revisá los dos odontogramas.</p>' : '') +
+        '<p class="hint">Queda registrado en el historial de cambios de las dos fichas.</p>';
+      return A.modalShell('Pasar a otra ficha', b, '<button class="btn" data-act="mvnBack">Volver</button><button class="btn primary" data-act="mvnGo">Pasar a ' + esc(to.first || to.name) + '</button>');
+    }
+    b += '<label class="field"><span>¿De qué paciente es?</span><input class="inp" id="mvnQ" data-in="mvnQ" autocomplete="off" placeholder="Nombre, apellido o DNI" value="' + esc(m.q) + '"></label><div id="mvnRes">' + results(m) + '</div>' +
+      '<p class="hint">Si no sabés de quién es, anulala: queda guardada pero oculta, como pide la ley.</p>';
+    return A.modalShell('No es de este paciente', b, '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="mvnVoid">No sé de quién es: anularla</button>');
+  };
+  let t = null;
+  A.ins.mvnQ = el => { S.modal.q = el.value; clearTimeout(t); t = setTimeout(() => { const h = $('#mvnRes'); if (h && S.modal && S.modal.type === 'mvn') h.innerHTML = results(S.modal); }, 120); };
+  A.acts.mvnPick = el => { S.modal.to = el.getAttribute('data-pid'); A.renderModal(); };
+  A.acts.mvnBack = () => { delete S.modal.to; A.renderModal(); };
+  A.acts.mvnVoid = () => { const m = S.modal; S.modal = { type: 'evVoid', id: m.id }; A.renderModal(); const w = $('#evWhy') || document.querySelector('.modal textarea, .modal input[type=text]'); if (w && !w.value) w.value = 'No es de este paciente (vino mal en la mudanza del sistema anterior).'; };
+  A.acts.mvnGo = () => {
+    const m = S.modal, a = A.pd(m.from), b = A.pd(m.to), n = noteOf(m.from, m.id); if (!n || !b) return;
+    const toP = A.PAT(m.to) || {}, fromP = A.PAT(m.from) || {};
+    a.notes = a.notes.filter(x => x !== n); b.notes = b.notes || []; b.notes.push(n);
+    if (n.odon) delete n.odon;
+    b.notes.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+    if (A.alog) { A.alog(m.from, 'mudanza', 'Una evolución del ' + A.fmtDMY(n.date) + ' pasó a la ficha de ' + (toP.name || '') + ' (no era de este paciente).'); A.alog(m.to, 'mudanza', 'Llegó una evolución del ' + A.fmtDMY(n.date) + ' desde la ficha de ' + (fromP.name || '') + ' (había quedado ahí por la mudanza).'); }
+    A.touchPd(m.from); A.touchPd(m.to); A.saveNow && A.saveNow();
+    S.modal = null; A.renderModal(); A.refresh(); A.toast('Evolución pasada a la ficha de ' + (toP.name || '') + '.');
+  };
+
+  const css = document.createElement('style');
+  css.id = 'ovApp108';
+  css.textContent = [
+    '.mvn-note { border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: 10px; padding: 8px 10px; margin-bottom: 12px; background: var(--surface-2); }',
+    '.mvn-m { font-size: 12.5px; color: var(--ink-2); margin-bottom: 4px; } .mvn-t { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 160px; overflow: auto; }',
+    '.mvn-res { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }',
+    '.mvn-p { display: flex; align-items: center; gap: 10px; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 8px 10px; cursor: pointer; font: inherit; min-height: 44px; }',
+    '.mvn-p:hover { border-color: var(--accent); } .mvn-p span { display: flex; flex-direction: column; } .mvn-p small { color: var(--ink-2); font-size: 12.5px; }'
   ].join('\n');
   document.body.appendChild(css);
 })();

@@ -52,6 +52,7 @@
     if (isVoid(n)) h += '<div class="ev-why">Anulada el ' + A.fmtDMY(n.void.date) + (n.void.by ? ' por ' + esc((A.PRO(n.void.by) || {}).short || '') : '') + ': ' + esc(n.void.why) + '</div>';
     h += '<div class="ev-acts">' + (long && !N(f.q) ? '<button class="lnk" data-act="evOpen" data-id="' + n.id + '">' + (f.open[n.id] ? 'Ver menos' : 'Ver completa') + '</button>' : '') +
       '<button class="lnk" data-act="evCopy" data-id="' + n.id + '">Copiar</button>' +
+      (n.imp && !isVoid(n) ? '<button class="lnk" data-act="mvnAsk" data-id="' + n.id + '">No es de este paciente</button>' : '') +
       (isVoid(n) ? '<button class="lnk" data-act="evRestore" data-id="' + n.id + '">Quitar la anulación</button>' :
         canDelete(n) ? '<button class="lnk bad" data-act="evDelAsk" data-id="' + n.id + '">Borrar</button>' : '<button class="lnk bad" data-act="evVoidAsk" data-id="' + n.id + '">Anular</button>') + '</div></li>';
     return h;
