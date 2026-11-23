@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Versión actual: **1.21.3** (compilación 1.76.3), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
+Leé esto antes de tocar nada. Versión actual: **1.22** (compilación 1.77.0), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Versión actual: **1.21.3** (compilación 1.76.3)
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39, app40, app41, app42, app43, app44, app45, app46, app47, app48, app49, app50, app51, app52, app53, app54, app55 … app108). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39, app40, app41, app42, app43, app44, app45, app46, app47, app48, app49, app50, app51, app52, app53, app54, app55 … app109). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -54,6 +54,7 @@ Leé esto antes de tocar nada. Versión actual: **1.21.3** (compilación 1.76.3)
 - Foto del paciente (1.20): `app103` (`pd.avatar` + `pd.photoOK`, ventana `avEdit`, foto chiquita en buscador y lista). Ojo: en el odontograma, todo adorno encima de las caras necesita `pointer-events: none` (en 1.19 el `selbox` con relleno frenaba los toques).
 - Notas de facturación a obras sociales (1.21): `app106` (`pd.factNotes`, tarjeta al final de Datos e historia y última nota en la ficha resumida). Encabezado con N° de afiliado y últimas 3 evoluciones en la resumida: `app107`. La resumida (`#panelHost`) recibe bloques de varios módulos en distintos momentos: lo que se ubique ahí hay que reubicarlo después de `rAF`.
 - Mudanza (1.21.2): `app53` `match()` **nunca adivina** el paciente (lo dudoso no se carga y se lista al final); `sitio/mudanza.js` no mezcla registros con el mismo `id` si la identidad no coincide; `app108` «No es de este paciente» para mover o anular notas importadas. Ante cualquier cambio en la mudanza, probar con homónimos y con ids repetidos. «Revisar una mudanza ya hecha» (1.21.3): no crea pacientes salvo que se tilde, cada pase se destilda, se deshace (`odontovoz.mudUndo`) y no toca notas `mvd`, anuladas ni propias.
+- Fichas FORN (1.22): `app109` (`pd.forn`, tarjeta en Datos e historia, Menú › FORN · Presentación mensual, PDF apaisado como la ficha de papel con dorso periodontal). Prueba: el PDF necesita jsPDF (sin internet, inyectarlo desde `node_modules/jspdf/dist/jspdf.umd.min.js`).
 - WhatsApp en la PC (1.18.2): `app51` (`odontovoz.waPc`: WhatsApp Web o la app de escritorio `whatsapp://`). WhatsApp Web no deja reusar su pestaña.
 - El inicio se redibuja también sin `afterRefresh` (`app6` cada minuto, `app35` al sincronizar): lo que se agregue al inicio después de dibujarlo tiene que reponerse con un `MutationObserver`, no solo en `afterRefresh` (1.20.3, logo del saludo).
 - No usar `backdrop-filter` (desenfoque) en barras fijas ni fondos de ventanas: traba el desplazamiento en Android (sacado en 1.20.1).

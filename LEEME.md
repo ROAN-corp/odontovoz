@@ -135,6 +135,16 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.22 · Fichas FORN y presentación mensual (23/11/2026)
+
+- Idea de Rodrigo, pensando en un convenio con la Federación Odontológica de Río Negro: que el odontólogo arme y presente en digital las fichas FORN del mes. Se tomó como modelo la ficha de papel (frente y dorso periodontal).
+- `src/app109.js`. Datos en `pd.forn`: `{id, mes, pro, afil, addr, loc, tel, birth, os, rows: [{fecha, pieza, cara, cod, desc}], obs, sig, sigAt, perio, estado}`, con estado borrador, lista o presentada.
+  - **En la historia clínica:** tarjeta «FORN» en Datos e historia (antes de «Facturado a obras sociales»). Arma la ficha del mes o abre la que ya existe. Al crearla trae solo lo **realizado en el mes** (`pd.tx`, `status: 'realizado'`) con su código (`A.codeFor`), pieza y caras. «Traer lo realizado» suma lo nuevo sin repetir. Los renglones se editan, los códigos se sugieren con los de `sitio/aranceles/forn.json` (`A.fornGet`) y al elegir uno se completa la descripción. Los datos del paciente que se corrigen acá (afiliado, domicilio, localidad, teléfono, nacimiento) vuelven a su ficha (`A.setProfile`). La firma del paciente va en un `canvas` (PNG) y el dorso periodontal es opcional.
+  - **Menú › FORN · Presentación mensual** (`frnOpen`): fichas del mes de todos los pacientes, con filtro por odontólogo y avisos de las que no tienen firma o N° de afiliado. Desde ahí se arma el PDF con todas, se comparte (Web Share con archivo; en la app instalada, `A.saveFile` abre el menú para compartir), se arma un mail (`mailto` con el resumen; el PDF se adjunta a mano) y se marcan todas como presentadas.
+  - **PDF** (jsPDF A4 apaisada, `compress: true`): resumen del mes y cada ficha con el formato del papel (encabezado de la Federación con sus datos de contacto, solo texto y sin su logo; casillas de afiliado; odontograma de 5 caras con el estado del paciente, rojo para lo existente o realizado y azul para lo que falta, X y corona; recuadro del odontólogo con la matrícula `pro.mat`; tabla de 6 renglones con la firma; consentimiento con el nombre del profesional; observaciones). Si hay más de 6 prácticas, sigue en otra hoja. El dorso lleva la profundidad de bolsa de más de 3 mm (vestibular, mesial y distal), la movilidad y el sangrado por cuadrante del último periodontograma. La firma va una sola vez por ficha (alias, `FAST`): una ficha pesa unos 26 KB.
+- Para conversar con la FORN: si acepta la firma electrónica (una firma del paciente repetida en cada renglón), si quiere otro formato (planilla, sistema propio) y si hace falta el sello digital.
+- Compilación 1.77.0.
+
 ## OdontoVoz 1.21.3 · revisión de la mudanza segura sobre una base que ya cambió (23/11/2026)
 
 - Pregunta de Rodrigo: ¿se rompe algo si reviso la mudanza después de haber cargado pacientes, evoluciones y cambios? Ajustes en `app53`:
