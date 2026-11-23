@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.22.2 · FORN en el menú principal (23/11/2026)
+
+- `app109` (`menu()`): «FORN · Presentación mensual» pasó del grupo Ajustes, que está plegado, a `#gearMenu .dr-nav`, justo antes de `#jrBtn` («Cambios de hoy · deshacer»).
+- Compilación 1.77.2.
+
 ## OdontoVoz 1.22.1 · códigos FORN en lista desplegable y logo de la Federación (23/11/2026)
 
 - **Código de cada práctica** (`app109`): ahora es un `<select>` nativo con `optgroup` por capítulo (I Consultas … X Cirugía), como en el sistema de Frontini para OSPe, con los códigos de la obra social de la ficha. La obra social se busca con `A.fornMatch` (con `A.osOf` del paciente o el nombre que tenga la ficha). Si hay varias tablas, se juntan. Al elegir un código se completa la descripción y se muestra lo que paga la O.S. (`cov`), el valor (`total`) o el del plan. El selector «Códigos de la obra social» (`frnOsSel`, `f.fornSlug`) permite usar otra obra social de la Federación, o todas. «✎ Escribir otro código…» cambia el renglón a un campo de texto (`r.free`). Sin conexión, el código se escribe a mano. Probado con el `forn.json` real: OSDE muestra 58 códigos en 8 capítulos y OSPE, 43.

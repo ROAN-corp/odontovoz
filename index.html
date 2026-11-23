@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.22.1';
+  A.VERSION = '1.22.2';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.77.1';
+  A.VBUILD = '1.77.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18491,6 +18491,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.22.2', b: '1.77.2', d: '2026-11-23', items: [
+      { t: '«FORN · Presentación mensual» está ahora en el menú principal, arriba de «Cambios de hoy · deshacer».' }] },
     { v: '1.22.1', b: '1.77.1', d: '2026-11-23', items: [
       { t: 'Ficha FORN: «Código» ahora es una lista desplegable con los códigos de la obra social del paciente, por capítulos y con lo que paga la obra social, tomados de los aranceles de la Federación (se actualizan solos cada mes).', top: true },
       { t: 'La presentación mensual y el PDF llevan el logo de la Federación Odontológica de Río Negro.' }] },
@@ -27267,8 +27269,10 @@ const OVMenu = (function () {
   const IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>';
   function menu() {
     if ($('#drFornMes')) return;
-    const ref = $('#gearMenu .dnav[data-act="cajaOpen"]') || $('#gearMenu .dnav[data-act="importOpen"]') || $('#gearMenu .dnav[data-act="notifOpen"]'); if (!ref) return;
-    ref.insertAdjacentHTML('beforebegin', '<button class="dnav" id="drFornMes" data-act="frnOpen">' + IC + '<span class="t">FORN · Presentación mensual<small>Fichas de la Federación de Río Negro</small></span></button>');
+    /* 1.22.2: en el menú principal, arriba de «Cambios de hoy · deshacer» (antes estaba dentro de Ajustes, plegado) */
+    const nav = $('#gearMenu .dr-nav'); if (!nav) return;
+    const html = '<button class="dnav" id="drFornMes" data-act="frnOpen">' + IC + '<span class="t">FORN · Presentación mensual</span></button>', jr = $('#jrBtn');
+    if (jr && jr.parentNode === nav) jr.insertAdjacentHTML('beforebegin', html); else nav.insertAdjacentHTML('beforeend', html);
   }
   const arPrev = A.afterRefresh;
   A.afterRefresh = function () { if (arPrev) arPrev.apply(this, arguments); try { menu(); } catch (e) { /* nada */ } };

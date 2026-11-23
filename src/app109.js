@@ -413,8 +413,10 @@
   const IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>';
   function menu() {
     if ($('#drFornMes')) return;
-    const ref = $('#gearMenu .dnav[data-act="cajaOpen"]') || $('#gearMenu .dnav[data-act="importOpen"]') || $('#gearMenu .dnav[data-act="notifOpen"]'); if (!ref) return;
-    ref.insertAdjacentHTML('beforebegin', '<button class="dnav" id="drFornMes" data-act="frnOpen">' + IC + '<span class="t">FORN · Presentación mensual<small>Fichas de la Federación de Río Negro</small></span></button>');
+    /* 1.22.2: en el menú principal, arriba de «Cambios de hoy · deshacer» (antes estaba dentro de Ajustes, plegado) */
+    const nav = $('#gearMenu .dr-nav'); if (!nav) return;
+    const html = '<button class="dnav" id="drFornMes" data-act="frnOpen">' + IC + '<span class="t">FORN · Presentación mensual</span></button>', jr = $('#jrBtn');
+    if (jr && jr.parentNode === nav) jr.insertAdjacentHTML('beforebegin', html); else nav.insertAdjacentHTML('beforeend', html);
   }
   const arPrev = A.afterRefresh;
   A.afterRefresh = function () { if (arPrev) arPrev.apply(this, arguments); try { menu(); } catch (e) { /* nada */ } };

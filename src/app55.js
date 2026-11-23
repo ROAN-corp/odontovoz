@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.22.2', b: '1.77.2', d: '2026-11-23', items: [
+      { t: '«FORN · Presentación mensual» está ahora en el menú principal, arriba de «Cambios de hoy · deshacer».' }] },
     { v: '1.22.1', b: '1.77.1', d: '2026-11-23', items: [
       { t: 'Ficha FORN: «Código» ahora es una lista desplegable con los códigos de la obra social del paciente, por capítulos y con lo que paga la obra social, tomados de los aranceles de la Federación (se actualizan solos cada mes).', top: true },
       { t: 'La presentación mensual y el PDF llevan el logo de la Federación Odontológica de Río Negro.' }] },
