@@ -135,6 +135,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.22.1 · códigos FORN en lista desplegable y logo de la Federación (23/11/2026)
+
+- **Código de cada práctica** (`app109`): ahora es un `<select>` nativo con `optgroup` por capítulo (I Consultas … X Cirugía), como en el sistema de Frontini para OSPe, con los códigos de la obra social de la ficha. La obra social se busca con `A.fornMatch` (con `A.osOf` del paciente o el nombre que tenga la ficha). Si hay varias tablas, se juntan. Al elegir un código se completa la descripción y se muestra lo que paga la O.S. (`cov`), el valor (`total`) o el del plan. El selector «Códigos de la obra social» (`frnOsSel`, `f.fornSlug`) permite usar otra obra social de la Federación, o todas. «✎ Escribir otro código…» cambia el renglón a un campo de texto (`r.free`). Sin conexión, el código se escribe a mano. Probado con el `forn.json` real: OSDE muestra 58 códigos en 8 capítulos y OSPE, 43.
+- **Logo de la FORN** (lo pasó Rodrigo; **hay que confirmar el permiso de uso con la Federación antes de vender**): JPG de 520×137 px embebido como `LOGO`. Va en el encabezado de «Presentación mensual» (con «Presentación mensual» debajo) y arriba a la izquierda en cada ficha del PDF, con la dirección al lado. Una ficha pesa unos 48 KB.
+- Compilación 1.77.1.
+
 ## OdontoVoz 1.22 · Fichas FORN y presentación mensual (23/11/2026)
 
 - Idea de Rodrigo, pensando en un convenio con la Federación Odontológica de Río Negro: que el odontólogo arme y presente en digital las fichas FORN del mes. Se tomó como modelo la ficha de papel (frente y dorso periodontal).

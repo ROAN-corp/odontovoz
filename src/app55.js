@@ -6,9 +6,12 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.22.1', b: '1.77.1', d: '2026-11-23', items: [
+      { t: 'Ficha FORN: «Código» ahora es una lista desplegable con los códigos de la obra social del paciente, por capítulos y con lo que paga la obra social, tomados de los aranceles de la Federación (se actualizan solos cada mes).', top: true },
+      { t: 'La presentación mensual y el PDF llevan el logo de la Federación Odontológica de Río Negro.' }] },
     { v: '1.22', b: '1.77.0', d: '2026-11-23', items: [
       { t: 'Fichas FORN: en la ficha del paciente (Datos e historia › FORN) se arma la ficha de la Federación Odontológica de Río Negro del mes, con sus datos ya cargados, lo que le hiciste ese mes con su código y la firma del paciente con el dedo.', top: true },
-      { t: 'Menú › FORN · Presentación mensual: todas las fichas del mes en un PDF (con un resumen al principio), para mandar por WhatsApp o mail y marcarlas como presentadas.', top: true }] },
+      { t: 'Menú › FORN · Presentación mensual: todas las fichas del mes en un PDF (con un resumen al principio), para mandar por WhatsApp o mail y marcarlas como presentadas.' }] },
     { v: '1.21.3', b: '1.76.3', d: '2026-11-23', items: [
       { t: '«Revisar una mudanza ya hecha» es más segura: solo mueve lo que trajo la mudanza (no toca lo que cargaste vos, lo anulado ni lo que pasaste a mano), podés destildar cada pase, no crea pacientes salvo que lo pidas y se puede deshacer.' }] },
     { v: '1.21.2', b: '1.76.2', d: '2026-11-23', items: [
