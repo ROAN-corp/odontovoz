@@ -124,7 +124,7 @@ main > section:first-child { scroll-margin-top: 76px; }
 
 /* el video de «Miralo funcionar» tiene la proporción de la pantalla del celular (720×1558): sin franjas grises */
 .watch .reel { width: min(300px, 100%); }
-.watch .reel video { aspect-ratio: 720 / 1558; object-fit: cover; }
+.watch .reel video { aspect-ratio: 720 / 1560; object-fit: cover; }
 /* modo oscuro: el logo y los textos de la barra y del menú se leen */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .topbar .brand, :root:not([data-theme="light"]) .side .brand, :root:not([data-theme="light"]) .sfoot .brand { color: var(--ink); }
