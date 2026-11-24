@@ -66,7 +66,7 @@ export function recipients(m: Msg, toks: Tok[], ev: Ev): Tok[] {
     if (t.sede && m.sede && t.sede !== m.sede) return false;              /* otro consultorio (Empresa) */
     const role = t.role || 'dueno';
     if (m.kind === 'stock') return role !== 'profesional';                /* el stock lo ve quien compra y ordena */
-    if (m.kind === 'cobrar') return role === 'recepcion' || role === 'dueno' || role === 'admin'; /* lo cobra la recepción */
+    if (m.kind === 'cobrar') return role === 'recepcion' || ((role === 'dueno' || role === 'admin') && !t.filter_pro); /* lo cobra la recepción; quien atiende y filtra por su profesional no recibe el cobro */
     if ((role === 'profesional' || role === 'asistente') && t.pro && m.pro && t.pro !== m.pro) return false; /* pacientes de otro odontólogo */
     if (t.filter_pro && m.pro && t.filter_pro !== m.pro) return false;    /* «Avisarme de los pacientes de…» */
     return true;

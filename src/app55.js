@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.23.3', b: '1.78.3', d: '2026-11-24', items: [
+      { t: 'Si administrás y también atendés (o sos dueño/a y atendés), los avisos de «llegó un paciente» ahora son solo de tus pacientes, en pantalla y con la app cerrada. Podés cambiarlo en Avisos y sonidos. Los «Para cobrar» quedan para la secretaria. En Usuarios del equipo se ve «Administra y atiende».', top: true }] },
     { v: '1.23.2', b: '1.78.2', d: '2026-11-24', items: [
       { t: 'Si el dueño de la cuenta también atiende: en Usuarios del equipo elige «Atiendo como…». Se le abre su agenda, firma como ese profesional y sus notas quedan a su nombre (antes figuraban con el mail de la cuenta).', top: true }] },
     { v: '1.23.1', b: '1.78.1', d: '2026-11-24', items: [

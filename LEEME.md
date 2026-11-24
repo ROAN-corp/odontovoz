@@ -135,6 +135,13 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.23.3 · avisos de quien administra y atiende (24/11/2026)
+
+- Diseño completo del modelo de socias, cajas privadas y profesionales que alquilan: `docs/SOCIAS-CAJAS-PRIVADAS.md` (se programa por etapas; esta es la etapa 1).
+- `app12` (`PREF`): si quien usa la app atiende (`A.myProId()`: Administración con profesional, o dueño con «Atiendo como») y nunca eligió el filtro (`proSet`), los avisos «llegó un paciente» son solo de su profesional; si elige «Todos» en Avisos y sonidos, se guarda `proSet` y recibe todos. El push toma el mismo filtro (`p_filter_pro`, `app59`).
+- `push-hook`: el aviso `cobrar` no le llega a dueño/administración que filtra por su profesional (el cobro lo hace la secretaria).
+- `app33`: en la lista de usuarios se ve «Administra y atiende · profesional».
+
 ## OdontoVoz 1.23.2 · el dueño que también atiende (24/11/2026)
 
 - Caso: dos socias dueñas y odontólogas. Un dueño no es un usuario del equipo, así que no tenía forma de quedar vinculado a un profesional: sus notas se firmaban con el **mail de la cuenta** (`A.actor()`) y la agenda, la firma de documentos y las fichas FORN no lo tenían en cuenta.

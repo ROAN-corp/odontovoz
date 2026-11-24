@@ -46,6 +46,7 @@ const T = [
 ];
 const ev = { owner: 'o', k: 'day:' + today, device: 'pc-recep' };
 const ll = P.events({ owner: 'o', k: 'day:' + today, old_v: [ap('t1', { loc: 's1' })], new_v: [ap('t1', { status: 'llego', loc: 's1' })] }, N)[0];
+ok(P.recipients(m[0], [{ token: 'a', role: 'recepcion' }, { token: 'b', role: 'admin', filter_pro: 'pr1' }, { token: 'c', role: 'dueno', filter_pro: 'pr1' }, { token: 'd', role: 'admin' }], { owner: 'o' }).map(t => t.token).join() === 'a,d', 'el cobro no le llega a quien administra y filtra por su profesional');
 let r = P.recipients(ll, T, ev).map(t => t.token);
 ok(!r.includes('T0'), 'no le llega al equipo que lo marcó');
 ok(r.includes('T1'), 'le llega a Rodrigo (sus pacientes)');

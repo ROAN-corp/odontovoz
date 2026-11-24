@@ -27,7 +27,9 @@
   /* =====================================================================
      LOGO ANIMADO CADA VEZ QUE SE ABRE LA APP
      ===================================================================== */
-  const PREF = () => { try { return Object.assign({ splash: true, splashSound: true, sound: true, vibrate: true, system: !!window.OV_NATIVE, pro: '' }, JSON.parse(LS.get('odontovoz.notif', '{}'))); } catch (e) { return { splash: true, splashSound: true, sound: true, vibrate: true, system: !!window.OV_NATIVE, pro: '' }; } };
+  const PREF0 = () => { try { return Object.assign({ splash: true, splashSound: true, sound: true, vibrate: true, system: !!window.OV_NATIVE, pro: '' }, JSON.parse(LS.get('odontovoz.notif', '{}'))); } catch (e) { return { splash: true, splashSound: true, sound: true, vibrate: true, system: !!window.OV_NATIVE, pro: '' }; } };
+  /* 1.23.3: quien atiende (administración o dueño con profesional) recibe por defecto solo los avisos de sus pacientes, hasta que elija otra cosa (proSet) */
+  const PREF = () => { const p = PREF0(); if (!p.proSet && A.myProId && A.myProId()) p.pro = A.myProId(); return p; };
   const savePref = p => LS.set('odontovoz.notif', JSON.stringify(p));
   A.notifPref = PREF;
   const LOGO = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path class="sp-tooth" d="M9 4c-3.2 0-5.5 2.6-5.5 6 0 2.6 1 4.4 1.8 6.6.9 2.5.9 5.4 1.9 8.5.5 1.6 2.4 1.7 3 .1.9-2.4 1.1-5.2 2.4-5.2h2.8c1.3 0 1.5 2.8 2.4 5.2.6 1.6 2.5 1.5 3-.1 1-3.1 1-6 1.9-8.5.8-2.2 1.8-4 1.8-6.6 0-3.4-2.3-6-5.5-6-2.1 0-3.2 1.1-5.2 1.1S11.1 4 9 4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path class="sp-wave" d="M11 11.5v2M13.5 10v5M16 9v7M18.5 10v5M21 11.5v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
@@ -362,7 +364,7 @@
     const p = PREF(); p[el.getAttribute('data-k')] = el.checked; savePref(p);
     if (el.getAttribute('data-k') === 'system' && el.checked) A.acts.notifPerm(); else A.renderModal();
   };
-  A.chg.notifPro = el => { const p = PREF(); p.pro = el.value; savePref(p); };
+  A.chg.notifPro = el => { const p = PREF(); p.pro = el.value; p.proSet = true; savePref(p); };
   A.acts.notifPerm = async () => {
     try {
       const ln = NL();
@@ -375,7 +377,7 @@
     audio();
     const t = A.today(), a = (A.day ? A.day(t) : []).filter(x => x.pid && A.PAT(x.pid))[0];
     const fake = a ? { id: a.id, pid: a.pid, start: a.start, pro: a.pro } : { id: '', pid: (A.PATS[0] || {}).id, start: A.nowMin ? A.nowMin() : 600, pro: (A.PROS[0] || {}).id };
-    const p = PREF(), keep = p.pro; p.pro = ''; savePref(p); A.onArrivals([fake]); p.pro = keep; savePref(p);
+    const p = PREF(), keep = p.pro, keepSet = p.proSet; p.pro = ''; p.proSet = true; savePref(p); A.onArrivals([fake]); p.pro = keep; p.proSet = keepSet; savePref(p);
     sysNotify('Así se ve el aviso', 'Llegó un paciente: está en la sala de espera.');
   };
   /* botón en Ajustes */
