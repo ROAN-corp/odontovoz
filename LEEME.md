@@ -135,6 +135,17 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.23 · «Ficha nueva» en FORN, con o sin paciente (24/11/2026)
+
+- Pedido de Rodrigo: crear fichas desde el apartado FORN y que quede registro en la organización, porque es lo que se cobra cuando pagan las obras sociales.
+- `app109`. En «FORN · Presentación mensual» hay un botón **«+ Ficha nueva»** (`frnNew`):
+  - **Con paciente:** se lo busca (`frnNewPat`) y se crea la ficha del mes que se está viendo, completada sola (`newFicha` + `pull`). Si ya tenía la de ese mes, se abre esa.
+  - **Sin paciente:** se crea con `frnNewFree` y se completan a mano apellido, nombre y DNI (`frnP`, `f.pat`). Se guarda en un registro de la organización que se sincroniza con la nube como **`fornfree`** (`A.cloudExtra`, y en el equipo en `localStorage` `odontovoz.fornfree.<owner>`). Aparece en el listado del mes con la etiqueta «sin paciente asignado», entra en el PDF (sin odontograma ni periodontograma) y se puede borrar.
+  - **Asignar** (`frnAsg`, `frnAsgPick`): la ficha pasa de `fornfree` a `pd.forn` del paciente, completa los datos que falten con los de su ficha y queda en su historial (`alog`).
+- `patOf(pid, f)` da los datos del paciente para el editor, el listado y el PDF, tenga o no paciente asignado.
+- Probado en celular y PC: con paciente, sin paciente, listado, PDF de 2 fichas, persistencia al recargar, clave `fornfree` en la sincronización y asignación (el registro sin paciente queda vacío).
+- Compilación 1.78.0.
+
 ## OdontoVoz 1.22.3 · logo de la FORN en el menú (24/11/2026)
 
 - `app109` (`menu()`): en la entrada del menú principal, el círculo del logo (PNG de 72 px con fondo transparente, `EMB`, 1,7 KB) hace de ícono y el logotipo «FORN | Federación Odontológica de Río Negro» (JPG de 270×77 px, `MARCA`, 10 KB) reemplaza al título, con «Presentación mensual» debajo.

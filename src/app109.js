@@ -11,8 +11,19 @@
   const mesTxt = m => { const p = String(m || '').split('-'); return p.length === 2 ? A.cap(MESES[(+p[1] || 1) - 1]) + ' ' + p[0] : ''; };
   const thisMonth = () => A.today().slice(0, 7);
   const addMonth = (m, k) => { let [y, mm] = m.split('-').map(Number); mm += k; while (mm < 1) { mm += 12; y--; } while (mm > 12) { mm -= 12; y++; } return y + '-' + String(mm).padStart(2, '0'); };
-  const list = pid => { const pd = A.pd(pid); return (pd.forn = pd.forn || []); };
+  /* 1.23: fichas sin paciente asignado. Son registro de la organización y se sincronizan con la clave «fornfree». */
+  const FKEY = () => 'odontovoz.fornfree.' + ((A.ownerId && A.ownerId()) || 'local');
+  let FREE = null;
+  const freeGet = () => { if (FREE) return FREE; try { FREE = JSON.parse(localStorage.getItem(FKEY()) || 'null'); } catch (e) { FREE = null; } if (!FREE || !Array.isArray(FREE.list)) FREE = { list: [] }; return FREE; };
+  const freeSet = v => { FREE = v && Array.isArray(v.list) ? v : { list: [] }; try { localStorage.setItem(FKEY(), JSON.stringify(FREE)); } catch (e) { /* lleno */ } };
+  const freeSave = () => { freeSet(freeGet()); try { A.save && A.save(); } catch (e) { /* nada */ } };
+  const xPrev = A.cloudExtra, kPrev = A.cloudExtraKeys;
+  A.cloudExtra = k => (k === 'fornfree' ? { get: () => (freeGet().list.length ? freeGet() : null), set: v => freeSet(v) } : (xPrev ? xPrev(k) : null));
+  A.cloudExtraKeys = () => ['fornfree'].concat(kPrev ? kPrev() : []);
+  const list = pid => { if (!pid) return freeGet().list; const pd = A.pd(pid); return (pd.forn = pd.forn || []); };
   const byId = (pid, id) => list(pid).filter(f => f.id === id)[0] || null;
+  /* datos del paciente: de su ficha o, si la ficha FORN no tiene paciente asignado, los que se escribieron a mano */
+  const patOf = (pid, f) => { if (pid && A.PAT(pid)) return A.PAT(pid); const x = (f && f.pat) || {}; return { id: '', first: x.first || '', last: x.last || '', name: ((x.first || '') + ' ' + (x.last || '')).trim(), dni: x.dni || '', cov: (f && f.os) || '', birth: (f && f.birth) || '', age: '' }; };
   const ESTADO = { borrador: 'Borrador', lista: 'Lista para presentar', presentada: 'Presentada' };
   const ECLS = { borrador: '', lista: 'acc', presentada: 'ok' };
   const dmy = d => (d ? A.fmtDMY(d) : '');
@@ -52,7 +63,7 @@
     if (!FD) return null;
     if (f.fornSlug) return (FD.os || []).filter(o => o.slug === f.fornSlug)[0] || null;
     if (f.fornSlug === '') return null;
-    const p = A.PAT(pid) || {}, name = f.os || p.cov || ''; if (isPart(name)) return null;
+    const p = patOf(pid, f), name = f.os || p.cov || ''; if (isPart(name)) return null;
     let o = null; try { o = A.osOf ? A.osOf(Object.assign({}, p, { cov: name })) : null; } catch (e) { /* nada */ }
     try { return A.fornMatch(o || { name, sigla: name }) || null; } catch (e) { return null; }
   }
@@ -102,23 +113,25 @@
     const f = list(pid).filter(x => x.mes === mes)[0] || newFicha(pid, mes);
     openEd(pid, f.id);
   };
-  A.acts.frnEdit = el => openEd(el.getAttribute('data-pid'), el.getAttribute('data-id'));
+  A.acts.frnEdit = el => openEd(el.getAttribute('data-pid') || null, el.getAttribute('data-id'));
   function openEd(pid, id) { loadCodes(); S.modal = { type: 'frnEd', pid, id, back: S.modal && S.modal.type === 'frnMes' ? S.modal : null }; A.renderModal(); }
 
   MF.frnEd = m => {
-    const p = A.PAT(m.pid) || {}, f = byId(m.pid, m.id);
+    const f = byId(m.pid, m.id), p = patOf(m.pid, f);
     if (!f) return A.modalShell('Ficha FORN', '<p>No encontré esa ficha.</p>', '<button class="btn" data-act="closeModal">Cerrar</button>');
     const fo = fornOs(m.pid, f), L = codesOf(fo);
     const fld = (k, lbl, type, ph) => '<label class="field"><span>' + lbl + '</span><input class="inp" ' + (type ? 'type="' + type + '" ' : '') + 'data-chg="frnF" data-k="' + k + '" value="' + esc(f[k] || '') + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + '></label>';
     let b = '<div class="frn-ed">' +
-      '<div class="frn-top"><div><b class="frn-pat">' + esc(p.name || '') + '</b><span class="hint" style="margin:0">DNI ' + esc(p.dni || '—') + (p.birth ? ' · ' + esc(ageOf(f.birth || p.birth)) + ' años' : '') + '</span></div>' +
+      (m.pid ? '<div class="frn-top"><div><b class="frn-pat">' + esc(p.name || '') + '</b><span class="hint" style="margin:0">DNI ' + esc(p.dni || '—') + (p.birth ? ' · ' + esc(ageOf(f.birth || p.birth)) + ' años' : '') + '</span></div>'
+        : '<div class="frn-free"><p class="hint" style="margin:0">Ficha sin paciente asignado: completá los datos a mano o <button class="lnk" data-act="frnAsg">asignala a un paciente</button>.</p><div class="frn-grid">' +
+          ['last|Apellido', 'first|Nombre', 'dni|DNI'].map(x => { const k = x.split('|'); return '<label class="field"><span>' + k[1] + '</span><input class="inp" data-chg="frnP" data-k="' + k[0] + '" value="' + esc((f.pat || {})[k[0]] || '') + '"></label>'; }).join('') + '</div></div><div class="frn-top">') +
       '<label class="field frn-mes"><span>Mes</span><input class="inp" type="month" data-chg="frnF" data-k="mes" value="' + esc(f.mes) + '"></label></div>' +
       '<details class="frn-dat"' + (f.afil && f.os ? '' : ' open') + '><summary>Datos del paciente para la ficha' + (f.afil ? '' : ' <span class="chip warn">falta N° de afiliado</span>') + '</summary><div class="frn-grid">' +
       fld('os', 'Obra social', '', 'Ej.: OSPe') + fld('afil', 'N° de afiliado') + fld('addr', 'Domicilio') + fld('loc', 'Localidad') + fld('tel', 'Teléfono') + fld('birth', 'Fecha de nacimiento', 'date') +
       '</div><p class="hint" style="margin:6px 0 0">Vienen de la ficha del paciente. Si cambiás algo acá, se guarda también en su ficha.</p></details>' +
       '<label class="field"><span>Odontólogo</span><select class="inp" data-chg="frnF" data-k="pro">' + (A.PROS || []).map(x => '<option value="' + esc(x.id) + '"' + (x.id === f.pro ? ' selected' : '') + '>' + esc(x.name) + (x.mat ? ' · Mat. ' + esc(x.mat) : '') + '</option>').join('') + '</select></label>' +
       (proOf(f.pro).mat ? '' : '<p class="hint warn" style="margin:0">Este profesional no tiene la matrícula cargada (Ajustes › Profesionales). En la ficha queda en blanco.</p>') +
-      '<h4 class="frn-h">Prácticas a facturar <button class="btn small" data-act="frnPull">Traer lo realizado en ' + esc(mesTxt(f.mes)) + '</button></h4>' +
+      '<h4 class="frn-h">Prácticas a facturar ' + (m.pid ? '<button class="btn small" data-act="frnPull">Traer lo realizado en ' + esc(mesTxt(f.mes)) + '</button>' : '') + '</h4>' +
       osPick(m.pid, f, fo) +
       '<div class="frn-rows">' + (f.rows.length ? f.rows.map((r, i) => { const x = L.filter(y => y.c === r.cod)[0]; return '<div class="frn-row">' +
         '<input class="inp" type="date" aria-label="Fecha" data-chg="frnR" data-i="' + i + '" data-k="fecha" value="' + esc(r.fecha || '') + '">' +
@@ -146,14 +159,14 @@
   }
   A.chg.frnOsSel = el => { const f = cur(); if (!f) return; f.fornSlug = el.value; save(); A.renderModal(); };
   const cur = () => { const m = S.modal; return m && m.type === 'frnEd' ? byId(m.pid, m.id) : null; };
-  const save = () => { const m = S.modal; if (m && m.pid) A.touchPd(m.pid); };
+  const save = () => { const m = S.modal; if (!m) return; if (m.pid) A.touchPd(m.pid); else freeSave(); };
   const PROF = { afil: 'afil', addr: 'addr', loc: 'loc', tel: 'phone', birth: 'birth' };
   A.chg.frnF = el => {
     const f = cur(); if (!f) return; const k = el.getAttribute('data-k'), v = el.value;
     if (k === 'mes' && !/^\d{4}-\d{2}$/.test(v)) return;
     f[k] = v; f.upd = new Date().toISOString(); save();
     /* lo que se corrige del paciente vuelve a su ficha */
-    if (PROF[k] && A.setProfile) { const o = {}; o[PROF[k]] = v; A.setProfile(S.modal.pid, o); }
+    if (PROF[k] && A.setProfile && S.modal.pid) { const o = {}; o[PROF[k]] = v; A.setProfile(S.modal.pid, o); }
     if (k === 'mes' || k === 'pro') A.renderModal();
   };
   A.chg.frnR = el => {
@@ -168,13 +181,14 @@
   A.chg.frnPerio = el => { const f = cur(); if (f) { f.perio = el.checked; save(); } };
   A.acts.frnAddRow = () => { const f = cur(); if (!f) return; f.rows.push({ id: A.uid(), fecha: A.today().slice(0, 7) === f.mes ? A.today() : f.mes + '-01', pieza: '', cara: '', cod: '', desc: '' }); save(); A.renderModal(); };
   A.acts.frnDelRow = el => { const f = cur(); if (!f) return; f.rows.splice(+el.getAttribute('data-i'), 1); save(); A.renderModal(); };
-  A.acts.frnPull = () => { const f = cur(); if (!f) return; pull(S.modal.pid, f); save(); A.renderModal(); };
+  A.chg.frnP = el => { const f = cur(); if (!f) return; f.pat = f.pat || {}; f.pat[el.getAttribute('data-k')] = el.value.trim(); f.upd = new Date().toISOString(); save(); };
+  A.acts.frnPull = () => { const f = cur(); if (!f || !S.modal.pid) return; pull(S.modal.pid, f); save(); A.renderModal(); };
   A.acts.frnSigClear = () => { const f = cur(); if (!f) return; f.sig = ''; f.sigAt = ''; save(); A.renderModal(); };
   A.acts.frnDone = () => { const m = S.modal; S.modal = m.back || null; if (S.modal && S.modal.type === 'frnMes') { /* volver al listado */ } A.renderModal(); A.refresh(); };
   A.acts.frnDelAsk = () => { const m = S.modal; S.modal = { type: 'frnDel', pid: m.pid, id: m.id, back: m.back }; A.renderModal(); };
-  MF.frnDel = m => { const f = byId(m.pid, m.id); return A.modalShell('Borrar la ficha FORN', '<p>¿Borrar la ficha de <b>' + esc((A.PAT(m.pid) || {}).name || '') + '</b> de ' + esc(mesTxt(f && f.mes)) + '? Las prácticas del plan de tratamiento no se tocan.</p>', '<button class="btn" data-act="frnDelNo">Cancelar</button><button class="btn danger" data-act="frnDelGo">Borrar</button>'); };
+  MF.frnDel = m => { const f = byId(m.pid, m.id); return A.modalShell('Borrar la ficha FORN', '<p>¿Borrar la ficha de <b>' + esc(patOf(m.pid, f).name || 'sin paciente') + '</b> de ' + esc(mesTxt(f && f.mes)) + '? Las prácticas del plan de tratamiento no se tocan.</p>', '<button class="btn" data-act="frnDelNo">Cancelar</button><button class="btn danger" data-act="frnDelGo">Borrar</button>'); };
   A.acts.frnDelNo = () => { const m = S.modal; S.modal = { type: 'frnEd', pid: m.pid, id: m.id, back: m.back }; A.renderModal(); };
-  A.acts.frnDelGo = () => { const m = S.modal, pd = A.pd(m.pid); pd.forn = (pd.forn || []).filter(f => f.id !== m.id); A.touchPd(m.pid); S.modal = m.back || null; A.renderModal(); A.refresh(); A.toast('Ficha FORN borrada.'); };
+  A.acts.frnDelGo = () => { const m = S.modal; if (m.pid) { const pd = A.pd(m.pid); pd.forn = (pd.forn || []).filter(f => f.id !== m.id); A.touchPd(m.pid); } else { const F = freeGet(); F.list = F.list.filter(f => f.id !== m.id); freeSave(); } S.modal = m.back || null; A.renderModal(); A.refresh(); A.toast('Ficha FORN borrada.'); };
 
   /* firma con el dedo (o el mouse) */
   A.modalAfter = A.modalAfter || {};
@@ -195,7 +209,8 @@
   function monthFichas(mes, pro) {
     const out = [];
     A.PATS.forEach(p => { if (p.deleted) return; const pd = S.pd && S.pd[p.id]; ((pd && pd.forn) || []).forEach(f => { if (f.mes === mes && (!pro || f.pro === pro)) out.push({ p, f }); }); });
-    return out.sort((a, b) => (a.p.last + a.p.first).localeCompare(b.p.last + b.p.first, 'es'));
+    freeGet().list.forEach(f => { if (f.mes === mes && (!pro || f.pro === pro)) out.push({ p: patOf(null, f), f, free: true }); });
+    return out.sort((a, b) => ((a.p.last || '') + (a.p.first || '')).localeCompare((b.p.last || '') + (b.p.first || ''), 'es'));
   }
   MF.frnMes = m => {
     const L = monthFichas(m.mes, m.pro), nPr = L.reduce((s, x) => s + x.f.rows.length, 0), sinFirma = L.filter(x => !x.f.sig).length, sinAfil = L.filter(x => !x.f.afil).length;
@@ -206,25 +221,70 @@
     if (!L.length) b += '<p class="frn-empty">Todavía no hay fichas de ' + esc(mesTxt(m.mes)) + '. Se arman desde la ficha de cada paciente: <b>Datos e historia › FORN › «+ Ficha del mes»</b>.</p>';
     else {
       if (sinFirma || sinAfil) b += '<p class="hint warn" style="margin:0 0 8px">' + [sinFirma ? sinFirma + ' sin la firma del paciente' : '', sinAfil ? sinAfil + ' sin N° de afiliado' : ''].filter(Boolean).join(' · ') + '.</p>';
-      b += '<ul class="frn-list">' + L.map(x => '<li><button class="frn-it" data-act="frnEdit" data-pid="' + esc(x.p.id) + '" data-id="' + esc(x.f.id) + '"><span class="frn-n"><b>' + esc(x.p.last + ', ' + x.p.first) + '</b><small>' + esc(x.f.os || x.p.cov || '') + (x.f.afil ? ' · Afil. ' + esc(x.f.afil) : '') + ' · ' + x.f.rows.length + ' práctica' + (x.f.rows.length === 1 ? '' : 's') + (x.f.rows.length ? ': ' + esc(x.f.rows.map(r => r.cod || '?').slice(0, 6).join(', ')) : '') + '</small></span>' +
+      b += '<ul class="frn-list">' + L.map(x => '<li><button class="frn-it" data-act="frnEdit" data-pid="' + esc(x.p.id || '') + '" data-id="' + esc(x.f.id) + '"><span class="frn-n"><b>' + esc(x.p.last || x.p.first ? (x.p.last || '') + ', ' + (x.p.first || '') : 'Sin paciente') + '</b>' + (x.free ? ' <span class="chip warn">sin paciente asignado</span>' : '') + '<small>' + [esc(x.f.os || x.p.cov || ''), x.f.afil ? 'Afil. ' + esc(x.f.afil) : ''].filter(Boolean).concat(['']).join(' · ') + x.f.rows.length + ' práctica' + (x.f.rows.length === 1 ? '' : 's') + (x.f.rows.length ? ': ' + esc(x.f.rows.map(r => r.cod || '?').slice(0, 6).join(', ')) : '') + '</small></span>' +
         '<span class="frn-st">' + (x.f.sig ? '<span class="chip ok">firmada</span>' : '<span class="chip warn">sin firma</span>') + '<span class="chip ' + ECLS[x.f.estado] + '">' + ESTADO[x.f.estado] + '</span></span></button></li>').join('') + '</ul>';
     }
     return A.modalShell('FORN · Presentación mensual', b,
-      '<button class="btn" data-act="closeModal">Cerrar</button>' + (L.length ? '<button class="btn" data-act="frnMarkAll">Marcar como presentadas</button><button class="btn" data-act="frnMail">Mail</button><button class="btn" data-act="frnShare">WhatsApp / Compartir</button><button class="btn primary" data-act="frnPdfAll">PDF con todas</button>' : ''), true)
+      '<button class="btn" data-act="closeModal">Cerrar</button><button class="btn" data-act="frnNew">+ Ficha nueva</button>' + (L.length ? '<button class="btn" data-act="frnMarkAll">Marcar como presentadas</button><button class="btn" data-act="frnMail">Mail</button><button class="btn" data-act="frnShare">WhatsApp / Compartir</button><button class="btn primary" data-act="frnPdfAll">PDF con todas</button>' : ''), true)
       .replace('<h2>FORN · Presentación mensual</h2>', '<h2 class="frn-logoh"><img src="' + LOGO + '" alt="FORN · Federación Odontológica de Río Negro" width="520" height="137"><span>Presentación mensual</span></h2>');
   };
   A.acts.frnMonth = el => { S.modal.mes = addMonth(S.modal.mes, +el.getAttribute('data-k')); A.renderModal(); };
   A.chg.frnProF = el => { S.modal.pro = el.value; A.renderModal(); };
   A.acts.frnMarkAll = () => {
     const m = S.modal, L = monthFichas(m.mes, m.pro), pids = {};
-    L.forEach(x => { x.f.estado = 'presentada'; x.f.presAt = new Date().toISOString(); pids[x.p.id] = 1; });
-    Object.keys(pids).forEach(pid => A.touchPd(pid)); A.renderModal(); A.toast(L.length + ' ficha' + (L.length === 1 ? '' : 's') + ' marcada' + (L.length === 1 ? '' : 's') + ' como presentada' + (L.length === 1 ? '' : 's') + '.');
+    L.forEach(x => { x.f.estado = 'presentada'; x.f.presAt = new Date().toISOString(); if (x.p.id) pids[x.p.id] = 1; });
+    Object.keys(pids).forEach(pid => A.touchPd(pid)); if (L.some(x => x.free)) freeSave(); A.renderModal(); A.toast(L.length + ' ficha' + (L.length === 1 ? '' : 's') + ' marcada' + (L.length === 1 ? '' : 's') + ' como presentada' + (L.length === 1 ? '' : 's') + '.');
+  };
+
+  /* ---------- ficha nueva desde el apartado FORN: con un paciente o sin paciente (se asigna después, si se quiere) ---------- */
+  function patResults(q, act, extra) {
+    if (A.norm(q || '').length < 2) return '<p class="hint" style="margin:0">Escribí al menos 2 letras del nombre, el apellido o el DNI.</p>';
+    const r = (A.searchPats(q, 8) || []).filter(p => !p.deleted);
+    if (!r.length) return '<p class="hint" style="margin:0">No encontré pacientes con eso.</p>';
+    return '<div class="mvn-res">' + r.map(p => '<button class="mvn-p" data-act="' + act + '" data-pid="' + esc(p.id) + '"' + (extra || '') + '>' + (A.avatarSm ? A.avatarSm(p.id, 'av-sm') : '') + '<span><b>' + esc(p.name) + '</b><small>DNI ' + esc(p.dni || '—') + ' · ' + esc(p.cov || 'Particular') + '</small></span></button>').join('') + '</div>';
+  }
+  A.acts.frnNew = () => { const m = S.modal; S.modal = { type: 'frnNew', mes: (m && m.mes) || thisMonth(), q: '', back: m && m.type === 'frnMes' ? m : null }; A.renderModal(); setTimeout(() => { const i = $('#frnNQ'); if (i) i.focus(); }, 50); };
+  MF.frnNew = m => A.modalShell('Ficha nueva · ' + mesTxt(m.mes),
+    '<label class="field"><span>¿De qué paciente?</span><input class="inp" id="frnNQ" data-in="frnNQ" autocomplete="off" placeholder="Nombre, apellido o DNI" value="' + esc(m.q) + '"></label><div id="frnNRes">' + patResults(m.q, 'frnNewPat') + '</div>' +
+    '<p class="hint">Se completa sola con sus datos y con lo que le hiciste en ' + esc(mesTxt(m.mes)) + '. Si ya tiene la ficha de ese mes, se abre esa.</p>' +
+    '<div class="frn-or"><span>o</span></div><button class="btn" data-act="frnNewFree">Crear sin paciente (la completo a mano)</button>' +
+    '<p class="hint">Queda en el registro FORN de la organización. Después la podés asignar a un paciente.</p>',
+    '<button class="btn" data-act="frnNewBack">Volver</button>');
+  let tq = null;
+  A.ins.frnNQ = el => { S.modal.q = el.value; clearTimeout(tq); tq = setTimeout(() => { const h = $('#frnNRes'); if (h && S.modal && S.modal.type === 'frnNew') h.innerHTML = patResults(S.modal.q, 'frnNewPat'); }, 120); };
+  A.acts.frnNewBack = () => { const m = S.modal; S.modal = m.back || null; A.renderModal(); };
+  A.acts.frnNewPat = el => {
+    const m = S.modal, pid = el.getAttribute('data-pid'), had = list(pid).filter(x => x.mes === m.mes)[0], f = had || newFicha(pid, m.mes);
+    if (had) A.toast('Ya tenía la ficha de ' + mesTxt(m.mes) + ': te la abro.');
+    loadCodes(); S.modal = { type: 'frnEd', pid, id: f.id, back: m.back }; A.renderModal();
+  };
+  A.acts.frnNewFree = () => {
+    const m = S.modal, f = { id: A.uid(), mes: m.mes, pro: ((A.PROS || [])[0] || {}).id, pat: { last: '', first: '', dni: '' }, afil: '', addr: '', loc: '', tel: '', birth: '', os: '', rows: [], obs: '', sig: '', perio: false, estado: 'borrador', at: new Date().toISOString() };
+    const me = A.actor && A.actor(); if (me && me.pro) f.pro = me.pro;
+    freeGet().list.push(f); freeSave(); loadCodes(); S.modal = { type: 'frnEd', pid: null, id: f.id, back: m.back }; A.renderModal();
+  };
+  /* asignar una ficha sin paciente a un paciente: pasa a su historia clínica */
+  A.acts.frnAsg = () => { const m = S.modal; S.modal = { type: 'frnAsg', id: m.id, q: ((cur() || {}).pat || {}).last || '', back: m.back }; A.renderModal(); setTimeout(() => { const i = $('#frnAQ'); if (i) i.focus(); }, 50); };
+  MF.frnAsg = m => A.modalShell('Asignar la ficha a un paciente',
+    '<label class="field"><span>Paciente</span><input class="inp" id="frnAQ" data-in="frnAQ" autocomplete="off" placeholder="Nombre, apellido o DNI" value="' + esc(m.q) + '"></label><div id="frnARes">' + patResults(m.q, 'frnAsgPick') + '</div>' +
+    '<p class="hint">La ficha pasa a su historia clínica. Los datos que falten (obra social, afiliado, domicilio…) se toman de su ficha.</p>',
+    '<button class="btn" data-act="frnAsgBack">Volver</button>');
+  A.ins.frnAQ = el => { S.modal.q = el.value; clearTimeout(tq); tq = setTimeout(() => { const h = $('#frnARes'); if (h && S.modal && S.modal.type === 'frnAsg') h.innerHTML = patResults(S.modal.q, 'frnAsgPick'); }, 120); };
+  A.acts.frnAsgBack = () => { const m = S.modal; S.modal = { type: 'frnEd', pid: null, id: m.id, back: m.back }; A.renderModal(); };
+  A.acts.frnAsgPick = el => {
+    const m = S.modal, pid = el.getAttribute('data-pid'), F = freeGet(), f = F.list.filter(x => x.id === m.id)[0], p = A.PAT(pid); if (!f || !p) return;
+    F.list = F.list.filter(x => x !== f); freeSave();
+    const fill = { afil: p.afil, addr: p.addr, loc: p.loc, tel: p.phone, birth: p.birth, os: isPart(p.cov) ? '' : p.cov }; Object.keys(fill).forEach(k => { if (!f[k] && fill[k]) f[k] = fill[k]; });
+    delete f.pat; list(pid).push(f); A.touchPd(pid);
+    if (A.alog) A.alog(pid, 'forn', 'Se le asignó la ficha FORN de ' + mesTxt(f.mes) + ' creada desde el apartado FORN.');
+    A.toast('Ficha asignada a ' + p.name + '.'); S.modal = { type: 'frnEd', pid, id: f.id, back: m.back }; A.renderModal();
   };
 
   /* ---------- PDF (A4 apaisada, como la ficha de papel) ---------- */
   const LINE = [40, 40, 40], RED = [207, 51, 45], BLUE = [31, 95, 191], MUT = [90, 100, 105];
   const clean = s => String(s == null ? '' : s).replace(/[−–—]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...');
   function faceMarks(pid) {
+    if (!pid) return {};
     const od = (A.pd(pid) || {}).odon || {}, out = {};
     Object.keys(od).forEach(n => {
       const d = od[n] || {}, w = d.whole || [], faces = {};
@@ -263,7 +323,7 @@
     d.setFontSize(6.5); d.setTextColor(...MUT); d.text('Rojo: existente / realizado   ·   Azul: a realizar', x0, y0 + 49);
   }
   function front(d, pid, f, rows, page, pages) {
-    const p = A.PAT(pid) || {}, pr = proOf(f.pro), W = 297;
+    const p = patOf(pid, f), pr = proOf(f.pro), W = 297;
     d.setTextColor(20, 20, 20); d.setDrawColor(...LINE);
     try { d.addImage(LOGO, 'JPEG', 9, 6, 60, 15.8, 'fornLogo', 'FAST'); } catch (e) { d.setFont('helvetica', 'bold'); d.setFontSize(11); d.text('FEDERACIÓN ODONTOLÓGICA DE RÍO NEGRO', 10, 13); }
     d.setFont('helvetica', 'normal'); d.setFontSize(7.3);
@@ -315,7 +375,7 @@
     d.text('Ficha generada con OdontoVoz. Firma del paciente: firma electrónica (Ley 25.506, art. 5)' + (f.sigAt ? ', ' + dmy(f.sigAt.slice(0, 10)) : '') + '.', 10, 203);
     if (f.perio) { d.setFont('helvetica', 'bold'); d.setFontSize(8); d.setTextColor(20, 20, 20); d.text('FICHA PERIODONTAL AL DORSO', 287, 203, { align: 'right' }); d.setFont('helvetica', 'normal'); }
   }
-  function lastExam(pid) { const P = (A.pd(pid) || {}).perio; const E = (P && P.exams) || []; return E.length ? E[E.length - 1] : null; }
+  function lastExam(pid) { if (!pid) return null; const P = (A.pd(pid) || {}).perio; const E = (P && P.exams) || []; return E.length ? E[E.length - 1] : null; }
   function back(d, pid) {
     const ex = lastExam(pid); d.setTextColor(20, 20, 20); d.setDrawColor(...LINE);
     d.setFont('helvetica', 'bold'); d.setFontSize(13); d.text('FICHA PERIODONTAL', 148.5, 13, { align: 'center' });
@@ -383,7 +443,7 @@
   }
   const fileName = (mes, who) => 'FORN-' + mes + (who ? '-' + A.norm(who).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '') + '.pdf';
   A.acts.frnPdf1 = () => {
-    const m = S.modal, f = cur(), p = A.PAT(m.pid); if (!f) return; const d = makeDoc(); if (!d) return;
+    const m = S.modal, f = cur(); if (!f) return; const p = patOf(m.pid, f); const d = makeDoc(); if (!d) return;
     addFicha(d, m.pid, f, true); A.saveFile(fileName(f.mes, p && p.last + ' ' + p.first), d.output('blob'));
   };
   function monthPdf() {
@@ -448,8 +508,10 @@
     '.frn-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; } .frn-bar b { font-size: 17px; min-width: 130px; text-align: center; } .frn-pro { max-width: 260px; }',
     '.frn-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }',
     '.frn-it { width: 100%; display: flex; align-items: center; gap: 10px; justify-content: space-between; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 10px 12px; cursor: pointer; font: inherit; flex-wrap: wrap; }',
-    '.frn-it:hover { border-color: var(--accent); } .frn-n { display: flex; flex-direction: column; min-width: 0; flex: 1 1 220px; } .frn-n small { color: var(--ink-2); font-size: 12.5px; overflow-wrap: anywhere; }',
+    '.frn-it:hover { border-color: var(--accent); } .frn-n { display: flex; flex-direction: column; min-width: 0; flex: 1 1 220px; } .frn-n .chip { align-self: flex-start; margin: 2px 0; } .frn-n small { color: var(--ink-2); font-size: 12.5px; overflow-wrap: anywhere; }',
     '.frn-st { display: flex; gap: 6px; flex-wrap: wrap; } .frn-empty { color: var(--ink-2); }',
+    '.frn-or { display: flex; align-items: center; gap: 10px; color: var(--ink-2); margin: 12px 0 8px; } .frn-or::before, .frn-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }',
+    '.frn-free { border: 1px dashed var(--warn); border-radius: 12px; padding: 10px 12px; background: var(--warn-soft); }',
     '.m-head h2.frn-logoh { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }',
     '.frn-logoh img { display: block; height: 46px; width: auto; max-width: 100%; background: #fff; border-radius: 10px; padding: 6px 10px; box-shadow: 0 0 0 1px var(--line); }',
     '.frn-logoh span { font-size: 14px; font-weight: 600; color: var(--ink-2); letter-spacing: .02em; }',
