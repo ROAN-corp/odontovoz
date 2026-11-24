@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.27.1', b: '1.82.1', d: '2026-11-24', items: [
+      { t: 'La fecha de nacimiento ahora se carga en tres casilleros: día, mes y año. Escribís o elegís el día, elegís el mes, escribís el año, y calcula la edad sola. Ya no hay que buscarla en el calendario.', top: true }] },
     { v: '1.27.0', b: '1.82.0', d: '2026-11-24', items: [
       { t: 'Planes nuevos: Profesional USD 22,21, Consultorio o Centro USD 45 (hasta 5 profesionales y 6 equipos, sin adicionales) y Empresa USD 96. Sin descuentos fijos: consultá por los disponibles. El precio en pesos se actualiza cada lunes con el dólar oficial.', top: true }] },
     { v: '1.26.0', b: '1.81.0', d: '2026-11-24', items: [

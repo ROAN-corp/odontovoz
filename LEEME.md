@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.27.1 · fecha de nacimiento en tres casilleros (24/11/2026)
+
+- Pedido de Rodrigo: el calendario del navegador para la fecha de nacimiento es engorroso. `src/app112.js` convierte cada `input[type=date]` de nacimiento (paciente nuevo `#npB`, ficha del paciente `#pf_birth`, historia de papel `#hp_birth`, ficha FORN `data-k="birth"`, o cualquier campo cuya etiqueta diga «nacimiento») en **Día** (se escribe o se elige de la lista), **Mes** (lista con los nombres) y **Año** (se escribe; 2 cifras se completan: 85 → 1985). Salta solo de un casillero al otro y muestra la edad. Valida (31 de febrero, fecha futura, antes de 1900) y avisa en rojo.
+- El `input[type=date]` original queda oculto y sigue siendo la fuente de la verdad: el módulo le pone el valor `AAAA-MM-DD` y dispara `input` y `change`, así que la edad, el guardado y el resto funcionan sin tocar nada. Si la voz u otro módulo cambia el valor, los casilleros lo siguen.
+
 ## OdontoVoz 1.27.0 · planes nuevos, dólar oficial y sitio web nuevo (24/11/2026)
 
 - **Precios** (dólares): Profesional **22,21** (= $37.753 con USD 1 = $1.700; +USD 3 por consultorio adicional), Consultorio o Centro **45** todo incluido (hasta **5 profesionales y 6 equipos**, sin adicional por profesional) y Empresa **96**. Se sacaron los descuentos (la promoción de noviembre) y se aclara «consultá por descuentos disponibles». Sincronizados: `src/app19.js` (límites 5/6), `src/app25.js`, `admin.html` (`DEF`, abono), `sitio/js/datos.js`, `sitio/terminos.html` y `supabase/planes-1-27.sql` (**correr una vez**: `ov_limits` con 5/6).
