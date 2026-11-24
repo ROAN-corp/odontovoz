@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.22.3', b: '1.77.3', d: '2026-11-24', items: [
+      { t: 'En el menú, FORN aparece con el logo de la Federación y «Presentación mensual» debajo.' }] },
     { v: '1.22.2', b: '1.77.2', d: '2026-11-23', items: [
       { t: '«FORN · Presentación mensual» está ahora en el menú principal, arriba de «Cambios de hoy · deshacer».' }] },
     { v: '1.22.1', b: '1.77.1', d: '2026-11-23', items: [

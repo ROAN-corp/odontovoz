@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.22.3 · logo de la FORN en el menú (24/11/2026)
+
+- `app109` (`menu()`): en la entrada del menú principal, el círculo del logo (PNG de 72 px con fondo transparente, `EMB`, 1,7 KB) hace de ícono y el logotipo «FORN | Federación Odontológica de Río Negro» (JPG de 270×77 px, `MARCA`, 10 KB) reemplaza al título, con «Presentación mensual» debajo.
+- Compilación 1.77.3.
+
 ## OdontoVoz 1.22.2 · FORN en el menú principal (23/11/2026)
 
 - `app109` (`menu()`): «FORN · Presentación mensual» pasó del grupo Ajustes, que está plegado, a `#gearMenu .dr-nav`, justo antes de `#jrBtn` («Cambios de hoy · deshacer»).
