@@ -1,8 +1,8 @@
 // Odonto Voz: funcionamiento sin conexión y avisos de versión nueva.
 // Cambiar VERSION en cada actualización publicada para que los teléfonos la reciban.
 // VERSION es interno (sigue subiendo); NAME es el número que ve la gente.
-const VERSION = 'odontovoz-1.80.2';
-const NAME = '1.25.2';
+const VERSION = 'odontovoz-1.81.0';
+const NAME = '1.26.0';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'jspdf.umd.min.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'icon-180.png'];
 
 self.addEventListener('install', e => {

@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.26.0', b: '1.81.0', d: '2026-11-24', items: [
+      { t: 'Cada profesional puede tener cargada su matrícula, su sello y su firma (Ajustes › Profesionales): se suben una sola vez con una foto y quedan registrados con fecha y quién los cargó. Se estampan solos en las fichas FORN.', top: true },
+      { t: 'FORN: al presentar las fichas del mes se sellan. Cada una lleva un código de verificación, ya no se pueden modificar (si hay un error, se hace una ficha de corrección) y el PDF mensual trae una nota de presentación con la firma y el sello del profesional.' }] },
     { v: '1.25.2', b: '1.80.2', d: '2026-11-24', items: [
       { t: 'En «Mis números» ahora elegís quién ve tu caja: Visible, Privada o Solo yo. En «Solo yo» además tus cobros no aparecen en «Para cobrar» y nadie más puede abrir tu caja, ni siquiera el dueño de la cuenta.', top: true }] },
     { v: '1.25.1', b: '1.80.1', d: '2026-11-24', items: [

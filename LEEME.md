@@ -135,6 +135,15 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.26.0 · sello, firma y ficha FORN sellada (24/11/2026)
+
+- Pedido de Rodrigo para la propuesta a la Federación: poder digitalizar todo, con el sello y la firma del profesional, y que lo presentado no se pueda tocar.
+- `app111` (nuevo): bloque «Matrícula, sello y firma» en Ajustes › Profesionales (`p.cred = {sello, firma, matFoto, at, by, h}`). Las fotos del sello y la firma se pasan a PNG con fondo transparente y color de tinta (`toInk`); la de la matrícula, a JPG de 900 px. Se registran con fecha, quién y una huella SHA-256. Es firma **electrónica registrada** (Ley 25.506 art. 5), no firma digital ni «validada» por un organismo.
+- Ficha FORN: `A.frnStamp` estampa firma y sello en el recuadro «Firma y sello»; el pie lleva el código de verificación (`A.frnCode`, SHA-256 de los datos de la ficha). «Marcar como presentadas» **sella** (`f.seal = {h, at, by, p}`): `cur()` de `app109` devuelve `null` y se frena toda edición, no se puede borrar ni reasignar. Si hay un error: «Hacer una ficha de corrección» (`frnCorr`, `f.corrige`). Si los datos no coinciden con el sello, el editor avisa.
+- PDF mensual: nota de presentación por profesional (`A.frnCover`) con la declaración, el código del lote, la firma y el sello y la lista de fichas con su código.
+- Las fichas ya marcadas como presentadas antes de esta versión no tienen sello (siguen editables).
+- La foto de la matrícula viaja con el resto de los profesionales (la ven los usuarios del equipo).
+
 ## OdontoVoz 1.25.2 · «Solo yo» (24/11/2026)
 
 - `app110`: tres niveles de caja propia en «Mis números» (`A.chg.pvMine`, selector): Visible, Privada (`cfg.priv`) y Solo yo (`cfg.solo`). `A.proSolo`/`A.soloFrom`; `privLocked`: en «Solo yo» solo el propio profesional la abre (ni el dueño de la cuenta). `A.pcList` oculta de «Para cobrar» lo de una caja «Solo yo» ajena.

@@ -158,7 +158,10 @@
       '<option value=""' + (fo ? '' : ' selected') + '>Todas las obras sociales</option>' + all.map(o => '<option value="' + esc(o.slug) + '"' + (fo && fo.slug === o.slug ? ' selected' : '') + '>' + esc(o.name + (o.sub && o.sub.length < 40 ? ' · ' + o.sub : '')) + '</option>').join('') + '</select></label>';
   }
   A.chg.frnOsSel = el => { const f = cur(); if (!f) return; f.fornSlug = el.value; save(); A.renderModal(); };
-  const cur = () => { const m = S.modal; return m && m.type === 'frnEd' ? byId(m.pid, m.id) : null; };
+  const curAny = () => { const m = S.modal; return m && m.type === 'frnEd' ? byId(m.pid, m.id) : null; };
+  /* 1.26: una ficha sellada no se modifica (cur() devuelve null y todas las ediciones se frenan) */
+  const cur = () => { const f = curAny(); return f && A.frnIsSealed && A.frnIsSealed(f) ? null : f; };
+  A.frnFicha = byId; A.frnList = list; A.frnOpenEd = (pid, id) => openEd(pid, id); A.frnFreeSave = () => freeSave();
   const save = () => { const m = S.modal; if (!m) return; if (m.pid) A.touchPd(m.pid); else freeSave(); };
   const PROF = { afil: 'afil', addr: 'addr', loc: 'loc', tel: 'phone', birth: 'birth' };
   A.chg.frnF = el => {
@@ -188,7 +191,7 @@
   A.acts.frnDelAsk = () => { const m = S.modal; S.modal = { type: 'frnDel', pid: m.pid, id: m.id, back: m.back }; A.renderModal(); };
   MF.frnDel = m => { const f = byId(m.pid, m.id); return A.modalShell('Borrar la ficha FORN', '<p>¿Borrar la ficha de <b>' + esc(patOf(m.pid, f).name || 'sin paciente') + '</b> de ' + esc(mesTxt(f && f.mes)) + '? Las prácticas del plan de tratamiento no se tocan.</p>', '<button class="btn" data-act="frnDelNo">Cancelar</button><button class="btn danger" data-act="frnDelGo">Borrar</button>'); };
   A.acts.frnDelNo = () => { const m = S.modal; S.modal = { type: 'frnEd', pid: m.pid, id: m.id, back: m.back }; A.renderModal(); };
-  A.acts.frnDelGo = () => { const m = S.modal; if (m.pid) { const pd = A.pd(m.pid); pd.forn = (pd.forn || []).filter(f => f.id !== m.id); A.touchPd(m.pid); } else { const F = freeGet(); F.list = F.list.filter(f => f.id !== m.id); freeSave(); } S.modal = m.back || null; A.renderModal(); A.refresh(); A.toast('Ficha FORN borrada.'); };
+  A.acts.frnDelGo = () => { const m = S.modal; if (A.frnIsSealed(byId(m.pid, m.id))) { A.toast('Una ficha sellada no se puede borrar.'); S.modal = m.back || null; A.renderModal(); return; } if (m.pid) { const pd = A.pd(m.pid); pd.forn = (pd.forn || []).filter(f => f.id !== m.id); A.touchPd(m.pid); } else { const F = freeGet(); F.list = F.list.filter(f => f.id !== m.id); freeSave(); } S.modal = m.back || null; A.renderModal(); A.refresh(); A.toast('Ficha FORN borrada.'); };
 
   /* firma con el dedo (o el mouse) */
   A.modalAfter = A.modalAfter || {};
@@ -232,7 +235,7 @@
   A.chg.frnProF = el => { S.modal.pro = el.value; A.renderModal(); };
   A.acts.frnMarkAll = () => {
     const m = S.modal, L = monthFichas(m.mes, m.pro), pids = {};
-    L.forEach(x => { x.f.estado = 'presentada'; x.f.presAt = new Date().toISOString(); if (x.p.id) pids[x.p.id] = 1; });
+    L.forEach(x => { x.f.estado = 'presentada'; x.f.presAt = new Date().toISOString(); if (A.frnSeal) A.frnSeal(x.f, x.p); if (x.p.id) pids[x.p.id] = 1; });
     Object.keys(pids).forEach(pid => A.touchPd(pid)); if (L.some(x => x.free)) freeSave(); A.renderModal(); A.toast(L.length + ' ficha' + (L.length === 1 ? '' : 's') + ' marcada' + (L.length === 1 ? '' : 's') + ' como presentada' + (L.length === 1 ? '' : 's') + '.');
   };
 
@@ -264,7 +267,7 @@
     freeGet().list.push(f); freeSave(); loadCodes(); S.modal = { type: 'frnEd', pid: null, id: f.id, back: m.back }; A.renderModal();
   };
   /* asignar una ficha sin paciente a un paciente: pasa a su historia clínica */
-  A.acts.frnAsg = () => { const m = S.modal; S.modal = { type: 'frnAsg', id: m.id, q: ((cur() || {}).pat || {}).last || '', back: m.back }; A.renderModal(); setTimeout(() => { const i = $('#frnAQ'); if (i) i.focus(); }, 50); };
+  A.acts.frnAsg = () => { const m = S.modal; if (A.frnIsSealed(curAny())) return; S.modal = { type: 'frnAsg', id: m.id, q: ((cur() || {}).pat || {}).last || '', back: m.back }; A.renderModal(); setTimeout(() => { const i = $('#frnAQ'); if (i) i.focus(); }, 50); };
   MF.frnAsg = m => A.modalShell('Asignar la ficha a un paciente',
     '<label class="field"><span>Paciente</span><input class="inp" id="frnAQ" data-in="frnAQ" autocomplete="off" placeholder="Nombre, apellido o DNI" value="' + esc(m.q) + '"></label><div id="frnARes">' + patResults(m.q, 'frnAsgPick') + '</div>' +
     '<p class="hint">La ficha pasa a su historia clínica. Los datos que falten (obra social, afiliado, domicilio…) se toman de su ficha.</p>',
@@ -345,7 +348,7 @@
     lbl('ODONTÓLOGO', 172, 66); d.setFontSize(9.5); d.text(clean(pr.name || ''), 172, 71);
     d.line(170, 74, 287, 74); lbl('Matrícula Profesional N°', 172, 79); d.setFontSize(9.5); d.text(clean(pr.mat || ''), 210, 79);
     d.line(170, 82, 287, 82); lbl('Lugar y Fecha', 172, 87); d.setFontSize(9.5); d.text(clean(((A.CFG && A.CFG.addr) || '').split(',').pop().trim() + '  ' + dmy(A.today())), 194, 87);
-    d.line(170, 90, 287, 90); lbl('FIRMA Y SELLO', 215, 109);
+    d.line(170, 90, 287, 90); lbl('FIRMA Y SELLO', 215, 109); if (A.frnStamp) A.frnStamp(d, pr, f);
     /* prácticas */
     const tx = 10, ty = 118, cw = [24, 15, 15, 28, 70], rh = 9.4, heads = ['FECHA', 'PIEZA', 'CARA', 'CÓDIGO', 'FIRMA DEL PACIENTE'];
     d.setLineWidth(0.3); let x = tx; heads.forEach((h, i) => { d.rect(x, ty, cw[i], 6); lbl(h, x + cw[i] / 2 - d.getTextWidth(h) / 2, ty + 4.3); x += cw[i]; });
@@ -372,7 +375,7 @@
     /* observaciones y pie */
     lbl('Observaciones:', 10, 188); d.setFontSize(9); d.text(clean(f.obs || ''), 34, 187.4, { maxWidth: 160 }); d.line(33, 188.6, 200, 188.6);
     d.setFontSize(6.5); d.setTextColor(...MUT);
-    d.text('Ficha generada con OdontoVoz. Firma del paciente: firma electrónica (Ley 25.506, art. 5)' + (f.sigAt ? ', ' + dmy(f.sigAt.slice(0, 10)) : '') + '.', 10, 203);
+    d.text('Ficha generada con OdontoVoz. Firma del paciente: firma electrónica (Ley 25.506, art. 5)' + (f.sigAt ? ', ' + dmy(f.sigAt.slice(0, 10)) : '') + '.' + (A.frnCode ? '  Código de verificación: ' + A.frnCode(f, p) : ''), 10, 203);
     if (f.perio) { d.setFont('helvetica', 'bold'); d.setFontSize(8); d.setTextColor(20, 20, 20); d.text('FICHA PERIODONTAL AL DORSO', 287, 203, { align: 'right' }); d.setFont('helvetica', 'normal'); }
   }
   function lastExam(pid) { if (!pid) return null; const P = (A.pd(pid) || {}).perio; const E = (P && P.exams) || []; return E.length ? E[E.length - 1] : null; }
@@ -443,12 +446,12 @@
   }
   const fileName = (mes, who) => 'FORN-' + mes + (who ? '-' + A.norm(who).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '') + '.pdf';
   A.acts.frnPdf1 = () => {
-    const m = S.modal, f = cur(); if (!f) return; const p = patOf(m.pid, f); const d = makeDoc(); if (!d) return;
+    const m = S.modal, f = curAny(); if (!f) return; const p = patOf(m.pid, f); const d = makeDoc(); if (!d) return;
     addFicha(d, m.pid, f, true); A.saveFile(fileName(f.mes, p && p.last + ' ' + p.first), d.output('blob'));
   };
   function monthPdf() {
     const m = S.modal, L = monthFichas(m.mes, m.pro); if (!L.length) return null; const d = makeDoc(); if (!d) return null;
-    summary(d, m.mes, L, m.pro); L.forEach(x => addFicha(d, x.p.id, x.f, false));
+    summary(d, m.mes, L, m.pro); if (A.frnCover) A.frnCover(d, m.mes, L, m.pro); L.forEach(x => addFicha(d, x.p.id, x.f, false));
     return { blob: d.output('blob'), name: fileName(m.mes, m.pro ? proOf(m.pro).name : ''), L, mes: m.mes };
   }
   A._fornMonthPdf = monthPdf; /* para pruebas */
