@@ -8,7 +8,7 @@
     prueba: { name: 'Prueba gratis', pros: 40, devices: 5, locs: 5, centros: 5 }, /* 1.17: la prueba trae todo, para conocer cualquier plan */
     lite: { name: 'Profesional', pros: 1, devices: 2, locs: 1 }, /* 1.52: LITE ya no existe; las cuentas viejas quedan como Profesional */
     basico: { name: 'Profesional', pros: 1, devices: 2, locs: 1 },
-    consultorio: { name: 'Consultorio o Centro', pros: 3, devices: 5, locs: 1 },
+    consultorio: { name: 'Consultorio o Centro', pros: 5, devices: 6, locs: 1 }, /* 1.27: hasta 5 profesionales y 6 equipos, precio total sin adicionales */
     centro: { name: 'Consultorio o Centro', pros: 8, devices: 12, locs: 5 }, /* plan anterior (se respetan sus límites) */
     empresa: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 },
     red: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */

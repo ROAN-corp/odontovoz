@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.26.0';
+  A.VERSION = '1.27.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.81.0';
+  A.VBUILD = '1.82.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -11152,7 +11152,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     prueba: { name: 'Prueba gratis', pros: 40, devices: 5, locs: 5, centros: 5 }, /* 1.17: la prueba trae todo, para conocer cualquier plan */
     lite: { name: 'Profesional', pros: 1, devices: 2, locs: 1 }, /* 1.52: LITE ya no existe; las cuentas viejas quedan como Profesional */
     basico: { name: 'Profesional', pros: 1, devices: 2, locs: 1 },
-    consultorio: { name: 'Consultorio o Centro', pros: 3, devices: 5, locs: 1 },
+    consultorio: { name: 'Consultorio o Centro', pros: 5, devices: 6, locs: 1 }, /* 1.27: hasta 5 profesionales y 6 equipos, precio total sin adicionales */
     centro: { name: 'Consultorio o Centro', pros: 8, devices: 12, locs: 5 }, /* plan anterior (se respetan sus límites) */
     empresa: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 },
     red: { name: 'Empresa', pros: 40, devices: 60, locs: 5, centros: 5 } /* nombre viejo del plan Empresa */
@@ -11797,14 +11797,20 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
      MI PLAN Y MEJORAR PLAN
      --------------------------------------------------------------- */
   /* precios en dólares; en pesos se calculan con el dólar de referencia (mantener igual que en sitio/index.html y sitio/terminos.html) */
-  const DOLAR = 1570, USD = { lite: 17, basico: 17, consultorio: 35, centro: 35, empresa: 82, red: 82 }, USD_EXTRA = 3; /* 1.52: sin LITE; Consultorio y Centro unificados */
-  const PRICE = {}; Object.keys(USD).forEach(k => { PRICE[k] = USD[k] * DOLAR; });
+  /* 1.27: Profesional = equivalente en dólares de $37.753 (con USD 1 = $1.700); Consultorio o Centro USD 45 todo incluido; Empresa USD 96. El dólar oficial se actualiza solo (dolar.json, los lunes). */
+  const DOLAR0 = 1700, USD = { lite: 22.21, basico: 22.21, consultorio: 45, centro: 45, empresa: 96, red: 96 }, USD_EXTRA = 3; /* USD_EXTRA: solo el consultorio adicional del plan Profesional */
+  const usdTxt = n => 'USD ' + (Math.round(n * 100) / 100).toLocaleString('es-AR', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  A.usdTxt = usdTxt; let DOLAR = DOLAR0;
+  const PRICE = new Proxy({}, { get: (o, k) => USD[k] * A.DOLAR });
   A.PRICE_USD = USD; A.DOLAR = DOLAR;
+  /* dólar oficial: lo publica la web cada lunes (dolar.json); si no hay internet queda el último que se bajó */
+  try { const c = JSON.parse(localStorage.getItem('odontovoz.dolar') || 'null'); if (c && c.usd > 500 && c.usd < 100000) A.DOLAR = c.usd; } catch (e) { /* nada */ }
+  try { fetch('https://odontovoz.com.ar/dolar.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(d => { if (d && d.usd > 500 && d.usd < 100000) { A.DOLAR = +d.usd; try { localStorage.setItem('odontovoz.dolar', JSON.stringify({ usd: +d.usd, at: d.fecha || '' })); } catch (e) { /* nada */ } } }).catch(() => {}); } catch (e) { /* nada */ }
   const DESC = {
     lite: '1 profesional, en uno o varios consultorios',
     basico: '1 profesional, en uno o varios consultorios',
-    consultorio: 'Hasta 3 profesionales y 5 equipos, con recepción',
-    centro: 'Hasta 3 profesionales y 5 equipos, con recepción. Profesional adicional (con un equipo más): USD 3',
+    consultorio: 'Hasta 5 profesionales y 6 equipos, con recepción',
+    centro: 'Hasta 8 profesionales y 12 equipos, con recepción (plan anterior)',
     empresa: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño',
     red: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño'
   };
@@ -11827,9 +11833,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     else b += '<div class="pl-now"><b>Tu plan: ' + esc(planName(cur)) + '</b><span>' + esc(DESC[cur] || '') + '</span></div>';
     b += '<div class="pl-list">' + ORDER.map(k => {
       const on = k === cur, lower = cur && cur !== 'prueba' && ORDER.indexOf(k) < ORDER.indexOf(cur);
-      return '<div class="pl-it' + (on ? ' on' : '') + '"><div><b>' + esc(planName(k)) + '</b><small>' + esc(DESC[k]) + '</small></div><div class="pl-pr">USD ' + USD[k] + '<small>≈ ' + pesos(PRICE[k]) + ' por mes</small>' + (k === 'basico' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por consultorio extra, con un equipo más</small>' : k === 'consultorio' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por profesional extra, con un equipo más</small>' : '') + '</div>' +
+      return '<div class="pl-it' + (on ? ' on' : '') + '"><div><b>' + esc(planName(k)) + '</b><small>' + esc(DESC[k]) + '</small></div><div class="pl-pr">' + usdTxt(USD[k]) + '<small>≈ ' + pesos(PRICE[k]) + ' por mes</small>' + (k === 'basico' ? '<small>+ ' + usdTxt(USD_EXTRA) + ' (≈ ' + pesos(USD_EXTRA * A.DOLAR) + ') por consultorio extra, con un equipo más</small>' : '') + '</div>' +
         (on ? '<span class="pl-tag">Tu plan</span>' : '<a class="btn small' + (lower ? '' : ' primary') + '" target="_blank" rel="noopener" href="' + esc(waLink(k)) + '">' + (lower ? 'Cambiar a este' : cur && cur !== 'prueba' ? 'Mejorar a este' : 'Quiero este') + '</a>') + '</div>';
-    }).join('') + '</div><p class="hint">El cambio de plan lo hacemos nosotros por WhatsApp, en el momento. Precios en dólares, con su equivalente en pesos (USD 1 = ' + pesos(DOLAR) + '), IVA incluido. Abono mensual, sin permanencia.</p>';
+    }).join('') + '</div><p class="hint">El cambio de plan lo hacemos nosotros por WhatsApp, en el momento. Precios en dólares, con su equivalente en pesos (USD 1 = ' + pesos(A.DOLAR) + ', dólar oficial, se actualiza cada lunes), IVA incluido. Abono mensual, sin permanencia. Consultá por descuentos disponibles.</p>';
     return A.modalShell('Mi plan', b, '<a class="btn" target="_blank" rel="noopener" href="' + esc(waLink(null)) + '">Consultar por WhatsApp</a><button class="btn primary" data-act="closeModal">Listo</button>');
   };
   /* botón en el menú, en «Tu cuenta» */
@@ -16611,7 +16617,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const sup = A.SUPPORT || {}, num = String([].concat(sup.whatsapp || [])[0] || '').replace(/\D/g, ''), mail = CL && CL.session && CL.session.user ? CL.session.user.email : '';
     const txt = 'Hola, tengo OdontoVoz LITE y quiero pasar a PRO.' + (mail ? ' Mi cuenta: ' + mail : ''), link = num ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(txt) : 'mailto:somosroan@gmail.com?subject=' + encodeURIComponent('Pasar a PRO') + '&body=' + encodeURIComponent(txt);
     const usd = (A.PRICE_USD || {}).basico, pesos = usd && A.DOLAR ? ' (≈ $' + Math.round(usd * A.DOLAR).toLocaleString('es-AR') + ')' : '';
-    return A.modalShell('OdontoVoz PRO', '<p>Tu plan es <b>Profesional LITE</b>: pacientes, agenda, recordatorios, notas y cobros, con botones grandes.</p><p>Con <b>PRO</b> sumás odontograma y periodontograma, presupuestos y planes de tratamiento, fotos, consentimientos firmados, caja, turnero online, stock y más. Y podés pasar de LITE a PRO con un toque cuando quieras.</p>' + (usd ? '<div class="acct-box"><b>Profesional PRO</b><span>USD ' + usd + pesos + ' por mes. Tus datos quedan igual.</span></div>' : ''), '<button class="btn" data-act="closeModal">Ahora no</button><a class="btn primary" target="_blank" rel="noopener" href="' + esc(link) + '">Quiero PRO</a>');
+    return A.modalShell('OdontoVoz PRO', '<p>Tu plan es <b>Profesional LITE</b>: pacientes, agenda, recordatorios, notas y cobros, con botones grandes.</p><p>Con <b>PRO</b> sumás odontograma y periodontograma, presupuestos y planes de tratamiento, fotos, consentimientos firmados, caja, turnero online, stock y más. Y podés pasar de LITE a PRO con un toque cuando quieras.</p>' + (usd ? '<div class="acct-box"><b>Profesional PRO</b><span>' + (A.usdTxt ? A.usdTxt(usd) : 'USD ' + usd) + pesos + ' por mes. Tus datos quedan igual.</span></div>' : ''), '<button class="btn" data-act="closeModal">Ahora no</button><a class="btn primary" target="_blank" rel="noopener" href="' + esc(link) + '">Quiero PRO</a>');
   };
 
   /* ---------- menú, clase del cuerpo y secciones permitidas ---------- */
@@ -18527,6 +18533,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.27.0', b: '1.82.0', d: '2026-11-24', items: [
+      { t: 'Planes nuevos: Profesional USD 22,21, Consultorio o Centro USD 45 (hasta 5 profesionales y 6 equipos, sin adicionales) y Empresa USD 96. Sin descuentos fijos: consultá por los disponibles. El precio en pesos se actualiza cada lunes con el dólar oficial.', top: true }] },
     { v: '1.26.0', b: '1.81.0', d: '2026-11-24', items: [
       { t: 'Cada profesional puede tener cargada su matrícula, su sello y su firma (Ajustes › Profesionales): se suben una sola vez con una foto y quedan registrados con fecha y quién los cargó. Se estampan solos en las fichas FORN.', top: true },
       { t: 'FORN: al presentar las fichas del mes se sellan. Cada una lleva un código de verificación, ya no se pueden modificar (si hay un error, se hace una ficha de corrección) y el PDF mensual trae una nota de presentación con la firma y el sello del profesional.' }] },
@@ -21047,7 +21055,7 @@ const OVMenu = (function () {
   const CUR = { ARS: { s: '$', n: 'pesos' }, USD: { s: 'US$', n: 'dólares' }, EUR: { s: '€', n: 'euros' }, BRL: { s: 'R$', n: 'reales' } };
   const KEYS = Object.keys(CUR);
   /* cotización de referencia (pesos por unidad); la del dólar arranca con la de los planes */
-  const FX = () => { const f = A.CFG.fx || (A.CFG.fx = {}); if (!f.USD) f.USD = A.DOLAR || 1570; if (!f.EUR) f.EUR = Math.round((A.DOLAR || 1570) * 1.08); if (!f.BRL) f.BRL = Math.round((A.DOLAR || 1570) / 5.4); return f; };
+  const FX = () => { const f = A.CFG.fx || (A.CFG.fx = {}); if (!f.USD) f.USD = A.DOLAR || 1700; if (!f.EUR) f.EUR = Math.round((A.DOLAR || 1700) * 1.08); if (!f.BRL) f.BRL = Math.round((A.DOLAR || 1700) / 5.4); return f; };
   const rate = c => (c === 'ARS' ? 1 : +FX()[c] || 1);
   const fmt = (n, c) => (!c || c === 'ARS') ? A.money(n) : CUR[c].s + ' ' + Math.round(n).toLocaleString('es-AR');
   A.fmtCur = fmt;

@@ -8,9 +8,10 @@ fs.rmSync(site, { recursive: true, force: true });
 fs.cpSync(path.join(root, 'sitio'), site, { recursive: true });
 fs.cpSync(path.join(root, 'www'), path.join(site, 'app'), { recursive: true });
 for (const f of ['admin.html', 'privacidad.html']) fs.copyFileSync(path.join(root, f), path.join(site, f));
-/* tipografías propias en las páginas públicas (sin Google Fonts) */
-for (const f of fs.readdirSync(site).filter(x => x.endsWith('.html'))) {
-  try { const p = path.join(site, f), h = fs.readFileSync(p, 'utf8'), n = require('./fonts-local')(h, site); if (n !== h) fs.writeFileSync(p, n); } catch (e) { console.warn('Tipografías locales (' + f + '): ' + e.message); }
+/* tipografías propias en las páginas públicas (sin Google Fonts); también en las subcarpetas (/funciones/, /planes/…) */
+const htmls = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => e.isDirectory() ? (e.name === 'app' ? [] : htmls(path.join(dir, e.name))) : (e.name.endsWith('.html') ? [path.join(dir, e.name)] : []));
+for (const p of htmls(site)) {
+  try { const h = fs.readFileSync(p, 'utf8'), n = require('./fonts-local')(h, site).replace('href="fonts.css"', 'href="/fonts.css"'); if (n !== h) fs.writeFileSync(p, n); } catch (e) { console.warn('Tipografías locales (' + path.relative(site, p) + '): ' + e.message); }
 }
 fs.writeFileSync(path.join(site, '.nojekyll'), '');
 console.log('site/ lista:', fs.readdirSync(site).join(', '));

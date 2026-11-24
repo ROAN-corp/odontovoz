@@ -7,14 +7,20 @@
      MI PLAN Y MEJORAR PLAN
      --------------------------------------------------------------- */
   /* precios en dólares; en pesos se calculan con el dólar de referencia (mantener igual que en sitio/index.html y sitio/terminos.html) */
-  const DOLAR = 1570, USD = { lite: 17, basico: 17, consultorio: 35, centro: 35, empresa: 82, red: 82 }, USD_EXTRA = 3; /* 1.52: sin LITE; Consultorio y Centro unificados */
-  const PRICE = {}; Object.keys(USD).forEach(k => { PRICE[k] = USD[k] * DOLAR; });
+  /* 1.27: Profesional = equivalente en dólares de $37.753 (con USD 1 = $1.700); Consultorio o Centro USD 45 todo incluido; Empresa USD 96. El dólar oficial se actualiza solo (dolar.json, los lunes). */
+  const DOLAR0 = 1700, USD = { lite: 22.21, basico: 22.21, consultorio: 45, centro: 45, empresa: 96, red: 96 }, USD_EXTRA = 3; /* USD_EXTRA: solo el consultorio adicional del plan Profesional */
+  const usdTxt = n => 'USD ' + (Math.round(n * 100) / 100).toLocaleString('es-AR', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  A.usdTxt = usdTxt; let DOLAR = DOLAR0;
+  const PRICE = new Proxy({}, { get: (o, k) => USD[k] * A.DOLAR });
   A.PRICE_USD = USD; A.DOLAR = DOLAR;
+  /* dólar oficial: lo publica la web cada lunes (dolar.json); si no hay internet queda el último que se bajó */
+  try { const c = JSON.parse(localStorage.getItem('odontovoz.dolar') || 'null'); if (c && c.usd > 500 && c.usd < 100000) A.DOLAR = c.usd; } catch (e) { /* nada */ }
+  try { fetch('https://odontovoz.com.ar/dolar.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(d => { if (d && d.usd > 500 && d.usd < 100000) { A.DOLAR = +d.usd; try { localStorage.setItem('odontovoz.dolar', JSON.stringify({ usd: +d.usd, at: d.fecha || '' })); } catch (e) { /* nada */ } } }).catch(() => {}); } catch (e) { /* nada */ }
   const DESC = {
     lite: '1 profesional, en uno o varios consultorios',
     basico: '1 profesional, en uno o varios consultorios',
-    consultorio: 'Hasta 3 profesionales y 5 equipos, con recepción',
-    centro: 'Hasta 3 profesionales y 5 equipos, con recepción. Profesional adicional (con un equipo más): USD 3',
+    consultorio: 'Hasta 5 profesionales y 6 equipos, con recepción',
+    centro: 'Hasta 8 profesionales y 12 equipos, con recepción (plan anterior)',
     empresa: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño',
     red: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño'
   };
@@ -37,9 +43,9 @@
     else b += '<div class="pl-now"><b>Tu plan: ' + esc(planName(cur)) + '</b><span>' + esc(DESC[cur] || '') + '</span></div>';
     b += '<div class="pl-list">' + ORDER.map(k => {
       const on = k === cur, lower = cur && cur !== 'prueba' && ORDER.indexOf(k) < ORDER.indexOf(cur);
-      return '<div class="pl-it' + (on ? ' on' : '') + '"><div><b>' + esc(planName(k)) + '</b><small>' + esc(DESC[k]) + '</small></div><div class="pl-pr">USD ' + USD[k] + '<small>≈ ' + pesos(PRICE[k]) + ' por mes</small>' + (k === 'basico' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por consultorio extra, con un equipo más</small>' : k === 'consultorio' ? '<small>+ USD ' + USD_EXTRA + ' (≈ ' + pesos(USD_EXTRA * DOLAR) + ') por profesional extra, con un equipo más</small>' : '') + '</div>' +
+      return '<div class="pl-it' + (on ? ' on' : '') + '"><div><b>' + esc(planName(k)) + '</b><small>' + esc(DESC[k]) + '</small></div><div class="pl-pr">' + usdTxt(USD[k]) + '<small>≈ ' + pesos(PRICE[k]) + ' por mes</small>' + (k === 'basico' ? '<small>+ ' + usdTxt(USD_EXTRA) + ' (≈ ' + pesos(USD_EXTRA * A.DOLAR) + ') por consultorio extra, con un equipo más</small>' : '') + '</div>' +
         (on ? '<span class="pl-tag">Tu plan</span>' : '<a class="btn small' + (lower ? '' : ' primary') + '" target="_blank" rel="noopener" href="' + esc(waLink(k)) + '">' + (lower ? 'Cambiar a este' : cur && cur !== 'prueba' ? 'Mejorar a este' : 'Quiero este') + '</a>') + '</div>';
-    }).join('') + '</div><p class="hint">El cambio de plan lo hacemos nosotros por WhatsApp, en el momento. Precios en dólares, con su equivalente en pesos (USD 1 = ' + pesos(DOLAR) + '), IVA incluido. Abono mensual, sin permanencia.</p>';
+    }).join('') + '</div><p class="hint">El cambio de plan lo hacemos nosotros por WhatsApp, en el momento. Precios en dólares, con su equivalente en pesos (USD 1 = ' + pesos(A.DOLAR) + ', dólar oficial, se actualiza cada lunes), IVA incluido. Abono mensual, sin permanencia. Consultá por descuentos disponibles.</p>';
     return A.modalShell('Mi plan', b, '<a class="btn" target="_blank" rel="noopener" href="' + esc(waLink(null)) + '">Consultar por WhatsApp</a><button class="btn primary" data-act="closeModal">Listo</button>');
   };
   /* botón en el menú, en «Tu cuenta» */

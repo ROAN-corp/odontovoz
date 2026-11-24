@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Versión actual: **1.26.0** (compilación 1.81.0), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
+Leé esto antes de tocar nada. Versión actual: **1.27.0** (compilación 1.82.0), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -8,7 +8,7 @@ Leé esto antes de tocar nada. Versión actual: **1.26.0** (compilación 1.81.0)
 - Hablale al usuario en castellano rioplatense, simple y sin jerga técnica.
 
 ## Direcciones
-- Web pública (landing): https://odontovoz.com.ar/ (fuente: `sitio/`; desde 1.52.1, la vieja roan-corp.github.io/odontovoz redirige)
+- Web pública: https://odontovoz.com.ar/ con páginas propias (`/funciones/`, `/planes/`, `/probala/`, `/descargas/`, `/tutoriales/`, `/preguntas/`, `/seguridad/`, `/contacto/`) y menú lateral; fuente en `sitio/` (CSS en `sitio/css`, JS en `sitio/js`; los planes y el contacto se editan en `sitio/js/datos.js`; desde 1.52.1, la vieja roan-corp.github.io/odontovoz redirige)
 - App web: https://odontovoz.com.ar/app/
 - Panel de licencias: https://odontovoz.com.ar/admin.html (admins: rodribobadilla5630@gmail.com y angelagatielo@gmail.com, tabla `ov_admins`)
 - APK: https://github.com/ROAN-corp/odontovoz/releases/latest/download/OdontoVoz.apk
@@ -37,7 +37,7 @@ Leé esto antes de tocar nada. Versión actual: **1.26.0** (compilación 1.81.0)
 - No repetir credenciales en el chat.
 
 ## Datos de negocio
-- Precios en dólares (USD 1 = $1.570, `DOLAR` en `src/app25.js`): Profesional USD 17 (+3 por consultorio extra), Centro USD 35 (+3 por profesional extra), Empresa USD 82. Prueba 7 días (14 para las primeras 50). Mantener iguales `PLAN` de `app19.js`, `PRICE`/`USD` de `app25.js`, `ov_limits()` del SQL, `DEF` de `admin.html`, tarjetas de `sitio/index.html` y `sitio/terminos.html`.
+- Precios en dólares (desde 1.27; USD 1 = $1.700 de referencia, el dólar oficial se actualiza solo los lunes: `.github/workflows/dolar.yml` → `sitio/dolar.json`, que leen la web y `A.DOLAR` en `src/app25.js`): Profesional USD 22,21 (= $37.753; +3 por consultorio extra), Consultorio o Centro USD 45 todo incluido (hasta 5 profesionales y 6 equipos), Empresa USD 96. Sin descuentos fijos («consultá por descuentos disponibles»). Prueba 7 días (14 para las primeras 50). Mantener iguales `PLAN` de `app19.js`, `USD` de `app25.js`, `ov_limits()` del SQL (`supabase/planes-1-27.sql`), `DEF` de `admin.html`, `sitio/js/datos.js` y `sitio/terminos.html`.
 - **Registro DNDA (hecho):** OdontoVoz 1.0 inscripto en el Registro de Obra Publicada – Software el 18/11/2026, legajo **RL-2026-111680189-APN-DNDA#MJ** (expediente EX-2026-110910062- -APN-DNDA#MJ; constancia RE-2026-111680201-APN-DNDA#MJ en TAD; obra `OdontoVoz-1.0-deposito.zip`, SHA-256 cf24222f…).
 - Soporte WhatsApp: Rodrigo 5492984513279 y Angel 5492984764428 (`A.SUPPORT` en `src/app5.js`).
 

@@ -9,7 +9,7 @@
   const CUR = { ARS: { s: '$', n: 'pesos' }, USD: { s: 'US$', n: 'dólares' }, EUR: { s: '€', n: 'euros' }, BRL: { s: 'R$', n: 'reales' } };
   const KEYS = Object.keys(CUR);
   /* cotización de referencia (pesos por unidad); la del dólar arranca con la de los planes */
-  const FX = () => { const f = A.CFG.fx || (A.CFG.fx = {}); if (!f.USD) f.USD = A.DOLAR || 1570; if (!f.EUR) f.EUR = Math.round((A.DOLAR || 1570) * 1.08); if (!f.BRL) f.BRL = Math.round((A.DOLAR || 1570) / 5.4); return f; };
+  const FX = () => { const f = A.CFG.fx || (A.CFG.fx = {}); if (!f.USD) f.USD = A.DOLAR || 1700; if (!f.EUR) f.EUR = Math.round((A.DOLAR || 1700) * 1.08); if (!f.BRL) f.BRL = Math.round((A.DOLAR || 1700) / 5.4); return f; };
   const rate = c => (c === 'ARS' ? 1 : +FX()[c] || 1);
   const fmt = (n, c) => (!c || c === 'ARS') ? A.money(n) : CUR[c].s + ' ' + Math.round(n).toLocaleString('es-AR');
   A.fmtCur = fmt;
