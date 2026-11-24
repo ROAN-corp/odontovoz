@@ -13,7 +13,7 @@
   const methOf = x => { if (x.via === 'obra social') return 'Obras sociales'; const t = String(x.method || '').toLowerCase(); return /efect/.test(t) ? 'Efectivo' : /transf|mercado|mp|qr/.test(t) ? 'Transferencia' : /d[eé]bito/.test(t) ? 'Débito' : /cr[eé]dito|tarjeta/.test(t) ? 'Crédito' : 'Otros'; };
 
   /* el acuerdo de cada profesional también queda en su ficha de profesional (así cada uno ve sus números sin ver los de los demás) */
-  const mirror = pid => { const p = A.PRO(pid); if (!p || !A.isBoss || !A.isBoss()) return; const c = A.liqCfg(pid); p.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode || 'pct', mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado' })); };
+  const mirror = pid => { const p = A.PRO(pid); if (!p || !A.isBoss || !A.isBoss()) return; const c = A.liqCfg(pid); p.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode || 'pct', mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado', priv: c.priv })); };
   ['dlSet', 'dlRulePct'].forEach(k => { const prev = A.chg[k]; if (prev) A.chg[k] = function (el) { const r = prev.apply(this, arguments); mirror(el.getAttribute('data-id')); A.save(); return r; }; });
   ['dlBase', 'dlRuleDel', 'dlRuleAdd'].forEach(k => { const prev = A.acts[k]; if (prev) A.acts[k] = function (el) { const r = prev.apply(this, arguments); mirror(el.getAttribute('data-id')); A.save(); return r; }; });
   const cfgPrev = A.liqCfg;

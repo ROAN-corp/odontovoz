@@ -135,6 +135,13 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.24.0 · alquiler, socias y caja privada (24/11/2026)
+
+- Diseño: `docs/SOCIAS-CAJAS-PRIVADAS.md`. Esta versión hace la parte de acuerdos y la privacidad **blanda** (en pantalla).
+- `app65`: modos nuevos `socia` (100%), `mod` ahora con horas por semana (`mod.hs`), días/horarios (`mod.hor`) y valor editable; `mod.by === 'modulo'` = monto fijo por mes (`app25` lo descuenta); `alq.by` = `mes` u `hora` (por horas de agenda). `app69` copia `priv` al acuerdo del profesional.
+- `app110` (nuevo): `A.proPriv(pid)` (alquila: privada salvo que se destilde; socia/otro: si la tildan; porcentaje: nunca), `A.privFrom(pid)`, `A.privLocked(pid)`. Envuelve `cobAlloc`, `liqCalc`, `liqMethods` y `render.liq`: quien no es ese profesional ve solo el alquiler. Abrir una caja privada ajena: solo desde el usuario del dueño, con aviso y registro (`empAudit`).
+- **No oculta todavía:** caja del día (`app86`), cuenta del paciente, «Para cobrar», obras sociales que deben (`osDue`). Privacidad dura (clave `priv:<uid>` con regla en `ov_key_ok`) y reparto entre socias: etapas siguientes.
+
 ## OdontoVoz 1.23.3 · avisos de quien administra y atiende (24/11/2026)
 
 - Diseño completo del modelo de socias, cajas privadas y profesionales que alquilan: `docs/SOCIAS-CAJAS-PRIVADAS.md` (se programa por etapas; esta es la etapa 1).

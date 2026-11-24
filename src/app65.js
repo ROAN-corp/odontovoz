@@ -8,12 +8,14 @@
   const canCfg = () => !A.isMember || !A.isMember() || (A.mbRole && A.mbRole() === 'admin');
   const MODES = [
     ['pct', 'Porcentaje de lo que trabaja'],
-    ['mod', 'Alquila un módulo (se queda con todo y paga el módulo)'],
+    ['socia', 'Socia / dueña (se queda con el 100% de sus pacientes)'],
+    ['mod', 'Alquila un módulo (horas por semana a convenir; se queda con el 100%)'],
     ['pctmod', 'Porcentaje + módulo'],
-    ['alq', 'Alquila el consultorio entero (monto fijo por mes)'],
+    ['alq', 'Alquila el consultorio entero (se queda con el 100%)'],
     ['otro', 'Otro acuerdo']
   ];
-  const BY = [['hora', 'por hora'], ['turno', 'por turno'], ['dia', 'por día']];
+  const BY = [['modulo', 'por módulo (monto fijo por mes)'], ['hora', 'por hora'], ['turno', 'por turno'], ['dia', 'por día']];
+  const ABY = [['mes', 'monto fijo por mes'], ['hora', 'por hora de agenda']];
   const cfgOf = pid => { const c = A.liqCfg(pid); c.rules = c.rules || []; return c; };
   const baseOf = c => c.base || 'cobrado';
   const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
@@ -27,15 +29,15 @@
   A.liqDeal = pid => {
     const c = cfgOf(pid), mode = c.mode || 'pct', ex = c.rules.map(r => r.key + ' ' + r.pct + '%').join(', ');
     const pc = c.pct + '% para el profesional' + (ex ? ' (' + ex + ')' : '');
-    const md = c.mod && c.mod.price ? money(c.mod.price) + ' ' + ((BY.filter(x => x[0] === c.mod.by)[0] || BY[0])[1]) : 'módulo sin valor';
+    const md = c.mod && c.mod.price ? money(c.mod.price) + ' ' + ((BY.filter(x => x[0] === c.mod.by)[0] || BY[0])[1]) + (c.mod.hs ? ' · ' + String(c.mod.hs).replace('.', ',') + ' h por semana' : '') + (c.mod.hor ? ' (' + c.mod.hor + ')' : '') : 'módulo sin valor';
     const t = mode === 'pct' ? pc : mode === 'mod' ? 'Alquila módulo: ' + md : mode === 'pctmod' ? pc + ' + módulo ' + md
-      : mode === 'alq' ? 'Alquila el consultorio: ' + money((c.alq || {}).price) + ' por mes' : 'Otro: ' + ((c.otro || {}).txt || 'sin detalle');
-    return t + (mode === 'alq' || mode === 'mod' ? '' : baseOf(c) === 'cobrado' ? ' · sobre lo cobrado' : ' · sobre lo facturado');
+      : mode === 'alq' ? 'Alquila el consultorio: ' + money((c.alq || {}).price) + ((c.alq || {}).by === 'hora' ? ' por hora' : ' por mes') : mode === 'socia' ? 'Socia: se queda con el 100% de sus pacientes' : 'Otro: ' + ((c.otro || {}).txt || 'sin detalle');
+    return t + (mode === 'alq' || mode === 'mod' || mode === 'socia' ? '' : baseOf(c) === 'cobrado' ? ' · sobre lo cobrado' : ' · sobre lo facturado');
   };
 
   /* ---------- el formulario del acuerdo (mismo en «Profesionales» y en Liquidaciones) ---------- */
   function dealHTML(pid) {
-    const c = cfgOf(pid), mode = c.mode || 'pct', mod = c.mod || { by: 'hora', price: 0 }, cats = A.catCats ? A.catCats() : [];
+    const c = cfgOf(pid), mode = c.mode || 'pct', mod = c.mod || { by: 'modulo', price: 0 }, cats = A.catCats ? A.catCats() : [];
     const D = 'data-id="' + pid + '"';
     let h = '<div class="dl-box"><div class="field"><label for="dlMode">Cómo trabaja con el centro</label><select id="dlMode" data-chg="dlSet" data-f="mode" ' + D + '>' +
       MODES.map(x => '<option value="' + x[0] + '"' + (x[0] === mode ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>';
@@ -48,17 +50,21 @@
     }
     if (mode === 'mod' || mode === 'pctmod') {
       h += '<div class="row2"><div class="field"><label for="dlModBy">El módulo se paga</label><select id="dlModBy" data-chg="dlSet" data-f="modBy" ' + D + '>' + BY.map(x => '<option value="' + x[0] + '"' + (x[0] === mod.by ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
-        '<div class="field"><label for="dlModP">Valor</label><input id="dlModP" inputmode="numeric" data-chg="dlSet" data-f="modPrice" ' + D + ' value="' + (mod.price || '') + '" placeholder="Ej.: 8000"></div></div>' +
-        '<div class="hint">Las horas, turnos o días salen de la agenda y se descuentan solos en la liquidación.</div>';
+        '<div class="field"><label for="dlModP">Valor (editable)</label><input id="dlModP" inputmode="numeric" data-chg="dlSet" data-f="modPrice" ' + D + ' value="' + (mod.price || '') + '" placeholder="Ej.: 80000"></div></div>' +
+        '<div class="row2"><div class="field"><label for="dlModHs">Horas por semana</label><input id="dlModHs" inputmode="decimal" data-chg="dlSet" data-f="modHs" ' + D + ' value="' + (mod.hs || '') + '" placeholder="Ej.: 4"></div>' +
+        '<div class="field"><label for="dlModHor">Días y horarios a convenir</label><input id="dlModHor" data-chg="dlSet" data-f="modHor" ' + D + ' value="' + esc(mod.hor || '') + '" placeholder="Ej.: martes y jueves de 14 a 16"></div></div>' +
+        '<div class="hint">Un módulo es un bloque de horas por semana a convenir (2, 3, 4, 5…). Si cambian las horas, cambiá también el valor. «Por módulo» es un monto fijo por mes; por hora, turno o día sale de la agenda y se descuenta solo en la liquidación.</div>';
     }
     if (mode === 'alq') {
-      h += '<div class="field"><label for="dlAlq">Paga por mes</label><input id="dlAlq" inputmode="numeric" data-chg="dlSet" data-f="alq" ' + D + ' value="' + ((c.alq || {}).price || '') + '" placeholder="Ej.: 350000"></div>' +
+      h += '<div class="row2"><div class="field"><label for="dlAlqBy">El alquiler se paga</label><select id="dlAlqBy" data-chg="dlSet" data-f="alqBy" ' + D + '>' + ABY.map(x => '<option value="' + x[0] + '"' + (x[0] === ((c.alq || {}).by || 'mes') ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
+        '<div class="field"><label for="dlAlq">Valor (editable)</label><input id="dlAlq" inputmode="numeric" data-chg="dlSet" data-f="alq" ' + D + ' value="' + ((c.alq || {}).price || '') + '" placeholder="Ej.: 350000"></div></div>' +
         '<div class="hint">Se queda con todo lo que cobra y el alquiler se descuenta solo en su liquidación.</div>';
     }
     if (mode === 'otro') {
       h += '<div class="field"><label for="dlTxt">Cómo es el acuerdo</label><textarea id="dlTxt" rows="2" data-chg="dlSet" data-f="txt" ' + D + ' placeholder="Ej.: 50% de lo cobrado y el laboratorio a medias">' + esc((c.otro || {}).txt || '') + '</textarea></div>' +
         '<div class="field"><label for="dlFix">Además paga por mes (opcional)</label><input id="dlFix" inputmode="numeric" data-chg="dlSet" data-f="fix" ' + D + ' value="' + ((c.otro || {}).fix || '') + '" placeholder="0"></div>';
     }
+    h += A.privHTML ? A.privHTML(pid, mode) : '';
     return h + '<div id="dlMsg" class="m-msg"></div></div>';
   }
   A.liqDealHTML = dealHTML;
@@ -68,11 +74,14 @@
   };
   A.chg.dlSet = el => {
     const c = cfgOf(el.getAttribute('data-id')), f = el.getAttribute('data-f'), v = el.value;
-    if (f === 'mode') { c.mode = v; if (v === 'mod' || v === 'pctmod') c.mod = c.mod || { by: 'hora', price: 0 }; }
+    if (f === 'mode') { c.mode = v; if (v === 'mod' || v === 'pctmod') c.mod = c.mod || { by: 'modulo', price: 0 }; }
     else if (f === 'pct') c.pct = pctNum(v);
     else if (f === 'modBy') { c.mod = c.mod || {}; c.mod.by = v; }
-    else if (f === 'modPrice') { c.mod = c.mod || { by: 'hora' }; c.mod.price = num(v); }
-    else if (f === 'alq') c.alq = { price: num(v) };
+    else if (f === 'modPrice') { c.mod = c.mod || { by: 'modulo' }; c.mod.price = num(v); }
+    else if (f === 'modHs') { c.mod = c.mod || { by: 'modulo' }; c.mod.hs = Math.max(0, parseFloat(String(v).replace(',', '.')) || 0); }
+    else if (f === 'modHor') { c.mod = c.mod || { by: 'modulo' }; c.mod.hor = v.trim().slice(0, 80); }
+    else if (f === 'alq') c.alq = Object.assign({}, c.alq, { price: num(v) });
+    else if (f === 'alqBy') c.alq = Object.assign({}, c.alq, { by: v === 'hora' ? 'hora' : 'mes' });
     else if (f === 'txt') { c.otro = c.otro || {}; c.otro.txt = v.trim(); }
     else if (f === 'fix') { c.otro = c.otro || {}; c.otro.fix = num(v); }
     redraw();
@@ -98,7 +107,7 @@
     const w = S.modal && S.modal.wiz, d = w && w.f.deal, before = A.PROS.map(p => p.id);
     const r = wizDonePrev.apply(this, arguments);
     const nw = A.PROS.filter(p => before.indexOf(p.id) < 0)[0];
-    if (nw && d && wizOk()) { const c = cfgOf(nw.id); c.mode = d.mode || 'pct'; if (d.pct != null) c.pct = d.pct; if ((c.mode === 'mod' || c.mode === 'pctmod') && !c.mod) c.mod = { by: 'hora', price: 0 }; try { nw.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode, mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado' })); } catch (e) { /* nada */ } A.save(); }
+    if (nw && d && wizOk()) { const c = cfgOf(nw.id); c.mode = d.mode || 'pct'; if (d.pct != null) c.pct = d.pct; if ((c.mode === 'mod' || c.mode === 'pctmod') && !c.mod) c.mod = { by: 'modulo', price: 0 }; try { nw.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode, mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado' })); } catch (e) { /* nada */ } A.save(); }
     return r;
   };
 
@@ -147,7 +156,7 @@
 
   /* ---------- liquidación ---------- */
   const pctPrev = A.liqPctFor;
-  A.liqPctFor = (pid, line) => { const md = cfgOf(pid).mode; return md === 'alq' ? { pct: 100, why: 'alquila el consultorio' } : pctPrev(pid, line); };
+  A.liqPctFor = (pid, line) => { const md = cfgOf(pid).mode; return md === 'alq' ? { pct: 100, why: 'alquila el consultorio' } : md === 'socia' ? { pct: 100, why: 'socia' } : pctPrev(pid, line); };
   const calcPrev = A.liqCalc;
   A.liqCalc = (pid, m) => {
     const c = calcPrev(pid, m), cfg = cfgOf(pid), mode = cfg.mode || 'pct';
@@ -161,7 +170,7 @@
       c.eff = c.prod ? Math.round(c.dent / c.prod * 1000) / 10 : 0; c.base = 'cobrado';
     }
     let fee = 0, why = '';
-    if (mode === 'alq' && cfg.alq && cfg.alq.price > 0) { fee = cfg.alq.price; why = 'Alquiler del consultorio (mes)'; }
+    if (mode === 'alq' && cfg.alq && cfg.alq.price > 0) { if (cfg.alq.by === 'hora') { const hs = A.liqUse ? A.liqUse(pid, m).hora : 0; fee = Math.round(hs * cfg.alq.price); why = 'Alquiler del consultorio: ' + String(hs).replace('.', ',') + ' h × ' + money(cfg.alq.price); } else { fee = cfg.alq.price; why = 'Alquiler del consultorio (mes)'; } }
     if (mode === 'otro' && cfg.otro && cfg.otro.fix > 0) { fee = cfg.otro.fix; why = 'Monto fijo del acuerdo (mes)'; }
     if (fee) c.deds = [{ id: 'alquiler', auto: true, desc: why, amount: fee }].concat((c.deds || []).filter(d => d.id !== 'alquiler'));
     c.ded = (c.deds || []).reduce((s, d) => s + (+d.amount || 0), 0);

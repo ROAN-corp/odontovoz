@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.24.0', b: '1.79.0', d: '2026-11-24', items: [
+      { t: 'Acuerdos nuevos para quien alquila: módulo (horas por semana a convenir, con días y horarios y un valor que se edita) o consultorio entero (por mes o por hora). Siempre se queda con el 100%. También hay «Socia / dueña».', top: true },
+      { t: 'Caja privada: quien alquila (o una socia que lo elija) puede ocultar sus cobros y números. La administración ve solo el alquiler. Por ahora se oculta en Liquidaciones y «Mis números»; la caja del día y la cuenta de cada paciente todavía muestran los cobros.' }] },
     { v: '1.23.3', b: '1.78.3', d: '2026-11-24', items: [
       { t: 'Si administrás y también atendés (o sos dueño/a y atendés), los avisos de «llegó un paciente» ahora son solo de tus pacientes, en pantalla y con la app cerrada. Podés cambiarlo en Avisos y sonidos. Los «Para cobrar» quedan para la secretaria. En Usuarios del equipo se ve «Administra y atiende».', top: true }] },
     { v: '1.23.2', b: '1.78.2', d: '2026-11-24', items: [

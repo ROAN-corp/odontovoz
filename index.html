@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.23.3';
+  A.VERSION = '1.24.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.78.3';
+  A.VBUILD = '1.79.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -11851,7 +11851,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
      El módulo se cobra por hora atendida, por turno o por día trabajado.
      --------------------------------------------------------------- */
   const MODES = [['pct', 'Porcentaje de lo que factura'], ['mod', 'Alquila un módulo (se queda con lo que factura)'], ['pctmod', 'Porcentaje + módulo']];
-  const BY = [['hora', 'por hora', 'hora', 'horas'], ['turno', 'por turno', 'turno', 'turnos'], ['dia', 'por día', 'día', 'días']];
+  const BY = [['modulo', 'por módulo (fijo por mes)', 'mes', 'meses'], ['hora', 'por hora', 'hora', 'horas'], ['turno', 'por turno', 'turno', 'turnos'], ['dia', 'por día', 'día', 'días']];
   const byInfo = k => BY.filter(x => x[0] === k)[0] || BY[0];
   const modeOf = pid => { const c = A.liqCfg(pid); return c.mode || 'pct'; };
   /* lo que trabajó en el mes según la agenda: horas, turnos y días */
@@ -11869,10 +11869,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const prevCalc = A.liqCalc;
   A.liqCalc = (pid, m) => {
     const c = prevCalc(pid, m), cfg = A.liqCfg(pid), mode = cfg.mode || 'pct';
-    if (mode === 'pct' || !cfg.mod || !(cfg.mod.price > 0)) return c;
-    const by = byInfo(cfg.mod.by), u = A.liqUse(pid, m)[by[0]], fee = Math.round(u * cfg.mod.price);
+    if ((mode !== 'mod' && mode !== 'pctmod') || !cfg.mod || !(cfg.mod.price > 0)) return c; /* 1.24: el módulo solo cuenta si el acuerdo es módulo */
+    const by = byInfo(cfg.mod.by), fijo = by[0] === 'modulo', u = fijo ? 1 : A.liqUse(pid, m)[by[0]], fee = Math.round(u * cfg.mod.price);
     if (!fee) return c;
-    const line = { id: 'modulo', auto: true, desc: 'Alquiler de módulo: ' + String(u).replace('.', ',') + ' ' + (u === 1 ? by[2] : by[3]) + ' × ' + A.money(cfg.mod.price), amount: fee };
+    const line = { id: 'modulo', auto: true, desc: fijo ? 'Alquiler de módulo (mes)' + (cfg.mod.hs ? ': ' + String(cfg.mod.hs).replace('.', ',') + ' h por semana' : '') : 'Alquiler de módulo: ' + String(u).replace('.', ',') + ' ' + (u === 1 ? by[2] : by[3]) + ' × ' + A.money(cfg.mod.price), amount: fee };
     c.deds = [line].concat(c.deds); c.ded += fee; c.net = c.dent - c.ded; c.center += fee; c.modFee = fee;
     return c;
   };
@@ -18515,6 +18515,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.24.0', b: '1.79.0', d: '2026-11-24', items: [
+      { t: 'Acuerdos nuevos para quien alquila: módulo (horas por semana a convenir, con días y horarios y un valor que se edita) o consultorio entero (por mes o por hora). Siempre se queda con el 100%. También hay «Socia / dueña».', top: true },
+      { t: 'Caja privada: quien alquila (o una socia que lo elija) puede ocultar sus cobros y números. La administración ve solo el alquiler. Por ahora se oculta en Liquidaciones y «Mis números»; la caja del día y la cuenta de cada paciente todavía muestran los cobros.' }] },
     { v: '1.23.3', b: '1.78.3', d: '2026-11-24', items: [
       { t: 'Si administrás y también atendés (o sos dueño/a y atendés), los avisos de «llegó un paciente» ahora son solo de tus pacientes, en pantalla y con la app cerrada. Podés cambiarlo en Avisos y sonidos. Los «Para cobrar» quedan para la secretaria. En Usuarios del equipo se ve «Administra y atiende».', top: true }] },
     { v: '1.23.2', b: '1.78.2', d: '2026-11-24', items: [
@@ -19836,12 +19839,14 @@ const OVMenu = (function () {
   const canCfg = () => !A.isMember || !A.isMember() || (A.mbRole && A.mbRole() === 'admin');
   const MODES = [
     ['pct', 'Porcentaje de lo que trabaja'],
-    ['mod', 'Alquila un módulo (se queda con todo y paga el módulo)'],
+    ['socia', 'Socia / dueña (se queda con el 100% de sus pacientes)'],
+    ['mod', 'Alquila un módulo (horas por semana a convenir; se queda con el 100%)'],
     ['pctmod', 'Porcentaje + módulo'],
-    ['alq', 'Alquila el consultorio entero (monto fijo por mes)'],
+    ['alq', 'Alquila el consultorio entero (se queda con el 100%)'],
     ['otro', 'Otro acuerdo']
   ];
-  const BY = [['hora', 'por hora'], ['turno', 'por turno'], ['dia', 'por día']];
+  const BY = [['modulo', 'por módulo (monto fijo por mes)'], ['hora', 'por hora'], ['turno', 'por turno'], ['dia', 'por día']];
+  const ABY = [['mes', 'monto fijo por mes'], ['hora', 'por hora de agenda']];
   const cfgOf = pid => { const c = A.liqCfg(pid); c.rules = c.rules || []; return c; };
   const baseOf = c => c.base || 'cobrado';
   const num = v => A.parseMoney(v);   /* 1.18: acepta centavos */
@@ -19855,15 +19860,15 @@ const OVMenu = (function () {
   A.liqDeal = pid => {
     const c = cfgOf(pid), mode = c.mode || 'pct', ex = c.rules.map(r => r.key + ' ' + r.pct + '%').join(', ');
     const pc = c.pct + '% para el profesional' + (ex ? ' (' + ex + ')' : '');
-    const md = c.mod && c.mod.price ? money(c.mod.price) + ' ' + ((BY.filter(x => x[0] === c.mod.by)[0] || BY[0])[1]) : 'módulo sin valor';
+    const md = c.mod && c.mod.price ? money(c.mod.price) + ' ' + ((BY.filter(x => x[0] === c.mod.by)[0] || BY[0])[1]) + (c.mod.hs ? ' · ' + String(c.mod.hs).replace('.', ',') + ' h por semana' : '') + (c.mod.hor ? ' (' + c.mod.hor + ')' : '') : 'módulo sin valor';
     const t = mode === 'pct' ? pc : mode === 'mod' ? 'Alquila módulo: ' + md : mode === 'pctmod' ? pc + ' + módulo ' + md
-      : mode === 'alq' ? 'Alquila el consultorio: ' + money((c.alq || {}).price) + ' por mes' : 'Otro: ' + ((c.otro || {}).txt || 'sin detalle');
-    return t + (mode === 'alq' || mode === 'mod' ? '' : baseOf(c) === 'cobrado' ? ' · sobre lo cobrado' : ' · sobre lo facturado');
+      : mode === 'alq' ? 'Alquila el consultorio: ' + money((c.alq || {}).price) + ((c.alq || {}).by === 'hora' ? ' por hora' : ' por mes') : mode === 'socia' ? 'Socia: se queda con el 100% de sus pacientes' : 'Otro: ' + ((c.otro || {}).txt || 'sin detalle');
+    return t + (mode === 'alq' || mode === 'mod' || mode === 'socia' ? '' : baseOf(c) === 'cobrado' ? ' · sobre lo cobrado' : ' · sobre lo facturado');
   };
 
   /* ---------- el formulario del acuerdo (mismo en «Profesionales» y en Liquidaciones) ---------- */
   function dealHTML(pid) {
-    const c = cfgOf(pid), mode = c.mode || 'pct', mod = c.mod || { by: 'hora', price: 0 }, cats = A.catCats ? A.catCats() : [];
+    const c = cfgOf(pid), mode = c.mode || 'pct', mod = c.mod || { by: 'modulo', price: 0 }, cats = A.catCats ? A.catCats() : [];
     const D = 'data-id="' + pid + '"';
     let h = '<div class="dl-box"><div class="field"><label for="dlMode">Cómo trabaja con el centro</label><select id="dlMode" data-chg="dlSet" data-f="mode" ' + D + '>' +
       MODES.map(x => '<option value="' + x[0] + '"' + (x[0] === mode ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>';
@@ -19876,17 +19881,21 @@ const OVMenu = (function () {
     }
     if (mode === 'mod' || mode === 'pctmod') {
       h += '<div class="row2"><div class="field"><label for="dlModBy">El módulo se paga</label><select id="dlModBy" data-chg="dlSet" data-f="modBy" ' + D + '>' + BY.map(x => '<option value="' + x[0] + '"' + (x[0] === mod.by ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
-        '<div class="field"><label for="dlModP">Valor</label><input id="dlModP" inputmode="numeric" data-chg="dlSet" data-f="modPrice" ' + D + ' value="' + (mod.price || '') + '" placeholder="Ej.: 8000"></div></div>' +
-        '<div class="hint">Las horas, turnos o días salen de la agenda y se descuentan solos en la liquidación.</div>';
+        '<div class="field"><label for="dlModP">Valor (editable)</label><input id="dlModP" inputmode="numeric" data-chg="dlSet" data-f="modPrice" ' + D + ' value="' + (mod.price || '') + '" placeholder="Ej.: 80000"></div></div>' +
+        '<div class="row2"><div class="field"><label for="dlModHs">Horas por semana</label><input id="dlModHs" inputmode="decimal" data-chg="dlSet" data-f="modHs" ' + D + ' value="' + (mod.hs || '') + '" placeholder="Ej.: 4"></div>' +
+        '<div class="field"><label for="dlModHor">Días y horarios a convenir</label><input id="dlModHor" data-chg="dlSet" data-f="modHor" ' + D + ' value="' + esc(mod.hor || '') + '" placeholder="Ej.: martes y jueves de 14 a 16"></div></div>' +
+        '<div class="hint">Un módulo es un bloque de horas por semana a convenir (2, 3, 4, 5…). Si cambian las horas, cambiá también el valor. «Por módulo» es un monto fijo por mes; por hora, turno o día sale de la agenda y se descuenta solo en la liquidación.</div>';
     }
     if (mode === 'alq') {
-      h += '<div class="field"><label for="dlAlq">Paga por mes</label><input id="dlAlq" inputmode="numeric" data-chg="dlSet" data-f="alq" ' + D + ' value="' + ((c.alq || {}).price || '') + '" placeholder="Ej.: 350000"></div>' +
+      h += '<div class="row2"><div class="field"><label for="dlAlqBy">El alquiler se paga</label><select id="dlAlqBy" data-chg="dlSet" data-f="alqBy" ' + D + '>' + ABY.map(x => '<option value="' + x[0] + '"' + (x[0] === ((c.alq || {}).by || 'mes') ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
+        '<div class="field"><label for="dlAlq">Valor (editable)</label><input id="dlAlq" inputmode="numeric" data-chg="dlSet" data-f="alq" ' + D + ' value="' + ((c.alq || {}).price || '') + '" placeholder="Ej.: 350000"></div></div>' +
         '<div class="hint">Se queda con todo lo que cobra y el alquiler se descuenta solo en su liquidación.</div>';
     }
     if (mode === 'otro') {
       h += '<div class="field"><label for="dlTxt">Cómo es el acuerdo</label><textarea id="dlTxt" rows="2" data-chg="dlSet" data-f="txt" ' + D + ' placeholder="Ej.: 50% de lo cobrado y el laboratorio a medias">' + esc((c.otro || {}).txt || '') + '</textarea></div>' +
         '<div class="field"><label for="dlFix">Además paga por mes (opcional)</label><input id="dlFix" inputmode="numeric" data-chg="dlSet" data-f="fix" ' + D + ' value="' + ((c.otro || {}).fix || '') + '" placeholder="0"></div>';
     }
+    h += A.privHTML ? A.privHTML(pid, mode) : '';
     return h + '<div id="dlMsg" class="m-msg"></div></div>';
   }
   A.liqDealHTML = dealHTML;
@@ -19896,11 +19905,14 @@ const OVMenu = (function () {
   };
   A.chg.dlSet = el => {
     const c = cfgOf(el.getAttribute('data-id')), f = el.getAttribute('data-f'), v = el.value;
-    if (f === 'mode') { c.mode = v; if (v === 'mod' || v === 'pctmod') c.mod = c.mod || { by: 'hora', price: 0 }; }
+    if (f === 'mode') { c.mode = v; if (v === 'mod' || v === 'pctmod') c.mod = c.mod || { by: 'modulo', price: 0 }; }
     else if (f === 'pct') c.pct = pctNum(v);
     else if (f === 'modBy') { c.mod = c.mod || {}; c.mod.by = v; }
-    else if (f === 'modPrice') { c.mod = c.mod || { by: 'hora' }; c.mod.price = num(v); }
-    else if (f === 'alq') c.alq = { price: num(v) };
+    else if (f === 'modPrice') { c.mod = c.mod || { by: 'modulo' }; c.mod.price = num(v); }
+    else if (f === 'modHs') { c.mod = c.mod || { by: 'modulo' }; c.mod.hs = Math.max(0, parseFloat(String(v).replace(',', '.')) || 0); }
+    else if (f === 'modHor') { c.mod = c.mod || { by: 'modulo' }; c.mod.hor = v.trim().slice(0, 80); }
+    else if (f === 'alq') c.alq = Object.assign({}, c.alq, { price: num(v) });
+    else if (f === 'alqBy') c.alq = Object.assign({}, c.alq, { by: v === 'hora' ? 'hora' : 'mes' });
     else if (f === 'txt') { c.otro = c.otro || {}; c.otro.txt = v.trim(); }
     else if (f === 'fix') { c.otro = c.otro || {}; c.otro.fix = num(v); }
     redraw();
@@ -19926,7 +19938,7 @@ const OVMenu = (function () {
     const w = S.modal && S.modal.wiz, d = w && w.f.deal, before = A.PROS.map(p => p.id);
     const r = wizDonePrev.apply(this, arguments);
     const nw = A.PROS.filter(p => before.indexOf(p.id) < 0)[0];
-    if (nw && d && wizOk()) { const c = cfgOf(nw.id); c.mode = d.mode || 'pct'; if (d.pct != null) c.pct = d.pct; if ((c.mode === 'mod' || c.mode === 'pctmod') && !c.mod) c.mod = { by: 'hora', price: 0 }; try { nw.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode, mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado' })); } catch (e) { /* nada */ } A.save(); }
+    if (nw && d && wizOk()) { const c = cfgOf(nw.id); c.mode = d.mode || 'pct'; if (d.pct != null) c.pct = d.pct; if ((c.mode === 'mod' || c.mode === 'pctmod') && !c.mod) c.mod = { by: 'modulo', price: 0 }; try { nw.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode, mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado' })); } catch (e) { /* nada */ } A.save(); }
     return r;
   };
 
@@ -19975,7 +19987,7 @@ const OVMenu = (function () {
 
   /* ---------- liquidación ---------- */
   const pctPrev = A.liqPctFor;
-  A.liqPctFor = (pid, line) => { const md = cfgOf(pid).mode; return md === 'alq' ? { pct: 100, why: 'alquila el consultorio' } : pctPrev(pid, line); };
+  A.liqPctFor = (pid, line) => { const md = cfgOf(pid).mode; return md === 'alq' ? { pct: 100, why: 'alquila el consultorio' } : md === 'socia' ? { pct: 100, why: 'socia' } : pctPrev(pid, line); };
   const calcPrev = A.liqCalc;
   A.liqCalc = (pid, m) => {
     const c = calcPrev(pid, m), cfg = cfgOf(pid), mode = cfg.mode || 'pct';
@@ -19989,7 +20001,7 @@ const OVMenu = (function () {
       c.eff = c.prod ? Math.round(c.dent / c.prod * 1000) / 10 : 0; c.base = 'cobrado';
     }
     let fee = 0, why = '';
-    if (mode === 'alq' && cfg.alq && cfg.alq.price > 0) { fee = cfg.alq.price; why = 'Alquiler del consultorio (mes)'; }
+    if (mode === 'alq' && cfg.alq && cfg.alq.price > 0) { if (cfg.alq.by === 'hora') { const hs = A.liqUse ? A.liqUse(pid, m).hora : 0; fee = Math.round(hs * cfg.alq.price); why = 'Alquiler del consultorio: ' + String(hs).replace('.', ',') + ' h × ' + money(cfg.alq.price); } else { fee = cfg.alq.price; why = 'Alquiler del consultorio (mes)'; } }
     if (mode === 'otro' && cfg.otro && cfg.otro.fix > 0) { fee = cfg.otro.fix; why = 'Monto fijo del acuerdo (mes)'; }
     if (fee) c.deds = [{ id: 'alquiler', auto: true, desc: why, amount: fee }].concat((c.deds || []).filter(d => d.id !== 'alquiler'));
     c.ded = (c.deds || []).reduce((s, d) => s + (+d.amount || 0), 0);
@@ -20520,7 +20532,7 @@ const OVMenu = (function () {
   const methOf = x => { if (x.via === 'obra social') return 'Obras sociales'; const t = String(x.method || '').toLowerCase(); return /efect/.test(t) ? 'Efectivo' : /transf|mercado|mp|qr/.test(t) ? 'Transferencia' : /d[eé]bito/.test(t) ? 'Débito' : /cr[eé]dito|tarjeta/.test(t) ? 'Crédito' : 'Otros'; };
 
   /* el acuerdo de cada profesional también queda en su ficha de profesional (así cada uno ve sus números sin ver los de los demás) */
-  const mirror = pid => { const p = A.PRO(pid); if (!p || !A.isBoss || !A.isBoss()) return; const c = A.liqCfg(pid); p.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode || 'pct', mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado' })); };
+  const mirror = pid => { const p = A.PRO(pid); if (!p || !A.isBoss || !A.isBoss()) return; const c = A.liqCfg(pid); p.deal = JSON.parse(JSON.stringify({ pct: c.pct, rules: c.rules || [], mode: c.mode || 'pct', mod: c.mod || null, alq: c.alq || null, otro: c.otro || null, base: c.base || 'cobrado', priv: c.priv })); };
   ['dlSet', 'dlRulePct'].forEach(k => { const prev = A.chg[k]; if (prev) A.chg[k] = function (el) { const r = prev.apply(this, arguments); mirror(el.getAttribute('data-id')); A.save(); return r; }; });
   ['dlBase', 'dlRuleDel', 'dlRuleAdd'].forEach(k => { const prev = A.acts[k]; if (prev) A.acts[k] = function (el) { const r = prev.apply(this, arguments); mirror(el.getAttribute('data-id')); A.save(); return r; }; });
   const cfgPrev = A.liqCfg;
@@ -27411,6 +27423,57 @@ const OVMenu = (function () {
     '#drFornMes .frn-marca { display: block; height: 36px; width: auto; max-width: 100%; background: #fff; border-radius: 6px; padding: 3px 6px; }',
     '#drFornMes .t small { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }'
   ].join('\n');
+  document.body.appendChild(css);
+})();
+/* ===== 1.24: caja privada de cada profesional (alquila, socia, otro): la administración ve solo el alquiler ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, esc = A.esc;
+  const cfgOf = pid => (A.liqCfg ? A.liqCfg(pid) : {}) || {};
+  /* ¿la caja de este profesional es privada? Alquila: privada salvo que se destilde. Socia y otro: privada si la tildan. Porcentaje: nunca (una parte es del centro). */
+  A.proPriv = pid => { const c = cfgOf(pid), md = c.mode || 'pct'; if (md === 'pct' || md === 'pctmod') return false; return md === 'mod' || md === 'alq' ? c.priv !== false : c.priv === true; };
+  /* ¿se la oculto a quien está usando la app? (el propio profesional siempre ve la suya) */
+  A.privFrom = pid => !!pid && A.proPriv(pid) && !(A.myProId && A.myProId() === pid);
+  /* una vez prendida, solo la apaga el propio profesional o, desde el usuario del dueño, con aviso en el registro */
+  A.privLocked = pid => A.proPriv(pid) && !!(A.isMember && A.isMember()) && !(A.myProId && A.myProId() === pid);
+
+  A.privHTML = (pid, mode) => {
+    if (mode === 'pct' || mode === 'pctmod') return '<div class="hint">Su caja es visible para la administración: una parte de lo que cobra es del consultorio.</div>';
+    const on = A.proPriv(pid), lock = A.privLocked(pid);
+    return '<label class="chk pv-row"><input type="checkbox" data-chg="dlSet" data-f="priv" data-id="' + pid + '"' + (on ? ' checked' : '') + (lock ? ' disabled' : '') + '> <span><b>Caja privada</b>: solo este profesional ve sus cobros y sus números. La administración ve únicamente el alquiler.</span></label>' +
+      (lock ? '<div class="hint">Solo el propio profesional puede abrir su caja.</div>' : '') +
+      '<div class="hint">Por ahora se oculta en Liquidaciones, «Mis números» y los totales de cobrado. La caja del día y la cuenta de cada paciente todavía muestran los cobros.</div>';
+  };
+  const dlPrev = A.chg.dlSet;
+  A.chg.dlSet = function (el) {
+    if (el.getAttribute('data-f') !== 'priv') return dlPrev.apply(this, arguments);
+    const pid = el.getAttribute('data-id'), c = cfgOf(pid), want = !!el.checked;
+    if (!want && A.privLocked(pid)) { el.checked = true; A.toast('Solo el propio profesional puede abrir su caja.'); return; }
+    if (!want && A.proPriv(pid) && !(A.myProId && A.myProId() === pid) && !window.confirm('Vas a abrir la caja privada de este profesional: la administración va a ver sus cobros. ¿Seguir?')) { el.checked = true; return; }
+    c.priv = want; if (A.empAudit) { try { A.empAudit((want ? 'Caja privada activada' : 'Caja privada desactivada') + ' para ' + ((A.PRO(pid) || {}).name || pid) + '.'); } catch (e) { /* nada */ } }
+    const p = A.PRO(pid); if (p && p.deal) p.deal.priv = want;
+    A.save(); if (S.modal) A.renderModal(); else A.refresh();
+  };
+
+  /* lo cobrado por cada profesional: para quien no puede verlo, no existe */
+  const allocPrev = A.cobAlloc;
+  A.cobAlloc = () => allocPrev().filter(x => !A.privFrom(x.pro));
+  const calcPrev = A.liqCalc;
+  A.liqCalc = (pid, m) => {
+    const c = calcPrev(pid, m); if (!A.privFrom(pid)) return c;
+    const rent = (c.deds || []).filter(d => d.auto).reduce((s, d) => s + (+d.amount || 0), 0);
+    return Object.assign(c, { hidden: true, lines: [], byCat: {}, prod: 0, dent: 0, eff: 0, net: 0, deds: (c.deds || []).filter(d => d.auto), ded: rent, center: rent, deal: 'Caja privada: la administración ve solo el alquiler' });
+  };
+  const metPrev = A.liqMethods;
+  if (metPrev) A.liqMethods = (pid, m) => A.privFrom(pid) ? { by: {}, os: {}, owed: 0, total: 0 } : metPrev(pid, m);
+  const liqPrev = A.render.liq;
+  A.render.liq = () => {
+    liqPrev(); const pid = S.liq && S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : null, host = document.querySelector('#view-liq');
+    if (!pid || !host || !A.privFrom(pid) || host.querySelector('.pv-note')) return;
+    const t = host.querySelector('.ag-title'); if (t) t.insertAdjacentHTML('afterend', '<div class="hint pv-note">🔒 La caja de ' + esc((A.PRO(pid) || {}).short || '') + ' es privada. Acá se ve solo el alquiler.</div>');
+  };
+  const css = document.createElement('style');
+  css.textContent = '.pv-row{display:flex;gap:8px;align-items:flex-start;margin:6px 0}.pv-row span{font-size:.9rem;color:var(--ink-2)}';
   document.body.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

@@ -61,7 +61,7 @@
      El módulo se cobra por hora atendida, por turno o por día trabajado.
      --------------------------------------------------------------- */
   const MODES = [['pct', 'Porcentaje de lo que factura'], ['mod', 'Alquila un módulo (se queda con lo que factura)'], ['pctmod', 'Porcentaje + módulo']];
-  const BY = [['hora', 'por hora', 'hora', 'horas'], ['turno', 'por turno', 'turno', 'turnos'], ['dia', 'por día', 'día', 'días']];
+  const BY = [['modulo', 'por módulo (fijo por mes)', 'mes', 'meses'], ['hora', 'por hora', 'hora', 'horas'], ['turno', 'por turno', 'turno', 'turnos'], ['dia', 'por día', 'día', 'días']];
   const byInfo = k => BY.filter(x => x[0] === k)[0] || BY[0];
   const modeOf = pid => { const c = A.liqCfg(pid); return c.mode || 'pct'; };
   /* lo que trabajó en el mes según la agenda: horas, turnos y días */
@@ -79,10 +79,10 @@
   const prevCalc = A.liqCalc;
   A.liqCalc = (pid, m) => {
     const c = prevCalc(pid, m), cfg = A.liqCfg(pid), mode = cfg.mode || 'pct';
-    if (mode === 'pct' || !cfg.mod || !(cfg.mod.price > 0)) return c;
-    const by = byInfo(cfg.mod.by), u = A.liqUse(pid, m)[by[0]], fee = Math.round(u * cfg.mod.price);
+    if ((mode !== 'mod' && mode !== 'pctmod') || !cfg.mod || !(cfg.mod.price > 0)) return c; /* 1.24: el módulo solo cuenta si el acuerdo es módulo */
+    const by = byInfo(cfg.mod.by), fijo = by[0] === 'modulo', u = fijo ? 1 : A.liqUse(pid, m)[by[0]], fee = Math.round(u * cfg.mod.price);
     if (!fee) return c;
-    const line = { id: 'modulo', auto: true, desc: 'Alquiler de módulo: ' + String(u).replace('.', ',') + ' ' + (u === 1 ? by[2] : by[3]) + ' × ' + A.money(cfg.mod.price), amount: fee };
+    const line = { id: 'modulo', auto: true, desc: fijo ? 'Alquiler de módulo (mes)' + (cfg.mod.hs ? ': ' + String(cfg.mod.hs).replace('.', ',') + ' h por semana' : '') : 'Alquiler de módulo: ' + String(u).replace('.', ',') + ' ' + (u === 1 ? by[2] : by[3]) + ' × ' + A.money(cfg.mod.price), amount: fee };
     c.deds = [line].concat(c.deds); c.ded += fee; c.net = c.dent - c.ded; c.center += fee; c.modFee = fee;
     return c;
   };
