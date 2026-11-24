@@ -21720,7 +21720,7 @@ const OVMenu = (function () {
     if (A._hcpMock) return A._hcpMock(imgs, it);
     if (!cloudOk()) return { ok: false, manual: true, msg: A.DEMO ? 'En el modo prueba no se lee con IA: cargala a mano mirando la foto.' : 'Para leer con IA hay que entrar con tu cuenta. Mientras, cargala a mano mirando la foto.' };
     try { return await CL.api('/functions/v1/hc-read', { method: 'POST', body: { images: imgs, hint: it.pid ? (A.PAT(it.pid) || {}).name : '' } }); }
-    catch (e) { const d = (e && e.data) || {}; if (e && e.status === 503) return { ok: false, manual: true, off: true, msg: d.msg || 'La lectura automática todavía no está encendida.' }; return { ok: false, msg: d.msg || (navigator.onLine === false ? 'Sin internet: se lee cuando vuelva la conexión.' : 'No se pudo leer ahora. Tocá «Reintentar».'), retry: navigator.onLine === false }; }
+    catch (e) { const d = (e && e.data) || {}; if (e && e.status === 503) return { ok: false, manual: true, off: true, code: d.code || '', msg: d.msg || 'La lectura automática todavía no está encendida.' }; return { ok: false, msg: d.msg || (navigator.onLine === false ? 'Sin internet: se lee cuando vuelva la conexión.' : 'No se pudo leer ahora. Tocá «Reintentar».'), retry: navigator.onLine === false }; }
   }
   A.hcpRun = async () => {
     if (running) return; running = true;
@@ -21730,8 +21730,11 @@ const OVMenu = (function () {
         const it = L.filter(x => x.st === 'cola')[0]; if (!it) break;
         it.st = 'leyendo'; paint();
         const r = await readOne(it);
-        if (r && r.ok && r.data) { it.data = r.data; it.st = 'leido'; it.src = 'ia'; it.msg = ''; }
-        else if (r && r.manual) { it.data = it.data || emptyData(); it.st = 'manual'; it.msg = r.msg || ''; if (r.off) S._hcpOff = 1; }
+        if (r && r.ok && r.data) { it.data = r.data; it.st = 'leido'; it.src = 'ia'; it.msg = ''; if (typeof r.left === 'number') S._hcpBal = { activada: true, hojas: r.left }; }
+        else if (r && r.manual) {
+          it.data = it.data || emptyData(); it.st = 'manual'; it.msg = r.msg || ''; if (r.off) S._hcpOff = r.code || 'off';
+          if (r.code === 'no_activada') S._hcpBal = { activada: false, hojas: 0 }; else if (r.code === 'sin_hojas') S._hcpBal = { activada: true, hojas: 0 };
+        }
         else { it.st = r && r.retry ? 'cola' : 'error'; it.msg = (r && r.msg) || 'No se pudo leer.'; if (r && r.retry) { await putI(it); paint(); break; } }
         await putI(it); paint();
         if (it.st === 'leido' && A.nfAdd) A.nfAdd({ id: 'hcp:' + it.id, k: 'info', t: 'Historia leída: ' + nameOf(it), b: 'Revisala y confirmala en «Pasar historias de papel».', act: 'hcpOpen' });
@@ -21745,16 +21748,41 @@ const OVMenu = (function () {
 
   /* ---------- pantalla principal ---------- */
   const paint = () => { if (S.modal && S.modal.type === 'hcp') A.renderModal(); };
+  /* hojas de lectura con IA que tiene la cuenta; null = el servidor no lo informa (todavía no tiene el saldo) */
+  A.hcpBal = async () => {
+    if (!cloudOk()) { S._hcpBal = null; return null; }
+    try { const r = await CL.api('/rest/v1/rpc/ov_ai_my', { method: 'POST', body: {} }); S._hcpBal = r && typeof r.hojas === 'number' ? { activada: !!r.activada, hojas: r.hojas } : null; }
+    catch (e) { S._hcpBal = null; }
+    return S._hcpBal;
+  };
   A.acts.hcpOpen = async el => {
     if (A.hideDrawer) A.hideDrawer(); await loadL();
     const pid = el && el.getAttribute && el.getAttribute('data-pid');
     S.modal = { type: 'hcp', pid: pid || null }; A.renderModal();
+    A.hcpBal().then(() => paint());
     if (L.some(x => x.st === 'cola')) A.hcpRun();
+  };
+  /* WhatsApp a ROAN para pedir la activación o más hojas (con el mail de la cuenta, para saber cuál es) */
+  const askLink = txt => {
+    const sup = A.SUPPORT || {}, num = String((sup.wa && sup.wa[0]) || sup.whatsapp || '').replace(/\D/g, '');
+    const mail = CL && CL.session && CL.session.user && CL.session.user.email ? ' Mi cuenta: ' + CL.session.user.email : '';
+    return num ? '<a class="btn small primary" target="_blank" rel="noopener" href="https://wa.me/' + num + '?text=' + encodeURIComponent(txt + mail) + '">Escribir por WhatsApp</a>' : '';
+  };
+  const balHTML = () => {
+    const b = S._hcpBal, off = S._hcpOff;
+    if (b && b.activada && b.hojas > 0) {
+      const low = b.hojas <= 20;
+      return '<div class="hp-bal' + (low ? ' low' : '') + '"><span>Hojas de lectura con IA: <b>' + b.hojas.toLocaleString('es-AR') + '</b></span>' + (low ? '<span class="hint" style="margin:0">Te quedan pocas.</span>' + askLink('Hola, quiero sumar hojas de lectura con IA para las historias de papel en OdontoVoz. Me quedan ' + b.hojas + '.') : '') + '</div>';
+    }
+    if ((b && b.activada) || off === 'sin_hojas') return '<div class="hp-bal low"><span>Se terminaron las hojas de lectura con IA de esta cuenta.</span>' + askLink('Hola, quiero sumar hojas de lectura con IA para las historias de papel en OdontoVoz.') + '</div><div class="hint">Mientras tanto podés pasar las historias igual: la foto queda al lado y la cargás a mano (también por voz).</div>';
+    if ((b && !b.activada) || off === 'no_activada') return '<div class="hp-bal low"><span>La lectura con IA no está activada en esta cuenta.</span>' + askLink('Hola, quiero activar la lectura con IA de historias de papel en OdontoVoz.') + '</div><div class="hint">Igual podés pasar las historias: la foto queda al lado y la cargás a mano (también por voz).</div>';
+    if (off) return '<div class="hint">La lectura automática con IA todavía no está encendida en esta cuenta. Igual podés pasar las historias: la foto queda al lado y la cargás a mano (también por voz).</div>';
+    return '';
   };
   MF.hcp = m => {
     const lote = (L || []).filter(x => x.st !== 'armando'), cur = (L || []).filter(x => x.st === 'armando')[0], target = m.pid && A.PAT(m.pid);
     const cam = (lbl, cls) => '<label class="btn ' + (cls || '') + ' filebtn">' + lbl + '<input type="file" accept="image/*" capture="environment" hidden data-chg="hcpCam"></label>';
-    let b = '';
+    let b = balHTML();
     if (!lote.length && !cur) b += '<p class="m-lead">Sacale fotos a cada historia clínica en papel (frente, dorso y hojas de evolución). OdontoVoz lee lo que dice y arma la ficha: después alguien revisa sección por sección, corrige lo que esté mal y confirma. Las fotos quedan guardadas en la ficha como respaldo.</p>';
     if (target) b += '<div class="hp-target">Para la ficha de <b>' + esc(target.name) + '</b>' + (target.dni ? ' · DNI ' + esc(target.dni) : '') + '</div>';
     if (cur) {
@@ -21764,7 +21792,6 @@ const OVMenu = (function () {
       b += '<div class="hp-start">' + cam('📷 Sacar fotos de una historia', 'primary big') + '<label class="btn big filebtn">Subir fotos o PDF escaneado<input type="file" accept="image/*,application/pdf" multiple hidden data-chg="hcpFiles"></label></div>' +
         '<label class="chk hp-each"><input type="checkbox" id="hpEach"' + (S._hpEach ? ' checked' : '') + ' data-chg="hcpEach"> Al subir archivos: cada archivo es de un paciente distinto</label>';
     }
-    if (S._hcpOff) b += '<div class="hint">La lectura automática con IA todavía no está encendida en esta cuenta. Igual podés pasar las historias: la foto queda al lado y la cargás a mano (también por voz).</div>';
     if (lote.length) {
       const n = k => lote.filter(x => x.st === k).length;
       b += '<h3 class="hp-h">Historias pasadas por foto <span class="count">' + lote.length + '</span></h3><div class="hp-sum">' + (n('leido') ? '<span class="chip ok">' + n('leido') + ' para revisar</span>' : '') + (n('leyendo') + n('cola') ? '<span class="chip">' + (n('leyendo') + n('cola')) + ' leyéndose</span>' : '') + (n('manual') ? '<span class="chip warn">' + n('manual') + ' a mano</span>' : '') + (n('error') ? '<span class="chip bad">' + n('error') + ' con error</span>' : '') + '</div>' +
@@ -22112,6 +22139,7 @@ const OVMenu = (function () {
   const css = document.createElement('style');
   css.textContent = '.hp-start{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 8px}.hp-start .btn.big{min-height:56px;font-size:16px;flex:1 1 220px;justify-content:center}.hp-each{font-size:14px}' +
     '.hp-target{background:var(--accent-soft,#e6f3f3);border-radius:10px;padding:8px 12px;margin:6px 0}' +
+    '.hp-bal{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:6px 0;background:var(--surface-2)}.hp-bal.low{border-color:var(--warn);background:var(--warn-soft)}.hp-bal b{font-variant-numeric:tabular-nums}' +
     '.hp-cur{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:6px 0}.hp-cur h3{margin:0 0 8px;font-size:15px}' +
     '.hp-ths{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.hp-th{position:relative;display:inline-block;border:2px solid transparent;border-radius:8px;padding:0;background:none;cursor:pointer}.hp-th.on{border-color:var(--accent,#0d6b6b)}.hp-th img{width:64px;height:84px;object-fit:cover;border-radius:6px;display:block;background:#eee;border:1px solid var(--line,#ccd)}.hp-th .x{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:0;background:var(--ink,#222);color:#fff;font-size:16px;line-height:1;cursor:pointer}' +
     '.hp-h{margin:14px 0 6px;font-size:15px}.hp-sum{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}' +

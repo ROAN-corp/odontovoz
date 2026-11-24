@@ -44,7 +44,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
   const PLANES = { prueba: 'Prueba', basico: 'Profesional', consultorio: 'Consultorio o Centro', empresa: 'Empresa', lite: 'Profesional LITE (ya no se ofrece)', centro: 'Centro (plan anterior, 8 prof.)', red: 'Empresa (nombre viejo)' };
   const $ = s => document.querySelector(s), app = $('#app');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let ses = null, rows = [], fb = null, rq = null, wa = null, q = '', filt = 'todas';
+  let ses = null, rows = [], fb = null, rq = null, wa = null, ia = null, q = '', filt = 'todas';
   const RQK = { baja: 'Baja de servicio', arrepentimiento: 'Arrepentimiento (10 días)', eliminar: 'Eliminar cuenta y datos' };
   try { ses = JSON.parse(sessionStorage.getItem('ovadm') || 'null'); } catch (e) { ses = null; }
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -87,6 +87,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
       try { fb = await http('/rest/v1/ov_feedback?select=*&order=created_at.desc&limit=100') || []; } catch (e) { fb = null; }
       try { rq = await http('/rest/v1/ov_requests?select=*&order=created_at.desc&limit=200') || []; } catch (e) { rq = null; }
       wa = {}; try { (await http('/rest/v1/rpc/ov_wa_admin_list', { method: 'POST', body: {} }) || []).forEach(x => { wa[x.owner] = x; }); } catch (e) { wa = null; }
+      await loadIa();
       render();
     } catch (e) { app.innerHTML = '<div class="card err">' + esc(e.message) + '</div>'; }
   }
@@ -98,11 +99,11 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     app.innerHTML = '<div class="stats"><div class="stat"><b>' + c.todas + '</b><span>cuentas</span></div><div class="stat"><b>' + c.activa + '</b><span>pagando</span></div><div class="stat"><b>' + c.prueba + '</b><span>en prueba</span></div><div class="stat"><b>' + soon + '</b><span>vencen en 7 días</span></div><div class="stat"><b>' + (c.vencida + c.suspendida) + '</b><span>vencidas o suspendidas</span></div></div>' +
       '<div class="tools"><input id="qq" placeholder="Buscar por correo o nota" value="' + esc(q) + '"><select id="ff">' + ['todas', 'activa', 'prueba', 'vencida', 'suspendida'].map(f => '<option value="' + f + '"' + (f === filt ? ' selected' : '') + '>' + (f === 'todas' ? 'Todas' : f) + ' (' + c[f] + ')</option>').join('') + '</select><button class="small" id="rl">Actualizar</button></div>' +
       '<table><thead><tr><th>Cuenta</th><th>Plan</th><th>Estado</th><th>Vence</th><th>Uso</th><th>Acciones</th></tr></thead><tbody>' +
-      (list.length ? list.map(r => '<tr><td><b>' + esc(r.email) + '</b><div class="muted">Alta ' + dmy((r.created_at || '').slice(0, 10)) + (r.notes ? ' · ' + esc(r.notes) : '') + '</div></td><td>' + esc(PLANES[r.plan] || r.plan) + (r.max_locs > 1 ? '<div class="muted">' + r.max_locs + ' consultorios</div>' : '') + (wa && wa[r.owner] ? '<div><span class="chip ' + (wa[r.owner].status === 'activo' ? 'ok' : 'acc') + '" title="Autogestión por WhatsApp">WA ' + esc(wa[r.owner].status) + (wa[r.owner].rem_plan ? ' · ' + esc((WAP[wa[r.owner].rem_plan] || {}).n || wa[r.owner].rem_plan) + ' ' + (wa[r.owner].rem_used || 0) + '/' + wa[r.owner].rem_quota : '') + '</span></div>' : '') + '</td><td>' + chip(state(r)) + '</td><td>' + dmy(until(r)) + '</td>' +
+      (list.length ? list.map(r => '<tr><td><b>' + esc(r.email) + '</b><div class="muted">Alta ' + dmy((r.created_at || '').slice(0, 10)) + (r.notes ? ' · ' + esc(r.notes) : '') + '</div></td><td>' + esc(PLANES[r.plan] || r.plan) + (r.max_locs > 1 ? '<div class="muted">' + r.max_locs + ' consultorios</div>' : '') + (wa && wa[r.owner] ? '<div><span class="chip ' + (wa[r.owner].status === 'activo' ? 'ok' : 'acc') + '" title="Autogestión por WhatsApp">WA ' + esc(wa[r.owner].status) + (wa[r.owner].rem_plan ? ' · ' + esc((WAP[wa[r.owner].rem_plan] || {}).n || wa[r.owner].rem_plan) + ' ' + (wa[r.owner].rem_used || 0) + '/' + wa[r.owner].rem_quota : '') + '</span></div>' : '') + (ia && ia[r.owner] ? '<div><span class="chip ' + (ia[r.owner].hojas > 20 ? 'ok' : 'warn') + '" title="Lectura con IA de historias de papel">IA ' + ia[r.owner].hojas + ' hojas</span></div>' : '') + '</td><td>' + chip(state(r)) + '</td><td>' + dmy(until(r)) + '</td>' +
         '<td class="muted">' + (r.limits ? '<b style="color:inherit">' + (r.devices || 0) + '/' + r.limits.devices + '</b> equipos · ' + r.limits.pros + ' prof.<br>' : '') + (r.flags ? '<span class="chip warn" title="' + esc(r.flags) + '">revisar</span> ' : '') + (r.records || 0) + ' registros<br>' + (r.last_sync ? 'sincronizó ' + dmy(r.last_sync.slice(0, 10)) : 'sin datos aún') + '</td>' +
         '<td><div class="acts"><button class="small" data-x="m30" data-id="' + r.owner + '">+1 mes</button><button class="small" data-x="y1" data-id="' + r.owner + '">+1 año</button>' +
         (r.status === 'suspendida' ? '<button class="small primary" data-x="on" data-id="' + r.owner + '">Reactivar</button>' : '<button class="small danger" data-x="off" data-id="' + r.owner + '">Suspender</button>') +
-        '<button class="small" data-x="ed" data-id="' + r.owner + '">Editar</button><button class="small" data-x="dv" data-id="' + r.owner + '">Equipos</button><button class="small danger" data-x="del" data-id="' + r.owner + '">Eliminar</button></div>' + ('terms_version' in r ? '<div class="muted" style="margin-top:4px">Términos: ' + (r.terms_version ? esc(r.terms_version) + (r.terms_at ? ' (' + dmy(r.terms_at.slice(0, 10)) + ')' : '') : '<span style="color:#b33">sin aceptar</span>') + '</div>' : '') + '</td></tr>').join('') : '<tr><td colspan="6" class="muted">No hay cuentas con ese filtro.</td></tr>') + '</tbody></table>' +
+        '<button class="small" data-x="ia" data-id="' + r.owner + '">IA historias</button><button class="small" data-x="ed" data-id="' + r.owner + '">Editar</button><button class="small" data-x="dv" data-id="' + r.owner + '">Equipos</button><button class="small danger" data-x="del" data-id="' + r.owner + '">Eliminar</button></div>' + ('terms_version' in r ? '<div class="muted" style="margin-top:4px">Términos: ' + (r.terms_version ? esc(r.terms_version) + (r.terms_at ? ' (' + dmy(r.terms_at.slice(0, 10)) + ')' : '') : '<span style="color:#b33">sin aceptar</span>') + '</div>' : '') + '</td></tr>').join('') : '<tr><td colspan="6" class="muted">No hay cuentas con ese filtro.</td></tr>') + '</tbody></table>' +
       (rq ? '<h2 style="margin:28px 0 8px">Pedidos de baja, arrepentimiento y eliminación <span class="muted">(' + rq.filter(x => x.status === 'nuevo' || x.status === 'en curso').length + ' pendientes · responder dentro de las 24 h)</span></h2>' + (rq.length ? '<table><thead><tr><th>Fecha</th><th>Código</th><th>Pedido</th><th>Correo</th><th>Estado</th><th></th></tr></thead><tbody>' + rq.map(x => '<tr' + (x.status === 'nuevo' ? ' style="background:var(--acc-bg,#fff6e0)"' : '') + '><td class="muted">' + esc(new Date(x.created_at).toLocaleString('es-AR')) + '</td><td><b>' + esc(x.code) + '</b></td><td>' + esc(RQK[x.kind] || x.kind) + (x.detail ? '<div class="muted">' + esc(x.detail) + '</div>' : '') + '</td><td>' + esc(x.email) + (x.name ? '<div class="muted">' + esc(x.name) + '</div>' : '') + (x.owner ? '' : '<div class="muted">sin cuenta asociada</div>') + '</td><td>' + esc(x.status) + (x.done_at ? '<div class="muted">' + esc(new Date(x.done_at).toLocaleDateString('es-AR')) + '</div>' : '') + '</td><td><div class="acts">' + (x.status === 'nuevo' ? '<button class="small" data-rq="en curso" data-id="' + x.id + '">En curso</button>' : '') + (x.status !== 'hecho' ? '<button class="small primary" data-rq="hecho" data-id="' + x.id + '">Hecho</button>' : '') + (x.kind === 'eliminar' && x.owner && x.status !== 'hecho' ? '<button class="small danger" data-del="' + x.owner + '">Eliminar cuenta</button>' : '') + '</div></td></tr>').join('') + '</tbody></table>' : '<p class="muted">Todavía no hay pedidos.</p>') + '<p class="muted">Baja: dejar de cobrar desde el próximo período (no borrar datos). Arrepentimiento: devolver todo lo pagado si está dentro de los 10 días. Eliminación: confirmar por correo con la persona y recién después tocar «Eliminar cuenta». Las pantallas de la app ya borran las fotos cuando el pedido sale desde la app.</p>' : '') +
       (fb ? '<h2 style="margin:28px 0 8px">Comentarios y sugerencias <span class="muted">(' + fb.filter(x => x.status === 'nuevo').length + ' nuevos)</span></h2>' + (fb.length ? '<table><thead><tr><th>Fecha</th><th>Cuenta</th><th>Tipo</th><th>Comentario</th><th></th></tr></thead><tbody>' + fb.map(x => '<tr' + (x.status === 'nuevo' ? ' style="font-weight:600"' : '') + '><td>' + dmy((x.created_at || '').slice(0, 10)) + '</td><td>' + esc(x.email || '') + '<div class="muted">' + esc(x.app || '') + '</div></td><td>' + esc(x.kind) + '</td><td style="white-space:pre-wrap;max-width:520px">' + esc(x.text) + '</td><td>' + (x.status === 'nuevo' ? '<button class="small" data-fb="' + x.id + '">Marcar leído</button>' : '<span class="muted">' + esc(x.status) + '</span>') + '</td></tr>').join('') + '</tbody></table>' : '<p class="muted">Todavía no llegaron comentarios.</p>') : '') +
       '<p class="muted">«+1 mes» y «+1 año» suman desde hoy o desde el vencimiento actual, lo que sea más tarde, y dejan la cuenta activa. Una cuenta vencida o suspendida queda en solo lectura: ve y descarga sus datos, pero el servidor no acepta cambios.</p>';
@@ -127,6 +128,7 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
     if (x === 'm30' || x === 'y1') { const n = x === 'm30' ? 30 : 365; if (r.plan === 'prueba') { edit(r, addDays(base, n)); return; } patch(id, { paid_until: addDays(base, n), status: 'activa' }); return; }
     if (x === 'dv') { devs(r); return; }
     if (x === 'wa') { waEdit(r); return; }
+    if (x === 'ia') { iaEdit(r); return; }
     if (x === 'off') { if (confirm('¿Suspender ' + r.email + '? Va a quedar en solo lectura.')) patch(id, { status: 'suspendida' }); return; }
     if (x === 'on') { patch(id, { status: 'activa' }); return; }
     if (x === 'ed') edit(r);
@@ -187,6 +189,42 @@ th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--lin
       try { await http('/rest/v1/rpc/ov_wa_admin_set', { method: 'POST', body: { p_owner: r.owner, p_status: $('#wSt').value, p_rem_plan: $('#wPl').value, p_rem_quota: parseInt($('#wQ').value, 10) || 0, p_phone_id: $('#wPh').value.trim(), p_waba_id: $('#wWb').value.trim(), p_display: $('#wDi').value.trim() } }); d.remove(); load(); }
       catch (e) { $('#wEr').textContent = /could not find|schema cache/i.test(e.message) ? 'Falta correr supabase/whatsapp.sql en Supabase.' : e.message; }
     };
+  }
+  /* Lectura con IA de historias de papel: saldo de hojas por cuenta (supabase/hcpapel-saldo.sql). Paquetes: mantener igual que docs/HC-PAPEL-IA.md §5 */
+  const IAP = [['Prueba gratis', 100, 0], ['Chico', 500, 49], ['Mediano', 2000, 149], ['Grande', 5000, 299]];
+  async function loadIa() {
+    ia = {}; try { (await http('/rest/v1/rpc/ov_ai_admin_list', { method: 'POST', body: {} }) || []).forEach(x => { ia[x.owner] = x; }); } catch (e) { ia = null; }
+  }
+  async function iaEdit(r) {
+    const d = document.createElement('div'); d.className = 'drawer'; d.innerHTML = '<div class="card"><h2 style="margin:0">Lectura con IA de historias · ' + esc(r.email) + '</h2><p class="muted">Cargando…</p></div>'; document.body.appendChild(d);
+    d.onclick = e => { if (e.target === d) d.remove(); };
+    const draw = async () => {
+      let me = null, led = [];
+      try {
+        (await http('/rest/v1/rpc/ov_ai_admin_list', { method: 'POST', body: {} }) || []).forEach(x => { if (x.owner === r.owner) me = x; });
+        if (me) led = await http('/rest/v1/rpc/ov_ai_admin_ledger', { method: 'POST', body: { p_owner: r.owner } }) || [];
+      } catch (e) {
+        d.querySelector('.card').innerHTML = '<h2 style="margin:0">Lectura con IA de historias · ' + esc(r.email) + '</h2><div class="err">' + (/could not find|schema cache/i.test(e.message) ? 'Falta correr supabase/hcpapel-saldo.sql en Supabase (SQL Editor).' : esc(e.message)) + '</div><div class="acts" style="justify-content:flex-end"><button class="primary" id="iaOk">Cerrar</button></div>';
+        d.querySelector('#iaOk').onclick = () => d.remove(); return;
+      }
+      d.querySelector('.card').innerHTML = '<h2 style="margin:0">Lectura con IA de historias · ' + esc(r.email) + '</h2>' +
+        (me ? '<div class="stats"><div class="stat"><b>' + me.hojas + '</b><span>hojas disponibles</span></div><div class="stat"><b>' + me.comprado + '</b><span>cargadas en total</span></div><div class="stat"><b>' + me.leidas + '</b><span>enviadas a leer</span></div></div>'
+          : '<p class="muted" style="margin:0">Esta cuenta todavía no tiene el servicio. Al cargarle hojas se activa; sin hojas no puede leer con IA.</p>') +
+        '<div class="muted">Cargar un paquete (cuando el cliente pagó):</div><div class="acts">' + IAP.map((k, i) => '<button class="small" data-iap="' + i + '">+' + k[1].toLocaleString('es-AR') + ' · ' + (k[2] ? 'USD ' + k[2] : k[0]) + '</button>').join('') + '</div>' +
+        '<div class="row2"><div><label>Otra cantidad (con signo menos corrige un error)</label><input type="number" id="iaN" step="1" placeholder="Ej.: 250"></div><div><label>Nota del pago</label><input id="iaNota" maxlength="200" placeholder="Ej.: transferencia 24/11"></div></div>' +
+        '<div class="err" id="iaEr"></div><div class="acts" style="justify-content:space-between"><button id="iaOk">Cerrar</button><button class="primary" id="iaGo">Cargar</button></div>' +
+        (led.length ? '<div class="muted" style="margin-top:6px">Últimas cargas</div><div class="muted">' + led.map(l => dmy(String(l.at || '').slice(0, 10)) + ' · ' + (l.n > 0 ? '+' : '') + l.n + (l.nota ? ' · ' + esc(l.nota) : '')).join('<br>') + '</div>' : '');
+      const go = async (n, nota) => {
+        if (!n || !Number.isInteger(n)) { d.querySelector('#iaEr').textContent = 'Poné una cantidad entera.'; return; }
+        if (!confirm((n > 0 ? 'Cargar ' : 'Restar ') + Math.abs(n).toLocaleString('es-AR') + ' hojas a ' + r.email + '?')) return;
+        try { await http('/rest/v1/rpc/ov_ai_admin_grant', { method: 'POST', body: { p_owner: r.owner, p_n: n, p_nota: nota || null } }); await loadIa(); render(); draw(); }
+        catch (e) { d.querySelector('#iaEr').textContent = e.message; }
+      };
+      d.querySelectorAll('[data-iap]').forEach(b => { b.onclick = () => { const k = IAP[+b.getAttribute('data-iap')]; go(k[1], (k[2] ? 'IA ' + k[0] + ' ' + k[1] + ' hojas, USD ' + k[2] : 'Prueba gratis ' + k[1] + ' hojas') + (d.querySelector('#iaNota').value.trim() ? ' · ' + d.querySelector('#iaNota').value.trim() : '')); }; });
+      d.querySelector('#iaGo').onclick = () => go(Number(d.querySelector('#iaN').value), d.querySelector('#iaNota').value.trim());
+      d.querySelector('#iaOk').onclick = () => d.remove();
+    };
+    draw();
   }
   async function devs(r) {
     const d = document.createElement('div'); d.className = 'drawer'; d.innerHTML = '<div class="card"><h2 style="margin:0">Equipos de ' + esc(r.email) + '</h2><p class="muted">Cargando…</p></div>'; document.body.appendChild(d);

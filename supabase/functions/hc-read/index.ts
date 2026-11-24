@@ -4,6 +4,8 @@
 // No guarda nada: ni las fotos ni el texto. Se publica CON «Verify JWT» (solo usuarios con sesión).
 // Secretos: ANTHROPIC_API_KEY. Opcionales: HC_AI_MODEL (modelo), HC_READ_MAX (hojas por día y cuenta, 600 por defecto).
 // Tope diario: supabase/hcpapel.sql (ov_ai_hit). Si no está corrido, funciona sin tope.
+// Saldo de hojas por cuenta: supabase/hcpapel-saldo.sql. Cada hoja leída se descuenta antes de llamar a la IA y se devuelve si algo falla.
+// Una cuenta sin hojas cargadas NO puede leer (si el SQL del saldo no está corrido, tampoco: se falla cerrado para no regalar lecturas).
 
 const env = (k: string, d = '') => (globalThis as any).Deno?.env?.get(k) ?? d;
 const SB = () => env('SUPABASE_URL');
@@ -102,23 +104,33 @@ export async function serve(req: Request): Promise<Response> {
   const owner = who && who.owner;
   if (!owner) return out({ ok: false, msg: 'No encontré tu cuenta.' }, 403);
 
+  /* saldo de hojas: se descuentan ahora y se devuelven si no se llegan a leer. Sin saldo, o si no se puede comprobar, no se lee. */
+  const n = imgs.length;
+  let left = -2;
+  try { left = Math.trunc(+(await rpc('ov_ai_take', { p_owner: owner, p_n: n }))); } catch (_) { left = -2; }
+  if (!(left >= 0)) return out(left === -1 ? { ok: false, off: true, code: 'sin_hojas', msg: 'Se terminaron las hojas de lectura con IA de tu cuenta. Escribinos para sumar más. Mientras, podés cargarla a mano mirando la foto.' } : { ok: false, off: true, code: 'no_activada', msg: 'La lectura con IA no está activada en tu cuenta. Escribinos y te la activamos. Mientras, podés cargarla a mano mirando la foto.' }, 503);
+  const back = async () => { try { await rpc('ov_ai_refund', { p_owner: owner, p_n: n }); } catch (_) { /* nada */ } };
+
   /* tope diario de hojas por cuenta (cuida el gasto); si el SQL no está corrido, sigue sin tope */
   const max = +env('HC_READ_MAX', '600'), day = new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
-  const used = await rpc('ov_ai_hit', { p_owner: owner, p_day: day, p_kind: 'hc', p_n: imgs.length }).catch(() => 0);
-  if (+used > max) return out({ ok: false, limit: true, msg: 'Por hoy se llegó al máximo de hojas leídas de esta cuenta. Mañana se puede seguir (o cargarla a mano mirando la foto).' }, 429);
+  const used = await rpc('ov_ai_hit', { p_owner: owner, p_day: day, p_kind: 'hc', p_n: n }).catch(() => 0);
+  if (+used > max) { await back(); return out({ ok: false, limit: true, msg: 'Por hoy se llegó al máximo de hojas leídas de esta cuenta. Mañana se puede seguir (o cargarla a mano mirando la foto).' }, 429); }
 
   const content: any[] = imgs.map((i: any) => ({ type: 'image', source: { type: 'base64', media_type: i.type || 'image/jpeg', data: i.data } }));
   content.push({ type: 'text', text: 'Estas ' + imgs.length + ' foto(s) son de la historia clínica en papel de un paciente' + (b.hint ? ' (' + String(b.hint).slice(0, 120) + ')' : '') + '. Transcribila con la herramienta «historia».' });
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': env('ANTHROPIC_API_KEY'), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: MODEL(), max_tokens: 8000, system: SYS, tools: [TOOL], tool_choice: { type: 'tool', name: 'historia' }, messages: [{ role: 'user', content }] })
-  });
-  if (!r.ok) { const t = await r.text().catch(() => ''); return out({ ok: false, msg: 'No se pudo leer ahora (' + r.status + '). Probá de nuevo en un rato.', detail: t.slice(0, 200) }, 502); }
-  const j = await r.json();
+  let r: Response;
+  try {
+    r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': env('ANTHROPIC_API_KEY'), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model: MODEL(), max_tokens: 8000, system: SYS, tools: [TOOL], tool_choice: { type: 'tool', name: 'historia' }, messages: [{ role: 'user', content }] })
+    });
+  } catch (_) { await back(); return out({ ok: false, msg: 'No se pudo leer ahora. Probá de nuevo en un rato.' }, 502); }
+  if (!r.ok) { await back(); const t = await r.text().catch(() => ''); return out({ ok: false, msg: 'No se pudo leer ahora (' + r.status + '). Probá de nuevo en un rato.', detail: t.slice(0, 200) }, 502); }
+  const j = await r.json().catch(() => ({}));
   const use = (j.content || []).filter((x: any) => x.type === 'tool_use' && x.name === 'historia')[0];
-  if (!use) return out({ ok: false, msg: 'No se pudo leer la historia. Probá con una foto más nítida o cargala a mano.' }, 422);
-  return out({ ok: true, data: tidy(use.input), pages: imgs.length });
+  if (!use) { await back(); return out({ ok: false, msg: 'No se pudo leer la historia. Probá con una foto más nítida o cargala a mano.' }, 422); }
+  return out({ ok: true, data: tidy(use.input), pages: n, left });
 }
 
 if ((globalThis as any).Deno?.serve) (globalThis as any).Deno.serve(serve);
