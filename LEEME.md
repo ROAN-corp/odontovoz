@@ -135,6 +135,11 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.25.2 · «Solo yo» (24/11/2026)
+
+- `app110`: tres niveles de caja propia en «Mis números» (`A.chg.pvMine`, selector): Visible, Privada (`cfg.priv`) y Solo yo (`cfg.solo`). `A.proSolo`/`A.soloFrom`; `privLocked`: en «Solo yo» solo el propio profesional la abre (ni el dueño de la cuenta). `A.pcList` oculta de «Para cobrar» lo de una caja «Solo yo» ajena.
+- Sigue sin ocultarse: la cuenta de cada paciente y «Te deben las obras sociales» (el reparto de lo cobrado usa esas filas). Es privacidad en pantalla, no en el servidor.
+
 ## OdontoVoz 1.25.1 · el socio/a tiene los permisos del dueño (24/11/2026)
 
 - `app33`: `mb()` devuelve `null` para un socio (pantalla y permisos como dueño); `rawMb()`/`A.memberRaw()` sigue dando su ficha (nombre, profesional). `isOwner()` es solo el dueño verdadero (el selector «Atiendo como» de la cuenta es suyo); `canTeam()` = dueño o socio. `A.mbPro`/`A.myProId` usan la ficha real. El socio no sube la clave `setup` (el servidor la rechaza).

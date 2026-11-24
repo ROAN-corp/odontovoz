@@ -7,8 +7,11 @@
   A.proPriv = pid => { const c = cfgOf(pid), md = c.mode || 'pct'; if (md === 'pct' || md === 'pctmod') return false; return md === 'mod' || md === 'alq' ? c.priv !== false : c.priv === true; };
   /* ¿se la oculto a quien está usando la app? (el propio profesional siempre ve la suya) */
   A.privFrom = pid => !!pid && A.proPriv(pid) && !(A.myProId && A.myProId() === pid);
-  /* una vez prendida, solo la apaga el propio profesional o, desde el usuario del dueño, con aviso en el registro */
-  A.privLocked = pid => A.proPriv(pid) && !!(A.memberRaw && A.memberRaw()) && !(A.myProId && A.myProId() === pid);
+  /* «Solo yo» (1.25.2): nadie más puede abrirla, ni el dueño de la cuenta */
+  A.proSolo = pid => A.proPriv(pid) && cfgOf(pid).solo === true;
+  A.soloFrom = pid => !!pid && A.proSolo(pid) && !(A.myProId && A.myProId() === pid);
+  /* «Privada»: la apaga el propio profesional o, desde el usuario del dueño, con aviso en el registro. «Solo yo»: únicamente él */
+  A.privLocked = pid => A.proPriv(pid) && !(A.myProId && A.myProId() === pid) && (A.proSolo(pid) || !!(A.memberRaw && A.memberRaw()));
 
   A.privHTML = (pid, mode) => {
     if (mode === 'pct' || mode === 'pctmod') return '<div class="hint">Su caja es visible para la administración: una parte de lo que cobra es del consultorio.</div>';
@@ -48,18 +51,21 @@
   /* «Mi caja» en «Mis números»: cada dueño/a o socio/a decide si sus cobros se ven en la caja general */
   A.chg.pvMine = el => {
     const pid = A.myProId && A.myProId(); if (!pid || !(A.isBoss && A.isBoss())) return;
-    const c = cfgOf(pid), want = !!el.checked;
+    const c = cfgOf(pid), v = el.value, want = v === 'priv' || v === 'solo';
     if (want && (c.mode || 'pct') === 'pct') { c.mode = 'socia'; }
-    c.priv = want; const p = A.PRO(pid); if (p && p.deal) { p.deal.priv = want; p.deal.mode = c.mode; }
-    if (A.empAudit) { try { A.empAudit((want ? 'Caja propia en privado' : 'Caja propia visible') + ': ' + ((A.PRO(pid) || {}).name || pid) + '.'); } catch (e) { /* nada */ } }
-    A.save(); A.toast(want ? 'Listo: tus cobros ya no se ven en la caja general.' : 'Listo: tus cobros se ven en la caja general.'); if (S.modal) A.renderModal(); else A.refresh();
+    c.priv = want; c.solo = v === 'solo'; const p = A.PRO(pid); if (p && p.deal) { p.deal.priv = want; p.deal.solo = c.solo; p.deal.mode = c.mode; }
+    if (A.empAudit) { try { A.empAudit('Caja propia: ' + (v === 'solo' ? 'solo yo' : want ? 'privada' : 'visible') + ' (' + ((A.PRO(pid) || {}).name || pid) + ').'); } catch (e) { /* nada */ } }
+    A.save(); A.toast(v === 'solo' ? 'Listo: solo vos ves tus números. Nadie más puede abrirlos.' : want ? 'Listo: tus cobros ya no se ven en la caja general.' : 'Listo: tus cobros se ven en la caja general.'); if (S.modal) A.renderModal(); else A.refresh();
   };
+  /* «Solo yo»: sus cobros pendientes tampoco aparecen en «Para cobrar» de los demás */
+  const pcPrev = A.pcList;
+  if (pcPrev) A.pcList = opt => pcPrev(opt).filter(it => !(it.items && it.items.length && it.items.every(e => A.soloFrom(e.pro))));
   const myPrev = A.modalFns.myLiq;
   if (myPrev) A.modalFns.myLiq = m => {
     const h = myPrev(m), pid = A.myProId && A.myProId(); if (typeof h !== 'string' || !pid || h.indexOf('pvMine') >= 0) return h;
     const boss = A.isBoss && A.isBoss(), on = A.proPriv(pid);
     const blk = '<div class="block pv-mine"><h3>Mi caja</h3>' + (boss
-      ? '<label class="chk pv-row"><input type="checkbox" data-chg="pvMine"' + (on ? ' checked' : '') + '> <span><b>Mi caja en privado</b>: mis cobros no aparecen en la caja general, en el inicio ni en las liquidaciones del consultorio. Solo los veo yo.</span></label><div class="hint">Podés cambiarlo cuando quieras. La historia clínica y los pacientes siguen siendo del consultorio.</div>'
+      ? '<div class="field"><label for="pvSel">Quién ve mis números</label><select id="pvSel" data-chg="pvMine"><option value=""' + (!on ? ' selected' : '') + '>Visible: se ven en la caja del consultorio</option><option value="priv"' + (on && !A.proSolo(pid) ? ' selected' : '') + '>Privada: no aparecen en la caja general, el inicio ni las liquidaciones</option><option value="solo"' + (A.proSolo(pid) ? ' selected' : '') + '>Solo yo: además tampoco en «Para cobrar», y nadie más puede abrirla (ni el dueño)</option></select></div><div class="hint">Podés cambiarlo cuando quieras (en «Solo yo», solo vos). La historia clínica y los pacientes siguen siendo del consultorio, y la cuenta de cada paciente muestra sus cobros.</div>'
       : '<div class="hint">' + (on ? '🔒 Tu caja es privada: la administración ve solo el alquiler.' : 'Tu caja es visible para la administración del consultorio.') + '</div>') + '</div>';
     return h.replace('<div class="hint">Es un cálculo', blk + '<div class="hint">Es un cálculo');
   };
