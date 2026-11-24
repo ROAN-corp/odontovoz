@@ -121,3 +121,15 @@ main > section:first-child { scroll-margin-top: 76px; }
 .trust svg { width: 26px; height: 26px; flex: none; fill: none; stroke: var(--teal); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; margin-top: 2px; }
 .trust span { font-size: 15px; line-height: 1.45; color: var(--ink-2); }
 .trust b { display: block; color: var(--ink); font: 800 16px var(--display); margin-bottom: 1px; }
+
+/* el video de «Miralo funcionar» tiene la proporción de la pantalla del celular (720×1558): sin franjas grises */
+.watch .reel { width: min(300px, 100%); }
+.watch .reel video { aspect-ratio: 720 / 1558; object-fit: cover; }
+/* modo oscuro: el logo y los textos de la barra y del menú se leen */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .topbar .brand, :root:not([data-theme="light"]) .side .brand, :root:not([data-theme="light"]) .sfoot .brand { color: var(--ink); }
+  :root:not([data-theme="light"]) .topbar .btn.solid { color: #2b2100; }
+}
+:root[data-theme="dark"] .topbar .brand, :root[data-theme="dark"] .side .brand, :root[data-theme="dark"] .sfoot .brand { color: var(--ink); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card-l .ic svg, :root:not([data-theme="light"]) .about-card .ic svg, :root:not([data-theme="light"]) .trust svg, :root:not([data-theme="light"]) .side a.it svg { stroke: #4cc3c4; } :root:not([data-theme="light"]) .card-l .ic, :root:not([data-theme="light"]) .about-card .ic { background: #1d4a45; } }
+:root[data-theme="dark"] .card-l .ic svg, :root[data-theme="dark"] .about-card .ic svg, :root[data-theme="dark"] .trust svg { stroke: #4cc3c4; }
