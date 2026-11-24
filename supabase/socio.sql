@@ -115,3 +115,45 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function public.ov_whoami() from public, anon;
 grant execute on function public.ov_whoami() to authenticated;
+
+-- el socio también invita por mail, cancela invitaciones y elige el código de la cuenta (todo a nombre de la cuenta del dueño)
+create or replace function public.ov_invite_create(p_role text, p_sede text, p_pro text, p_name text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare uid uuid := auth.uid(); o uuid := public.ov_owner(); code text; al constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; n int;
+begin
+  if uid is null or not ((public.ov_role() = 'dueno' and o = uid) or public.ov_is_socio()) then return jsonb_build_object('ok', false, 'msg', 'Solo el dueño de la cuenta o un socio puede invitar.'); end if;
+  if p_role not in ('admin', 'recepcion', 'profesional', 'asistente') then return jsonb_build_object('ok', false, 'msg', 'Puesto inválido.'); end if;
+  if p_sede is not null and p_sede !~ '^[A-Za-z0-9_-]{1,40}$' then return jsonb_build_object('ok', false, 'msg', 'Consultorio inválido.'); end if;
+  select count(*) into n from public.ov_invites where owner = o and created_at > now() - interval '1 day';
+  if n >= 30 then return jsonb_build_object('ok', false, 'msg', 'Demasiadas invitaciones hoy. Probá mañana.'); end if;
+  code := (select string_agg(substr(al, 1 + floor(random() * length(al))::int, 1), '') from generate_series(1, 10));
+  insert into public.ov_invites (code, owner, role, sede, pro, name) values (code, o, p_role, nullif(p_sede, ''), nullif(p_pro, ''), left(p_name, 80));
+  return jsonb_build_object('ok', true, 'code', code, 'expires_at', now() + interval '7 days');
+end $$;
+revoke all on function public.ov_invite_create(text, text, text, text) from public, anon;
+grant execute on function public.ov_invite_create(text, text, text, text) to authenticated;
+
+create or replace function public.ov_invite_revoke(p_code text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare o uuid := public.ov_owner();
+begin
+  if auth.uid() is null or not ((public.ov_role() = 'dueno' and o = auth.uid()) or public.ov_is_socio()) then return jsonb_build_object('ok', false); end if;
+  update public.ov_invites set revoked = true where code = p_code and owner = o;
+  return jsonb_build_object('ok', found);
+end $$;
+revoke all on function public.ov_invite_revoke(text) from public, anon;
+grant execute on function public.ov_invite_revoke(text) to authenticated;
+
+create or replace function public.ov_code_set(p_code text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare c text := lower(trim(coalesce(p_code, ''))); o uuid := public.ov_owner();
+begin
+  if auth.uid() is null or not ((public.ov_role() = 'dueno' and o = auth.uid()) or public.ov_is_socio()) then return jsonb_build_object('ok', false, 'msg', 'Solo el dueño de la cuenta o un socio.'); end if;
+  if c !~ '^[a-z0-9]{4,20}$' then return jsonb_build_object('ok', false, 'msg', 'El código lleva de 4 a 20 letras o números, sin espacios ni acentos.'); end if;
+  if exists (select 1 from public.ov_members where owner = o and sub) then return jsonb_build_object('ok', false, 'msg', 'Ya hay usuarios creados con el código actual: no se puede cambiar.'); end if;
+  if exists (select 1 from public.ov_accounts where code = c and owner <> o) then return jsonb_build_object('ok', false, 'msg', 'Ese código ya lo usa otra cuenta. Probá con otro.'); end if;
+  update public.ov_accounts set code = c where owner = o;
+  return jsonb_build_object('ok', true, 'code', c);
+end $$;
+revoke all on function public.ov_code_set(text) from public, anon;
+grant execute on function public.ov_code_set(text) to authenticated;

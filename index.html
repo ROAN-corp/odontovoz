@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.25.0';
+  A.VERSION = '1.25.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.80.0';
+  A.VBUILD = '1.80.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -13658,21 +13658,23 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
   const real = () => !!(CL.session && !A.DEMO);
   /* A._tmMember: solo para probar las pantallas en el modo de prueba (desde la consola) */
-  const mb = () => (real() && CL.member) || (A.DEMO && A._tmMember) || null;
-  A.memberNow = mb;
+  const rawMb = () => (real() && CL.member) || (A.DEMO && A._tmMember) || null;
+  /* 1.25.1: un socio/a es administración en el servidor pero, para los permisos de la pantalla, es como el dueño (mb() = null); rawMb() sigue dando su ficha (nombre, profesional) */
+  const mb = () => { const m = rawMb(); return m && m.socio && m.role === 'admin' ? null : m; };
+  A.memberNow = mb; A.memberRaw = rawMb;
   const role = () => { const m = mb(); return m ? m.role : 'dueno'; };
   const isEmp = () => !!(A.isEmp && A.isEmp());
-  const isOwner = () => (real() || (A.DEMO && A._tmOwner)) && !mb();
+  const isOwner = () => (real() || (A.DEMO && A._tmOwner)) && !rawMb();
   /* 1.25: socio/a = administración con permiso para manejar el equipo (ov_member_socio en el servidor) */
-  const isSocio = () => { const m = mb(); return !!(m && m.socio && m.role === 'admin' && (real() || A.DEMO)); };
+  const isSocio = () => { const m = rawMb(); return !!(m && m.socio && m.role === 'admin' && (real() || A.DEMO)); };
   const canTeam = () => isOwner() || isSocio();
   const rn = m => (m && m.socio && m.role === 'admin' ? RN.socio : RN[m && m.role] || (m && m.role) || '');
   A.isSocio = isSocio;
   A.mbRole = role; A.isMember = () => !!mb();
   /* profesional con el que atiende este usuario del equipo (de cualquier puesto), o null */
-  A.mbPro = () => { const m = mb(); return m && m.pro && A.PROS.some(p => p.id === m.pro) ? m.pro : null; };
+  A.mbPro = () => { const m = rawMb(); return m && m.pro && A.PROS.some(p => p.id === m.pro) ? m.pro : null; };
   /* 1.23.2: el dueño de la cuenta que también atiende elige con qué profesional (se guarda en la cuenta: A.CFG.ownerPro) */
-  A.ownerPro = () => { const v = !mb() && A.CFG && A.CFG.ownerPro; return v && A.PROS.some(p => p.id === v) ? v : null; };
+  A.ownerPro = () => { const v = !rawMb() && A.CFG && A.CFG.ownerPro; return v && A.PROS.some(p => p.id === v) ? v : null; };
   /* con qué profesional atiende quien está usando la app (usuario del equipo o dueño), o null */
   A.myProId = () => A.mbPro() || A.ownerPro();
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
@@ -13790,7 +13792,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const raPrev = A.recAllowed;
   A.recAllowed = (k, v) => {
     if (raPrev && !raPrev(k, v)) return false;
-    const m = mb(); if (!m) return true;
+    const m = mb(); if (!m) return !(A.isSocio() && k === 'setup'); /* el servidor no deja que un socio cambie la configuración inicial */
     if (k === 'setup') return false;
     const r = m.role;
     if (r === 'admin') return k !== 'empo';
@@ -13859,6 +13861,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     b.classList.toggle('mb-on', !!m);
     ['admin', 'recepcion', 'profesional', 'asistente'].forEach(x => b.classList.toggle('mb-' + x, !!m && m.role === x));
     if (m) enforce(m);
+    else if (A.isSocio()) enforce(rawMb());
     else if (A.ownerPro()) { S.me = A.ownerPro(); if (!meDone) { meDone = true; S.proSel = [S.me]; } }
     if (arPrev) arPrev();
     if (m && !tabOk(S.tab)) { S.tab = 'inicio'; setTimeout(() => A.refresh(), 0); return; }
@@ -13900,7 +13903,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       const tb = isSocio() ? '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Como dueño/a (socio/a) manejás el equipo igual que el dueño de la cuenta.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">Ver el equipo</button></div></div>' : '';
       return h.replace('<div class="field" style="margin-top:10px">', box + tb + '<div class="field" style="margin-top:10px">');
     }
-    if (isOwner()) {
+    if (canTeam()) {
       const n = TEAM && TEAM.ok ? TEAM.members.filter(x => x.active).length : null;
       const block = '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Creale un usuario a tu secretaria y a los odontólogos que trabajan con vos: entran con el código de tu cuenta, su usuario y su contraseña (no necesitan correo), gratis, y ven solo lo de su puesto.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">' + (n ? 'Ver el equipo (' + n + ')' : 'Crear usuarios') + '</button></div></div>';
       h = h.replace('<div class="block"><h3>Tus datos</h3>', block + '<div class="block"><h3>Tus datos</h3>');
@@ -18524,6 +18527,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.25.1', b: '1.80.1', d: '2026-11-24', items: [
+      { t: 'El puesto «Dueño/a (socio/a)» ahora tiene los mismos permisos que el dueño de la cuenta: usuarios, invitaciones, código, ajustes y todas las pantallas. Además atiende con su agenda. Solo el plan, el cobro de la cuenta y la caja privada de otro profesional siguen aparte. Hay que volver a correr socio.sql en Supabase.', top: true }] },
     { v: '1.25.0', b: '1.80.0', d: '2026-11-24', items: [
       { t: 'Nuevo puesto «Dueño/a (socio/a)»: maneja el equipo igual que el dueño de la cuenta (crea y quita usuarios, cambia puestos) y también atiende. Para activarlo hay que correr una vez socio.sql en Supabase.', top: true },
       { t: '«Mi caja en privado»: en «Mis números», cada dueño/a o socio/a decide si sus cobros se ven en la caja general. Si los deja en privado, no aparecen en la caja, el inicio ni las liquidaciones del consultorio.' }] },
@@ -20585,7 +20590,7 @@ const OVMenu = (function () {
   };
 
   /* ---------- «Mis números» para el profesional del equipo ---------- */
-  const myPro = () => { const mb = A.memberNow && A.memberNow(); return mb && mb.pro ? mb.pro : ((!mb && A.ownerPro && A.ownerPro()) || null); };
+  const myPro = () => { const mb = A.memberRaw && A.memberRaw(); return mb && mb.pro ? mb.pro : ((!mb && A.ownerPro && A.ownerPro()) || null); };
   A.acts.myLiq = () => { S.modal = { type: 'myLiq', m: A.today().slice(0, 7) }; A.renderModal(); };
   A.acts.myLiqM = el => { S.modal.m = addM(S.modal.m, +el.getAttribute('data-n')); A.renderModal(); };
   MF.myLiq = m => {
@@ -20821,7 +20826,7 @@ const OVMenu = (function () {
     const p = A.PRO(pid); return p && p.rx && p.rx.url ? p.rx : null;
   };
   A.rxOf = rxOf;
-  const proOfFicha = pid => { const mb = A.memberNow && A.memberNow(); if (mb && mb.pro) return mb.pro; const p = A.PAT(pid); return (p && p.pro) || (A.PROS[0] || {}).id; };
+  const proOfFicha = pid => { const mb = A.memberRaw && A.memberRaw(); if (mb && mb.pro) return mb.pro; const p = A.PAT(pid); return (p && p.pro) || (A.PROS[0] || {}).id; };
   const patText = pid => {
     const p = A.PAT(pid) || {}, pd = A.pd(pid), pr = pd.prof || {};
     const L = [['Paciente', p.name], ['DNI', p.dni], ['Fecha de nacimiento', pr.birth || p.birth ? A.fmtDMY(pr.birth || p.birth) : ''], ['Sexo', pr.sex || ''], ['Obra social', p.cov], ['N.º de afiliado', pr.covNum || pr.afil || p.covNum || ''], ['Plan', pr.plan || ''], ['Teléfono', p.phone], ['Correo', pr.email || p.email || '']];
@@ -22174,7 +22179,7 @@ const OVMenu = (function () {
 
   /* ¿de quién es la agenda si no lo dijo? */
   function mine() {
-    const mb = A.memberNow && A.memberNow(); if (mb && mb.pro) return mb.pro;
+    const mb = A.memberRaw && A.memberRaw(); if (mb && mb.pro) return mb.pro;
     const v = vis(); if (v.length === 1) return v[0].id;
     if (A.isSolo && A.isSolo()) return (v[0] || A.PROS[0]).id;
     if (S.uimode === 'atencion' && S.me) return S.me;
@@ -24183,7 +24188,7 @@ const OVMenu = (function () {
   A.modalAfter.myLiq = m => {
     if (myAfter) try { myAfter(m); } catch (e) { /* nada */ }
     const body = $('#modalHost .m-body'); if (!body || body.querySelector('.lq-pub')) return;
-    const mb = A.memberNow && A.memberNow(), pid = (mb && mb.pro) || (S.liq && S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : null); if (!pid) return;
+    const mb = A.memberRaw && A.memberRaw(), pid = (mb && mb.pro) || (S.liq && S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : null); if (!pid) return;
     const k = key(pid, m.m), o = OK[k]; if (!o || (o.void && !o.pub)) return;
     let h = '<div class="lq-pub"><h3>Liquidación que te mandó el centro</h3><div class="cj-big3"><div class="cj-b acc"><small>Te pagan</small><b>' + money(o.net) + '</b><span>' + plural(o.n || 0, 'práctica') + '</span></div><div class="cj-b"><small>Te corresponde</small><b>' + money(o.dent) + '</b></div><div class="cj-b"><small>Descuentos</small><b>' + money((o.deds || []).reduce((s, d) => s + d.amount, 0)) + '</b></div></div>' +
       ((o.deds || []).length ? '<ul class="lq-deds">' + o.deds.map(d => '<li>' + esc(d.desc) + ': − ' + money(d.amount) + '</li>').join('') + '</ul>' : '') +
@@ -27447,7 +27452,7 @@ const OVMenu = (function () {
   /* ¿se la oculto a quien está usando la app? (el propio profesional siempre ve la suya) */
   A.privFrom = pid => !!pid && A.proPriv(pid) && !(A.myProId && A.myProId() === pid);
   /* una vez prendida, solo la apaga el propio profesional o, desde el usuario del dueño, con aviso en el registro */
-  A.privLocked = pid => A.proPriv(pid) && !!(A.isMember && A.isMember()) && !(A.myProId && A.myProId() === pid);
+  A.privLocked = pid => A.proPriv(pid) && !!(A.memberRaw && A.memberRaw()) && !(A.myProId && A.myProId() === pid);
 
   A.privHTML = (pid, mode) => {
     if (mode === 'pct' || mode === 'pctmod') return '<div class="hint">Su caja es visible para la administración: una parte de lo que cobra es del consultorio.</div>';

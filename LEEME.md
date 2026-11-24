@@ -135,6 +135,13 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.25.1 · el socio/a tiene los permisos del dueño (24/11/2026)
+
+- `app33`: `mb()` devuelve `null` para un socio (pantalla y permisos como dueño); `rawMb()`/`A.memberRaw()` sigue dando su ficha (nombre, profesional). `isOwner()` es solo el dueño verdadero (el selector «Atiendo como» de la cuenta es suyo); `canTeam()` = dueño o socio. `A.mbPro`/`A.myProId` usan la ficha real. El socio no sube la clave `setup` (el servidor la rechaza).
+- `supabase/socio.sql` (volver a correr): ahora también `ov_invite_create`, `ov_invite_revoke` y `ov_code_set` a nombre de la cuenta del dueño. Prueba: `node tests/sql/socio.test.mjs`.
+- La caja privada de una socia no se abre desde la cuenta de otra socia (`A.privLocked`); solo el dueño de la cuenta, con aviso.
+- Sigue siendo solo del dueño: plan y cobro, sueldos/metas del modo Empresa (clave `empo`), activar/desactivar Empresa por servidor no, borrar datos.
+
 ## OdontoVoz 1.25.0 · dueño/a (socio/a) y «Mi caja en privado» (24/11/2026)
 
 - Servidor (`supabase/socio.sql`, correr una vez; probado con `node tests/sql/socio.test.mjs`): columna `ov_members.socio`, `ov_is_socio()`, `ov_member_socio()`; `ov_sub_create` (el socio crea administradores), `ov_member_set` (el socio cambia puestos y quita accesos), `ov_team` y `ov_whoami` devuelven `socio`. La socia sigue siendo `role = 'admin'`, así que todo lo que ya autorizaba al administrador (claves, fotos, WhatsApp, auditoría) sigue igual.

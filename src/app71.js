@@ -33,7 +33,7 @@
     const p = A.PRO(pid); return p && p.rx && p.rx.url ? p.rx : null;
   };
   A.rxOf = rxOf;
-  const proOfFicha = pid => { const mb = A.memberNow && A.memberNow(); if (mb && mb.pro) return mb.pro; const p = A.PAT(pid); return (p && p.pro) || (A.PROS[0] || {}).id; };
+  const proOfFicha = pid => { const mb = A.memberRaw && A.memberRaw(); if (mb && mb.pro) return mb.pro; const p = A.PAT(pid); return (p && p.pro) || (A.PROS[0] || {}).id; };
   const patText = pid => {
     const p = A.PAT(pid) || {}, pd = A.pd(pid), pr = pd.prof || {};
     const L = [['Paciente', p.name], ['DNI', p.dni], ['Fecha de nacimiento', pr.birth || p.birth ? A.fmtDMY(pr.birth || p.birth) : ''], ['Sexo', pr.sex || ''], ['Obra social', p.cov], ['N.º de afiliado', pr.covNum || pr.afil || p.covNum || ''], ['Plan', pr.plan || ''], ['Teléfono', p.phone], ['Correo', pr.email || p.email || '']];

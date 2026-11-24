@@ -215,7 +215,7 @@
   A.modalAfter.myLiq = m => {
     if (myAfter) try { myAfter(m); } catch (e) { /* nada */ }
     const body = $('#modalHost .m-body'); if (!body || body.querySelector('.lq-pub')) return;
-    const mb = A.memberNow && A.memberNow(), pid = (mb && mb.pro) || (S.liq && S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : null); if (!pid) return;
+    const mb = A.memberRaw && A.memberRaw(), pid = (mb && mb.pro) || (S.liq && S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : null); if (!pid) return;
     const k = key(pid, m.m), o = OK[k]; if (!o || (o.void && !o.pub)) return;
     let h = '<div class="lq-pub"><h3>Liquidación que te mandó el centro</h3><div class="cj-big3"><div class="cj-b acc"><small>Te pagan</small><b>' + money(o.net) + '</b><span>' + plural(o.n || 0, 'práctica') + '</span></div><div class="cj-b"><small>Te corresponde</small><b>' + money(o.dent) + '</b></div><div class="cj-b"><small>Descuentos</small><b>' + money((o.deds || []).reduce((s, d) => s + d.amount, 0)) + '</b></div></div>' +
       ((o.deds || []).length ? '<ul class="lq-deds">' + o.deds.map(d => '<li>' + esc(d.desc) + ': − ' + money(d.amount) + '</li>').join('') + '</ul>' : '') +

@@ -54,7 +54,7 @@
   };
 
   /* ---------- «Mis números» para el profesional del equipo ---------- */
-  const myPro = () => { const mb = A.memberNow && A.memberNow(); return mb && mb.pro ? mb.pro : ((!mb && A.ownerPro && A.ownerPro()) || null); };
+  const myPro = () => { const mb = A.memberRaw && A.memberRaw(); return mb && mb.pro ? mb.pro : ((!mb && A.ownerPro && A.ownerPro()) || null); };
   A.acts.myLiq = () => { S.modal = { type: 'myLiq', m: A.today().slice(0, 7) }; A.renderModal(); };
   A.acts.myLiqM = el => { S.modal.m = addM(S.modal.m, +el.getAttribute('data-n')); A.renderModal(); };
   MF.myLiq = m => {

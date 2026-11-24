@@ -14,7 +14,7 @@
 
   /* ¿de quién es la agenda si no lo dijo? */
   function mine() {
-    const mb = A.memberNow && A.memberNow(); if (mb && mb.pro) return mb.pro;
+    const mb = A.memberRaw && A.memberRaw(); if (mb && mb.pro) return mb.pro;
     const v = vis(); if (v.length === 1) return v[0].id;
     if (A.isSolo && A.isSolo()) return (v[0] || A.PROS[0]).id;
     if (S.uimode === 'atencion' && S.me) return S.me;

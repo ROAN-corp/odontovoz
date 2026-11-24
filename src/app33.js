@@ -6,21 +6,23 @@
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
   const real = () => !!(CL.session && !A.DEMO);
   /* A._tmMember: solo para probar las pantallas en el modo de prueba (desde la consola) */
-  const mb = () => (real() && CL.member) || (A.DEMO && A._tmMember) || null;
-  A.memberNow = mb;
+  const rawMb = () => (real() && CL.member) || (A.DEMO && A._tmMember) || null;
+  /* 1.25.1: un socio/a es administración en el servidor pero, para los permisos de la pantalla, es como el dueño (mb() = null); rawMb() sigue dando su ficha (nombre, profesional) */
+  const mb = () => { const m = rawMb(); return m && m.socio && m.role === 'admin' ? null : m; };
+  A.memberNow = mb; A.memberRaw = rawMb;
   const role = () => { const m = mb(); return m ? m.role : 'dueno'; };
   const isEmp = () => !!(A.isEmp && A.isEmp());
-  const isOwner = () => (real() || (A.DEMO && A._tmOwner)) && !mb();
+  const isOwner = () => (real() || (A.DEMO && A._tmOwner)) && !rawMb();
   /* 1.25: socio/a = administración con permiso para manejar el equipo (ov_member_socio en el servidor) */
-  const isSocio = () => { const m = mb(); return !!(m && m.socio && m.role === 'admin' && (real() || A.DEMO)); };
+  const isSocio = () => { const m = rawMb(); return !!(m && m.socio && m.role === 'admin' && (real() || A.DEMO)); };
   const canTeam = () => isOwner() || isSocio();
   const rn = m => (m && m.socio && m.role === 'admin' ? RN.socio : RN[m && m.role] || (m && m.role) || '');
   A.isSocio = isSocio;
   A.mbRole = role; A.isMember = () => !!mb();
   /* profesional con el que atiende este usuario del equipo (de cualquier puesto), o null */
-  A.mbPro = () => { const m = mb(); return m && m.pro && A.PROS.some(p => p.id === m.pro) ? m.pro : null; };
+  A.mbPro = () => { const m = rawMb(); return m && m.pro && A.PROS.some(p => p.id === m.pro) ? m.pro : null; };
   /* 1.23.2: el dueño de la cuenta que también atiende elige con qué profesional (se guarda en la cuenta: A.CFG.ownerPro) */
-  A.ownerPro = () => { const v = !mb() && A.CFG && A.CFG.ownerPro; return v && A.PROS.some(p => p.id === v) ? v : null; };
+  A.ownerPro = () => { const v = !rawMb() && A.CFG && A.CFG.ownerPro; return v && A.PROS.some(p => p.id === v) ? v : null; };
   /* con qué profesional atiende quien está usando la app (usuario del equipo o dueño), o null */
   A.myProId = () => A.mbPro() || A.ownerPro();
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
@@ -138,7 +140,7 @@
   const raPrev = A.recAllowed;
   A.recAllowed = (k, v) => {
     if (raPrev && !raPrev(k, v)) return false;
-    const m = mb(); if (!m) return true;
+    const m = mb(); if (!m) return !(A.isSocio() && k === 'setup'); /* el servidor no deja que un socio cambie la configuración inicial */
     if (k === 'setup') return false;
     const r = m.role;
     if (r === 'admin') return k !== 'empo';
@@ -207,6 +209,7 @@
     b.classList.toggle('mb-on', !!m);
     ['admin', 'recepcion', 'profesional', 'asistente'].forEach(x => b.classList.toggle('mb-' + x, !!m && m.role === x));
     if (m) enforce(m);
+    else if (A.isSocio()) enforce(rawMb());
     else if (A.ownerPro()) { S.me = A.ownerPro(); if (!meDone) { meDone = true; S.proSel = [S.me]; } }
     if (arPrev) arPrev();
     if (m && !tabOk(S.tab)) { S.tab = 'inicio'; setTimeout(() => A.refresh(), 0); return; }
@@ -248,7 +251,7 @@
       const tb = isSocio() ? '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Como dueño/a (socio/a) manejás el equipo igual que el dueño de la cuenta.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">Ver el equipo</button></div></div>' : '';
       return h.replace('<div class="field" style="margin-top:10px">', box + tb + '<div class="field" style="margin-top:10px">');
     }
-    if (isOwner()) {
+    if (canTeam()) {
       const n = TEAM && TEAM.ok ? TEAM.members.filter(x => x.active).length : null;
       const block = '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Creale un usuario a tu secretaria y a los odontólogos que trabajan con vos: entran con el código de tu cuenta, su usuario y su contraseña (no necesitan correo), gratis, y ven solo lo de su puesto.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">' + (n ? 'Ver el equipo (' + n + ')' : 'Crear usuarios') + '</button></div></div>';
       h = h.replace('<div class="block"><h3>Tus datos</h3>', block + '<div class="block"><h3>Tus datos</h3>');

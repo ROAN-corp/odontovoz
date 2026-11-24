@@ -8,7 +8,7 @@
   /* ¿se la oculto a quien está usando la app? (el propio profesional siempre ve la suya) */
   A.privFrom = pid => !!pid && A.proPriv(pid) && !(A.myProId && A.myProId() === pid);
   /* una vez prendida, solo la apaga el propio profesional o, desde el usuario del dueño, con aviso en el registro */
-  A.privLocked = pid => A.proPriv(pid) && !!(A.isMember && A.isMember()) && !(A.myProId && A.myProId() === pid);
+  A.privLocked = pid => A.proPriv(pid) && !!(A.memberRaw && A.memberRaw()) && !(A.myProId && A.myProId() === pid);
 
   A.privHTML = (pid, mode) => {
     if (mode === 'pct' || mode === 'pctmod') return '<div class="hint">Su caja es visible para la administración: una parte de lo que cobra es del consultorio.</div>';

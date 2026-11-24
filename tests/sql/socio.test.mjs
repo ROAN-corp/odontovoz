@@ -53,4 +53,14 @@ r = j(await as(V, `select public.ov_sub_create('Otro','otro','clave1','admin',nu
 ok(r.ok === false, 'sin ser socia ya no crea administradores');
 r = j(await as(O, `select public.ov_member_set('${mar}', null, null, null, false)`));
 ok(r.ok === true, 'el dueño sigue pudiendo quitar accesos');
+r = j(await as(O, `select public.ov_member_socio('${V}', true)`));
+r = j(await as(V, `select public.ov_invite_create('profesional', null, 'pr1', 'Nuevo')`));
+ok(r.ok === true && (await db.query(`select owner from public.ov_invites where code='${r.code}'`)).rows[0].owner === O, 'la invitación de la socia queda en la cuenta del dueño');
+r = j(await as(S, `select public.ov_invite_create('profesional', null, 'pr1', 'Otro')`));
+ok(r.ok === false, 'la secretaria no invita');
+await db.exec(`insert into public.ov_accounts (owner, email, code) values ('00000000-0000-0000-0000-0000000000ff', 'otra@x.test', 'otra') on conflict do nothing`);
+r = j(await as(V, `select public.ov_code_set('micodigo')`));
+ok(r.ok === false && /Ya hay usuarios/.test(r.msg), 'la socia llega a la regla del código (ya hay usuarios creados)');
+r = j(await as(S, `select public.ov_code_set('otrocodigo')`));
+ok(r.ok === false && /Solo el due/.test(r.msg), 'la secretaria no cambia el código');
 console.log(fails ? fails + ' FALLAS' : 'todo bien'); process.exit(fails ? 1 : 0);

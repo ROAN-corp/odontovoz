@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.25.1', b: '1.80.1', d: '2026-11-24', items: [
+      { t: 'El puesto «Dueño/a (socio/a)» ahora tiene los mismos permisos que el dueño de la cuenta: usuarios, invitaciones, código, ajustes y todas las pantallas. Además atiende con su agenda. Solo el plan, el cobro de la cuenta y la caja privada de otro profesional siguen aparte. Hay que volver a correr socio.sql en Supabase.', top: true }] },
     { v: '1.25.0', b: '1.80.0', d: '2026-11-24', items: [
       { t: 'Nuevo puesto «Dueño/a (socio/a)»: maneja el equipo igual que el dueño de la cuenta (crea y quita usuarios, cambia puestos) y también atiende. Para activarlo hay que correr una vez socio.sql en Supabase.', top: true },
       { t: '«Mi caja en privado»: en «Mis números», cada dueño/a o socio/a decide si sus cobros se ven en la caja general. Si los deja en privado, no aparecen en la caja, el inicio ni las liquidaciones del consultorio.' }] },
