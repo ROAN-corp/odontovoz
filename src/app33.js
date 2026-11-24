@@ -12,6 +12,8 @@
   const isEmp = () => !!(A.isEmp && A.isEmp());
   const isOwner = () => (real() || (A.DEMO && A._tmOwner)) && !mb();
   A.mbRole = role; A.isMember = () => !!mb();
+  /* profesional con el que atiende este usuario del equipo (de cualquier puesto), o null */
+  A.mbPro = () => { const m = mb(); return m && m.pro && A.PROS.some(p => p.id === m.pro) ? m.pro : null; };
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
   const noServer = e => e && (e.status === 404 || /could not find the function|schema cache/i.test(String(e.message)));
   const RN = { admin: 'Administración', recepcion: 'Recepción', profesional: 'Profesional', asistente: 'Asistente', dueno: 'Dueño' };
@@ -175,11 +177,19 @@
     const r = m.role;
     if (r === 'recepcion') { S.role = 'recepcion'; if (S.uimode === 'atencion') S.uimode = 'admin'; }
     else if (r === 'profesional' || r === 'asistente') S.role = 'profesional';
-    if ((r === 'profesional' || r === 'asistente') && m.pro && A.PROS.some(p => p.id === m.pro)) {
+    /* 1.23.1: un socio con puesto Administración que también atiende abre su agenda y firma como su profesional (y sigue viendo todo) */
+    if ((r === 'profesional' || r === 'asistente' || r === 'admin') && m.pro && A.PROS.some(p => p.id === m.pro)) {
       S.me = m.pro;
       if (!meDone) { meDone = true; S.proSel = [m.pro]; }
     }
   }
+  /* firmar un documento (consentimiento, presupuesto…): por defecto firma la profesional que está usando la app, si el socio la tiene asignada */
+  const ssPrev = A.startSign;
+  if (ssPrev) A.startSign = function (o) {
+    const m = mb();
+    if (o && !o.proId && m && m.role === 'admin' && A.mbPro && A.mbPro()) o = Object.assign({}, o, { proId: A.mbPro() });
+    return ssPrev.call(this, o);
+  };
   const arPrev = A.afterRefresh;
   A.afterRefresh = () => {
     const m = mb(), b = document.body;
@@ -270,7 +280,7 @@
   const invLink = code => appUrl() + '?invitacion=' + encodeURIComponent(code);
   const waText = i => 'Hola' + (i.name ? ' ' + i.name.split(' ')[0] : '') + '. Te invito a usar OdontoVoz en ' + (A.CLINIC || 'el consultorio') + ' como ' + (RN[i.role] || i.role).toLowerCase() + (i.sede && sedeName(i.sede) ? ' en ' + sedeName(i.sede) : '') + '. Entrá a este enlace y creá tu usuario con tu correo (para vos es gratis): ' + invLink(i.code) + ' . Si ya usás OdontoVoz en tu propio consultorio, abrí el enlace e ingresá con tu cuenta de siempre: este lugar se te suma y pasás de uno a otro con un toque. El enlace vence en 7 días y sirve una sola vez.';
   const sedeOpts = (sel, any) => (any ? '<option value=""' + (!sel ? ' selected' : '') + '>Todos los ' + LW(true) + '</option>' : '') + sedes().map(l => '<option value="' + esc(l.id) + '"' + (sel === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('');
-  const proOpts = sel => '<option value="">— Elegí —</option>' + A.PROS.map(p => '<option value="' + esc(p.id) + '"' + (sel === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
+  const proOpts = (sel, optional) => '<option value="">' + (optional ? '— No atiende pacientes —' : '— Elegí —') + '</option>' + A.PROS.map(p => '<option value="' + esc(p.id) + '"' + (sel === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
   const roleOpts = sel => ['recepcion', 'profesional', 'asistente', 'admin'].map(r => '<option value="' + r + '"' + (sel === r ? ' selected' : '') + '>' + RN[r] + '</option>').join('');
   const manyLocs = () => sedes().length > 1 || isEmp();
   function teamHTML() {
@@ -293,7 +303,7 @@
         '<div class="field"><label for="tmName">Nombre</label><input id="tmName" value="' + esc(f.name) + '" placeholder="Ej.: Marta" data-in="tmF" data-k="name"></div>' +
         '<div class="field"><label for="tmRole">Puesto</label><select id="tmRole" data-chg="tmF" data-k="role">' + roleOpts(f.role) + '</select></div>' +
         (manyLocs() ? '<div class="field"><label for="tmSede">' + LWc() + '</label><select id="tmSede" data-chg="tmF" data-k="sede">' + sedeOpts(f.sede, f.role === 'admin') + '</select></div>' : '') +
-        (f.role === 'profesional' || f.role === 'asistente' ? '<div class="field"><label for="tmPro">' + (f.role === 'profesional' ? 'Es el profesional' : 'Trabaja con') + '</label><select id="tmPro" data-chg="tmF" data-k="pro">' + proOpts(f.pro) + '</select></div>' : '') +
+        (f.role === 'profesional' || f.role === 'asistente' || f.role === 'admin' ? '<div class="field"><label for="tmPro">' + (f.role === 'profesional' ? 'Es el profesional' : f.role === 'admin' ? 'Atiende como (si es odontólogo/a)' : 'Trabaja con') + '</label><select id="tmPro" data-chg="tmF" data-k="pro">' + proOpts(f.pro, f.role === 'admin') + '</select>' + (f.role === 'admin' ? '<div class="hint" style="margin:4px 0 0">Si atiende, se le abre su agenda y firma como ese profesional, y sigue viendo todo lo demás.</div>' : '') + '</div>' : '') +
         (!byMail ? '<div class="field"><label for="tmUser">Usuario</label><input id="tmUser" value="' + esc(f.user || '') + '" placeholder="Ej.: marta.gomez" autocapitalize="none" autocomplete="off" spellcheck="false" data-in="tmF" data-k="user"></div><div class="field"><label for="tmPass">Contraseña</label><input id="tmPass" value="' + esc(f.pass || (f.pass = sugPass())) + '" autocomplete="off" spellcheck="false" data-in="tmF" data-k="pass"></div>' : '') +
         '</div><p class="hint" style="margin:4px 0 8px">' + esc(RDESC[f.role] || '') + (f.role === 'profesional' ? ' Si el odontólogo todavía no está cargado, primero sumalo en Profesionales.' : '') + '</p><div class="row-btns"><button class="btn small primary" data-act="tmNew">' + (byMail ? 'Crear invitación' : 'Crear usuario') + '</button></div><div class="hint bad" id="tmMsg"></div></div>';
     }
@@ -302,7 +312,7 @@
     /* personas */
     x += '<h3 style="margin-top:14px">Personas con usuario <span class="count">' + TEAM.members.filter(z => z.active).length + '</span></h3>';
     x += TEAM.members.length ? '<div class="tm-list">' + TEAM.members.map(z => '<div class="tm-row' + (z.active ? '' : ' tm-off') + '"><div class="tm-who"><b>' + esc(z.name || z.username || z.email || 'Sin nombre') + '</b><span>' + (z.sub ? 'Usuario: <b>' + esc(z.username || '') + '</b>' : esc(z.email || '')) + '</span><span>' + (z.active ? 'Último uso: ' + esc(fmtWhen(z.last_seen)) + ' · ' + z.devices + ' equipo' + (z.devices === 1 ? '' : 's') : 'Sin acceso') + '</span></div>' +
-      (z.active ? '<div class="tm-ctl"><select aria-label="Puesto" data-chg="tmSet" data-k="role" data-id="' + esc(z.member) + '">' + roleOpts(z.role) + '</select>' + (manyLocs() ? '<select aria-label="Consultorio" data-chg="tmSet" data-k="sede" data-id="' + esc(z.member) + '">' + sedeOpts(z.sede, z.role === 'admin') + '</select>' : '') + (z.role === 'profesional' || z.role === 'asistente' ? '<select aria-label="Profesional" data-chg="tmSet" data-k="pro" data-id="' + esc(z.member) + '">' + proOpts(z.pro) + '</select>' : '') + (z.sub ? '<button class="btn small" data-act="tmPass" data-id="' + esc(z.member) + '">Cambiar contraseña</button>' : '') + '<button class="btn small danger" data-act="tmOff" data-id="' + esc(z.member) + '">Quitar acceso</button></div>' : '<div class="tm-ctl"><button class="btn small" data-act="tmOn" data-id="' + esc(z.member) + '">Devolver acceso</button></div>') + '</div>').join('') + '</div>' : '<div class="empty">Todavía no creaste usuarios.</div>';
+      (z.active ? '<div class="tm-ctl"><select aria-label="Puesto" data-chg="tmSet" data-k="role" data-id="' + esc(z.member) + '">' + roleOpts(z.role) + '</select>' + (manyLocs() ? '<select aria-label="Consultorio" data-chg="tmSet" data-k="sede" data-id="' + esc(z.member) + '">' + sedeOpts(z.sede, z.role === 'admin') + '</select>' : '') + (z.role === 'profesional' || z.role === 'asistente' || z.role === 'admin' ? '<select aria-label="' + (z.role === 'admin' ? 'Atiende como' : 'Profesional') + '" data-chg="tmSet" data-k="pro" data-id="' + esc(z.member) + '">' + proOpts(z.pro, z.role === 'admin') + '</select>' : '') + (z.sub ? '<button class="btn small" data-act="tmPass" data-id="' + esc(z.member) + '">Cambiar contraseña</button>' : '') + '<button class="btn small danger" data-act="tmOff" data-id="' + esc(z.member) + '">Quitar acceso</button></div>' : '<div class="tm-ctl"><button class="btn small" data-act="tmOn" data-id="' + esc(z.member) + '">Devolver acceso</button></div>') + '</div>').join('') + '</div>' : '<div class="empty">Todavía no creaste usuarios.</div>';
     if (TEAM.invites.length) x += '<h3 style="margin-top:14px">Invitaciones sin usar</h3><div class="tm-list">' + TEAM.invites.map(i => '<div class="tm-row"><div class="tm-who"><b>' + esc(i.name || RN[i.role]) + '</b><span>' + esc(RN[i.role] || i.role) + (i.sede && sedeName(i.sede) ? ' · ' + esc(sedeName(i.sede)) : '') + ' · vence el ' + A.fmtDMY(String(i.expires_at).slice(0, 10)) + '</span></div><div class="tm-ctl"><a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(i)) + '">WhatsApp</a><button class="btn small" data-act="tmCopy" data-code="' + esc(i.code) + '">Copiar</button><button class="btn small ghost" data-act="tmRevoke" data-code="' + esc(i.code) + '">Cancelar</button></div></div>').join('') + '</div>';
     x += '<p class="hint" style="margin-top:12px">Cada persona usa uno de los equipos de tu plan. El servidor controla lo que puede ver: la recepción y los profesionales no pueden bajar las liquidaciones, los sueldos, la caja general ni los datos de otros consultorios. Los pacientes y la agenda del consultorio son compartidos (es lo que necesitan para trabajar).</p>';
     return x;

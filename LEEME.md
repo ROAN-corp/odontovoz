@@ -135,6 +135,15 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.23.1 · socios con puesto Administración que también atienden (24/11/2026)
+
+- Caso: dos socias (Vane y Mariela) en el mismo consultorio. Una es la **Dueña** (la cuenta con el mail del consultorio) y la otra entra con su propio usuario y puesto **Administración**. Antes, ese puesto veía todo pero no podía quedar vinculado a un profesional: el selector «Profesional» solo aparecía para Profesional y Asistente, y `enforce()` solo fijaba `S.me` y la agenda para esos dos.
+- `app33`: el selector «Atiende como (si es odontólogo/a)» aparece también para Administración (alta de usuario, invitación y lista de personas), con la opción «— No atiende pacientes —». `enforce()` fija `S.me` y `S.proSel` también para `admin` con `pro`. Nuevo `A.mbPro()`: el profesional del usuario del equipo, de cualquier puesto. `A.startSign` envuelto: un `admin` con profesional firma por defecto como él. No hubo que cambiar el servidor: `ov_sub_create`, `ov_invite_create`, `ov_join_invite` y `ov_member_set` ya guardan `pro` para cualquier puesto.
+- `app109`: la ficha FORN (con o sin paciente) toma por defecto el profesional del usuario (`A.mbPro()`); antes, `frnNewFree` leía `A.actor().pro`, que no existe.
+- Los permisos no cambian: Administración sigue sin poder cambiar el plan, cambiar de cuenta ni crear usuarios, y sigue viendo caja y liquidaciones. Las notas ya salían firmadas con el nombre de cada usuario (`app56`).
+- Probado en celular y PC con un usuario de equipo simulado: antes el selector no aparecía; ahora se elige, se manda `p_pro` al servidor, la agenda abre en su columna, firma y presenta FORN como ella.
+- Compilación 1.78.1.
+
 ## OdontoVoz 1.23 · «Ficha nueva» en FORN, con o sin paciente (24/11/2026)
 
 - Pedido de Rodrigo: crear fichas desde el apartado FORN y que quede registro en la organización, porque es lo que se cobra cuando pagan las obras sociales.
