@@ -24,6 +24,7 @@ Escrito el 24/11/2026 con Rodrigo, a partir del consultorio de Vanessa y Mariela
 **Alquiler es una rama aparte, con dos modalidades** (las dos con el mismo trato: 100% para él):
 - **Alquiler de un módulo** (un sillón/espacio dentro del consultorio).
 - **Alquiler del consultorio completo.**
+- **Qué es un módulo:** un bloque de horas semanales **a convenir** (por ejemplo 2, 3, 4 o 5 horas por semana), con **horarios editables**. Como las horas son variables, **el precio del módulo también es editable** para cada profesional (más horas, más plata; se acuerda y se puede cambiar cuando cambian las horas).
 - En cualquiera de las dos, el alquiler se puede cobrar **por hora, por módulo o por consultorio entero** (monto por hora × horas de agenda, o monto fijo mensual). Esto reemplaza a los modos `alq`/`mod`/`otro` para quien alquila.
 
 **Obras sociales del que alquila: también privadas.** Atiende a sus pacientes, factura él y le pagan a él. Sus liquidaciones de obra social, deudas y cobros no los ve el consultorio.
