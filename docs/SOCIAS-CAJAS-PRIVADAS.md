@@ -13,20 +13,33 @@ Escrito el 24/11/2026 con Rodrigo, a partir del consultorio de Vanessa y Mariela
 - El que alquila necesita **su propio usuario dentro del consultorio**: ve la agenda y los pacientes del consultorio, y sus propios números. Si no, no se puede sumar a un consultorio.
 - Flujo: el paciente llega, la secretaria lo asigna al profesional, el profesional lo atiende y cobra en su caja.
 
-## 2. Tres tipos de profesional (según el acuerdo que ya existe en Liquidaciones)
+## 2. Tres tipos de profesional (decidido con Rodrigo el 24/11/2026)
 
-| Acuerdo (`mode`) | Plata | ¿La administración ve sus números? | Su caja |
+| Tipo | Plata | ¿La administración ve sus números? | Su caja |
 |---|---|---|---|
-| **Socia** (dueña y profesional) | 100% de sus pacientes | Si ella quiere (la otra socia no ve si es privada) | Privada o visible, la elige ella |
-| **Porcentaje** (`pct`, `pctmod`) | Parte para el consultorio, parte para él | **Sí, siempre** (le corresponde plata al consultorio) | Visible |
-| **Alquiler** (`alq`, `mod`) | 100% suyo; el consultorio solo cobra el alquiler | **No**, si él lo tilda (solo ve el alquiler) | Privada o visible, la elige él |
+| **Socia** (dueña y profesional) | 100% de sus pacientes; reparte con la otra socia solo lo del consultorio | Lo que ella decida | Privada o visible, la elige ella |
+| **A porcentaje** (`pct`, `pctmod`) | Parte para el consultorio, parte para él | **Sí, siempre** (le corresponde plata al consultorio) | Visible |
+| **Alquila** (rama aparte) | **Siempre se queda con el 100%.** Solo paga el alquiler | **No**: la administración ve únicamente el pago del alquiler | Privada (puede tildar que sea visible) |
+
+**Alquiler es una rama aparte, con dos modalidades** (las dos con el mismo trato: 100% para él):
+- **Alquiler de un módulo** (un sillón/espacio dentro del consultorio).
+- **Alquiler del consultorio completo.**
+- En cualquiera de las dos, el alquiler se puede cobrar **por hora, por módulo o por consultorio entero** (monto por hora × horas de agenda, o monto fijo mensual). Esto reemplaza a los modos `alq`/`mod`/`otro` para quien alquila.
+
+**Obras sociales del que alquila: también privadas.** Atiende a sus pacientes, factura él y le pagan a él. Sus liquidaciones de obra social, deudas y cobros no los ve el consultorio.
+
+**Regla legal que ordena todo (Ley 26.529 art. 18, 10 años):** las **historias clínicas son del consultorio**, no del profesional. Si el que alquila se va:
+- sus **cobros y números privados se los lleva** (los exporta; no quedan en el consultorio);
+- las **historias clínicas, odontogramas, fotos y firmas quedan en el consultorio**;
+- los pacientes son del consultorio; si el profesional se los lleva a otro lugar, **el consultorio conserva la historia** (solo deja de atenderlos ahí).
+Por eso la privacidad es **solo de la plata** (cobros, deuda, obras sociales, liquidaciones). La parte clínica nunca es privada.
 
 ## 3. Cómo se hace (privacidad de verdad, no solo esconder en pantalla)
 
 - Hoy los cobros y cargos viven dentro de la ficha de cada paciente (`pd:<id>`, `ledger`), que ve todo el consultorio. Para que un profesional con **caja privada** no se la muestre a nadie, sus importes se guardan en una clave propia `priv:<usuario>` y **el servidor solo se la deja leer y escribir a ese usuario**. Es una regla más en `ov_key_ok(k)` (`supabase/equipo.sql` y `permisos.sql`), como las que ya existen para `caja:` o `liq`. Ni la administración, ni la otra socia, ni la cuenta del dueño pueden leerla por la app ni por la API.
 - En la ficha compartida del paciente queda solo una marca «atendido por Dr. X, cobro en su caja privada», **sin importes**. La secretaria no ve la deuda de esos pacientes: la maneja el profesional.
 - **Límite honesto:** quien administra el servidor (ROAN y Supabase) puede leer cualquier dato, como en cualquier sistema en la nube. Si algún día se quiere cifrado de punta a punta, es otro nivel y otro costo.
-- El **alquiler** se registra solo como ingreso del consultorio: acuerdo `alq` (monto mensual) o `mod` (por hora × horas de agenda), sin mostrar los cobros del profesional.
+- El **alquiler** (módulo o consultorio completo; por hora, por módulo o fijo) se registra solo como ingreso del consultorio, sin mostrar los cobros del profesional.
 - El **reparto entre socias**: resultado del consultorio del mes = ingresos del consultorio (porcentajes, alquileres, otros) − gastos compartidos, repartido por el porcentaje de cada socia (configurable). Lo ven las dos, porque es del consultorio.
 - **Subcuenta del que alquila:** un usuario con puesto Profesional vinculado a él (`m.pro`), con «Mi caja privada» activada. Ve la agenda y los pacientes del consultorio y solo sus números.
 
@@ -40,8 +53,10 @@ Escrito el 24/11/2026 con Rodrigo, a partir del consultorio de Vanessa y Mariela
 
 ## 5. Decisiones abiertas (a definir cuando se llegue a cada etapa)
 
-- Obras sociales de un profesional privado: ¿pagan al consultorio o a él? Cambia quién ve la liquidación de la obra social.
-- Si un paciente pasa de un profesional privado a otro, ¿qué pasa con su deuda?
+- ~~Obras sociales del que alquila~~: resuelto, son privadas (le pagan a él).
+- Qué obras sociales del profesional **socia** o **a porcentaje** quedan en la caja del consultorio.
+- Cómo se exportan los números privados cuando el que alquila se va.
+- Si un paciente pasa de un profesional privado a otro, ¿qué pasa con su deuda? (la deuda es del profesional que la generó; la historia sigue en el consultorio)
 - Cambiar una caja de privada a visible (o al revés) cuando ya tiene movimientos.
 - IVA y facturación de los alquileres.
 - Precio del plan: cada usuario usa un equipo del plan (Consultorio o Centro trae 5).
