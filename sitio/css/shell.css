@@ -37,12 +37,12 @@ body.shell-on { margin: 0; background: var(--paper); color: var(--ink); font-fam
 .topbar .burger:hover { background: var(--paper); border-color: var(--teal); }
 .topbar .burger svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .topbar .brand { font: 800 19px var(--display); color: var(--deep); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-.topbar .quick { display: none; gap: 4px; margin-right: auto; margin-left: 10px; }
-.topbar .quick { border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
-.topbar .quick a { color: var(--ink); text-decoration: none; font: 600 15px var(--display); padding: 8px 12px; border-radius: 999px; }
-.topbar .quick a:hover { background: var(--mint); }
+.topbar .topnav { display: none; gap: 4px; margin-right: auto; margin-left: 10px; }
+.topbar .topnav { border: 0 !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
+.topbar .topnav a { color: var(--ink); text-decoration: none; font: 600 15px var(--display); padding: 8px 12px; border-radius: 999px; }
+.topbar .topnav a:hover { background: var(--mint); }
 .topbar .brand { margin-right: auto; }
-@media (min-width: 900px) { .topbar .quick { display: flex; } .topbar .brand { margin-right: 0; } }
+@media (min-width: 900px) { .topbar .topnav { display: flex; } .topbar .brand { margin-right: 0; } }
 .topbar .brand svg { width: 28px; height: 28px; color: var(--teal); }
 .topbar .btn { padding: 9px 14px; font-size: 14px; }
 
@@ -100,3 +100,24 @@ body.shell-on { margin: 0; background: var(--paper); color: var(--ink); font-fam
 /* las secciones reutilizadas no necesitan el espacio de encabezado de la página vieja */
 main > section:first-child { scroll-margin-top: 76px; }
 .scrim { transition: opacity .2s; }
+
+/* portada: qué es OdontoVoz */
+.hero-kick { display: inline-block; margin: 0 0 14px; font: 700 13px var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--sun); }
+.demo-cap { margin: 0 0 10px; font: 700 12.5px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--teal); }
+.about { padding: clamp(44px, 7vw, 84px) 0; background: var(--white); border-bottom: 1px solid var(--line); }
+.about-head { max-width: 860px; margin-bottom: clamp(26px, 4vw, 40px); }
+.about-kick { margin: 0 0 8px; font: 700 13px var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--teal); }
+.about h2 { margin: 0 0 14px; font: 800 clamp(30px, 4.4vw, 46px)/1.08 var(--display); letter-spacing: -.02em; color: var(--ink); }
+.about-lead { margin: 0; font-size: clamp(17.5px, 2.1vw, 21px); line-height: 1.6; color: var(--ink-2); }
+.about-lead b { color: var(--ink); }
+.about-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.about-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 20px 22px; display: flex; flex-direction: column; gap: 8px; }
+.about-card .ic { width: 46px; height: 46px; border-radius: 14px; background: var(--mint); display: grid; place-items: center; }
+.about-card .ic svg { width: 24px; height: 24px; fill: none; stroke: var(--deep); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.about-card b { font: 800 18.5px var(--display); color: var(--ink); }
+.about-card p { margin: 0; font-size: 16px; line-height: 1.55; color: var(--ink-2); }
+.trust { list-style: none; margin: clamp(26px, 4vw, 40px) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.trust li { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1px dashed color-mix(in srgb, var(--teal) 45%, var(--line)); border-radius: var(--radius); }
+.trust svg { width: 26px; height: 26px; flex: none; fill: none; stroke: var(--teal); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; margin-top: 2px; }
+.trust span { font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+.trust b { display: block; color: var(--ink); font: 800 16px var(--display); margin-bottom: 1px; }
