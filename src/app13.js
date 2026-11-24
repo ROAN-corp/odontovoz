@@ -286,7 +286,7 @@
     }
     A.PATS.forEach(p => {
       const pd = A.S.pd[p.id] || (A.DEMO ? A.pd(p.id) : null); if (!pd || pd.deleted || !pd.ledger) return;
-      pd.ledger.forEach(e => { if (e.type !== 'pago' || e.voided || !e.date || e.date.slice(0, 7) !== month) return; const l = A.locOfPay(p.id, e), t = out[l] || none; t.cob += e.amount; t.pays.push({ e, p }); });
+      pd.ledger.forEach(e => { if (e.type !== 'pago' || e.voided || (A.privFrom && A.privFrom(e.pro)) || !e.date || e.date.slice(0, 7) !== month) return; const l = A.locOfPay(p.id, e), t = out[l] || none; t.cob += e.amount; t.pays.push({ e, p }); });
     });
     return { out, none };
   }

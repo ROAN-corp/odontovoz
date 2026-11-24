@@ -51,7 +51,7 @@
       const pd = A.pd(id); if (!pd || !pd.ledger) return;
       const nm = (A.PAT(id) || {}).name || (pd.prof && pd.prof.name) || 'Paciente';
       pd.ledger.forEach(e => {
-        if (e.type !== 'pago' || e.voided || e.anula) return;
+        if (e.type !== 'pago' || e.voided || e.anula || (A.privFrom && A.privFrom(e.pro))) return; /* 1.25: caja privada de otro profesional */
         const amt = +e.amount || 0; if (!amt) return;
         const method = e.method || 'Efectivo', f = A.cjFee(method), fee = amt > 0 ? Math.round(amt * (+f.pct || 0) / 100) : 0, ac = c.acred[e.id];
         const due = A.add(e.date, +f.days || 0);

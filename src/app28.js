@@ -208,7 +208,7 @@
     /* profesionales que atienden hoy aunque todavía no tengan turnos */
     A.PROS.forEach(p => { if (!A.hoursFor(p, d).length) return; proSedes(p).forEach(sd => { if (z[sd] && !(p.id in z[sd].pros)) z[sd].pros[p.id] = 0; }); });
     const paidPids = {};
-    ledgerScan(d, d, (p, e) => { if (e.type !== 'pago') return; const sd = payLoc(p.id, e), o = z[sd]; if (!o) return; o.cob += e.amount; o.ing += e.amount; const m = e.method || 'Otro'; o.pm[m] = (o.pm[m] || 0) + e.amount; paidPids[p.id] = 1; });
+    ledgerScan(d, d, (p, e) => { if (e.type !== 'pago' || (A.privFrom && A.privFrom(e.pro))) return; const sd = payLoc(p.id, e), o = z[sd]; if (!o) return; o.cob += e.amount; o.ing += e.amount; const m = e.method || 'Otro'; o.pm[m] = (o.pm[m] || 0) + e.amount; paidPids[p.id] = 1; });
     sedes().forEach(l => {
       const c = cajaOf(l.id), o = z[l.id];
       c.moves.forEach(m => { if (m.status === 'pendiente' || m.date !== d) return; if (m.type === 'ingreso') o.ing += m.amount; else o.egr += m.amount; });

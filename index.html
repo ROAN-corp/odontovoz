@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.24.0';
+  A.VERSION = '1.25.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.79.0';
+  A.VBUILD = '1.80.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -9320,7 +9320,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     }
     A.PATS.forEach(p => {
       const pd = A.S.pd[p.id] || (A.DEMO ? A.pd(p.id) : null); if (!pd || pd.deleted || !pd.ledger) return;
-      pd.ledger.forEach(e => { if (e.type !== 'pago' || e.voided || !e.date || e.date.slice(0, 7) !== month) return; const l = A.locOfPay(p.id, e), t = out[l] || none; t.cob += e.amount; t.pays.push({ e, p }); });
+      pd.ledger.forEach(e => { if (e.type !== 'pago' || e.voided || (A.privFrom && A.privFrom(e.pro)) || !e.date || e.date.slice(0, 7) !== month) return; const l = A.locOfPay(p.id, e), t = out[l] || none; t.cob += e.amount; t.pays.push({ e, p }); });
     });
     return { out, none };
   }
@@ -9752,7 +9752,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     /* cuántos quedan, cuánto cobré */
     if (/^(?:cuantos (?:me )?(?:quedan|faltan)|cuantos pacientes (?:me )?(?:quedan|faltan)|cuanto me falta(?: para terminar)?|cuantos turnos (?:me )?quedan)$/.test(c)) { const now = A.nowMin(), l = A.day(A.today()).filter(a => a.type !== 'block' && ['cancelado', 'atendido', 'ausente'].indexOf(a.status) < 0 && a.start + a.dur > now); return ok(l.length ? 'Te quedan ' + l.length + ' paciente' + (l.length > 1 ? 's' : '') + '. El próximo es ' + A.PAT(l[0].pid).name + ' a las ' + A.mm(l[0].start) + '.' : 'No te queda nadie más hoy.'); }
     if (/^(?:cuanto (?:cobre|cobramos|hice|hicimos|facture|entro|junte)(?: hoy)?|caja de hoy|como viene la caja|cuanta plata (?:entro|hay)(?: hoy)?)$/.test(c)) {
-      let tot = 0, k = 0; A.PATS.forEach(p => { const pd = A.S.pd[p.id]; if (!pd || !pd.ledger) return; pd.ledger.forEach(e => { if (e.type === 'pago' && !e.voided && e.date === A.today()) { tot += e.amount; k++; } }); });
+      let tot = 0, k = 0; A.PATS.forEach(p => { const pd = A.S.pd[p.id]; if (!pd || !pd.ledger) return; pd.ledger.forEach(e => { if (e.type === 'pago' && !e.voided && !(A.privFrom && A.privFrom(e.pro)) && e.date === A.today()) { tot += e.amount; k++; } }); });
       return ok(k ? 'Hoy cobraste ' + A.money(tot) + ' en ' + k + ' cobro' + (k > 1 ? 's' : '') + '.' : 'Hoy todavía no registraste cobros.');
     }
     /* cuándo viene alguien */
@@ -12308,7 +12308,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     /* profesionales que atienden hoy aunque todavía no tengan turnos */
     A.PROS.forEach(p => { if (!A.hoursFor(p, d).length) return; proSedes(p).forEach(sd => { if (z[sd] && !(p.id in z[sd].pros)) z[sd].pros[p.id] = 0; }); });
     const paidPids = {};
-    ledgerScan(d, d, (p, e) => { if (e.type !== 'pago') return; const sd = payLoc(p.id, e), o = z[sd]; if (!o) return; o.cob += e.amount; o.ing += e.amount; const m = e.method || 'Otro'; o.pm[m] = (o.pm[m] || 0) + e.amount; paidPids[p.id] = 1; });
+    ledgerScan(d, d, (p, e) => { if (e.type !== 'pago' || (A.privFrom && A.privFrom(e.pro))) return; const sd = payLoc(p.id, e), o = z[sd]; if (!o) return; o.cob += e.amount; o.ing += e.amount; const m = e.method || 'Otro'; o.pm[m] = (o.pm[m] || 0) + e.amount; paidPids[p.id] = 1; });
     sedes().forEach(l => {
       const c = cajaOf(l.id), o = z[l.id];
       c.moves.forEach(m => { if (m.status === 'pendiente' || m.date !== d) return; if (m.type === 'ingreso') o.ing += m.amount; else o.egr += m.amount; });
@@ -13663,6 +13663,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const role = () => { const m = mb(); return m ? m.role : 'dueno'; };
   const isEmp = () => !!(A.isEmp && A.isEmp());
   const isOwner = () => (real() || (A.DEMO && A._tmOwner)) && !mb();
+  /* 1.25: socio/a = administración con permiso para manejar el equipo (ov_member_socio en el servidor) */
+  const isSocio = () => { const m = mb(); return !!(m && m.socio && m.role === 'admin' && (real() || A.DEMO)); };
+  const canTeam = () => isOwner() || isSocio();
+  const rn = m => (m && m.socio && m.role === 'admin' ? RN.socio : RN[m && m.role] || (m && m.role) || '');
+  A.isSocio = isSocio;
   A.mbRole = role; A.isMember = () => !!mb();
   /* profesional con el que atiende este usuario del equipo (de cualquier puesto), o null */
   A.mbPro = () => { const m = mb(); return m && m.pro && A.PROS.some(p => p.id === m.pro) ? m.pro : null; };
@@ -13672,12 +13677,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.myProId = () => A.mbPro() || A.ownerPro();
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
   const noServer = e => e && (e.status === 404 || /could not find the function|schema cache/i.test(String(e.message)));
-  const RN = { admin: 'Administración', recepcion: 'Recepción', profesional: 'Profesional', asistente: 'Asistente', dueno: 'Dueño' };
+  const RN = { socio: 'Dueño/a (socio/a)', admin: 'Administración', recepcion: 'Recepción', profesional: 'Profesional', asistente: 'Asistente', dueno: 'Dueño' };
   const RDESC = {
     recepcion: 'Agenda, turnos, pacientes (datos y cuenta, sin la historia clínica), cobros y la caja de su consultorio.',
     profesional: 'Su agenda, los pacientes con la historia clínica, odontograma, prácticas, presupuestos y cobros. No ve la caja, las liquidaciones ni los números de la empresa.',
     asistente: 'Agenda, pacientes e historia clínica. No ve la plata.',
-    admin: 'Todo, salvo los sueldos y las metas. No puede cambiar el plan ni borrar la cuenta.'
+    admin: 'Todo, salvo los sueldos y las metas. No puede cambiar el plan ni borrar la cuenta.',
+    socio: 'Igual que el dueño de la cuenta: maneja el equipo (crea y quita usuarios, cambia puestos), la agenda, los pacientes y la plata del consultorio. Si atiende, elige con qué profesional. Puede dejar su propia caja en privado. El plan y el cobro de la cuenta siguen siendo del dueño.'
   };
   const sedes = () => (A.locs ? A.locs() : []);
   /* en modo Empresa cada sede es un centro (adentro tiene sus consultorios) */
@@ -13810,7 +13816,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     const m = mb(); if (!m) return;
     const el = e.target.closest && e.target.closest('[data-act]'); if (!el || el.closest('#loginWrap')) return;
     const a = el.getAttribute('data-act') || '';
-    let no = NEVER.test(a) && !(m.role === 'admin' && /^(empDevScope)$/.test(a));
+    let no = NEVER.test(a) && !(m.role === 'admin' && /^(empDevScope)$/.test(a)) && !(isSocio() && /^(tmNew|tmGo|tmSet|tmOff|tmOn|tmRevoke)/.test(a));
     if (!no && m.role !== 'admin' && NOT_ADMIN.test(a)) no = !(m.role === 'profesional' && NOT_REC.test(a));
     if (a === 'tab' && !tabOk(el.getAttribute('data-tab'))) no = true;
     if (no) { e.stopImmediatePropagation(); e.preventDefault(); A.toast('Eso lo maneja el dueño de la cuenta.'); }
@@ -13879,7 +13885,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.cloudChrome = () => {
     ccPrev();
     const m = mb(), box = document.querySelector('#drAcct .acct-box'); if (!m || !box || box.querySelector('.mb-line')) return;
-    const b = box.querySelector('b'); if (b) b.insertAdjacentHTML('afterend', '<span class="mb-line">' + esc(RN[m.role] || m.role) + (m.sede && sedeName(m.sede) ? ' · ' + esc(sedeName(m.sede)) : '') + ' en ' + esc(A.CLINIC || 'el consultorio') + '</span>');
+    const b = box.querySelector('b'); if (b) b.insertAdjacentHTML('afterend', '<span class="mb-line">' + esc(rn(m)) + (m.sede && sedeName(m.sede) ? ' · ' + esc(sedeName(m.sede)) : '') + ' en ' + esc(A.CLINIC || 'el consultorio') + '</span>');
   };
 
   /* =====================================================================
@@ -13890,8 +13896,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let h = acctPrev(m);
     const mm = mb();
     if (mm) {
-      const box = '<div class="block mb-block"><h3>Tu puesto</h3><div class="acct-box"><b>' + esc(RN[mm.role] || mm.role) + (mm.sede && sedeName(mm.sede) ? ' · ' + esc(sedeName(mm.sede)) : '') + '</b><span>Usás la cuenta de <b>' + esc(A.CLINIC || 'el consultorio') + '</b>. La paga el dueño: para vos es gratis.</span><span>' + esc(RDESC[mm.role] || '') + '</span></div><div class="hint" style="margin:6px 0 0">' + (mm.sub ? 'Entrás con la cuenta <b>' + esc((CL.code || '')) + '</b> y el usuario <b>' + esc(mm.username || '') + '</b>. Si te olvidás la contraseña, pedile al dueño que te la cambie desde Equipo. Para entrar en otro lugar donde trabajes, tocá «Entrar en otro lugar».' : 'Tu correo y tu contraseña son tuyos.') + ' Si dejás de trabajar ahí, el dueño te quita el acceso y los datos se borran de tus equipos.</div><div class="row-btns" style="margin-top:8px"><button class="btn small" data-act="lgOtherPlace">Entrar en otro lugar</button></div></div>';
-      return h.replace('<div class="field" style="margin-top:10px">', box + '<div class="field" style="margin-top:10px">');
+      const box = '<div class="block mb-block"><h3>Tu puesto</h3><div class="acct-box"><b>' + esc(rn(mm)) + (mm.sede && sedeName(mm.sede) ? ' · ' + esc(sedeName(mm.sede)) : '') + '</b><span>Usás la cuenta de <b>' + esc(A.CLINIC || 'el consultorio') + '</b>. La paga el dueño: para vos es gratis.</span><span>' + esc(RDESC[mm.socio ? 'socio' : mm.role] || '') + '</span></div><div class="hint" style="margin:6px 0 0">' + (mm.sub ? 'Entrás con la cuenta <b>' + esc((CL.code || '')) + '</b> y el usuario <b>' + esc(mm.username || '') + '</b>. Si te olvidás la contraseña, pedile al dueño que te la cambie desde Equipo. Para entrar en otro lugar donde trabajes, tocá «Entrar en otro lugar».' : 'Tu correo y tu contraseña son tuyos.') + ' Si dejás de trabajar ahí, el dueño te quita el acceso y los datos se borran de tus equipos.</div><div class="row-btns" style="margin-top:8px"><button class="btn small" data-act="lgOtherPlace">Entrar en otro lugar</button></div></div>';
+      const tb = isSocio() ? '<div class="block"><h3>Usuarios del equipo</h3><div class="hint" style="margin:0 0 6px">Como dueño/a (socio/a) manejás el equipo igual que el dueño de la cuenta.</div><div class="row-btns"><button class="btn small primary" data-act="teamOpen">Ver el equipo</button></div></div>' : '';
+      return h.replace('<div class="field" style="margin-top:10px">', box + tb + '<div class="field" style="margin-top:10px">');
     }
     if (isOwner()) {
       const n = TEAM && TEAM.ok ? TEAM.members.filter(x => x.active).length : null;
@@ -13925,7 +13932,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     catch (e) { if (o) o.textContent = e.message || 'Sin conexión.'; }
   };
   async function loadTeam() {
-    if (!isOwner() || teamBusy) return; teamBusy = true;
+    if (!canTeam() || teamBusy) return; teamBusy = true;
     try { TEAM = await rpc('ov_team'); teamErr = ''; }
     catch (e) { teamErr = noServer(e) ? 'Falta actualizar el servidor para usar los usuarios del equipo.' : e.offline ? 'Sin conexión.' : (e.message || 'No se pudo.'); }
     teamBusy = false; paintTeam();
@@ -13939,7 +13946,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const waText = i => 'Hola' + (i.name ? ' ' + i.name.split(' ')[0] : '') + '. Te invito a usar OdontoVoz en ' + (A.CLINIC || 'el consultorio') + ' como ' + (RN[i.role] || i.role).toLowerCase() + (i.sede && sedeName(i.sede) ? ' en ' + sedeName(i.sede) : '') + '. Entrá a este enlace y creá tu usuario con tu correo (para vos es gratis): ' + invLink(i.code) + ' . Si ya usás OdontoVoz en tu propio consultorio, abrí el enlace e ingresá con tu cuenta de siempre: este lugar se te suma y pasás de uno a otro con un toque. El enlace vence en 7 días y sirve una sola vez.';
   const sedeOpts = (sel, any) => (any ? '<option value=""' + (!sel ? ' selected' : '') + '>Todos los ' + LW(true) + '</option>' : '') + sedes().map(l => '<option value="' + esc(l.id) + '"' + (sel === l.id ? ' selected' : '') + '>' + esc(l.name) + '</option>').join('');
   const proOpts = (sel, optional) => '<option value="">' + (optional ? '— No atiende pacientes —' : '— Elegí —') + '</option>' + A.PROS.map(p => '<option value="' + esc(p.id) + '"' + (sel === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
-  const roleOpts = sel => ['recepcion', 'profesional', 'asistente', 'admin'].map(r => '<option value="' + r + '"' + (sel === r ? ' selected' : '') + '>' + RN[r] + '</option>').join('');
+  const roleOpts = sel => ['recepcion', 'profesional', 'asistente', 'admin', 'socio'].map(r => '<option value="' + r + '"' + (sel === r ? ' selected' : '') + '>' + RN[r] + '</option>').join('');
   const manyLocs = () => sedes().length > 1 || isEmp();
   function teamHTML() {
     let x = '';
@@ -13962,7 +13969,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
         '<div class="field"><label for="tmName">Nombre</label><input id="tmName" value="' + esc(f.name) + '" placeholder="Ej.: Marta" data-in="tmF" data-k="name"></div>' +
         '<div class="field"><label for="tmRole">Puesto</label><select id="tmRole" data-chg="tmF" data-k="role">' + roleOpts(f.role) + '</select></div>' +
         (manyLocs() ? '<div class="field"><label for="tmSede">' + LWc() + '</label><select id="tmSede" data-chg="tmF" data-k="sede">' + sedeOpts(f.sede, f.role === 'admin') + '</select></div>' : '') +
-        (f.role === 'profesional' || f.role === 'asistente' || f.role === 'admin' ? '<div class="field"><label for="tmPro">' + (f.role === 'profesional' ? 'Es el profesional' : f.role === 'admin' ? 'Atiende como (si es odontólogo/a)' : 'Trabaja con') + '</label><select id="tmPro" data-chg="tmF" data-k="pro">' + proOpts(f.pro, f.role === 'admin') + '</select>' + (f.role === 'admin' ? '<div class="hint" style="margin:4px 0 0">Si atiende, se le abre su agenda y firma como ese profesional, y sigue viendo todo lo demás.</div>' : '') + '</div>' : '') +
+        (f.role === 'profesional' || f.role === 'asistente' || f.role === 'admin' || f.role === 'socio' ? '<div class="field"><label for="tmPro">' + (f.role === 'profesional' ? 'Es el profesional' : f.role === 'admin' || f.role === 'socio' ? 'Atiende como (si es odontólogo/a)' : 'Trabaja con') + '</label><select id="tmPro" data-chg="tmF" data-k="pro">' + proOpts(f.pro, f.role === 'admin' || f.role === 'socio') + '</select>' + (f.role === 'admin' || f.role === 'socio' ? '<div class="hint" style="margin:4px 0 0">Si atiende, se le abre su agenda y firma como ese profesional, y sigue viendo todo lo demás.</div>' : '') + '</div>' : '') +
         (!byMail ? '<div class="field"><label for="tmUser">Usuario</label><input id="tmUser" value="' + esc(f.user || '') + '" placeholder="Ej.: marta.gomez" autocapitalize="none" autocomplete="off" spellcheck="false" data-in="tmF" data-k="user"></div><div class="field"><label for="tmPass">Contraseña</label><input id="tmPass" value="' + esc(f.pass || (f.pass = sugPass())) + '" autocomplete="off" spellcheck="false" data-in="tmF" data-k="pass"></div>' : '') +
         '</div><p class="hint" style="margin:4px 0 8px">' + esc(RDESC[f.role] || '') + (f.role === 'profesional' ? ' Si el odontólogo todavía no está cargado, primero sumalo en Profesionales.' : '') + '</p><div class="row-btns"><button class="btn small primary" data-act="tmNew">' + (byMail ? 'Crear invitación' : 'Crear usuario') + '</button></div><div class="hint bad" id="tmMsg"></div></div>';
     }
@@ -13971,7 +13978,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     /* personas */
     x += '<h3 style="margin-top:14px">Personas con usuario <span class="count">' + TEAM.members.filter(z => z.active).length + '</span></h3>';
     x += TEAM.members.length ? '<div class="tm-list">' + TEAM.members.map(z => '<div class="tm-row' + (z.active ? '' : ' tm-off') + '"><div class="tm-who"><b>' + esc(z.name || z.username || z.email || 'Sin nombre') + '</b><span>' + (z.sub ? 'Usuario: <b>' + esc(z.username || '') + '</b>' : esc(z.email || '')) + '</span>' + (z.active && z.role === 'admin' && z.pro && A.PROS.some(q => q.id === z.pro) ? '<span><b>Administra y atiende</b> · ' + esc(A.PROS.filter(q => q.id === z.pro)[0].name) + '</span>' : '') + '<span>' + (z.active ? 'Último uso: ' + esc(fmtWhen(z.last_seen)) + ' · ' + z.devices + ' equipo' + (z.devices === 1 ? '' : 's') : 'Sin acceso') + '</span></div>' +
-      (z.active ? '<div class="tm-ctl"><select aria-label="Puesto" data-chg="tmSet" data-k="role" data-id="' + esc(z.member) + '">' + roleOpts(z.role) + '</select>' + (manyLocs() ? '<select aria-label="Consultorio" data-chg="tmSet" data-k="sede" data-id="' + esc(z.member) + '">' + sedeOpts(z.sede, z.role === 'admin') + '</select>' : '') + (z.role === 'profesional' || z.role === 'asistente' || z.role === 'admin' ? '<select aria-label="' + (z.role === 'admin' ? 'Atiende como' : 'Profesional') + '" data-chg="tmSet" data-k="pro" data-id="' + esc(z.member) + '">' + proOpts(z.pro, z.role === 'admin') + '</select>' : '') + (z.sub ? '<button class="btn small" data-act="tmPass" data-id="' + esc(z.member) + '">Cambiar contraseña</button>' : '') + '<button class="btn small danger" data-act="tmOff" data-id="' + esc(z.member) + '">Quitar acceso</button></div>' : '<div class="tm-ctl"><button class="btn small" data-act="tmOn" data-id="' + esc(z.member) + '">Devolver acceso</button></div>') + '</div>').join('') + '</div>' : '<div class="empty">Todavía no creaste usuarios.</div>';
+      (z.active ? '<div class="tm-ctl"><select aria-label="Puesto" data-chg="tmSet" data-k="role" data-id="' + esc(z.member) + '">' + roleOpts(z.role === 'admin' && z.socio ? 'socio' : z.role) + '</select>' + (manyLocs() ? '<select aria-label="Consultorio" data-chg="tmSet" data-k="sede" data-id="' + esc(z.member) + '">' + sedeOpts(z.sede, z.role === 'admin') + '</select>' : '') + (z.role === 'profesional' || z.role === 'asistente' || z.role === 'admin' ? '<select aria-label="' + (z.role === 'admin' ? 'Atiende como' : 'Profesional') + '" data-chg="tmSet" data-k="pro" data-id="' + esc(z.member) + '">' + proOpts(z.pro, z.role === 'admin') + '</select>' : '') + (z.sub ? '<button class="btn small" data-act="tmPass" data-id="' + esc(z.member) + '">Cambiar contraseña</button>' : '') + '<button class="btn small danger" data-act="tmOff" data-id="' + esc(z.member) + '">Quitar acceso</button></div>' : '<div class="tm-ctl"><button class="btn small" data-act="tmOn" data-id="' + esc(z.member) + '">Devolver acceso</button></div>') + '</div>').join('') + '</div>' : '<div class="empty">Todavía no creaste usuarios.</div>';
     if (TEAM.invites.length) x += '<h3 style="margin-top:14px">Invitaciones sin usar</h3><div class="tm-list">' + TEAM.invites.map(i => '<div class="tm-row"><div class="tm-who"><b>' + esc(i.name || RN[i.role]) + '</b><span>' + esc(RN[i.role] || i.role) + (i.sede && sedeName(i.sede) ? ' · ' + esc(sedeName(i.sede)) : '') + ' · vence el ' + A.fmtDMY(String(i.expires_at).slice(0, 10)) + '</span></div><div class="tm-ctl"><a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(waText(i)) + '">WhatsApp</a><button class="btn small" data-act="tmCopy" data-code="' + esc(i.code) + '">Copiar</button><button class="btn small ghost" data-act="tmRevoke" data-code="' + esc(i.code) + '">Cancelar</button></div></div>').join('') + '</div>';
     x += '<p class="hint" style="margin-top:12px">Cada persona usa uno de los equipos de tu plan. El servidor controla lo que puede ver: la recepción y los profesionales no pueden bajar las liquidaciones, los sueldos, la caja general ni los datos de otros consultorios. Los pacientes y la agenda del consultorio son compartidos (es lo que necesitan para trabajar).</p>';
     return x;
@@ -13985,7 +13992,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.chg.tmF = el => {
     const f = S.tmForm || (S.tmForm = {}), k = el.getAttribute('data-k'); f[k] = el.value;
     const nm = $('#tmName'); if (nm) f.name = nm.value;
-    if (k === 'role') { if (f.role === 'admin') f.sede = isEmp() ? '' : f.sede; else if (!f.sede) f.sede = (sedes()[0] || {}).id || ''; }
+    if (k === 'role') { if (f.role === 'admin' || f.role === 'socio') f.sede = isEmp() ? '' : f.sede; else if (!f.sede) f.sede = (sedes()[0] || {}).id || ''; }
     paintTeam();
   };
   A.acts.tmAnother = () => { NEWINV = null; NEWSUB = null; S.tmForm = null; paintTeam(); };
@@ -14002,8 +14009,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       if ((f.pass || '').length < 6) return say('La contraseña necesita al menos 6 caracteres.');
       el.disabled = true; say('Creando…');
       try {
-        const r = await rpc('ov_sub_create', { p_name: f.name, p_user: f.user, p_pass: f.pass, p_role: f.role, p_sede: manyLocs() ? (f.sede || null) : null, p_pro: f.pro || null });
+        const r = await rpc('ov_sub_create', { p_name: f.name, p_user: f.user, p_pass: f.pass, p_role: f.role === 'socio' ? 'admin' : f.role, p_sede: manyLocs() ? (f.sede || null) : null, p_pro: f.pro || null });
         if (!r || !r.ok) { el.disabled = false; return say((r && r.msg) || 'No se pudo.'); }
+        if (f.role === 'socio') { try { const q = await rpc('ov_member_socio', { p_member: r.member, p_on: true }); if (!q || !q.ok) A.toast((q && q.msg) || 'Quedó como Administración: no se pudo marcar como dueño/a.'); } catch (e) { A.toast(noServer(e) ? 'Falta correr socio.sql en Supabase para marcarlo como dueño/a: por ahora quedó como Administración.' : (e.message || 'Quedó como Administración.')); } }
         NEWSUB = { name: f.name, code: r.code, user: r.user, pass: f.pass };
         if (A.empAudit) A.empAudit('Creó el usuario ' + r.user + ' para ' + f.name + ' (' + RN[f.role] + ').');
         S.tmForm = null; loadTeam(); paintTeam();
@@ -14012,7 +14020,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     }
     el.disabled = true; say('Creando…');
     try {
-      const r = await rpc('ov_invite_create', { p_role: f.role, p_sede: manyLocs() ? (f.sede || null) : null, p_pro: f.pro || null, p_name: f.name });
+      const r = await rpc('ov_invite_create', { p_role: f.role === 'socio' ? 'admin' : f.role, p_sede: manyLocs() ? (f.sede || null) : null, p_pro: f.pro || null, p_name: f.name });
       if (!r || !r.ok) { el.disabled = false; return say((r && r.msg) || 'No se pudo.'); }
       NEWINV = { code: r.code, role: f.role, sede: manyLocs() ? f.sede : null, name: f.name };
       if (A.empAudit) A.empAudit('Invitó a ' + f.name + ' como ' + RN[f.role] + '.');
@@ -14039,6 +14047,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   A.chg.tmSet = el => {
     const id = el.getAttribute('data-id'), k = el.getAttribute('data-k'), v = el.value, z = memberOf(id), p = {};
+    if (k === 'role' && v === 'socio') { if (A.empAudit) A.empAudit('Marcó a ' + (z.name || z.email) + ' como dueño/a (socio/a).'); (async () => { try { const q = await rpc('ov_member_socio', { p_member: id, p_on: true }); if (!q || !q.ok) A.toast((q && q.msg) || 'No se pudo.'); else A.toast('Listo: ahora es dueño/a (socio/a).'); } catch (e) { A.toast(noServer(e) ? 'Falta correr socio.sql en Supabase.' : (e.message || 'Sin conexión.')); } loadTeam(); })(); return; }
     if (k === 'role') { p.p_role = v; if (v !== 'admin' && isEmp() && !z.sede && sedes()[0]) p.p_sede = sedes()[0].id; }
     if (k === 'sede') p.p_sede = v;
     if (k === 'pro') p.p_pro = v;
@@ -15422,7 +15431,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* cobrado hoy (para el resumen): pagos del día en el centro actual */
   function paidToday(d) {
     const sd = curSede(), rows = [];
-    A.PATS.forEach(p => { const pd = A.S.pd[p.id]; if (!pd || !pd.ledger) return; pd.ledger.forEach(e => { if (e.type !== 'pago' || e.voided || e.anula || e.date !== d) return; if (sd && A.empPayLoc && A.empPayLoc(p.id, e) !== sd) return; rows.push({ p, e }); }); });
+    A.PATS.forEach(p => { const pd = A.S.pd[p.id]; if (!pd || !pd.ledger) return; pd.ledger.forEach(e => { if (e.type !== 'pago' || e.voided || e.anula || e.date !== d || (A.privFrom && A.privFrom(e.pro))) return; if (sd && A.empPayLoc && A.empPayLoc(p.id, e) !== sd) return; rows.push({ p, e }); }); });
     return rows;
   }
   const canCobrar = it => { const r = role(); if (!r || r === 'admin' || r === 'recepcion') return true; if (r === 'profesional') return it.items.every(e => e.cob === 'pro'); return false; };
@@ -16365,7 +16374,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     cash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>'
   };
-  const cobradoHoy = () => { const t = A.today(); let s = 0; Object.keys(A.S.pd || {}).forEach(pid => { const pd = A.S.pd[pid]; (pd && pd.ledger || []).forEach(e => { if (e.type === 'pago' && e.date === t && !e.void && !e.anulado) s += e.amount || 0; }); }); return s; };
+  const cobradoHoy = () => { const t = A.today(); let s = 0; Object.keys(A.S.pd || {}).forEach(pid => { const pd = A.S.pd[pid]; (pd && pd.ledger || []).forEach(e => { if (e.type === 'pago' && e.date === t && !e.void && !e.anulado && !(A.privFrom && A.privFrom(e.pro))) s += e.amount || 0; }); }); return s; };
   const remPend = k => dayList(k).filter(a => ['pendiente'].indexOf(a.status) >= 0 && a.rem !== 'enviado' && a.rem !== 'confirmo').length;
   const switchBtn = () => A.liteForced()
     ? '<button class="lt-sw" data-act="liteUp">Conocé OdontoVoz PRO</button>'
@@ -18515,6 +18524,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.25.0', b: '1.80.0', d: '2026-11-24', items: [
+      { t: 'Nuevo puesto «Dueño/a (socio/a)»: maneja el equipo igual que el dueño de la cuenta (crea y quita usuarios, cambia puestos) y también atiende. Para activarlo hay que correr una vez socio.sql en Supabase.', top: true },
+      { t: '«Mi caja en privado»: en «Mis números», cada dueño/a o socio/a decide si sus cobros se ven en la caja general. Si los deja en privado, no aparecen en la caja, el inicio ni las liquidaciones del consultorio.' }] },
     { v: '1.24.0', b: '1.79.0', d: '2026-11-24', items: [
       { t: 'Acuerdos nuevos para quien alquila: módulo (horas por semana a convenir, con días y horarios y un valor que se edita) o consultorio entero (por mes o por hora). Siempre se queda con el 100%. También hay «Socia / dueña».', top: true },
       { t: 'Caja privada: quien alquila (o una socia que lo elija) puede ocultar sus cobros y números. La administración ve solo el alquiler. Por ahora se oculta en Liquidaciones y «Mis números»; la caja del día y la cuenta de cada paciente todavía muestran los cobros.' }] },
@@ -20573,7 +20585,7 @@ const OVMenu = (function () {
   };
 
   /* ---------- «Mis números» para el profesional del equipo ---------- */
-  const myPro = () => { const mb = A.memberNow && A.memberNow(); return mb && mb.pro ? mb.pro : null; };
+  const myPro = () => { const mb = A.memberNow && A.memberNow(); return mb && mb.pro ? mb.pro : ((!mb && A.ownerPro && A.ownerPro()) || null); };
   A.acts.myLiq = () => { S.modal = { type: 'myLiq', m: A.today().slice(0, 7) }; A.renderModal(); };
   A.acts.myLiqM = el => { S.modal.m = addM(S.modal.m, +el.getAttribute('data-n')); A.renderModal(); };
   MF.myLiq = m => {
@@ -23379,7 +23391,7 @@ const OVMenu = (function () {
       const pd = A.pd(id); if (!pd || !pd.ledger) return;
       const nm = (A.PAT(id) || {}).name || (pd.prof && pd.prof.name) || 'Paciente';
       pd.ledger.forEach(e => {
-        if (e.type !== 'pago' || e.voided || e.anula) return;
+        if (e.type !== 'pago' || e.voided || e.anula || (A.privFrom && A.privFrom(e.pro))) return; /* 1.25: caja privada de otro profesional */
         const amt = +e.amount || 0; if (!amt) return;
         const method = e.method || 'Efectivo', f = A.cjFee(method), fee = amt > 0 ? Math.round(amt * (+f.pct || 0) / 100) : 0, ac = c.acred[e.id];
         const due = A.add(e.date, +f.days || 0);
@@ -27442,7 +27454,7 @@ const OVMenu = (function () {
     const on = A.proPriv(pid), lock = A.privLocked(pid);
     return '<label class="chk pv-row"><input type="checkbox" data-chg="dlSet" data-f="priv" data-id="' + pid + '"' + (on ? ' checked' : '') + (lock ? ' disabled' : '') + '> <span><b>Caja privada</b>: solo este profesional ve sus cobros y sus números. La administración ve únicamente el alquiler.</span></label>' +
       (lock ? '<div class="hint">Solo el propio profesional puede abrir su caja.</div>' : '') +
-      '<div class="hint">Por ahora se oculta en Liquidaciones, «Mis números» y los totales de cobrado. La caja del día y la cuenta de cada paciente todavía muestran los cobros.</div>';
+      '<div class="hint">Se oculta en la caja general, el inicio, Liquidaciones y «Mis números». La cuenta de cada paciente (que es del consultorio) sigue mostrando sus cobros.</div>';
   };
   const dlPrev = A.chg.dlSet;
   A.chg.dlSet = function (el) {
@@ -27471,6 +27483,24 @@ const OVMenu = (function () {
     liqPrev(); const pid = S.liq && S.liq.pro && S.liq.pro !== 'all' ? S.liq.pro : null, host = document.querySelector('#view-liq');
     if (!pid || !host || !A.privFrom(pid) || host.querySelector('.pv-note')) return;
     const t = host.querySelector('.ag-title'); if (t) t.insertAdjacentHTML('afterend', '<div class="hint pv-note">🔒 La caja de ' + esc((A.PRO(pid) || {}).short || '') + ' es privada. Acá se ve solo el alquiler.</div>');
+  };
+  /* «Mi caja» en «Mis números»: cada dueño/a o socio/a decide si sus cobros se ven en la caja general */
+  A.chg.pvMine = el => {
+    const pid = A.myProId && A.myProId(); if (!pid || !(A.isBoss && A.isBoss())) return;
+    const c = cfgOf(pid), want = !!el.checked;
+    if (want && (c.mode || 'pct') === 'pct') { c.mode = 'socia'; }
+    c.priv = want; const p = A.PRO(pid); if (p && p.deal) { p.deal.priv = want; p.deal.mode = c.mode; }
+    if (A.empAudit) { try { A.empAudit((want ? 'Caja propia en privado' : 'Caja propia visible') + ': ' + ((A.PRO(pid) || {}).name || pid) + '.'); } catch (e) { /* nada */ } }
+    A.save(); A.toast(want ? 'Listo: tus cobros ya no se ven en la caja general.' : 'Listo: tus cobros se ven en la caja general.'); if (S.modal) A.renderModal(); else A.refresh();
+  };
+  const myPrev = A.modalFns.myLiq;
+  if (myPrev) A.modalFns.myLiq = m => {
+    const h = myPrev(m), pid = A.myProId && A.myProId(); if (typeof h !== 'string' || !pid || h.indexOf('pvMine') >= 0) return h;
+    const boss = A.isBoss && A.isBoss(), on = A.proPriv(pid);
+    const blk = '<div class="block pv-mine"><h3>Mi caja</h3>' + (boss
+      ? '<label class="chk pv-row"><input type="checkbox" data-chg="pvMine"' + (on ? ' checked' : '') + '> <span><b>Mi caja en privado</b>: mis cobros no aparecen en la caja general, en el inicio ni en las liquidaciones del consultorio. Solo los veo yo.</span></label><div class="hint">Podés cambiarlo cuando quieras. La historia clínica y los pacientes siguen siendo del consultorio.</div>'
+      : '<div class="hint">' + (on ? '🔒 Tu caja es privada: la administración ve solo el alquiler.' : 'Tu caja es visible para la administración del consultorio.') + '</div>') + '</div>';
+    return h.replace('<div class="hint">Es un cálculo', blk + '<div class="hint">Es un cálculo');
   };
   const css = document.createElement('style');
   css.textContent = '.pv-row{display:flex;gap:8px;align-items:flex-start;margin:6px 0}.pv-row span{font-size:.9rem;color:var(--ink-2)}';

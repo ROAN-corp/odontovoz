@@ -361,7 +361,7 @@
     /* cuántos quedan, cuánto cobré */
     if (/^(?:cuantos (?:me )?(?:quedan|faltan)|cuantos pacientes (?:me )?(?:quedan|faltan)|cuanto me falta(?: para terminar)?|cuantos turnos (?:me )?quedan)$/.test(c)) { const now = A.nowMin(), l = A.day(A.today()).filter(a => a.type !== 'block' && ['cancelado', 'atendido', 'ausente'].indexOf(a.status) < 0 && a.start + a.dur > now); return ok(l.length ? 'Te quedan ' + l.length + ' paciente' + (l.length > 1 ? 's' : '') + '. El próximo es ' + A.PAT(l[0].pid).name + ' a las ' + A.mm(l[0].start) + '.' : 'No te queda nadie más hoy.'); }
     if (/^(?:cuanto (?:cobre|cobramos|hice|hicimos|facture|entro|junte)(?: hoy)?|caja de hoy|como viene la caja|cuanta plata (?:entro|hay)(?: hoy)?)$/.test(c)) {
-      let tot = 0, k = 0; A.PATS.forEach(p => { const pd = A.S.pd[p.id]; if (!pd || !pd.ledger) return; pd.ledger.forEach(e => { if (e.type === 'pago' && !e.voided && e.date === A.today()) { tot += e.amount; k++; } }); });
+      let tot = 0, k = 0; A.PATS.forEach(p => { const pd = A.S.pd[p.id]; if (!pd || !pd.ledger) return; pd.ledger.forEach(e => { if (e.type === 'pago' && !e.voided && !(A.privFrom && A.privFrom(e.pro)) && e.date === A.today()) { tot += e.amount; k++; } }); });
       return ok(k ? 'Hoy cobraste ' + A.money(tot) + ' en ' + k + ' cobro' + (k > 1 ? 's' : '') + '.' : 'Hoy todavía no registraste cobros.');
     }
     /* cuándo viene alguien */

@@ -223,7 +223,7 @@
   /* cobrado hoy (para el resumen): pagos del día en el centro actual */
   function paidToday(d) {
     const sd = curSede(), rows = [];
-    A.PATS.forEach(p => { const pd = A.S.pd[p.id]; if (!pd || !pd.ledger) return; pd.ledger.forEach(e => { if (e.type !== 'pago' || e.voided || e.anula || e.date !== d) return; if (sd && A.empPayLoc && A.empPayLoc(p.id, e) !== sd) return; rows.push({ p, e }); }); });
+    A.PATS.forEach(p => { const pd = A.S.pd[p.id]; if (!pd || !pd.ledger) return; pd.ledger.forEach(e => { if (e.type !== 'pago' || e.voided || e.anula || e.date !== d || (A.privFrom && A.privFrom(e.pro))) return; if (sd && A.empPayLoc && A.empPayLoc(p.id, e) !== sd) return; rows.push({ p, e }); }); });
     return rows;
   }
   const canCobrar = it => { const r = role(); if (!r || r === 'admin' || r === 'recepcion') return true; if (r === 'profesional') return it.items.every(e => e.cob === 'pro'); return false; };

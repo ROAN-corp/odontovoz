@@ -135,6 +135,13 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.25.0 · dueño/a (socio/a) y «Mi caja en privado» (24/11/2026)
+
+- Servidor (`supabase/socio.sql`, correr una vez; probado con `node tests/sql/socio.test.mjs`): columna `ov_members.socio`, `ov_is_socio()`, `ov_member_socio()`; `ov_sub_create` (el socio crea administradores), `ov_member_set` (el socio cambia puestos y quita accesos), `ov_team` y `ov_whoami` devuelven `socio`. La socia sigue siendo `role = 'admin'`, así que todo lo que ya autorizaba al administrador (claves, fotos, WhatsApp, auditoría) sigue igual.
+- `app33`: puesto «Dueño/a (socio/a)» (`isSocio`, `canTeam`): ve y maneja el equipo; en la lista y al crear aparece como puesto. El plan, el cobro y el cambio de cuenta siguen siendo solo del dueño. Los socios por invitación por mail quedan como Administración (se los marca después desde la lista).
+- `app110`: «Mi caja en privado» en «Mis números» (`A.chg.pvMine`); al activarlo desde un acuerdo de porcentaje pasa a «Socia» (100%). `A.privFrom(e.pro)` oculta los cobros de otra caja privada en la caja general (`app86 pays`), el inicio (`app45`, `app13`, `app14`), la empresa (`app28`) y «Para cobrar» (`app40 paidToday`), además de Liquidaciones. La cuenta de cada paciente sigue mostrándolos (son del consultorio).
+- Límite: es privacidad en pantalla, no en el servidor. Privacidad dura (clave `priv:<uid>`) sigue pendiente.
+
 ## OdontoVoz 1.24.0 · alquiler, socias y caja privada (24/11/2026)
 
 - Diseño: `docs/SOCIAS-CAJAS-PRIVADAS.md`. Esta versión hace la parte de acuerdos y la privacidad **blanda** (en pantalla).

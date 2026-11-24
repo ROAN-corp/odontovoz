@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.25.0', b: '1.80.0', d: '2026-11-24', items: [
+      { t: 'Nuevo puesto «Dueño/a (socio/a)»: maneja el equipo igual que el dueño de la cuenta (crea y quita usuarios, cambia puestos) y también atiende. Para activarlo hay que correr una vez socio.sql en Supabase.', top: true },
+      { t: '«Mi caja en privado»: en «Mis números», cada dueño/a o socio/a decide si sus cobros se ven en la caja general. Si los deja en privado, no aparecen en la caja, el inicio ni las liquidaciones del consultorio.' }] },
     { v: '1.24.0', b: '1.79.0', d: '2026-11-24', items: [
       { t: 'Acuerdos nuevos para quien alquila: módulo (horas por semana a convenir, con días y horarios y un valor que se edita) o consultorio entero (por mes o por hora). Siempre se queda con el 100%. También hay «Socia / dueña».', top: true },
       { t: 'Caja privada: quien alquila (o una socia que lo elija) puede ocultar sus cobros y números. La administración ve solo el alquiler. Por ahora se oculta en Liquidaciones y «Mis números»; la caja del día y la cuenta de cada paciente todavía muestran los cobros.' }] },

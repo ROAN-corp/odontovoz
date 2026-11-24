@@ -34,7 +34,7 @@
     mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     cash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>'
   };
-  const cobradoHoy = () => { const t = A.today(); let s = 0; Object.keys(A.S.pd || {}).forEach(pid => { const pd = A.S.pd[pid]; (pd && pd.ledger || []).forEach(e => { if (e.type === 'pago' && e.date === t && !e.void && !e.anulado) s += e.amount || 0; }); }); return s; };
+  const cobradoHoy = () => { const t = A.today(); let s = 0; Object.keys(A.S.pd || {}).forEach(pid => { const pd = A.S.pd[pid]; (pd && pd.ledger || []).forEach(e => { if (e.type === 'pago' && e.date === t && !e.void && !e.anulado && !(A.privFrom && A.privFrom(e.pro))) s += e.amount || 0; }); }); return s; };
   const remPend = k => dayList(k).filter(a => ['pendiente'].indexOf(a.status) >= 0 && a.rem !== 'enviado' && a.rem !== 'confirmo').length;
   const switchBtn = () => A.liteForced()
     ? '<button class="lt-sw" data-act="liteUp">Conocé OdontoVoz PRO</button>'
