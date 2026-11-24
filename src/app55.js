@@ -6,8 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.23.2', b: '1.78.2', d: '2026-11-24', items: [
+      { t: 'Si el dueño de la cuenta también atiende: en Usuarios del equipo elige «Atiendo como…». Se le abre su agenda, firma como ese profesional y sus notas quedan a su nombre (antes figuraban con el mail de la cuenta).', top: true }] },
     { v: '1.23.1', b: '1.78.1', d: '2026-11-24', items: [
-      { t: 'Socios del mismo centro: un usuario con puesto Administración ahora puede «Atender como» un profesional. Se le abre su agenda, firma y presenta las fichas FORN como ese profesional, y sigue viendo todo lo demás. Se elige en Usuarios del equipo.', top: true }] },
+      { t: 'Socios del mismo centro: un usuario con puesto Administración ahora puede «Atender como» un profesional. Se le abre su agenda, firma y presenta las fichas FORN como ese profesional, y sigue viendo todo lo demás. Se elige en Usuarios del equipo.' }] },
     { v: '1.23', b: '1.78.0', d: '2026-11-24', items: [
       { t: 'FORN: botón «+ Ficha nueva» en la presentación mensual. Elegís el paciente (se completa sola) o la creás sin paciente y la completás a mano; después la podés asignar a un paciente. Todo queda en el registro de la organización.' }] },
     { v: '1.22.3', b: '1.77.3', d: '2026-11-24', items: [

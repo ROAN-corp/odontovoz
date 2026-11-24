@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.23.1';
+  A.VERSION = '1.23.2';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.78.1';
+  A.VBUILD = '1.78.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -13664,6 +13664,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.mbRole = role; A.isMember = () => !!mb();
   /* profesional con el que atiende este usuario del equipo (de cualquier puesto), o null */
   A.mbPro = () => { const m = mb(); return m && m.pro && A.PROS.some(p => p.id === m.pro) ? m.pro : null; };
+  /* 1.23.2: el dueño de la cuenta que también atiende elige con qué profesional (se guarda en la cuenta: A.CFG.ownerPro) */
+  A.ownerPro = () => { const v = !mb() && A.CFG && A.CFG.ownerPro; return v && A.PROS.some(p => p.id === v) ? v : null; };
+  /* con qué profesional atiende quien está usando la app (usuario del equipo o dueño), o null */
+  A.myProId = () => A.mbPro() || A.ownerPro();
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
   const noServer = e => e && (e.status === 404 || /could not find the function|schema cache/i.test(String(e.message)));
   const RN = { admin: 'Administración', recepcion: 'Recepción', profesional: 'Profesional', asistente: 'Asistente', dueno: 'Dueño' };
@@ -13837,15 +13841,17 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const ssPrev = A.startSign;
   if (ssPrev) A.startSign = function (o) {
     const m = mb();
-    if (o && !o.proId && m && m.role === 'admin' && A.mbPro && A.mbPro()) o = Object.assign({}, o, { proId: A.mbPro() });
+    if (o && !o.proId && (!m || m.role === 'admin') && A.myProId()) o = Object.assign({}, o, { proId: A.myProId() });
     return ssPrev.call(this, o);
   };
+  { const st = document.createElement('style'); st.textContent = '.tm-me{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 12px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px}'; document.head.appendChild(st); }
   const arPrev = A.afterRefresh;
   A.afterRefresh = () => {
     const m = mb(), b = document.body;
     b.classList.toggle('mb-on', !!m);
     ['admin', 'recepcion', 'profesional', 'asistente'].forEach(x => b.classList.toggle('mb-' + x, !!m && m.role === x));
     if (m) enforce(m);
+    else if (A.ownerPro()) { S.me = A.ownerPro(); if (!meDone) { meDone = true; S.proSel = [S.me]; } }
     if (arPrev) arPrev();
     if (m && !tabOk(S.tab)) { S.tab = 'inicio'; setTimeout(() => A.refresh(), 0); return; }
     offScreen();
@@ -13935,6 +13941,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   const manyLocs = () => sedes().length > 1 || isEmp();
   function teamHTML() {
     let x = '';
+    if (isOwner() && A.PROS.length) x += '<div class="tm-me"><b>Vos (dueño/a de la cuenta)</b><div class="field"><label for="tmOwnerPro">Si atendés pacientes, atendés como</label><select id="tmOwnerPro" data-chg="tmOwnerPro">' + proOpts(A.CFG.ownerPro || '', true) + '</select></div><div class="hint" style="margin:0">Así se abre tu agenda, firmás como ese profesional y tus notas quedan a su nombre (no con el mail de la cuenta). Seguís viendo y manejando todo.</div></div>';
     if (teamErr) x += '<div class="hint bad">' + esc(teamErr) + '</div>';
     if (TEAM && TEAM.ok && TEAM.code !== undefined) {
       const locked = TEAM.members.some(z => z.sub);
@@ -14023,6 +14030,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     loadTeam();
   }
   const memberOf = id => (TEAM && TEAM.members || []).filter(z => z.member === id)[0] || {};
+  A.chg.tmOwnerPro = el => {
+    if (!isOwner()) return;
+    A.CFG.ownerPro = el.value || ''; if (!el.value) delete A.CFG.ownerPro;
+    A.save(); if (el.value) { S.me = el.value; S.proSel = [el.value]; } A.toast(el.value ? 'Listo: atendés como ' + ((A.PRO(el.value) || {}).name || '') + '.' : 'Listo: no atendés pacientes desde esta cuenta.'); A.refresh();
+  };
   A.chg.tmSet = el => {
     const id = el.getAttribute('data-id'), k = el.getAttribute('data-k'), v = el.value, z = memberOf(id), p = {};
     if (k === 'role') { p.p_role = v; if (v !== 'admin' && isEmp() && !z.sede && sedes()[0]) p.p_sede = sedes()[0].id; }
@@ -18501,8 +18513,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.23.2', b: '1.78.2', d: '2026-11-24', items: [
+      { t: 'Si el dueño de la cuenta también atiende: en Usuarios del equipo elige «Atiendo como…». Se le abre su agenda, firma como ese profesional y sus notas quedan a su nombre (antes figuraban con el mail de la cuenta).', top: true }] },
     { v: '1.23.1', b: '1.78.1', d: '2026-11-24', items: [
-      { t: 'Socios del mismo centro: un usuario con puesto Administración ahora puede «Atender como» un profesional. Se le abre su agenda, firma y presenta las fichas FORN como ese profesional, y sigue viendo todo lo demás. Se elige en Usuarios del equipo.', top: true }] },
+      { t: 'Socios del mismo centro: un usuario con puesto Administración ahora puede «Atender como» un profesional. Se le abre su agenda, firma y presenta las fichas FORN como ese profesional, y sigue viendo todo lo demás. Se elige en Usuarios del equipo.' }] },
     { v: '1.23', b: '1.78.0', d: '2026-11-24', items: [
       { t: 'FORN: botón «+ Ficha nueva» en la presentación mensual. Elegís el paciente (se completa sola) o la creás sin paciente y la completás a mano; después la podés asignar a un paciente. Todo queda en el registro de la organización.' }] },
     { v: '1.22.3', b: '1.77.3', d: '2026-11-24', items: [
@@ -18829,7 +18843,7 @@ const OVMenu = (function () {
 
   /* ---------- quién está usando la app (su usuario, no el equipo) ---------- */
   A.actor = () => {
-    if (real()) { const u = CL.session.user || {}, m = CL.member; return { uid: u.id || '', who: (m && (m.name || m.username)) || u.email || 'Usuario' }; }
+    if (real()) { const u = CL.session.user || {}, m = CL.member; return { uid: u.id || '', who: (m && (m.name || m.username)) || (!m && A.ownerPro && A.ownerPro() && A.PRO(A.ownerPro()) ? A.PRO(A.ownerPro()).name : '') || u.email || 'Usuario' }; }
     const pr = A.PRO && S.me ? A.PRO(S.me) : null; return { uid: 'local', who: (pr && (pr.name || pr.short)) || 'Este equipo' };
   };
   const stamp = () => { const a = A.actor(); return { at: new Date().toISOString(), uid: a.uid, who: a.who }; };
@@ -26906,7 +26920,7 @@ const OVMenu = (function () {
   /* ---------- crear / completar ---------- */
   function newFicha(pid, mes) {
     const p = A.PAT(pid) || {};
-    const f = { id: A.uid(), mes, pro: (A.mbPro && A.mbPro()) || p.pro || ((A.PROS || [])[0] || {}).id, afil: p.afil || '', addr: p.addr || '', loc: p.loc || '', tel: p.phone || '', birth: p.birth || '', os: isPart(p.cov) ? '' : (p.cov || ''), rows: [], obs: '', sig: '', perio: true, estado: 'borrador', at: new Date().toISOString() };
+    const f = { id: A.uid(), mes, pro: (A.myProId && A.myProId()) || p.pro || ((A.PROS || [])[0] || {}).id, afil: p.afil || '', addr: p.addr || '', loc: p.loc || '', tel: p.phone || '', birth: p.birth || '', os: isPart(p.cov) ? '' : (p.cov || ''), rows: [], obs: '', sig: '', perio: true, estado: 'borrador', at: new Date().toISOString() };
     pull(pid, f, true);
     list(pid).push(f); A.touchPd(pid); return f;
   }
@@ -27132,7 +27146,7 @@ const OVMenu = (function () {
   };
   A.acts.frnNewFree = () => {
     const m = S.modal, f = { id: A.uid(), mes: m.mes, pro: ((A.PROS || [])[0] || {}).id, pat: { last: '', first: '', dni: '' }, afil: '', addr: '', loc: '', tel: '', birth: '', os: '', rows: [], obs: '', sig: '', perio: false, estado: 'borrador', at: new Date().toISOString() };
-    if (A.mbPro && A.mbPro()) f.pro = A.mbPro();
+    if (A.myProId && A.myProId()) f.pro = A.myProId();
     freeGet().list.push(f); freeSave(); loadCodes(); S.modal = { type: 'frnEd', pid: null, id: f.id, back: m.back }; A.renderModal();
   };
   /* asignar una ficha sin paciente a un paciente: pasa a su historia clínica */

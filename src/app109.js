@@ -34,7 +34,7 @@
   /* ---------- crear / completar ---------- */
   function newFicha(pid, mes) {
     const p = A.PAT(pid) || {};
-    const f = { id: A.uid(), mes, pro: (A.mbPro && A.mbPro()) || p.pro || ((A.PROS || [])[0] || {}).id, afil: p.afil || '', addr: p.addr || '', loc: p.loc || '', tel: p.phone || '', birth: p.birth || '', os: isPart(p.cov) ? '' : (p.cov || ''), rows: [], obs: '', sig: '', perio: true, estado: 'borrador', at: new Date().toISOString() };
+    const f = { id: A.uid(), mes, pro: (A.myProId && A.myProId()) || p.pro || ((A.PROS || [])[0] || {}).id, afil: p.afil || '', addr: p.addr || '', loc: p.loc || '', tel: p.phone || '', birth: p.birth || '', os: isPart(p.cov) ? '' : (p.cov || ''), rows: [], obs: '', sig: '', perio: true, estado: 'borrador', at: new Date().toISOString() };
     pull(pid, f, true);
     list(pid).push(f); A.touchPd(pid); return f;
   }
@@ -260,7 +260,7 @@
   };
   A.acts.frnNewFree = () => {
     const m = S.modal, f = { id: A.uid(), mes: m.mes, pro: ((A.PROS || [])[0] || {}).id, pat: { last: '', first: '', dni: '' }, afil: '', addr: '', loc: '', tel: '', birth: '', os: '', rows: [], obs: '', sig: '', perio: false, estado: 'borrador', at: new Date().toISOString() };
-    if (A.mbPro && A.mbPro()) f.pro = A.mbPro();
+    if (A.myProId && A.myProId()) f.pro = A.myProId();
     freeGet().list.push(f); freeSave(); loadCodes(); S.modal = { type: 'frnEd', pid: null, id: f.id, back: m.back }; A.renderModal();
   };
   /* asignar una ficha sin paciente a un paciente: pasa a su historia clínica */

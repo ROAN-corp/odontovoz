@@ -135,6 +135,15 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.23.2 · el dueño que también atiende (24/11/2026)
+
+- Caso: dos socias dueñas y odontólogas. Un dueño no es un usuario del equipo, así que no tenía forma de quedar vinculado a un profesional: sus notas se firmaban con el **mail de la cuenta** (`A.actor()`) y la agenda, la firma de documentos y las fichas FORN no lo tenían en cuenta.
+- `app33`: en «Usuarios del equipo», el dueño ve el bloque «Vos (dueño/a de la cuenta)» con «Si atendés pacientes, atendés como». Se guarda en `A.CFG.ownerPro` (se sincroniza con la cuenta, `cfg`). Nuevos `A.ownerPro()` (solo si no es un usuario del equipo) y `A.myProId()` (= `A.mbPro()` o `A.ownerPro()`). La pantalla del dueño abre en su agenda, como la de un socio. `A.startSign` y las fichas FORN (`app109`) usan `A.myProId()`.
+- `app56` (`A.actor`): el dueño con profesional figura con el nombre del profesional y no con el mail.
+- No se cambia el servidor ni los permisos: el dueño sigue siendo el único que maneja el plan, la cuenta y los usuarios. Hay **un solo dueño por cuenta**: no existen «varios dueños», y no hace falta porque un socio con puesto Administración que atiende (1.23.1) ve y maneja todo salvo el plan, el cambio de cuenta y la gestión de usuarios.
+- Probado en celular y PC: dueño real simulado (mail del consultorio) que elige un profesional, nota firmada con su nombre, firma y ficha FORN a su nombre, un usuario del equipo ignora lo del dueño, quitar la elección vuelve a mostrar el mail. Antes del cambio, `A.myProId` no existía.
+- Compilación 1.78.2.
+
 ## OdontoVoz 1.23.1 · socios con puesto Administración que también atienden (24/11/2026)
 
 - Caso: dos socias (Vane y Mariela) en el mismo consultorio. Una es la **Dueña** (la cuenta con el mail del consultorio) y la otra entra con su propio usuario y puesto **Administración**. Antes, ese puesto veía todo pero no podía quedar vinculado a un profesional: el selector «Profesional» solo aparecía para Profesional y Asistente, y `enforce()` solo fijaba `S.me` y la agenda para esos dos.

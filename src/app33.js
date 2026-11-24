@@ -14,6 +14,10 @@
   A.mbRole = role; A.isMember = () => !!mb();
   /* profesional con el que atiende este usuario del equipo (de cualquier puesto), o null */
   A.mbPro = () => { const m = mb(); return m && m.pro && A.PROS.some(p => p.id === m.pro) ? m.pro : null; };
+  /* 1.23.2: el dueño de la cuenta que también atiende elige con qué profesional (se guarda en la cuenta: A.CFG.ownerPro) */
+  A.ownerPro = () => { const v = !mb() && A.CFG && A.CFG.ownerPro; return v && A.PROS.some(p => p.id === v) ? v : null; };
+  /* con qué profesional atiende quien está usando la app (usuario del equipo o dueño), o null */
+  A.myProId = () => A.mbPro() || A.ownerPro();
   const rpc = (fn, body) => CL.api('/rest/v1/rpc/' + fn, { method: 'POST', body: body || {} });
   const noServer = e => e && (e.status === 404 || /could not find the function|schema cache/i.test(String(e.message)));
   const RN = { admin: 'Administración', recepcion: 'Recepción', profesional: 'Profesional', asistente: 'Asistente', dueno: 'Dueño' };
@@ -187,15 +191,17 @@
   const ssPrev = A.startSign;
   if (ssPrev) A.startSign = function (o) {
     const m = mb();
-    if (o && !o.proId && m && m.role === 'admin' && A.mbPro && A.mbPro()) o = Object.assign({}, o, { proId: A.mbPro() });
+    if (o && !o.proId && (!m || m.role === 'admin') && A.myProId()) o = Object.assign({}, o, { proId: A.myProId() });
     return ssPrev.call(this, o);
   };
+  { const st = document.createElement('style'); st.textContent = '.tm-me{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 12px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px}'; document.head.appendChild(st); }
   const arPrev = A.afterRefresh;
   A.afterRefresh = () => {
     const m = mb(), b = document.body;
     b.classList.toggle('mb-on', !!m);
     ['admin', 'recepcion', 'profesional', 'asistente'].forEach(x => b.classList.toggle('mb-' + x, !!m && m.role === x));
     if (m) enforce(m);
+    else if (A.ownerPro()) { S.me = A.ownerPro(); if (!meDone) { meDone = true; S.proSel = [S.me]; } }
     if (arPrev) arPrev();
     if (m && !tabOk(S.tab)) { S.tab = 'inicio'; setTimeout(() => A.refresh(), 0); return; }
     offScreen();
@@ -285,6 +291,7 @@
   const manyLocs = () => sedes().length > 1 || isEmp();
   function teamHTML() {
     let x = '';
+    if (isOwner() && A.PROS.length) x += '<div class="tm-me"><b>Vos (dueño/a de la cuenta)</b><div class="field"><label for="tmOwnerPro">Si atendés pacientes, atendés como</label><select id="tmOwnerPro" data-chg="tmOwnerPro">' + proOpts(A.CFG.ownerPro || '', true) + '</select></div><div class="hint" style="margin:0">Así se abre tu agenda, firmás como ese profesional y tus notas quedan a su nombre (no con el mail de la cuenta). Seguís viendo y manejando todo.</div></div>';
     if (teamErr) x += '<div class="hint bad">' + esc(teamErr) + '</div>';
     if (TEAM && TEAM.ok && TEAM.code !== undefined) {
       const locked = TEAM.members.some(z => z.sub);
@@ -373,6 +380,11 @@
     loadTeam();
   }
   const memberOf = id => (TEAM && TEAM.members || []).filter(z => z.member === id)[0] || {};
+  A.chg.tmOwnerPro = el => {
+    if (!isOwner()) return;
+    A.CFG.ownerPro = el.value || ''; if (!el.value) delete A.CFG.ownerPro;
+    A.save(); if (el.value) { S.me = el.value; S.proSel = [el.value]; } A.toast(el.value ? 'Listo: atendés como ' + ((A.PRO(el.value) || {}).name || '') + '.' : 'Listo: no atendés pacientes desde esta cuenta.'); A.refresh();
+  };
   A.chg.tmSet = el => {
     const id = el.getAttribute('data-id'), k = el.getAttribute('data-k'), v = el.value, z = memberOf(id), p = {};
     if (k === 'role') { p.p_role = v; if (v !== 'admin' && isEmp() && !z.sede && sedes()[0]) p.p_sede = sedes()[0].id; }

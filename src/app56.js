@@ -9,7 +9,7 @@
 
   /* ---------- quién está usando la app (su usuario, no el equipo) ---------- */
   A.actor = () => {
-    if (real()) { const u = CL.session.user || {}, m = CL.member; return { uid: u.id || '', who: (m && (m.name || m.username)) || u.email || 'Usuario' }; }
+    if (real()) { const u = CL.session.user || {}, m = CL.member; return { uid: u.id || '', who: (m && (m.name || m.username)) || (!m && A.ownerPro && A.ownerPro() && A.PRO(A.ownerPro()) ? A.PRO(A.ownerPro()).name : '') || u.email || 'Usuario' }; }
     const pr = A.PRO && S.me ? A.PRO(S.me) : null; return { uid: 'local', who: (pr && (pr.name || pr.short)) || 'Este equipo' };
   };
   const stamp = () => { const a = A.actor(); return { at: new Date().toISOString(), uid: a.uid, who: a.who }; };
