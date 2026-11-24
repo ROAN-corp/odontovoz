@@ -64,3 +64,31 @@ Cuando Rodrigo pase los números (gasto en USD, hojas leídas, cuántas salieron
 4. Publicar una versión nueva (pasos en CLAUDE.md).
 
 **Reglas:** Claude no pide, no ve ni pega claves. La clave la pone Rodrigo en Supabase.
+
+## 7. Método de activación cuando un cliente paga (decidido el 24/11/2026; todavía NO está armado, a propósito)
+
+**Estado hoy:** apagado para todos (no hay clave de IA). No se publica nada hasta que entre el primer pago.
+
+**Ojo, para no equivocarse:** **no hay que encender la clave de Anthropic (punto 3) antes de armar el control por cuenta (A.1 y A.2)**. Hoy `hc-read` no pregunta si la cuenta pagó: con la clave puesta, cualquier cuenta leería hasta 600 hojas por día gratis.
+
+**La idea:** el servicio queda apagado para todos y se habilita **cuenta por cuenta con un saldo de hojas**. Es el mismo esquema de los recordatorios de WhatsApp (`ov_wa.rem_plan`, `ov_wa_admin_set`, botón en `admin.html`). Se carga hojas a quien paga y se descuentan al leer.
+
+### A) Cuando entra el primer pago: lo que arma Claude (una sola vez, unas 2 horas y una versión nueva)
+1. **SQL** (agregar a `supabase/hcpapel.sql`, repetible sin riesgo): tabla `ov_ai_credit (owner uuid primary key, hojas int not null default 0, updated_at)` cerrada con RLS; función `ov_ai_take(owner, n)` que descuenta de forma atómica y devuelve las hojas que quedan (o -1 si no alcanzan); función `ov_ai_grant(owner, n)` que suma (solo `service_role` y administradores, con `ov_is_admin()`); y `ov_ai_admin_list()` para el panel.
+2. **`supabase/functions/hc-read/index.ts`**: una vez conocido el `owner`, llamar a `ov_ai_take` con la cantidad de hojas. Si no alcanza, responder **503 con `off: true`** y el mensaje «Este servicio no está activado en tu cuenta. Escribinos y te lo activamos.». La app ya sabe manejarlo (pasa a carga a mano y muestra el cartel), **no hay que tocar la app**. Si la IA falla (502 o 422), devolver las hojas con `ov_ai_grant`. Se mantiene el tope diario. Actualizar `tests/hc/hcread.test.mjs`.
+   - `hc-read` se despliega solo (`.github/workflows/functions.yml`) al subir a `main` cualquier cambio en `supabase/functions/**`. Por eso **no tocar esos archivos hasta este momento**.
+3. **`admin.html`**: botón «IA historias» en cada cuenta (como «WhatsApp»), para ver el saldo y cargar hojas (+500, +2.000, +5.000 o a mano). Se puede dejar para después: mientras tanto se carga con SQL (punto B).
+4. **Después, sin apuro:** aviso en la app cuando quedan pocas hojas, con botón de WhatsApp (como «Mi plan»); servicio y precios en la portada (`sitio/index.html`) y en los términos (`sitio/terminos.html`, subiendo la versión en `cloud.js` y en las páginas).
+5. Rodrigo corre el SQL nuevo en Supabase › SQL Editor (Claude no maneja la base) y hace el punto C.
+
+### B) Cada vez que un cliente paga: lo hace Rodrigo, sin código, en unos 2 minutos
+1. Cobrarle el paquete del punto 5 (en dólares, pasados a pesos con `DOLAR` de `src/app25.js`).
+2. Supabase › SQL Editor, buscar la cuenta: `select owner, email from ov_accounts where email ilike '%parte-del-mail%';`
+3. Cargar las hojas: `select ov_ai_grant('<owner>', 500);` (Chico 500, Mediano 2000, Grande 5000). Para dar las 100 de prueba gratis: `select ov_ai_grant('<owner>', 100);`
+4. Avisarle al cliente que ya puede usarlo en Ajustes › Consultorio › Pasar historias de papel. Para ver cuánto le queda: `select * from ov_ai_credit where owner = '<owner>';`
+5. Anotar el pago en las notas de la cuenta (panel › Editar), por ejemplo «IA 500 hojas, USD 49, 24/11/2026».
+
+### C) Una sola vez antes del primer cliente (Rodrigo)
+Hacer el punto 3 de este documento (clave en Supabase; límite mensual en Anthropic: subirlo según el volumen vendido, para no cortar el servicio a mitad de un paquete) y la prueba de costo del punto 4. Si la prueba todavía no se hizo cuando paga el primero, se hace con esas primeras historias y se ajustan los precios antes del segundo.
+
+**Cuidados:** si el gasto de Anthropic llega al límite, la lectura se corta sola y la app pasa a carga a mano (no se pierde nada). Si una lectura falla, no se descuentan hojas. Claude nunca ve ni pega claves.
