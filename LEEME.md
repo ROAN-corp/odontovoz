@@ -1068,3 +1068,7 @@ Stock rediseñado (`src/app115.js`): «Mi stock» (indicadores, buscador, catego
 
 ## 1.31.0 (compilación 1.86.0)
 Agenda (`src/app116.js`): arrastrar un paciente de la burbuja a la agenda para crear el turno (ratón: arrastrar; táctil: mantener ~0,4 s) y estirar el borde de abajo de un turno o bloqueo para cambiar la duración de a 15 min (con aviso de conflicto).
+
+
+## 1.32.0 (compilación 1.87.0)
+Ortodoncia (`src/app117.js`): solapa «Ortodoncia» en la ficha (`pd.orto` con `ctrls`). Cada control guarda fotos en `pd.images` (`kind:'orto'`, `view`, `ctrl`), crea una nota de evolución (`orto: id`) y muestra «Antes y ahora».

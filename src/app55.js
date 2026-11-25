@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.32.0', b: '1.87.0', d: '2026-11-25', items: [
+      { t: 'Ortodoncia: solapa nueva en la ficha del paciente. Empezás el tratamiento (aparatología, inicio, duración) y en cada control cargás las fotos del día, el arco, los elásticos y lo que hiciste. Se anota solo en la evolución clínica (con las fotos) y las fotos quedan también en «Fotos y radiografías».' },
+      { t: 'Ortodoncia: «Antes y ahora» compara la primera y la última foto de cada vista, barra de avance del tratamiento y botón para dar el turno del próximo control.' }] },
     { v: '1.31.0', b: '1.86.0', d: '2026-11-25', items: [
       { t: 'Agenda: dar turno arrastrando. En la burbuja de un espacio libre, arrastrá un paciente (en el celu, mantenelo presionado un instante) hasta el horario que quieras de la agenda y soltalo: se crea el turno ahí. Mientras arrastrás ves dónde cae y si está ocupado.' },
       { t: 'Agenda: estirá el borde de abajo de cualquier turno o bloqueo (la rayita gris) hacia abajo o arriba para cambiar la duración de a 15 minutos: 45 min, 1 hora, etc. Si se pisa con otro turno, te pregunta qué hacer.' }] },
