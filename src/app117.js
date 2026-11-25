@@ -35,14 +35,14 @@
   }
   function formHTML(pid) {
     const pd = A.pd(pid), d = draft(pid), n = ((O(pid).ctrls || []).length) + 1, ph = imgs(pd, d.id);
-    return '<section class="card ox-card" id="oxForm"><h2>Control N° ' + n + '</h2>' +
+    return '<section class="card ox-card" id="oxForm"><h2>' + (d.editing ? 'Completar el control del ' + dmy(d.date) : 'Control N° ' + n) + '</h2>' +
       '<div class="field"><label>¿Qué hiciste hoy?</label><div class="ox-chips">' + CHIPS.map(c => '<button type="button" class="' + (d.chips.indexOf(c) >= 0 ? 'on' : '') + '" data-act="oxChip" data-c="' + esc(c) + '" aria-pressed="' + (d.chips.indexOf(c) >= 0) + '">' + esc(c) + '</button>').join('') + '</div></div>' +
       '<div class="row3"><div class="field"><label for="oxU">Arco superior</label><input id="oxU" list="oxArcs" data-chg="oxFld" data-k="arcU" value="' + esc(d.arcU) + '" placeholder=".016 NiTi"></div><div class="field"><label for="oxL">Arco inferior</label><input id="oxL" list="oxArcs" data-chg="oxFld" data-k="arcL" value="' + esc(d.arcL) + '" placeholder=".016 NiTi"></div><div class="field"><label for="oxE">Elásticos</label><input id="oxE" list="oxEl" data-chg="oxFld" data-k="elas" value="' + esc(d.elas) + '" placeholder="Clase II 1/4&quot;"></div></div>' +
       '<datalist id="oxArcs">' + ARCS.map(x => '<option value="' + esc(x) + '">').join('') + '</datalist><datalist id="oxEl">' + ELAS.map(x => '<option value="' + esc(x) + '">').join('') + '</datalist>' +
       '<div class="field"><label for="oxN">Observaciones</label><textarea id="oxN" data-chg="oxFld" data-k="notes" placeholder="Ej.: buena higiene, se activó el resorte del 13, indico elásticos 24 h">' + esc(d.notes) + '</textarea></div>' +
       '<div class="field"><label>Fotos de hoy <span class="count">' + ph.length + '</span></label><div class="ox-ph"><select id="oxV" data-chg="oxFld" data-k="view" aria-label="Qué foto es">' + opts(VIEWS, d.view) + '</select><label class="btn ox-up">📷 Agregar fotos<input type="file" accept="image/*" multiple hidden data-chg="oxPhoto"></label></div><div class="ox-ths">' + (ph.length ? thumbs(pd, ph, true) : '<span class="hint">Elegí qué foto es y tocá «Agregar fotos». Podés sacar varias seguidas.</span>') + '</div><div class="hint" id="oxMsg"></div></div>' +
       '<div class="row2"><div class="field"><label for="oxX">Próximo control en</label><select id="oxX" data-chg="oxFld" data-k="next">' + [3, 4, 5, 6, 8, 10, 12].map(w => '<option value="' + w + '"' + (+d.next === w ? ' selected' : '') + '>' + w + ' semanas</option>').join('') + '</select></div><div class="field"><label for="oxD">Fecha del control</label><input id="oxD" type="date" data-chg="oxFld" data-k="date" value="' + esc(d.date) + '"></div></div>' +
-      '<div class="row-btns"><button class="btn primary" data-act="oxSave">Guardar control</button><button class="btn" data-act="oxSaveNext">Guardar y dar el próximo turno</button></div></section>';
+      '<div class="row-btns"><button class="btn primary" data-act="oxSave">' + (d.editing ? 'Guardar cambios' : 'Guardar control') + '</button><button class="btn" data-act="oxSaveNext">Guardar y dar el próximo turno</button>' + (d.editing ? '<button class="btn" data-act="oxCancelEdit">Cancelar</button>' : '') + '</div></section>';
   }
   function compareHTML(pid) {
     const pd = A.pd(pid), all = (pd.images || []).filter(i => i.kind === 'orto' && i.view), by = {};
@@ -57,7 +57,7 @@
     if (!L.length) return '<section class="card ox-card"><h2>Controles</h2><div class="empty">Todavía no registraste controles.</div></section>';
     return '<section class="card ox-card"><h2>Controles <span class="count">' + L.length + '</span></h2><ol class="ox-list">' + L.map((c, k) => {
       const ph = imgs(pd, c.id), det = [c.arcU ? 'Sup. ' + c.arcU : '', c.arcL ? 'Inf. ' + c.arcL : '', c.elas ? 'Elásticos: ' + c.elas : ''].filter(Boolean).join(' · ');
-      return '<li><div class="ox-ch"><b>Control N° ' + (L.length - k) + '</b><span>' + dmy(c.date) + '</span><button class="ox-del" data-act="oxDel" data-id="' + esc(c.id) + '" aria-label="Borrar control">🗑</button></div>' +
+      return '<li><div class="ox-ch"><b>Control N° ' + (L.length - k) + '</b><span>' + dmy(c.date) + '</span><button class="ox-del" data-act="oxEdit" data-id="' + esc(c.id) + '" aria-label="Completar o editar control">✎</button><button class="ox-del" data-act="oxDel" data-id="' + esc(c.id) + '" aria-label="Borrar control">🗑</button></div>' +
         (c.chips && c.chips.length ? '<div class="ox-tags">' + c.chips.map(x => '<span>' + esc(x) + '</span>').join('') + '</div>' : '') + (det ? '<div class="ox-det">' + esc(det) + '</div>' : '') + (c.notes ? '<div class="ox-nt">' + esc(c.notes) + '</div>' : '') + (ph.length ? '<div class="ox-ths">' + thumbs(pd, ph, false) + '</div>' : '') + '</li>';
     }).join('') + '</ol></section>';
   }
@@ -90,6 +90,10 @@
     if (!d.chips.length && !d.arcU && !d.arcL && !d.elas && !d.notes.trim() && !ph.length) { const m = $('#oxMsg'); if (m) m.textContent = 'Cargá al menos una foto, un arco o lo que hiciste.'; A.toast('Cargá al menos una foto o lo que hiciste.'); return; }
     const c = { id: d.id, date: d.date || A.today(), arcU: d.arcU.trim(), arcL: d.arcL.trim(), elas: d.elas.trim(), notes: d.notes.trim(), next: +d.next || 5, chips: d.chips.slice() };
     ph.forEach(i => { i.date = c.date; });
+    if (d.editing) {
+      const old = (o.ctrls || []).filter(x => x.id === d.editing)[0];
+      if (old) { Object.assign(old, c, { id: old.id, noteId: old.noteId, auto: false }); delete drafts[pid]; touch(pid); A.refresh(); A.toast('Control actualizado.'); if (next && A.openNewAppt) A.openNewAppt({ pid, date: A.add(old.date, 7 * old.next), what: 'Control' }); return; }
+    }
     o.ctrls = o.ctrls || []; o.ctrls.unshift(c); o.ctrls.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     const nro = o.ctrls.length, parts = [];
     if (c.chips.length) parts.push(c.chips.join(', ')); if (c.arcU) parts.push('arco superior ' + c.arcU); if (c.arcL) parts.push('arco inferior ' + c.arcL); if (c.elas) parts.push('elásticos ' + c.elas);
@@ -99,6 +103,12 @@
     delete drafts[pid]; touch(pid); A.refresh(); A.toast('Control N° ' + nro + ' guardado' + (ph.length ? ' con ' + ph.length + ' foto(s)' : '') + '.');
     if (next && A.openNewAppt) A.openNewAppt({ pid, date: A.add(c.date, 7 * c.next), what: 'Control' });
   }
+  A.acts.oxEdit = el => {
+    const pid = pid0(), o = O(pid), c = (o.ctrls || []).filter(x => x.id === el.getAttribute('data-id'))[0]; if (!c) return;
+    drafts[pid] = { id: c.id, editing: c.id, date: c.date, arcU: c.arcU || '', arcL: c.arcL || '', elas: c.elas || '', notes: c.notes || '', next: c.next || 5, chips: (c.chips || []).slice(), view: 'Frente' };
+    A.refresh(); const f = $('#oxForm'); if (f && f.scrollIntoView) f.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
+  A.acts.oxCancelEdit = () => { delete drafts[pid0()]; A.refresh(); };
   A.acts.oxSave = () => save(false);
   A.acts.oxSaveNext = () => save(true);
   A.acts.oxDel = el => {

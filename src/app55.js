@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.35.0', b: '1.90.0', d: '2026-11-26', items: [
+      { t: 'Ortodoncia: si en la evolución clínica escribís un control de ortodoncia (por ejemplo «control de ortodoncia, cambié arco superior .014 NiTi, cadena elástica…»), se crea solo el control en la solapa Ortodoncia con el arco, lo que hiciste y el próximo control, y te avisa con la opción de deshacer. La nota queda tal cual la escribiste.' },
+      { t: 'En esa nota de la evolución aparece «Agregar foto» (con el tipo de foto) y «Ver en Ortodoncia». En la solapa, cada control tiene un lápiz ✎ para completar o corregir los detalles.' }] },
     { v: '1.34.1', b: '1.89.1', d: '2026-11-26', items: [
       { t: 'Ficha del paciente en el celular: el selector de secciones ahora dice «Estás en…» con el ícono de la sección y un botón verde «Cambiar sección» (que late las primeras veces). Al abrirlo, cada sección es una tarjeta con ícono y una línea que explica qué hay adentro.' },
       { t: 'Ortodoncia: ícono nuevo, un diente con bracket y arco por delante.' }] },
