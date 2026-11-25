@@ -1096,3 +1096,7 @@ Ortodoncia automática (`src/app121.js`): `A.touchPd` revisa las 6 notas más nu
 
 ## 1.35.1 (compilación 1.90.1)
 Agenda: la tira de días (`render.agenda` en index.html) conserva su posición (`S._stripKeep`) y se centra suavemente después de que `app16` la vuelve a armar; antes salía de 0 y recorría toda la tira.
+
+
+## 1.36.0 (compilación 1.91.0)
+Calendario de la derecha (`app24`): `offWhy`/`am-off` (rojo suave para días sin atención por cierre, vacaciones o agenda cancelada), `am-part` (punto rojo si solo algunos profesionales no atienden), leyenda arriba y nueva estética. `app122`: al cargar vacaciones ofrece cancelar los turnos y avisar por WhatsApp; las columnas cerradas muestran «Vacaciones»/«Cerrado».

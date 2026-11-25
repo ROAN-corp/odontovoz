@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.36.0', b: '1.91.0', d: '2026-11-26', items: [
+      { t: 'Agenda en la PC y tablet: el calendario de la derecha se rediseñó (tarjetas por mes, colores, leyenda arriba). Los días sin atención por vacaciones, feriado o agenda cancelada se ven en rojo suave y los días que se atiende en verde suave. Si elegís «Todos» y solo algún profesional no está, el día lleva un puntito rojo.' },
+      { t: 'Vacaciones: al cargar un período en Profesionales, si ya había turnos esos días te ofrece cancelarlos y avisar a cada paciente por WhatsApp. Las columnas de esos días dicen «Vacaciones» (o «Cerrado» en los feriados) con el motivo.' }] },
     { v: '1.35.1', b: '1.90.1', d: '2026-11-26', items: [
       { t: 'Arreglo en la agenda (web y tablet): al cambiar de día, la tira de fechas ya no da toda la vuelta; se mueve suave desde donde estaba hasta el día elegido.' }] },
     { v: '1.35.0', b: '1.90.0', d: '2026-11-26', items: [

@@ -8201,10 +8201,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.35.1';
+  A.VERSION = '1.36.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.90.1';
+  A.VBUILD = '1.91.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -11732,6 +11732,16 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   }
 
   /* ---------- varios meses de calendario ---------- */
+  /* 1.36: días en que normalmente se atiende pero no hay agenda (feriado/cierre, vacaciones o agenda cancelada) */
+  const normalDay = (p, k) => { const dw = A.dow(k); if ((A.CFG.days || []).indexOf(dw) < 0) return false; return (p.extra || []).some(x => x.d === k) || (p.sched && (p.sched[dw] || []).length > 0); };
+  const offWhy = (p, k) => {
+    if (!normalDay(p, k)) return '';
+    const c = A.closedOn && A.closedOn(k); if (c) return c.why || 'Cerrado';
+    const v = A.vacOn && A.vacOn(p, k); if (v) return v.why || 'Vacaciones';
+    if (A.day(k).some(a => a.type === 'block' && a.dayOff && a.pro === p.id)) return 'Agenda cancelada';
+    return '';
+  };
+  A.offWhy = offWhy;
   function month(m0) {
     const first = m0 + '-01', d0 = A.parse(first), today = A.today(), sel = cur();
     const pros = sel ? A.visPros().filter(p => p.id === sel) : A.visPros();
@@ -11741,8 +11751,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       const k = A.add(start, i), out = k.slice(0, 7) !== m0; if (i >= 35 && out) break;
       if (out) { h += '<span class="mc-d out am-blank"></span>'; continue; }
       const n = A.day(k).filter(a => live(a) && pros.some(p => p.id === a.pro)).length;
-      const works = pros.some(p => A.hoursFor(p, k).length);
-      h += '<button class="mc-d' + (k === today ? ' today' : '') + (k === S.date ? ' sel' : '') + (works ? ' am-w' : '') + '" data-act="agGoDay" data-date="' + k + '" aria-label="' + esc(A.fmtLong(k) + (n ? ': ' + n + ' turnos' : '')) + '"><span class="mc-n">' + A.parse(k).getDate() + '</span>' + (n ? '<small class="mc-t">' + n + '</small>' : '') + '</button>';
+      const works = pros.some(p => A.hoursFor(p, k).length), why = !works ? (pros.map(p => offWhy(p, k)).filter(Boolean)[0] || '') : '';
+      h += '<button class="mc-d' + (k === today ? ' today' : '') + (k === S.date ? ' sel' : '') + (works ? ' am-w' : '') + (why ? ' am-off' : '') + (works && pros.length > 1 && pros.some(p => offWhy(p, k)) ? ' am-part' : '') + '" data-act="agGoDay" data-date="' + k + '"' + (why ? ' title="' + esc(why) + '"' : '') + ' aria-label="' + esc(A.fmtLong(k) + (n ? ': ' + n + ' turnos' : '') + (why ? ': sin atención (' + why + ')' : '')) + '"><span class="mc-n">' + A.parse(k).getDate() + '</span>' + (n ? '<small class="mc-t">' + n + '</small>' : '') + '</button>';
     }
     return h + '</div></div>';
   }
@@ -11750,9 +11760,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function months() {
     const m0 = S.calM || S.date.slice(0, 7);
     const sel = cur(), p = sel && A.PRO(sel);
-    return '<div class="mc-head"><button class="btn small" data-act="agCalMon" data-n="-1" aria-label="Meses anteriores">‹</button><b>Calendario</b><button class="btn small" data-act="agCalMon" data-n="1" aria-label="Meses siguientes">›</button></div>' +
+    return '<div class="mc-head"><button class="btn small" data-act="agCalMon" data-n="-1" aria-label="Meses anteriores">‹</button><b><i aria-hidden="true">📅</i> Calendario</b><button class="btn small" data-act="agCalMon" data-n="1" aria-label="Meses siguientes">›</button></div>' +
       (p ? '<div class="am-who"><b class="pdot" style="background:' + p.color + '"></b>' + esc(p.name) + '</div>' : '') +
-      '<div class="am-ms">' + [0, 1, 2].map(i => month(addM(m0, i))).join('') + '</div><div class="hint am-leg">Los días marcados son los que ' + (p ? 'atiende' : 'hay atención') + '. El número chico son los turnos.</div>';
+      '<div class="am-leg"><span><i class="lg lg-w"></i>' + (p ? 'Atiende' : 'Hay atención') + '</span><span><i class="lg lg-o"></i>Sin atención</span><span><i class="lg lg-t"></i>Hoy</span><span class="lg-n">Rojo: vacaciones, feriado o agenda cancelada. El número chico son los turnos.</span></div><div class="am-ms">' + [0, 1, 2].map(i => month(addM(m0, i))).join('') + '</div>';
   }
 
   const prevAgenda = A.render.agenda;
@@ -11788,7 +11798,16 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.ap-tx{display:flex;flex-direction:column;min-width:0}.ap-tx b{font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ap-tx small{font-size:12px;color:var(--ink-2)}' +
     '.ap-list.h .ap-pro{flex:0 0 auto;flex-direction:column;gap:3px;padding:6px 8px;width:76px;text-align:center;border-color:var(--line);background:var(--surface)}.ap-list.h .ap-pro.on{background:var(--accent-soft);border-color:var(--accent)}.ap-list.h .ap-tx{align-items:center;width:100%}.ap-list.h .ap-tx b{font-size:11.5px;max-width:100%}.ap-list.h .ap-tx small{font-size:10.5px}.ap-list.h .ap-av{width:36px;height:36px;font-size:13px}' +
     '.am-side .am-ms{display:flex;flex-direction:column;gap:12px}.am-t{font:700 14px var(--f-display,inherit);text-align:center;margin-bottom:4px}.am-who{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2)}.am-blank{visibility:hidden}' +
-    '.am-side .mc-d.am-w{background:var(--accent-soft)}.am-side .mc-d.sel{outline:2px solid var(--accent)}.am-leg{font-size:12px}' +
+    '.am-side{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 7%,var(--surface)),var(--surface))!important;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--line))!important;border-radius:20px!important;padding:14px!important;box-shadow:0 6px 22px rgba(8,20,24,.07)}' +
+    '.am-side .mc-head{margin-bottom:8px}.am-side .mc-head b{font:800 16px var(--f-display,inherit);display:flex;align-items:center;gap:6px}.am-side .mc-head b i{font-style:normal}.am-side .mc-head .btn{border-radius:50%;width:32px;height:32px;padding:0;display:grid;place-items:center;font-size:18px;line-height:1}' +
+    '.am-side .am-m{background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 12%,var(--line));border-radius:16px;padding:10px 8px 8px}' +
+    '.am-side .am-t{font:800 14px var(--f-display,inherit);color:var(--accent);letter-spacing:.02em;margin-bottom:6px}' +
+    '.am-side .mc-grid{gap:3px}.am-side .mc-dw{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);opacity:.8}' +
+    '.am-side .mc-d{border-radius:10px;transition:transform .12s,background .12s}.am-side .mc-d:hover{transform:scale(1.08);background:var(--surface-2)}' +
+    '.am-side .mc-d.am-w{background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:color-mix(in srgb,var(--ok) 55%,var(--ink));font-weight:700}' +
+    '.am-side .mc-d.am-off{background:color-mix(in srgb,var(--red) 13%,var(--surface));color:color-mix(in srgb,var(--red) 60%,var(--ink));font-weight:700;background-image:repeating-linear-gradient(135deg,transparent 0 5px,color-mix(in srgb,var(--red) 10%,transparent) 5px 6px)}' +
+    '.am-side .mc-d.today{box-shadow:inset 0 0 0 2px var(--accent)}.am-side .mc-d.sel{outline:none;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 40%,transparent)}.am-side .mc-d.sel .mc-t{color:inherit}' +
+    '.am-side .mc-d.am-part::after{content:"";position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red)}.am-side{max-height:calc(100vh - 86px);overflow-y:auto}.am-leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--ink-2);margin:0 0 10px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.am-leg span{display:inline-flex;align-items:center;gap:5px}.am-leg .lg{width:12px;height:12px;border-radius:4px;display:inline-block}.am-leg .lg-w{background:color-mix(in srgb,var(--ok) 35%,var(--surface))}.am-leg .lg-o{background:color-mix(in srgb,var(--red) 35%,var(--surface))}.am-leg .lg-t{box-shadow:inset 0 0 0 2px var(--accent)}.am-leg .lg-n{flex-basis:100%}' +
     '@media (max-width:1280px){.ag-split.has-pros{grid-template-columns:190px minmax(0,1fr) 240px}}' +
     '</style>');
 })();
@@ -18544,6 +18563,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.36.0', b: '1.91.0', d: '2026-11-26', items: [
+      { t: 'Agenda en la PC y tablet: el calendario de la derecha se rediseñó (tarjetas por mes, colores, leyenda arriba). Los días sin atención por vacaciones, feriado o agenda cancelada se ven en rojo suave y los días que se atiende en verde suave. Si elegís «Todos» y solo algún profesional no está, el día lleva un puntito rojo.' },
+      { t: 'Vacaciones: al cargar un período en Profesionales, si ya había turnos esos días te ofrece cancelarlos y avisar a cada paciente por WhatsApp. Las columnas de esos días dicen «Vacaciones» (o «Cerrado» en los feriados) con el motivo.' }] },
     { v: '1.35.1', b: '1.90.1', d: '2026-11-26', items: [
       { t: 'Arreglo en la agenda (web y tablet): al cambiar de día, la tira de fechas ya no da toda la vuelta; se mueve suave desde donde estaba hasta el día elegido.' }] },
     { v: '1.35.0', b: '1.90.0', d: '2026-11-26', items: [
@@ -28806,6 +28828,60 @@ const OVMenu = (function () {
 
   const css = document.createElement('style');
   css.textContent = '.ox-addph{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.ox-tag{font-size:.76rem;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 10px}.ox-addph select{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:6px 8px;font:inherit;font-size:.82rem}';
+  document.body.appendChild(css);
+})();
+/* ===== 1.36: vacaciones: se ofrece cancelar los turnos de esos días y avisar a los pacientes; la agenda dice «Vacaciones» en las columnas cerradas ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns, esc = A.esc, $ = q => document.querySelector(q);
+  if (!A.acts.cfgVacAdd || !A.vacOn) return;
+  const live = a => a && a.type !== 'block' && a.status !== 'cancelado' && a.status !== 'atendido' && !/^g\d/.test(String(a.id));
+  const inRange = (pro, f, t) => { const out = []; Object.keys(S.days || {}).forEach(k => { if (k >= f && k <= t) (S.days[k] || []).forEach(a => { if (a.pro === pro && live(a)) out.push(a); }); }); return out.sort((x, y) => (x.date + x.start < y.date + y.start ? -1 : 1)); };
+  const msg = a => { const p = A.PAT(a.pid) || {}, cl = A.CLINIC || 'el consultorio', first = String(p.first || p.name || '').split(' ')[0]; return 'Hola ' + first + ', te escribimos de ' + cl + '. Tu turno del ' + (A.fmtShort ? A.fmtShort(a.date) : a.date) + ' a las ' + A.mm(a.start) + ' hay que reprogramarlo porque ese día no vamos a atender. Te pedimos disculpas. ¿Te parece si te damos un nuevo turno? Respondé este mensaje y lo coordinamos.'; };
+
+  /* ---------- al cargar vacaciones: ofrecer cancelar los turnos que ya había ---------- */
+  const prev = A.acts.cfgVacAdd;
+  A.acts.cfgVacAdd = function (el) {
+    const id = el.getAttribute('data-id'), f = ($('#vcFrom') || {}).value, t = (($('#vcTo') || {}).value || f), why = (($('#vcWhy') || {}).value || '').trim();
+    const r = prev.apply(this, arguments);
+    try { const p = A.PRO(id), L = f && t >= f ? inRange(id, f, t) : []; if (p && L.length && (p.vac || []).some(v => v.from === f)) { S.modal = { type: 'vacTurnos', pro: id, from: f, to: t, why: why || 'Vacaciones', ids: L.map(a => a.id) }; A.renderModal(); } } catch (e) { /* nada */ }
+    return r;
+  };
+  MF.vacTurnos = m => {
+    const p = A.PRO(m.pro) || {}, L = m.ids.map(i => A.apptById(i)).filter(Boolean), rng = A.fmtShort(m.from) + (m.to !== m.from ? ' al ' + A.fmtShort(m.to) : '');
+    if (m.done) {
+      const sent = Object.keys(m.sent || {}).length;
+      return A.modalShell('Turnos cancelados', '<div class="do-ok">✔ ' + L.length + ' turno' + (L.length === 1 ? '' : 's') + ' cancelado' + (L.length === 1 ? '' : 's') + ' por vacaciones (' + esc(rng) + ').</div><h3 class="hp-h">Avisale a cada paciente <span class="count">' + sent + ' de ' + L.length + '</span></h3><ul class="do-list wa">' + L.map(a => { const pt = A.PAT(a.pid) || {}, url = A.waLink ? A.waLink(pt.phone, msg(a)) : ''; return '<li><span class="mono">' + esc(A.fmtShort(a.date)) + ' ' + A.mm(a.start) + '</span> <span class="nm">' + esc(pt.name || '') + '</span>' + (url ? '<a class="btn small' + (m.sent && m.sent[a.id] ? '' : ' primary') + '" target="_blank" rel="noopener" href="' + esc(url) + '" data-act="vacSent" data-id="' + esc(a.id) + '">' + (m.sent && m.sent[a.id] ? 'Avisado ✔' : 'Avisar por WhatsApp') + '</a>' : '<span class="chip warn">sin teléfono</span>') + '</li>'; }).join('') + '</ul>', '<button class="btn primary" data-act="closeModal">Listo</button>', true);
+    }
+    return A.modalShell('Hay turnos en esos días', '<p><b>' + esc(p.name || '') + '</b> quedó de vacaciones del <b>' + esc(rng) + '</b>, y en esos días ya hay <b>' + L.length + ' turno' + (L.length === 1 ? '' : 's') + '</b>:</p><ul class="do-list">' + L.slice(0, 40).map(a => '<li><span class="mono">' + esc(A.fmtShort(a.date)) + ' ' + A.mm(a.start) + '</span> ' + esc((A.PAT(a.pid) || {}).name || '') + '</li>').join('') + '</ul>' + '<p class="hint">Si los cancelás, te muestro la lista para avisarle a cada paciente por WhatsApp. Si no, quedan como están y los reprogramás vos.</p>',
+      '<button class="btn" data-act="closeModal">Dejarlos como están</button><button class="btn primary danger-ish" data-act="vacCancelGo">Cancelar los ' + L.length + ' turnos y avisar</button>', true);
+  };
+  A.acts.vacCancelGo = () => {
+    const m = S.modal; if (!m) return; const L = m.ids.map(i => A.apptById(i)).filter(Boolean), dates = Array.from(new Set(L.map(a => a.date)));
+    A.mutate(dates, () => { L.forEach(a => { a.status = 'cancelado'; a.rem = 'cancelo'; a.dayOff = m.why; }); }, 'Turnos cancelados por vacaciones: ' + L.length + '.');
+    S.modal = Object.assign({}, m, { done: 1, sent: {} }); A.renderModal(); A.refresh();
+  };
+  A.acts.vacSent = el => { const m = S.modal; if (m && m.sent) { m.sent[el.getAttribute('data-id')] = 1; setTimeout(() => A.renderModal(), 400); } };
+
+  /* ---------- «Vacaciones» / «Cerrado» escrito en las columnas sin atención ---------- */
+  function label() {
+    document.querySelectorAll('#gridWrap .gb[data-pro][data-date]').forEach(gb => {
+      const pro = A.PRO(gb.getAttribute('data-pro')), d = gb.getAttribute('data-date'); if (!pro) return;
+      let txt = '', sub = '', ic = '';
+      const cl = A.closedOn && A.closedOn(d), v = A.vacOn(pro, d);
+      if (cl) { ic = '🚫'; txt = 'Cerrado'; sub = cl.why || ''; } else if (v) { ic = '🏖'; txt = 'Vacaciones'; sub = v.why && !/^vacaciones$/i.test(v.why) ? v.why : ''; }
+      const old = gb.querySelector(':scope > .gb-offlbl');
+      if (!txt) { if (old) old.remove(); return; }
+      const html = '<div class="gb-offlbl" aria-hidden="true"><span>' + ic + ' ' + esc(txt) + '</span>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+      if (old) { if (old.outerHTML !== html) old.outerHTML = html; } else gb.insertAdjacentHTML('afterbegin', html);
+    });
+  }
+  let rq = 0; const sched = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; try { label(); } catch (e) { /* nada */ } }); };
+  try { new MutationObserver(sched).observe(document.body, { childList: true, subtree: true }); } catch (e) { /* nada */ }
+  sched();
+
+  const css = document.createElement('style');
+  css.textContent = '.gb-offlbl{position:absolute;left:6px;right:6px;top:10px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;text-align:center}.gb-offlbl span{background:color-mix(in srgb,var(--red) 14%,var(--surface));color:color-mix(in srgb,var(--red) 65%,var(--ink));border:1px solid color-mix(in srgb,var(--red) 35%,var(--line));border-radius:999px;padding:4px 14px;font-size:.82rem;font-weight:800}.gb-offlbl small{color:var(--ink-2);font-size:.74rem}';
   document.body.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
