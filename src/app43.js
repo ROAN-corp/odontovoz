@@ -265,6 +265,10 @@
   A.chg.stkCat = el => { S.stk.cat = el.value; paint(); };
   A.chg.stkLow = el => { S.stk.low = el.checked; paint(); };
   /* 1.2: lo que falta (para el aviso del inicio y las colaboraciones) */
+  /* 1.28: para el catálogo de Rutident (app113): sumar un insumo al stock, buscarlo y guardar */
+  A.stkAddItem = it => { const i = norm1(Object.assign({ id: A.uid(), ck: null, name: '', unit: '', uses: 1, qty: 0, min: 0, cat: 'Otros', mv: [] }, it)); list(place()).push(i); save(); return i; };
+  A.stkFind = fn => list(place()).filter(fn)[0] || null;
+  A.stkSave = save;
   A.stkLowList = () => { try { return list(place()).map(norm1).filter(i => status(i) !== 'ok'); } catch (e) { return []; } };
   A.stkBuyText = () => { const sd = place(); return buyText(sd, chosen(buyList(list(sd).map(norm1)))); };
   A.acts.stkBuyCopy = async () => { const sd = place(), t = buyText(sd, chosen(buyList(list(sd).map(norm1)))); try { await navigator.clipboard.writeText(t); A.toast('Pedido copiado.'); } catch (e) { A.toast(t); } };

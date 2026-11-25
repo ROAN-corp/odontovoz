@@ -135,6 +135,14 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.28.0 · Stock › Rutiden (25/11/2026)
+
+- Pedido de Rodrigo: que dentro de Stock haya una segunda solapa con la casa de insumos Rutiden (logo incluido), con su catálogo, para armar el pedido y mandárselo por WhatsApp; más adelante, lo mismo con Surdental. Los productos se agrupan (por ejemplo, un composite con todos sus colores) para no tener un stock gigante, con los precios a la derecha y el precio de compra.
+- Catálogo: `scripts/rutident/lista.txt` (listado de la casa: código y nombre, **sin precios**, 2.981 productos) → `python3 scripts/rutident/build.py` → `sitio/catalogos/rutiden.json` (242 KB, 51 KB comprimido): 19 categorías, 51 marcas y 2.396 familias, 185 de ellas con variantes (colores A1-D4, medidas, números de fresa). La agrupación es por palabras clave del nombre (se ajusta en el diccionario del script). `robots.txt` no lo indexa.
+- `src/app113.js`: solapa «Rutiden» de Stock (`S.stk.tab = 'rut'`; envuelve `A.stkHTML`), categorías, buscador, filtro de marca, variantes con cantidad, precios propios (`cfg.rut.p` lista y `cfg.rut.c` compra, viajan con el stock en `A.EMP.stock._cfg.rut`), pedido (`cfg.rut.cart`) y envío por WhatsApp (`cfg.rut.wa`, o la sucursal de la colaboración «Rutiden» si existe en `ov_partners`). «+ mi stock» suma el insumo con su código (`i.rut`); en «Para comprar» aparece «Pedir a Rutiden» con lo vinculado que falta. `app43` exporta `A.stkAddItem`, `A.stkFind` y `A.stkSave`.
+- Para sumar otra casa (Surdental): repetir el catálogo en `sitio/catalogos/` y definir otro `P` en `app113`.
+- Falta confirmar con Rutiden el permiso para usar su logo y su listado; y cargar su número de WhatsApp (se carga desde el botón «WhatsApp» de la solapa).
+
 ## OdontoVoz 1.27.1 · fecha de nacimiento en tres casilleros (24/11/2026)
 
 - Pedido de Rodrigo: el calendario del navegador para la fecha de nacimiento es engorroso. `src/app112.js` convierte cada `input[type=date]` de nacimiento (paciente nuevo `#npB`, ficha del paciente `#pf_birth`, historia de papel `#hp_birth`, ficha FORN `data-k="birth"`, o cualquier campo cuya etiqueta diga «nacimiento») en **Día** (se escribe o se elige de la lista), **Mes** (lista con los nombres) y **Año** (se escribe; 2 cifras se completan: 85 → 1985). Salta solo de un casillero al otro y muestra la edad. Valida (31 de febrero, fecha futura, antes de 1900) y avisa en rojo.

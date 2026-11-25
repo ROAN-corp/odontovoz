@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /app/
+Disallow: /catalogos/
 Sitemap: https://odontovoz.com.ar/sitemap.xml
