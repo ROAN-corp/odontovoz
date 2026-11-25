@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.28.0';
+  A.VERSION = '1.28.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.83.0';
+  A.VBUILD = '1.83.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18537,6 +18537,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.28.1', b: '1.83.1', d: '2026-11-25', items: [
+      { t: 'Rutiden: al filtrar por marca ya se puede volver a «Todas».' }] },
     { v: '1.28.0', b: '1.83.0', d: '2026-11-25', items: [
       { t: 'Stock › Rutiden: la casa de insumos de la zona, adentro del stock. Más de 2.900 productos agrupados por categoría, marca y variantes (colores, medidas). Cargás tus precios (de lista y el último al que compraste), armás el pedido y se lo mandás a Rutiden por WhatsApp. Podés seguir cualquier producto en tu stock.', top: true }] },
     { v: '1.27.1', b: '1.82.1', d: '2026-11-24', items: [
@@ -27767,10 +27769,10 @@ const OVMenu = (function () {
 
   /* ---------- pantalla ---------- */
   function refresh() { if (S.modal && S.modal.type === 'stk' && S.stk && S.stk.tab === 'rut') { const h = document.getElementById('stkHost'); if (h) h.innerHTML = A.stkHTML(); else A.renderModal(); } }
-  const results = () => {
+  const results = skipBrand => {
     const s = st(), q = norm(s.q || ''), qs = q.split(/\s+/).filter(Boolean); let L = [];
     if (!CAT) return L;
-    CAT.f.forEach((f, i) => { if (s.cat && f[1] !== s.cat) return; if (s.brand && f[2] !== s.brand) return; if (qs.length && !qs.every(w => IDX[i].t.indexOf(w) >= 0)) return; L.push(i); });
+    CAT.f.forEach((f, i) => { if (s.cat && f[1] !== s.cat) return; if (!skipBrand && s.brand && f[2] !== s.brand) return; if (qs.length && !qs.every(w => IDX[i].t.indexOf(w) >= 0)) return; L.push(i); });
     return L;
   };
   const cartCount = () => Object.keys(cfg().cart).length;
@@ -27797,7 +27799,7 @@ const OVMenu = (function () {
       return '<div class="rt-cats">' + CAT.cats.filter(c => counts[c[0]]).map(c => '<button class="rt-cat" data-act="rtCat" data-c="' + c[0] + '"><span class="rt-ci" aria-hidden="true">' + c[2] + '</span><b>' + esc(c[1]) + '</b><small>' + counts[c[0]] + ' productos</small></button>').join('') + '</div>' +
         '<p class="hint rt-note">Catálogo de Rutiden (' + CAT.f.reduce((n, f) => n + f[3].length, 0).toLocaleString('es-AR') + ' productos). Los precios los cargás vos: tocá «+ precio» en cada producto. Con «+» armás el pedido y se lo mandás por WhatsApp.</p>';
     }
-    const L = results(), brands = {}; L.forEach(i => { const b = CAT.f[i][2]; if (b) brands[b] = (brands[b] || 0) + 1; });
+    const L = results(), brands = {}; results(true).forEach(i => { const b = CAT.f[i][2]; if (b) brands[b] = (brands[b] || 0) + 1; });
     let h = '<div class="rt-crumb">' + (s.cat ? '<button class="linkbtn" data-act="rtCat" data-c="">‹ Todas las categorías</button><b>' + esc(catName(s.cat)) + '</b>' : '<button class="linkbtn" data-act="rtCat" data-c="">‹ Categorías</button><b>Resultados</b>') + '<span>' + L.length + ' productos</span></div>';
     const bk = Object.keys(brands).map(Number).sort((a, b) => brandName(a).localeCompare(brandName(b)));
     if (bk.length > 1) h += '<div class="rt-brands"><label for="rtBr">Marca</label><select id="rtBr" data-chg="rtBrand"><option value="0">Todas</option>' + bk.map(b => '<option value="' + b + '"' + (s.brand === b ? ' selected' : '') + '>' + esc(cap(brandName(b))) + ' (' + brands[b] + ')</option>').join('') + '</select></div>';

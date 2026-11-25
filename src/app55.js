@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.28.1', b: '1.83.1', d: '2026-11-25', items: [
+      { t: 'Rutiden: al filtrar por marca ya se puede volver a «Todas».' }] },
     { v: '1.28.0', b: '1.83.0', d: '2026-11-25', items: [
       { t: 'Stock › Rutiden: la casa de insumos de la zona, adentro del stock. Más de 2.900 productos agrupados por categoría, marca y variantes (colores, medidas). Cargás tus precios (de lista y el último al que compraste), armás el pedido y se lo mandás a Rutiden por WhatsApp. Podés seguir cualquier producto en tu stock.', top: true }] },
     { v: '1.27.1', b: '1.82.1', d: '2026-11-24', items: [

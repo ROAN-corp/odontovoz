@@ -35,10 +35,10 @@
 
   /* ---------- pantalla ---------- */
   function refresh() { if (S.modal && S.modal.type === 'stk' && S.stk && S.stk.tab === 'rut') { const h = document.getElementById('stkHost'); if (h) h.innerHTML = A.stkHTML(); else A.renderModal(); } }
-  const results = () => {
+  const results = skipBrand => {
     const s = st(), q = norm(s.q || ''), qs = q.split(/\s+/).filter(Boolean); let L = [];
     if (!CAT) return L;
-    CAT.f.forEach((f, i) => { if (s.cat && f[1] !== s.cat) return; if (s.brand && f[2] !== s.brand) return; if (qs.length && !qs.every(w => IDX[i].t.indexOf(w) >= 0)) return; L.push(i); });
+    CAT.f.forEach((f, i) => { if (s.cat && f[1] !== s.cat) return; if (!skipBrand && s.brand && f[2] !== s.brand) return; if (qs.length && !qs.every(w => IDX[i].t.indexOf(w) >= 0)) return; L.push(i); });
     return L;
   };
   const cartCount = () => Object.keys(cfg().cart).length;
@@ -65,7 +65,7 @@
       return '<div class="rt-cats">' + CAT.cats.filter(c => counts[c[0]]).map(c => '<button class="rt-cat" data-act="rtCat" data-c="' + c[0] + '"><span class="rt-ci" aria-hidden="true">' + c[2] + '</span><b>' + esc(c[1]) + '</b><small>' + counts[c[0]] + ' productos</small></button>').join('') + '</div>' +
         '<p class="hint rt-note">Catálogo de Rutiden (' + CAT.f.reduce((n, f) => n + f[3].length, 0).toLocaleString('es-AR') + ' productos). Los precios los cargás vos: tocá «+ precio» en cada producto. Con «+» armás el pedido y se lo mandás por WhatsApp.</p>';
     }
-    const L = results(), brands = {}; L.forEach(i => { const b = CAT.f[i][2]; if (b) brands[b] = (brands[b] || 0) + 1; });
+    const L = results(), brands = {}; results(true).forEach(i => { const b = CAT.f[i][2]; if (b) brands[b] = (brands[b] || 0) + 1; });
     let h = '<div class="rt-crumb">' + (s.cat ? '<button class="linkbtn" data-act="rtCat" data-c="">‹ Todas las categorías</button><b>' + esc(catName(s.cat)) + '</b>' : '<button class="linkbtn" data-act="rtCat" data-c="">‹ Categorías</button><b>Resultados</b>') + '<span>' + L.length + ' productos</span></div>';
     const bk = Object.keys(brands).map(Number).sort((a, b) => brandName(a).localeCompare(brandName(b)));
     if (bk.length > 1) h += '<div class="rt-brands"><label for="rtBr">Marca</label><select id="rtBr" data-chg="rtBrand"><option value="0">Todas</option>' + bk.map(b => '<option value="' + b + '"' + (s.brand === b ? ' selected' : '') + '>' + esc(cap(brandName(b))) + ' (' + brands[b] + ')</option>').join('') + '</select></div>';
