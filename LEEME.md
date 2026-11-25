@@ -1072,3 +1072,7 @@ Agenda (`src/app116.js`): arrastrar un paciente de la burbuja a la agenda para c
 
 ## 1.32.0 (compilación 1.87.0)
 Ortodoncia (`src/app117.js`): solapa «Ortodoncia» en la ficha (`pd.orto` con `ctrls`). Cada control guarda fotos en `pd.images` (`kind:'orto'`, `view`, `ctrl`), crea una nota de evolución (`orto: id`) y muestra «Antes y ahora».
+
+
+## 1.33.0 (compilación 1.88.0)
+Planes de tratamiento en PDF (`src/app118.js`): tarjeta arriba de «Plan y presupuesto» para subir PDF hechos fuera de la app (`pd.planPdfs`, archivo en `A.media`, tope 20 MB). Abrir, descargar, renombrar y quitar.

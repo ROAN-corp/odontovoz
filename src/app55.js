@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.33.0', b: '1.88.0', d: '2026-11-25', items: [
+      { t: 'Plan y presupuesto: ahora podés subir planes de tratamiento en PDF (por ejemplo, los de ortodoncia que armás fuera de la aplicación). Les ponés nombre, y desde la ficha del paciente los abrís, descargás, renombrás o quitás.' }] },
     { v: '1.32.0', b: '1.87.0', d: '2026-11-25', items: [
       { t: 'Ortodoncia: solapa nueva en la ficha del paciente. Empezás el tratamiento (aparatología, inicio, duración) y en cada control cargás las fotos del día, el arco, los elásticos y lo que hiciste. Se anota solo en la evolución clínica (con las fotos) y las fotos quedan también en «Fotos y radiografías».' },
       { t: 'Ortodoncia: «Antes y ahora» compara la primera y la última foto de cada vista, barra de avance del tratamiento y botón para dar el turno del próximo control.' }] },
