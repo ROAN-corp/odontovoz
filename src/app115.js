@@ -130,6 +130,16 @@
     return savePrev.apply(this, arguments);
   };
 
+  /* 1.30.2: la X de una ventanita de stock vuelve al stock, no al menú */
+  const SUB = /^(stk(I|New|Pick|CountM|Kit|Levels|MoveM)|rt(Cart|Price|Wa)|pt(Ed|Del|Panel))$/, closePrev2 = A.closeModal;
+  const stkHTMLv = A.stkHTML; A.stkHTML = function () { S._stkOn = true; return stkHTMLv.apply(this, arguments); };
+  A.closeModal = function () {
+    const m = S.modal;
+    if (m && m.type === 'stk') S._stkOn = false;
+    else if (m && SUB.test(m.type) && S._stkOn && !S._stkInline) { S.modal = { type: 'stk' }; A.renderModal(); return; }
+    return closePrev2.apply(this, arguments);
+  };
+
   const css = document.createElement('style');
   css.textContent = '.s2-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:5px;margin:0 0 12px}' +
     '.s2-tabs button{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;border:0;background:transparent;color:var(--ink-2);border-radius:12px;padding:10px 8px;font:inherit;font-weight:700;font-size:.9rem;cursor:pointer;transition:background .15s,color .15s}' +

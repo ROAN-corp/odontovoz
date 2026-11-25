@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.30.1';
+  A.VERSION = '1.30.2';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.85.1';
+  A.VBUILD = '1.85.2';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18540,6 +18540,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.30.2', b: '1.85.2', d: '2026-11-25', items: [
+      { t: 'Stock: al cerrar con la X una ventanita (insumo, pedido, conteo, etc.) volvés al stock y seguís trabajando, en vez de salir al menú.' }] },
     { v: '1.30.1', b: '1.85.1', d: '2026-11-25', items: [
       { t: 'Rutiden: el pedido por WhatsApp ya sale con el número de Rutiden cargado.' }] },
     { v: '1.30.0', b: '1.85.0', d: '2026-11-25', items: [
@@ -28266,6 +28268,16 @@ const OVMenu = (function () {
     const m = S.modal, k = m && ($('#seK') || $('#siK')), id = m && m.id;
     if (k && id && (m.mode === 'edit' || m.mode === 'in')) { const v = A.parseMoney ? A.parseMoney(k.value) : 0, i = A.stkFind(x => x.id === id); if (i) { if (v > 0) i.cost = v; else if (m.mode === 'edit') delete i.cost; } }
     return savePrev.apply(this, arguments);
+  };
+
+  /* 1.30.2: la X de una ventanita de stock vuelve al stock, no al menú */
+  const SUB = /^(stk(I|New|Pick|CountM|Kit|Levels|MoveM)|rt(Cart|Price|Wa)|pt(Ed|Del|Panel))$/, closePrev2 = A.closeModal;
+  const stkHTMLv = A.stkHTML; A.stkHTML = function () { S._stkOn = true; return stkHTMLv.apply(this, arguments); };
+  A.closeModal = function () {
+    const m = S.modal;
+    if (m && m.type === 'stk') S._stkOn = false;
+    else if (m && SUB.test(m.type) && S._stkOn && !S._stkInline) { S.modal = { type: 'stk' }; A.renderModal(); return; }
+    return closePrev2.apply(this, arguments);
   };
 
   const css = document.createElement('style');
