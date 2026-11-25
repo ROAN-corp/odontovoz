@@ -58,11 +58,14 @@
   function months() {
     const m0 = S.calM || S.date.slice(0, 7);
     const sel = cur(), p = sel && A.PRO(sel);
-    return '<div class="mc-head"><button class="btn small" data-act="agCalMon" data-n="-1" aria-label="Meses anteriores">‹</button><b><i aria-hidden="true">📅</i> Calendario</b><button class="btn small" data-act="agCalMon" data-n="1" aria-label="Meses siguientes">›</button></div>' +
+    const base = A.today().slice(0, 7), opts = []; for (let i = -1; i < 14; i++) { const mm = addM(base, i); opts.push('<option value="' + mm + '"' + (mm === m0 ? ' selected' : '') + '>' + esc(A.cap(A.MON[+mm.slice(5) - 1]) + ' ' + mm.slice(0, 4)) + '</option>'); }
+    if (!opts.some(o => o.indexOf('value="' + m0 + '"') >= 0)) opts.unshift('<option value="' + m0 + '" selected>' + esc(A.cap(A.MON[+m0.slice(5) - 1]) + ' ' + m0.slice(0, 4)) + '</option>');
+    return '<div class="mc-head"><button class="btn small" data-act="agCalMon" data-n="-1" aria-label="Meses anteriores">‹</button><label class="mc-jump"><span class="sr">Ir a un mes</span><i aria-hidden="true">📅</i><select data-chg="agCalJump" aria-label="Ir a un mes">' + opts.join('') + '</select></label><button class="btn small" data-act="agCalMon" data-n="1" aria-label="Meses siguientes">›</button></div>' +
       (p ? '<div class="am-who"><b class="pdot" style="background:' + p.color + '"></b>' + esc(p.name) + '</div>' : '') +
-      '<div class="am-leg"><span><i class="lg lg-w"></i>' + (p ? 'Atiende' : 'Hay atención') + '</span><span><i class="lg lg-o"></i>Sin atención</span><span><i class="lg lg-t"></i>Hoy</span><span class="lg-n">Rojo: vacaciones, feriado o agenda cancelada. El número chico son los turnos.</span></div><div class="am-ms">' + [0, 1, 2].map(i => month(addM(m0, i))).join('') + '</div>';
+      '<div class="am-leg"><span><i class="lg lg-w"></i>' + (p ? 'Atiende' : 'Hay atención') + '</span><span><i class="lg lg-o"></i>Sin atención</span><span><i class="lg lg-t"></i>Hoy</span><span class="lg-n">Rojo: vacaciones, feriado o agenda cancelada · número chico: turnos</span></div><div class="am-ms">' + [0, 1, 2].map(i => month(addM(m0, i))).join('') + '</div>';
   }
 
+  A.chg.agCalJump = el => { S.calM = el.value; A.render.agenda(); };
   const prevAgenda = A.render.agenda;
   A.render.agenda = () => {
     prevAgenda();
@@ -105,7 +108,12 @@
     '.am-side .mc-d.am-w{background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:color-mix(in srgb,var(--ok) 55%,var(--ink));font-weight:700}' +
     '.am-side .mc-d.am-off{background:color-mix(in srgb,var(--red) 13%,var(--surface));color:color-mix(in srgb,var(--red) 60%,var(--ink));font-weight:700;background-image:repeating-linear-gradient(135deg,transparent 0 5px,color-mix(in srgb,var(--red) 10%,transparent) 5px 6px)}' +
     '.am-side .mc-d.today{box-shadow:inset 0 0 0 2px var(--accent)}.am-side .mc-d.sel{outline:none;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 40%,transparent)}.am-side .mc-d.sel .mc-t{color:inherit}' +
-    '.am-side .mc-d.am-part::after{content:"";position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red)}.am-side{max-height:calc(100vh - 86px);overflow-y:auto}.am-leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--ink-2);margin:0 0 10px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.am-leg span{display:inline-flex;align-items:center;gap:5px}.am-leg .lg{width:12px;height:12px;border-radius:4px;display:inline-block}.am-leg .lg-w{background:color-mix(in srgb,var(--ok) 35%,var(--surface))}.am-leg .lg-o{background:color-mix(in srgb,var(--red) 35%,var(--surface))}.am-leg .lg-t{box-shadow:inset 0 0 0 2px var(--accent)}.am-leg .lg-n{flex-basis:100%}' +
+    '.am-side .mc-d.am-part::after{content:"";position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red)}.am-side{max-height:calc(100vh - 86px);overflow-y:auto}.am-leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--ink-2);margin:0 0 10px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.am-leg span{display:inline-flex;align-items:center;gap:5px}.am-leg .lg{width:12px;height:12px;border-radius:4px;display:inline-block}.am-leg .lg-w{background:color-mix(in srgb,var(--ok) 35%,var(--surface))}.am-leg .lg-o{background:color-mix(in srgb,var(--red) 35%,var(--surface))}.am-leg .lg-t{box-shadow:inset 0 0 0 2px var(--accent)}.am-leg .lg-n{flex-basis:100%;font-size:9.5px;opacity:.85}' +
+    '.am-side{--mcell:clamp(17px,calc((100vh - 395px) / 18),26px);padding:10px!important}.am-side .mc-head{margin-bottom:6px}.am-side .mc-head .btn{width:28px;height:28px;font-size:16px}' +
+    '.mc-jump{flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));background:var(--surface);border-radius:999px;padding:0 6px 0 8px;margin:0 4px}.mc-jump i{font-style:normal;font-size:13px}.mc-jump select{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:800 13px var(--f-display,inherit);padding:6px 0;cursor:pointer;appearance:auto}' +
+    '.am-side .am-ms{gap:8px}.am-side .am-m{padding:6px 6px 5px;border-radius:14px}.am-side .am-t{font-size:12.5px;margin-bottom:3px}.am-side .mc-grid{gap:2px}.am-side .mc-dw{font-size:9px;padding:0}' +
+    '.am-side .mc-d{min-height:var(--mcell);padding:0;align-items:center;justify-content:center;font-size:12px}.am-side .mc-d .mc-t{position:absolute;top:0;right:2px;font-size:8px;line-height:1;opacity:.75}' +
+    '.am-leg{font-size:10.5px;margin:0 0 6px;padding-bottom:6px}.am-leg .lg{width:10px;height:10px}.am-side .am-who{font-size:12px;margin-bottom:4px}' +
     '@media (max-width:1280px){.ag-split.has-pros{grid-template-columns:190px minmax(0,1fr) 240px}}' +
     '</style>');
 })();

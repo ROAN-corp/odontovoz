@@ -1104,3 +1104,7 @@ Calendario de la derecha (`app24`): `offWhy`/`am-off` (rojo suave para días sin
 
 ## 1.36.1 (compilación 1.91.1)
 Tira de días: al cambiar de mes se recuerda el día que estaba en el borde (`anchor`) y se vuelve a ubicar en el mismo lugar antes de centrar el día elegido.
+
+
+## 1.36.2 (compilación 1.91.2)
+Calendario (`app24`): celdas que se ajustan al alto de la pantalla (`--mcell`), contador de turnos arriba a la derecha de cada día, selector «ir a un mes» (`A.chg.agCalJump`, 14 meses) y leyenda más corta.
