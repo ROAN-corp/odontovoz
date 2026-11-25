@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.30.1', b: '1.85.1', d: '2026-11-25', items: [
+      { t: 'Rutiden: el pedido por WhatsApp ya sale con el número de Rutiden cargado.' }] },
     { v: '1.30.0', b: '1.85.0', d: '2026-11-25', items: [
       { t: 'Stock rediseñado: dos lugares claros, «Mi stock» y «Comprar stock». En Mi stock ves cuántos insumos tenés, cuántos andan bien, cuáles están por acabarse y cuáles vencen pronto; tocás un número y se filtra.' },
       { t: 'Mi stock: buscador, categorías, orden (lo más urgente, nombre, vence antes, más usado, mayor valor), agrupado o lista compacta, barra de cuánto queda y botones − / + para descontar o sumar uno al instante. Botón Compartir para mandar el stock por WhatsApp.' },

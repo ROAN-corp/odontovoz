@@ -132,7 +132,7 @@
     save(); back();
   };
   /* el pedido */
-  const waNum = () => { const c = cfg(); let n = String(c.wa || '').replace(/\D/g, ''); const p = A.partnerMain && A.partnerMain('stock'); if (!n && p && /rutiden/i.test(p.name || '')) { const b = (p.branches || []).filter(x => String(x.wa || '').replace(/\D/g, ''))[0]; if (b) n = String(b.wa).replace(/\D/g, ''); } if (n && !/^54/.test(n)) n = '549' + n.replace(/^0/, ''); return n; };
+  const waNum = () => { const c = cfg(); let n = String(c.wa || '').replace(/\D/g, ''); const p = A.partnerMain && A.partnerMain('stock'); if (!n && p && /rutiden/i.test(p.name || '')) { const b = (p.branches || []).filter(x => String(x.wa || '').replace(/\D/g, ''))[0]; if (b) n = String(b.wa).replace(/\D/g, ''); } if (!n) n = '2996546332'; /* número de Rutiden (1.30.1); se pisa desde «WhatsApp» */ if (n && !/^54/.test(n)) n = '549' + n.replace(/^0/, ''); return n; };
   const orderText = () => {
     const c = cfg(), K = Object.keys(c.cart); const tt = cartTotal();
     return 'Pedido a ' + P.name + ' · ' + (A.CLINIC || '') + ' · ' + A.fmtDMY(A.today()) + '\n\n' + K.map(k => '- ' + c.cart[k].q + ' x ' + c.cart[k].n + ' (cód. ' + k + ')').join('\n') + (tt.all && tt.t ? '\n\nTotal estimado: ' + money(tt.t) : '') + '\n\nPedido armado desde OdontoVoz';
