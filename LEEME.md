@@ -1092,3 +1092,7 @@ Ficha en el celular (`app97`): selector «Estás en … / Cambiar sección», ta
 
 ## 1.35.0 (compilación 1.90.0)
 Ortodoncia automática (`src/app121.js`): `A.touchPd` revisa las 6 notas más nuevas; si hablan de un control de ortodoncia (frase fuerte o 2+ términos: arco, ligadura, cadena elástica, bracket, NiTi…) crea el control (`ctrl.auto`, `note.orto`), con `parse()` de arcos/elásticos/chips/próximo control. Botón «Agregar foto» en la nota y edición de controles con ✎ (`app117`).
+
+
+## 1.35.1 (compilación 1.90.1)
+Agenda: la tira de días (`render.agenda` en index.html) conserva su posición (`S._stripKeep`) y se centra suavemente después de que `app16` la vuelve a armar; antes salía de 0 y recorría toda la tira.

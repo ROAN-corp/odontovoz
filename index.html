@@ -3064,7 +3064,11 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       /* 1.15: la tira de días queda quieta; solo se centra cuando cambia el día elegido */
       const sameDay = S._stripDate === S.date; S._stripDate = S.date;
       if (stripPos != null && sameDay) { S._stripKeep = stripPos; strip.style.scrollBehavior = 'auto'; strip.scrollLeft = stripPos; strip.style.scrollBehavior = ''; }
-      else if (stripPos != null) { strip.style.scrollBehavior = 'auto'; strip.scrollLeft = stripPos; strip.style.scrollBehavior = ''; try { strip.scrollTo({ left: target, behavior: 'smooth' }); } catch (e) { strip.scrollLeft = target; } }
+      else if (stripPos != null) {
+        /* 1.35.1: se deja la tira donde estaba (otro módulo la vuelve a armar y la pondría en 0) y recién después se la desliza suave hasta el día elegido */
+        S._stripKeep = stripPos; strip.style.scrollBehavior = 'auto'; strip.scrollLeft = stripPos; strip.style.scrollBehavior = '';
+        setTimeout(() => { const st2 = $('#dayStrip'), sb2 = st2 && $('.wk[aria-pressed="true"]', st2); if (!st2 || !sb2) return; const tg = Math.max(0, sb2.offsetLeft - st2.clientWidth / 2 + sb2.offsetWidth / 2); try { st2.scrollTo({ left: tg, behavior: 'smooth' }); } catch (e) { st2.scrollLeft = tg; } }, 70);
+      }
       else { strip.style.scrollBehavior = 'auto'; strip.scrollLeft = target; strip.style.scrollBehavior = ''; }
     }
   };
@@ -8197,10 +8201,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.35.0';
+  A.VERSION = '1.35.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.90.0';
+  A.VBUILD = '1.90.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18540,6 +18544,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.35.1', b: '1.90.1', d: '2026-11-26', items: [
+      { t: 'Arreglo en la agenda (web y tablet): al cambiar de día, la tira de fechas ya no da toda la vuelta; se mueve suave desde donde estaba hasta el día elegido.' }] },
     { v: '1.35.0', b: '1.90.0', d: '2026-11-26', items: [
       { t: 'Ortodoncia: si en la evolución clínica escribís un control de ortodoncia (por ejemplo «control de ortodoncia, cambié arco superior .014 NiTi, cadena elástica…»), se crea solo el control en la solapa Ortodoncia con el arco, lo que hiciste y el próximo control, y te avisa con la opción de deshacer. La nota queda tal cual la escribiste.' },
       { t: 'En esa nota de la evolución aparece «Agregar foto» (con el tipo de foto) y «Ver en Ortodoncia». En la solapa, cada control tiene un lápiz ✎ para completar o corregir los detalles.' }] },
