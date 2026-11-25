@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.33.0';
+  A.VERSION = '1.33.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.88.0';
+  A.VBUILD = '1.88.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18540,6 +18540,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.33.1', b: '1.88.1', d: '2026-11-25', items: [
+      { t: 'Turno con paciente nuevo: la obra social ahora se elige igual que en la ficha (lista para elegir o escribir, N.º de afiliado y plan con un toque).' },
+      { t: 'Arreglo: las ventanas podían quedar chicas después de usar el teclado en la tablet y tapar botones como «Borrar turno»; ahora se reacomodan solas.' }] },
     { v: '1.33.0', b: '1.88.0', d: '2026-11-25', items: [
       { t: 'Plan y presupuesto: ahora podés subir planes de tratamiento en PDF (por ejemplo, los de ortodoncia que armás fuera de la aplicación). Les ponés nombre, y desde la ficha del paciente los abrís, descargás, renombrás o quitás.' }] },
     { v: '1.32.0', b: '1.87.0', d: '2026-11-25', items: [
@@ -28295,8 +28298,8 @@ const OVMenu = (function () {
   /* 1.30.4: las ventanas se ajustan al espacio realmente visible (barra del teclado en tablets, DeX): --vvh */
   (function () {
     const vv = window.visualViewport, root = document.documentElement;
-    const set = () => { const h = Math.round(Math.min(window.innerHeight, vv ? vv.height : window.innerHeight)); root.style.setProperty('--vvh', h + 'px'); };
-    set(); window.addEventListener('resize', set); if (vv) { vv.addEventListener('resize', set); vv.addEventListener('scroll', set); }
+    const set = () => { const h = Math.max(Math.round(Math.min(window.innerHeight, vv ? vv.height : window.innerHeight)), Math.min(360, window.innerHeight)); root.style.setProperty('--vvh', h + 'px'); };
+    set(); window.addEventListener('resize', set); window.addEventListener('focusout', () => setTimeout(set, 350)); document.addEventListener('visibilitychange', set); setInterval(set, 1500); if (vv) { vv.addEventListener('resize', set); vv.addEventListener('scroll', set); }
     document.addEventListener('focusin', e => { const t = e.target; if (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) && t.closest('.modal')) setTimeout(() => { try { t.scrollIntoView({ block: 'nearest' }); } catch (x) { /* nada */ } }, 250); });
   })();
 
@@ -28637,6 +28640,37 @@ const OVMenu = (function () {
   css.textContent = '.pf-h{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.pf-h h2{margin:0}.pf-up{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.pf-up input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 10px;font:inherit;min-width:200px}' +
     '.pf-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}.pf-list li{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--surface);flex-wrap:wrap}.pf-ic{font-size:1.5rem}.pf-t{flex:1;min-width:150px;display:flex;flex-direction:column}.pf-t small{color:var(--ink-2);font-size:.76rem;word-break:break-all}.pf-b{display:flex;gap:6px;flex-wrap:wrap}';
   document.body.appendChild(css);
+})();
+/* ===== 1.33.1: paciente nuevo desde el turno con la misma obra social que la ficha (lista, N.º de afiliado y plan con toque) ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, esc = A.esc, $ = q => document.querySelector(q);
+  if (!A.wrapNewAppt || !A.osList) return;
+  const N = s => (A.norm ? A.norm(s) : String(s || '').toLowerCase());
+  const sigla = txt => { const t = String(txt || '').trim(); if (!t || /^particular$/i.test(t)) return 'Particular'; const o = A.osList().filter(x => N(x.sigla) === N(t) || N(x.name) === N(t))[0]; return o ? o.sigla : t; };
+  const prev = A.wrapNewAppt;
+  A.wrapNewAppt = (m, html) => {
+    html = prev ? prev(m, html) : html;
+    if (!m.f || !m.f.creating) return html;
+    const f = m.f, oss = A.osList().filter(o => o.kind !== 'particular'), v = f.n_cov && f.n_cov !== 'Particular' ? f.n_cov : '';
+    const field = '<div class="field"><label for="npC">Obra social / prepaga <span class="opt">vacío = particular</span></label><input id="npC" list="npOsDl" value="' + esc(v) + '" placeholder="Elegí de la lista o escribí" autocomplete="off"><datalist id="npOsDl">' + oss.map(o => '<option value="' + esc(o.sigla) + '">' + esc(o.name) + '</option>').join('') + '</datalist></div>' +
+      '<div class="row2"><div class="field"><label for="npAfil">N.º de afiliado <span class="opt">opcional</span></label><input id="npAfil" value="' + esc(f.n_afil || '') + '"></div><div class="field"><label for="npPlan">Plan <span class="opt">opcional</span></label><input id="npPlan" value="' + esc(f.n_plan || '') + '" placeholder="Ej.: 210, Bronce, PMO"></div></div>';
+    const re = /<div class="field"><label for="nc_cov">[\s\S]*?<\/select><\/div>/;
+    return re.test(html) ? html.replace(re, field) : html.replace(/(<div class="field"><label for="nc_phone">[\s\S]*?<\/div>)/, '$1' + field);
+  };
+  const keep = e => {
+    const id = e.target && e.target.id, k = { npC: 'n_cov', npAfil: 'n_afil', npPlan: 'n_plan' }[id];
+    if (k && S.modal && S.modal.type === 'newAppt' && S.modal.f) S.modal.f[k] = e.target.value;
+  };
+  document.addEventListener('input', keep); document.addEventListener('change', keep);
+  const addPrev = A.addPatient;
+  A.addPatient = function (d) {
+    const c = $('#npC'), inNew = c && S.modal && S.modal.type === 'newAppt';
+    if (inNew && d && (!d.cov || d.cov === 'Particular')) d.cov = sigla(c.value);
+    const p = addPrev.apply(this, arguments);
+    if (inNew && p && p.id && A.setProfile && d.cov !== 'Particular') { const ex = {}, af = ($('#npAfil') || {}).value, pl = ($('#npPlan') || {}).value; if (af && af.trim()) ex.afil = af.trim(); if (pl && pl.trim()) ex.plan = pl.trim(); if (Object.keys(ex).length) A.setProfile(p.id, ex); }
+    return p;
+  };
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

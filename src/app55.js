@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.33.1', b: '1.88.1', d: '2026-11-25', items: [
+      { t: 'Turno con paciente nuevo: la obra social ahora se elige igual que en la ficha (lista para elegir o escribir, N.º de afiliado y plan con un toque).' },
+      { t: 'Arreglo: las ventanas podían quedar chicas después de usar el teclado en la tablet y tapar botones como «Borrar turno»; ahora se reacomodan solas.' }] },
     { v: '1.33.0', b: '1.88.0', d: '2026-11-25', items: [
       { t: 'Plan y presupuesto: ahora podés subir planes de tratamiento en PDF (por ejemplo, los de ortodoncia que armás fuera de la aplicación). Les ponés nombre, y desde la ficha del paciente los abrís, descargás, renombrás o quitás.' }] },
     { v: '1.32.0', b: '1.87.0', d: '2026-11-25', items: [

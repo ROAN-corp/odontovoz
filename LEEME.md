@@ -1076,3 +1076,7 @@ Ortodoncia (`src/app117.js`): solapa «Ortodoncia» en la ficha (`pd.orto` con `
 
 ## 1.33.0 (compilación 1.88.0)
 Planes de tratamiento en PDF (`src/app118.js`): tarjeta arriba de «Plan y presupuesto» para subir PDF hechos fuera de la app (`pd.planPdfs`, archivo en `A.media`, tope 20 MB). Abrir, descargar, renombrar y quitar.
+
+
+## 1.33.1 (compilación 1.88.1)
+Turno con paciente nuevo (`src/app119.js`): obra social con lista/escritura libre, N.º de afiliado y plan (chips de `app91`), igual que la ficha. `--vvh` (app115) se recalcula al salir de un campo, al volver a la pantalla y cada 1,5 s, con un piso de 360 px.

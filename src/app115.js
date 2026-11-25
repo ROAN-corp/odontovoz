@@ -143,8 +143,8 @@
   /* 1.30.4: las ventanas se ajustan al espacio realmente visible (barra del teclado en tablets, DeX): --vvh */
   (function () {
     const vv = window.visualViewport, root = document.documentElement;
-    const set = () => { const h = Math.round(Math.min(window.innerHeight, vv ? vv.height : window.innerHeight)); root.style.setProperty('--vvh', h + 'px'); };
-    set(); window.addEventListener('resize', set); if (vv) { vv.addEventListener('resize', set); vv.addEventListener('scroll', set); }
+    const set = () => { const h = Math.max(Math.round(Math.min(window.innerHeight, vv ? vv.height : window.innerHeight)), Math.min(360, window.innerHeight)); root.style.setProperty('--vvh', h + 'px'); };
+    set(); window.addEventListener('resize', set); window.addEventListener('focusout', () => setTimeout(set, 350)); document.addEventListener('visibilitychange', set); setInterval(set, 1500); if (vv) { vv.addEventListener('resize', set); vv.addEventListener('scroll', set); }
     document.addEventListener('focusin', e => { const t = e.target; if (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) && t.closest('.modal')) setTimeout(() => { try { t.scrollIntoView({ block: 'nearest' }); } catch (x) { /* nada */ } }, 250); });
   })();
 
