@@ -1100,3 +1100,7 @@ Agenda: la tira de días (`render.agenda` en index.html) conserva su posición (
 
 ## 1.36.0 (compilación 1.91.0)
 Calendario de la derecha (`app24`): `offWhy`/`am-off` (rojo suave para días sin atención por cierre, vacaciones o agenda cancelada), `am-part` (punto rojo si solo algunos profesionales no atienden), leyenda arriba y nueva estética. `app122`: al cargar vacaciones ofrece cancelar los turnos y avisar por WhatsApp; las columnas cerradas muestran «Vacaciones»/«Cerrado».
+
+
+## 1.36.1 (compilación 1.91.1)
+Tira de días: al cambiar de mes se recuerda el día que estaba en el borde (`anchor`) y se vuelve a ubicar en el mismo lugar antes de centrar el día elegido.

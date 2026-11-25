@@ -3052,13 +3052,16 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     let h = bar();
     h += S.view === 'dia' ? dayView() : S.view === 'semana' ? weekView() : monthView();
     const host = $('#view-agenda'), wrap = $('#gridWrap'), st = wrap ? [wrap.scrollTop, wrap.scrollLeft] : null;
-    const oldStrip = $('#dayStrip'), stripPos = oldStrip ? oldStrip.scrollLeft : null;
+    const oldStrip = $('#dayStrip'); let stripPos = oldStrip ? oldStrip.scrollLeft : null, anchor = null;
+    /* 1.36.1: al pasar de mes la tira cambia de rango; se recuerda qué día estaba en el borde para dejarlo en el mismo lugar */
+    if (oldStrip) { const wks = oldStrip.querySelectorAll('.wk'); for (let i = 0; i < wks.length; i++) { if (wks[i].offsetLeft + wks[i].offsetWidth > stripPos) { anchor = []; for (let j = i; j < Math.min(wks.length, i + 40); j++) anchor.push({ d: wks[j].getAttribute('data-date'), dx: stripPos - wks[j].offsetLeft }); break; } } }
     host.innerHTML = h;
     const w2 = $('#gridWrap');
     if (w2 && st) { w2.scrollTop = st[0]; w2.scrollLeft = st[1]; } /* 1.15: la agenda arranca desde arriba, sin saltar a la hora actual */
     if (w2 && S._slide) { w2.classList.add(S._slide); }
     S._slide = null;
     const strip = $('#dayStrip'), selB = strip && $('.wk[aria-pressed="true"]', strip);
+    if (strip && anchor && stripPos != null) { for (let i = 0; i < anchor.length; i++) { const e2 = strip.querySelector('.wk[data-date="' + anchor[i].d + '"]'); if (e2) { stripPos = Math.max(0, e2.offsetLeft + anchor[i].dx); break; } } }
     if (strip && selB) {
       const target = Math.max(0, selB.offsetLeft - strip.clientWidth / 2 + selB.offsetWidth / 2);
       /* 1.15: la tira de días queda quieta; solo se centra cuando cambia el día elegido */
@@ -8201,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.36.0';
+  A.VERSION = '1.36.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.91.0';
+  A.VBUILD = '1.91.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18563,6 +18566,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.36.1', b: '1.91.1', d: '2026-11-26', items: [
+      { t: 'Arreglo en la agenda: al pasar de un mes al siguiente (por ejemplo del 30 al 1) la tira de fechas ya no da la vuelta para atrás; se mueve suave desde donde estaba.' }] },
     { v: '1.36.0', b: '1.91.0', d: '2026-11-26', items: [
       { t: 'Agenda en la PC y tablet: el calendario de la derecha se rediseñó (tarjetas por mes, colores, leyenda arriba). Los días sin atención por vacaciones, feriado o agenda cancelada se ven en rojo suave y los días que se atiende en verde suave. Si elegís «Todos» y solo algún profesional no está, el día lleva un puntito rojo.' },
       { t: 'Vacaciones: al cargar un período en Profesionales, si ya había turnos esos días te ofrece cancelarlos y avisar a cada paciente por WhatsApp. Las columnas de esos días dicen «Vacaciones» (o «Cerrado» en los feriados) con el motivo.' }] },
