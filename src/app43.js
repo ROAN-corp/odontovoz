@@ -127,6 +127,9 @@
   const expSoon = i => i.exp && i.qty > 0 && A.dayDiff(today(), i.exp) <= 45;
   const status = i => (i.qty <= 0 ? 'out' : (i.min > 0 && i.qty <= i.min) || (daysLeft(i) != null && daysLeft(i) <= 10) ? 'low' : 'ok');
   A.stockList = sd => list(sd || place()).map(norm1);
+  /* 1.30: lo que necesita la pantalla rediseñada (app115) */
+  A.stkApi = { list: sd => list(sd || place()).map(norm1), status, expSoon, daysLeft, use30, fq, canCfg, place, sedeName, isEmp,
+    adjust: (id, d, note) => { const i = itemById(id); if (!i) return null; norm1(i); i.qty = Math.max(0, Math.round((i.qty + d) * 1000) / 1000); mvAdd(i, d, d < 0 ? 'uso' : 'compra', note || 'ajuste rápido'); save(); return i; } };
   A.stkRec = { recOf: k => recOf(k), recKey: it => recKey(it), RNAME, CATI, BASE };
 
   /* ---------- descuento automático al cargar prácticas («Prácticas de hoy») ---------- */

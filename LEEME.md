@@ -1060,3 +1060,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 ## OdontoVoz 1.45.1 · Arreglo de la mudanza
 - **Error encontrado:** al importar, un paciente con el mismo DNI que otro (por ejemplo, una hija con el de la madre) se tomaba como el mismo: no se creaba su ficha y sus evoluciones y turnos iban a la del otro. Ahora el DNI solo une si el nombre también coincide; las evoluciones y turnos se ubican primero por el número de paciente del sistema anterior.
 - **«Revisar una mudanza ya hecha»** (Ajustes › Mudanza desde otro sistema): con el mismo archivo .json compara cada evolución y turno con su paciente original, crea los pacientes que faltan y pasa a su ficha lo que quedó en otra (con registro en cada ficha y aviso si ya se había pasado al odontograma).
+
+
+## 1.30.0 (compilación 1.85.0)
+Stock rediseñado (`src/app115.js`): «Mi stock» (indicadores, buscador, categorías, orden, agrupar/compacto, −/+ rápido, compartir, costo por unidad) y «Comprar stock» (Lo que falta, Rutiden, Mi pedido, Surdental próximamente), más Movimientos y Consumo por práctica.

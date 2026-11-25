@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.30.0', b: '1.85.0', d: '2026-11-25', items: [
+      { t: 'Stock rediseñado: dos lugares claros, «Mi stock» y «Comprar stock». En Mi stock ves cuántos insumos tenés, cuántos andan bien, cuáles están por acabarse y cuáles vencen pronto; tocás un número y se filtra.' },
+      { t: 'Mi stock: buscador, categorías, orden (lo más urgente, nombre, vence antes, más usado, mayor valor), agrupado o lista compacta, barra de cuánto queda y botones − / + para descontar o sumar uno al instante. Botón Compartir para mandar el stock por WhatsApp.' },
+      { t: 'Comprar stock: «Lo que falta» (con el aviso de cuántos hay para reponer), Rutiden con su catálogo, «Mi pedido» y Surdental (próximamente). Los insumos ahora pueden tener costo por unidad y el stock calcula cuánto vale.' }] },
     { v: '1.29.0', b: '1.84.0', d: '2026-11-25', items: [
       { t: 'Agenda: mantené presionado un espacio libre (1 segundo; se cambia a 0,5, 2 o 4 s desde la burbuja) y arrastrá hacia abajo o hacia arriba para elegir las horas. Soltás, ajustás el final si hace falta, ponés un motivo y tocás «Bloquear».', top: true },
       { t: 'Agenda: al tocar un espacio libre se abre una burbuja con el menú (Turno, Sobreturno, Bloquear, Nota) y, a la derecha, la lista de pacientes con buscador: elegís uno y se arma el turno en ese horario.' }] },

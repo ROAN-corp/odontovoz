@@ -27,6 +27,7 @@
     refresh();
   }
   A.rutLoad = load;
+  A.rutInfo = () => { const t = cartTotal(); return { n: cartCount(), total: t.t, all: t.all, logo: P.logo, name: P.name, count: CAT ? CAT.f.reduce((n, f) => n + f[3].length, 0) : 0 }; };
   const KEEP = { FG: 1, CA: 1, LED: 1, UV: 1, PVC: 1, RX: 1, RVG: 1, HP: 1, EDTA: 1, MTA: 1, ZOE: 1, GC: 1, IRM: 1, PKT: 1, TBASE: 1, UCLA: 1, ANMAT: 1, USA: 1, PTFE: 1, CAD: 1, CAM: 1 };
   const pretty = s => { s = String(s); if (/[a-záéíóúñ]/.test(s)) return s; return s.toLowerCase().replace(/(^|[\s(\/-])([a-záéíóúñ])/g, (m, a, b) => a + b.toUpperCase()).replace(/\b([a-záéíóúñ0-9.]+)\b/gi, w => (KEEP[w.toUpperCase()] || /\d/.test(w) ? w.toUpperCase() : w)).replace(/\bX\b/g, 'x'); };
   const catName = id => ((CAT && CAT.cats.filter(c => c[0] === id)[0]) || [0, 'Otros'])[1];
