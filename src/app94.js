@@ -196,9 +196,9 @@
     /* marco de las ventanas */
     '.modal { border-radius: 20px; border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line)); box-shadow: 0 24px 60px rgba(8, 20, 24, .28), 0 2px 8px rgba(8, 20, 24, .08); overflow: hidden; }',
     '.m-head { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 9%, var(--surface)), var(--surface)); border-bottom: 1px solid color-mix(in srgb, var(--accent) 16%, var(--line)); }',
-    '.m-head h2 { flex: 1; min-width: 0; } .m-head.m-drag { cursor: grab; user-select: none; } .m-head.m-drag:active { cursor: grabbing; }',
+    '.m-head h2 { flex: 1; min-width: 0; } .m-head.m-drag { cursor: grab; user-select: none; touch-action: none; -webkit-user-select: none; } .m-head.m-drag:active { cursor: grabbing; }',
     '.m-foot { background: color-mix(in srgb, var(--accent) 3%, var(--surface)); }',
-    '@media (min-width: 700px) { .ov-float { cursor: grab; } .ov-float:active { cursor: grabbing; } .ov-float input, .ov-float textarea, .ov-float select { cursor: auto; } .ov-float button, .ov-float a, .ov-float [data-act] { cursor: pointer; } }',
+    '@media (min-width: 700px) { .ov-float > :first-child { touch-action: none; } .ov-float { cursor: grab; } .ov-float:active { cursor: grabbing; } .ov-float input, .ov-float textarea, .ov-float select { cursor: auto; } .ov-float button, .ov-float a, .ov-float [data-act] { cursor: pointer; } }',
     '.m-min { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 10px; cursor: pointer; }',
     '.m-min svg { width: 18px; height: 18px; } .m-min:hover { color: var(--accent); border-color: var(--accent); }',
     /* burbuja */

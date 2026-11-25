@@ -8197,10 +8197,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.30.2';
+  A.VERSION = '1.30.3';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.85.2';
+  A.VBUILD = '1.85.3';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18540,6 +18540,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.30.3', b: '1.85.3', d: '2026-11-25', items: [
+      { t: 'Arreglo: las ventanas flotantes ahora se arrastran con el dedo (en tablets y pantallas táctiles se soltaban a los pocos milímetros).' }] },
     { v: '1.30.2', b: '1.85.2', d: '2026-11-25', items: [
       { t: 'Stock: al cerrar con la X una ventanita (insumo, pedido, conteo, etc.) volvés al stock y seguís trabajando, en vez de salir al menú.' }] },
     { v: '1.30.1', b: '1.85.1', d: '2026-11-25', items: [
@@ -25580,9 +25582,9 @@ const OVMenu = (function () {
     /* marco de las ventanas */
     '.modal { border-radius: 20px; border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line)); box-shadow: 0 24px 60px rgba(8, 20, 24, .28), 0 2px 8px rgba(8, 20, 24, .08); overflow: hidden; }',
     '.m-head { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 9%, var(--surface)), var(--surface)); border-bottom: 1px solid color-mix(in srgb, var(--accent) 16%, var(--line)); }',
-    '.m-head h2 { flex: 1; min-width: 0; } .m-head.m-drag { cursor: grab; user-select: none; } .m-head.m-drag:active { cursor: grabbing; }',
+    '.m-head h2 { flex: 1; min-width: 0; } .m-head.m-drag { cursor: grab; user-select: none; touch-action: none; -webkit-user-select: none; } .m-head.m-drag:active { cursor: grabbing; }',
     '.m-foot { background: color-mix(in srgb, var(--accent) 3%, var(--surface)); }',
-    '@media (min-width: 700px) { .ov-float { cursor: grab; } .ov-float:active { cursor: grabbing; } .ov-float input, .ov-float textarea, .ov-float select { cursor: auto; } .ov-float button, .ov-float a, .ov-float [data-act] { cursor: pointer; } }',
+    '@media (min-width: 700px) { .ov-float > :first-child { touch-action: none; } .ov-float { cursor: grab; } .ov-float:active { cursor: grabbing; } .ov-float input, .ov-float textarea, .ov-float select { cursor: auto; } .ov-float button, .ov-float a, .ov-float [data-act] { cursor: pointer; } }',
     '.m-min { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 10px; cursor: pointer; }',
     '.m-min svg { width: 18px; height: 18px; } .m-min:hover { color: var(--accent); border-color: var(--accent); }',
     /* burbuja */
