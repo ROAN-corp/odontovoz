@@ -135,6 +135,12 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 - Nube activada (Supabase, proyecto «OdontoVoz» de la organización ROAN, región UE-Irlanda): al abrir la app se ingresa con correo y contraseña; los datos se sincronizan entre teléfono, PC y recepción.
 - Versión web publicada en https://roan-corp.github.io/odontovoz/
 
+## OdontoVoz 1.29.0 · agenda: bloquear arrastrando y burbuja en el espacio libre (25/11/2026)
+
+- `src/app114.js`. **Bloquear arrastrando:** pointer events sobre `#gridWrap .gb` (la columna de cada profesional; `data-g0`, `--sh` = 28 px cada 15 min): se mantiene presionado (`odontovoz.holdMs`, 1 s por defecto; 0,5/1/2/4 s desde la burbuja), se arrastra hacia abajo o arriba (se alinea al turno del profesional; autoscroll en los bordes), y al soltar aparece la barra «Bloquear de 13:00 a 16:00» con − y + de un turno, motivo y botón. Mover más de 10 px antes de tiempo cancela (es un scroll). Crea el mismo `type: 'block'` que `app34` y avisa si ya había turnos. Se frena el menú del sistema y el `click` final.
+- **Burbuja:** `A.acts.gbClick` envuelto (`odontovoz.bubble`; no actúa con el pegado de turnos ni con una ventana abierta): menú a la izquierda (Turno, Sobreturno, Bloquear, Nota) y a la derecha buscador y pacientes recientes (`A.searchPats`); al elegir uno se abre `A.openNewAppt` con ese paciente y la hora. En celular es una hoja desde abajo.
+- Pedido de Rodrigo: «mantener presionado por 4 segundos». Lo dejé en 1 s por defecto porque 4 s se siente trabado; se puede elegir 4 s.
+
 ## OdontoVoz 1.28.0 · Stock › Rutiden (25/11/2026)
 
 - Pedido de Rodrigo: que dentro de Stock haya una segunda solapa con la casa de insumos Rutiden (logo incluido), con su catálogo, para armar el pedido y mandárselo por WhatsApp; más adelante, lo mismo con Surdental. Los productos se agrupan (por ejemplo, un composite con todos sus colores) para no tener un stock gigante, con los precios a la derecha y el precio de compra.

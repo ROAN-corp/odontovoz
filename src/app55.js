@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.29.0', b: '1.84.0', d: '2026-11-25', items: [
+      { t: 'Agenda: mantené presionado un espacio libre (1 segundo; se cambia a 0,5, 2 o 4 s desde la burbuja) y arrastrá hacia abajo o hacia arriba para elegir las horas. Soltás, ajustás el final si hace falta, ponés un motivo y tocás «Bloquear».', top: true },
+      { t: 'Agenda: al tocar un espacio libre se abre una burbuja con el menú (Turno, Sobreturno, Bloquear, Nota) y, a la derecha, la lista de pacientes con buscador: elegís uno y se arma el turno en ese horario.' }] },
     { v: '1.28.1', b: '1.83.1', d: '2026-11-25', items: [
       { t: 'Rutiden: al filtrar por marca ya se puede volver a «Todas».' }] },
     { v: '1.28.0', b: '1.83.0', d: '2026-11-25', items: [
