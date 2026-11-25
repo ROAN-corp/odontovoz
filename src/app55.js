@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.30.4', b: '1.85.4', d: '2026-11-25', items: [
+      { t: 'Tablets: las ventanas (por ejemplo Nuevo turno) se ajustan al espacio visible y los botones de abajo ya no quedan tapados por la barra del teclado.' }] },
     { v: '1.30.3', b: '1.85.3', d: '2026-11-25', items: [
       { t: 'Arreglo: las ventanas flotantes ahora se arrastran con el dedo (en tablets y pantallas táctiles se soltaban a los pocos milímetros).' }] },
     { v: '1.30.2', b: '1.85.2', d: '2026-11-25', items: [
