@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.34.0', b: '1.89.0', d: '2026-11-26', items: [
+      { t: 'El puesto «Recepción» ahora se llama «Secretaría» y administra el consultorio: da y borra turnos, maneja pacientes (datos y cuenta), cobros, caja y cuentas. No modifica la historia clínica, los precios ni borra o archiva pacientes. Para que pueda corregir cobros hay que correr una vez supabase/secretaria.sql.' },
+      { t: 'Arreglo en el celular: al buscar un paciente arriba en el inicio, los resultados se veían cortados y con las letras en vertical; ahora ocupan todo el ancho.' }] },
     { v: '1.33.1', b: '1.88.1', d: '2026-11-25', items: [
       { t: 'Turno con paciente nuevo: la obra social ahora se elige igual que en la ficha (lista para elegir o escribir, N.º de afiliado y plan con un toque).' },
       { t: 'Arreglo: las ventanas podían quedar chicas después de usar el teclado en la tablet y tapar botones como «Borrar turno»; ahora se reacomodan solas.' }] },
@@ -165,7 +168,7 @@
       { t: 'Recargos por cuotas de tarjeta y descuentos por medio de pago, fijos para cada consultorio: Ajustes › Medios de pago y recargos. Si se cambian en un cobro, pide el motivo.' },
       { t: 'Toda corrección o aclaración en un cobro lleva su motivo y el dueño la ve en Caja › Historial › Correcciones.' }] },
     { v: '1.7', b: '1.62.0', d: '2026-11-17', items: [
-      { t: 'Al anotar lo que hiciste en la evolución, primero te pregunta: «¿Cobra secretaría o lo cobro yo?». A recepción le aparece un cartel con lo que escribiste y lo que hay que cobrar, y lo puede corregir.', top: true },
+      { t: 'Al anotar lo que hiciste en la evolución, primero te pregunta: «¿Cobra secretaría o lo cobro yo?». A secretaría le aparece un cartel con lo que escribiste y lo que hay que cobrar, y lo puede corregir.', top: true },
       { t: 'Entiende varias prácticas juntas: «arreglo en 24, 25 y 33 por oclusal, por mesial y por distal, y limpieza».' },
       { t: 'Nuevas opciones de cobro: «Cubierto 100% por la obra social» y «No le cobro nada» (pide el motivo y queda anotado).' }] },
     { v: '1.6.1', b: '1.61.1', d: '2026-11-17', items: [
@@ -244,7 +247,7 @@
     { v: '1.48', d: '2026-11-11', items: [
       { t: 'Aranceles de la Federación Odontológica de Río Negro: en Obras sociales tocá «Federación RN» y se cargan solos. Cada mes te avisamos cuando haya valores nuevos; tus coseguros los decidís vos.', top: 1 },
       { t: 'Subir precios por porcentaje (todos o por categoría) y «Costos y rentabilidad»: precios de insumos mes a mes, gastos fijos y precio sugerido para no perder margen.', top: 1 },
-      { t: 'Consentimiento en papel: se imprime, se firma y se sube la foto a la historia clínica. Radiografías en PDF, arrastrando o pegando. Recepción carga sin poder borrar lo hecho.', top: 1 }] },
+      { t: 'Consentimiento en papel: se imprime, se firma y se sube la foto a la historia clínica. Radiografías en PDF, arrastrando o pegando. Secretaría carga sin poder borrar lo hecho.', top: 1 }] },
     { v: '1.47', d: '2026-11-11', items: [
       { t: 'La Caja abre en «Cobros del día»: el total de hoy, por medio de pago y por odontólogo, con quién cobró y qué pagó cada paciente.', top: 1 },
       { t: 'Obras sociales que pagan después (como OSOEFRNyN): lo que pagan no queda «para cobrar» al paciente; en Caja › Obras sociales ves lo que te deben por mes y marcás «Llegó el pago».', top: 1 },
@@ -265,7 +268,7 @@
     { v: '1.45.4', d: '2026-11-11', items: [
       { t: 'Turnero online: los pacientes reservan como máximo 30 minutos, y cada día dice claro cuántos «turnos libres» quedan.', top: 1 }] },
     { v: '1.45.3', d: '2026-11-11', items: [
-      { t: 'Los equipos se enteran al instante de lo que hace otro (por ejemplo, cuando recepción marca que llegó un paciente).', top: 1 }] },
+      { t: 'Los equipos se enteran al instante de lo que hace otro (por ejemplo, cuando secretaría marca que llegó un paciente).', top: 1 }] },
     { v: '1.45.2', d: '2026-11-11', items: [
       { t: 'La sesión ya no se cierra sola: queda abierta hasta que toques «Cerrar sesión» (al ingresar podés elegirlo).', top: 1 },
       { t: 'En el celular, los avisos (llegó un paciente, stock, laboratorio, turnos online…) aparecen arriba, en la barra de notificaciones, como un mensaje de WhatsApp.', top: 1 }] },
@@ -288,7 +291,7 @@
       { t: 'Si cambiás de consultorio sin internet, la app te avisa en vez de perder lo que no se guardó.' }] },
     { v: '1.40', d: '2026-11-09', items: [
       { t: 'Mudanza gratis: traé pacientes, turnos y evoluciones desde Bilog u otro sistema (Ajustes › Mudanza).', top: 1 },
-      { t: 'Ajustes › Equipo e invitaciones, para sumar odontólogos y recepción.' },
+      { t: 'Ajustes › Equipo e invitaciones, para sumar odontólogos y secretaría.' },
       { t: 'Más seguridad al usar la app en varios equipos y en varios consultorios.' }] }
   ];
   const vnum = v => String(v || '0').split('.').map(n => +n || 0).reduce((s, n, i) => s + n * Math.pow(1000, 2 - i), 0);

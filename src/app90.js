@@ -153,7 +153,7 @@
     m._plBook = () => bookRec(m.pid, L, { pcIds: (m.ids || []).slice() });
     return ppPrev.apply(this, arguments);
   };
-  /* el ajuste se asienta justo antes de crear los pagos (después de las correcciones de recepción) */
+  /* el ajuste se asienta justo antes de crear los pagos (después de las correcciones de secretaría) */
   const settleHook = () => {
     const m = S.modal; if (!m || !m._plBook) return;
     const rec = (m.plLines || []).reduce((s, l) => s + l.rec, 0); m._plBook(); m._plBook = null; m.tot = m.tot + rec;

@@ -247,7 +247,7 @@
   const whoBtns = (pre, last, extra) =>
     '<div class="who-ops">' +
       '<button class="who-op' + (last === 'pro' ? ' last' : '') + '" data-act="' + pre + '" data-k="pro"><b>Cobro yo ahora</b><span>Se abre el cobro: efectivo, tarjeta, transferencia, cuotas…</span></button>' +
-      '<button class="who-op' + (last === 'rcp' ? ' last' : '') + '" data-act="' + pre + '" data-k="rcp"><b>Lo cobra la secretaria</b><span>Le aparece en «Para cobrar» en su usuario (y en la recepción), con aviso. Vos seguís atendiendo.</span></button>' +
+      '<button class="who-op' + (last === 'rcp' ? ' last' : '') + '" data-act="' + pre + '" data-k="rcp"><b>Lo cobra la secretaria</b><span>Le aparece en «Para cobrar» en su usuario (y en la secretaría), con aviso. Vos seguís atendiendo.</span></button>' +
     '</div>' + (extra || '');
   function whoView(m, p, t, cob) {
     const b = '<p class="who-q">¿Quién le cobra <b>' + money(t.pay) + '</b> a <b>' + esc(p.name || 'el paciente') + '</b>?</p>' + whoBtns('poGo', A.CFG.cobra && A.CFG.cobra[m.pro] ? cob : '');
@@ -271,7 +271,7 @@
     const L = A.pcList();
     return h.replace(/<button class="btn small primary" data-act="pcPay" data-pid="([^"]+)">Cobrar<\/button>/g, (all, pid) => {
       const it = L.filter(x => x.pid === pid)[0], atRcp = it && it.items.every(e => e.cob === 'rcp');
-      return (atRcp ? '<small class="pc-rcp">en recepción</small>' : '') + '<button class="btn small primary" data-act="pcWho" data-pid="' + pid + '">Cobrar</button>';
+      return (atRcp ? '<small class="pc-rcp">en secretaría</small>' : '') + '<button class="btn small primary" data-act="pcWho" data-pid="' + pid + '">Cobrar</button>';
     });
   };
   A.acts.pcWho = el => { S.modal = { type: 'pcWho', pid: el.getAttribute('data-pid') }; A.renderModal(); };

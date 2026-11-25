@@ -3,7 +3,7 @@
   'use strict';
   const A = window.App, S = A.S;
   const $ = s => document.querySelector(s);
-  /* profesional del puesto (odontólogo o asistente del equipo con agenda asignada); dueño, administración y recepción no tienen límite */
+  /* profesional del puesto (odontólogo o asistente del equipo con agenda asignada); dueño, administración y secretaría no tienen límite */
   const myPro = () => { const m = A.memberNow && A.memberNow(); return m && (m.role === 'profesional' || m.role === 'asistente') && m.pro ? m.pro : null; };
   A.myProOnly = myPro;
   A.canEditAppt = a => { const p = myPro(); return !p || !a || !a.pro || a.pro === p; };
@@ -11,7 +11,7 @@
   const J = x => JSON.stringify(x === undefined ? null : x);
   const clone = x => JSON.parse(JSON.stringify(x));
   let lastWarn = 0;
-  const warn = who => { lastWarn = Date.now(); A.toast('Ese turno es de la agenda de ' + who + '. Lo pueden cambiar recepción o la administración del centro.'); };
+  const warn = who => { lastWarn = Date.now(); A.toast('Ese turno es de la agenda de ' + who + '. Lo pueden cambiar secretaría o la administración del centro.'); };
 
   /* cualquier cambio de turnos pasa por A.mutate: si toca la agenda de otro profesional, eso se deshace */
   const mutPrev = A.mutate;
@@ -51,7 +51,7 @@
     if (!a || A.canEditAppt(a)) return;
     el.classList.add('tp-ro');
     const n = document.createElement('div'); n.className = 'tp-roNote';
-    n.textContent = 'Turno de la agenda de ' + proName(a.pro) + ': lo ves, pero lo cambian recepción o la administración del centro.';
+    n.textContent = 'Turno de la agenda de ' + proName(a.pro) + ': lo ves, pero lo cambian secretaría o la administración del centro.';
     const nm = el.querySelector('.tp-name'); if (nm && nm.parentNode) nm.parentNode.insertBefore(n, nm.nextSibling); else el.prepend(n);
   };
   new MutationObserver(() => { if (myPro()) markPop(); }).observe(document.body, { childList: true });
@@ -60,7 +60,7 @@
   const naPrev = A.acts.naSave;
   if (naPrev) A.acts.naSave = function () {
     const me = myPro(), m = S.modal;
-    if (me && m && m.f && m.f.pro && m.f.pro !== me) { A.toast('Solo podés dar turnos en tu agenda. Para la agenda de ' + proName(m.f.pro) + ', pedíselo a recepción.'); return; }
+    if (me && m && m.f && m.f.pro && m.f.pro !== me) { A.toast('Solo podés dar turnos en tu agenda. Para la agenda de ' + proName(m.f.pro) + ', pedíselo a secretaría.'); return; }
     return naPrev.apply(this, arguments);
   };
 })();

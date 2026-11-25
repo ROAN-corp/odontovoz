@@ -559,7 +559,7 @@
       if (!who || /^(?:siguiente|proximo|el siguiente|el proximo|el que sigue|la que sigue|quien sigue)$/.test(who)) return { intent: 'attend', next: true };
       if (!/\b(?:turno|agenda|dictado)\b/.test(who)) return { intent: 'attend', name: isPron(who) ? null : who, current: isPron(who) };
     }
-    // recepción: llegó / no vino
+    // secretaría: llegó / no vino
     if ((m = /^(.+?)\s+(?:no vino|falto|no se presento|esta ausente|no llego|no va a venir|me dejo plantad[oa]|nos dejo plantad[oa]|me planto|me fallo|nunca vino|no aparecio|se borro|pego (?:el )?faltazo|se colgo|me clavo|nos clavo|clavo|falto sin avisar|falto sin aviso|no dio senales|se rateo|no se presento)$/.exec(c)) || (m = /^(?:no vino|falto|ausente|(?:marca(?:r|le)?|pone(?:r|le)?|registra(?:r|le)?|deja(?:r|le)?|da(?:r|le)?) (?:como )?ausente(?: a)?)\s+(.+)$/.exec(c))) return { intent: 'noshow', name: cleanName(m[1]) };
     if ((m = /^(.+?)\s+(?:cancelo|suspendio|aviso que no viene|avisa que no viene|no viene|no puede venir|no va a poder venir|pidio cancelar|quiere cancelar|bajo|dio de baja)(?: (?:el|su) turno| la cita| la consulta)?(?: (?:de )?(?:hoy|manana|del [a-z]+))?$/.exec(c)) && !/^(?:el|la|ya|hoy|nadie)$/.test(m[1])) return { intent: 'cancelAppt', name: cleanName(m[1]) };
     if ((m = /^(?:(?:da(?:r|le)?|marca(?:r|le)?|registra(?:r|le)?|pone(?:r|le)?) )?(?:la )?llegada (?:a|de|del|de la|al|para)\s+(.+)$/.exec(c))) return { intent: 'arrived', name: cleanName(m[1]) };

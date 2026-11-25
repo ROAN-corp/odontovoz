@@ -40,7 +40,7 @@
   };
   const resTxt = (base, c) => !c.delta ? 'Paga ' + money(base) + '.' : c.txt + ': ' + (c.delta < 0 ? '−' : '+') + money(Math.abs(c.delta)) + ' · total <b>' + money(c.total) + '</b>' + (c.n ? ' · ' + c.n + ' cuotas de ' + money(c.each) + (c.now !== c.total ? ' · hoy paga ' + money(c.now) : '') : '');
 
-  /* ---------- en «Cobrar» de lo que quedó para cobrar en recepción ---------- */
+  /* ---------- en «Cobrar» de lo que quedó para cobrar en secretaría ---------- */
   const isPc = () => S.modal && S.modal.type === 'pcPay';
   const isCb = () => S.modal && S.modal.type === 'cobro';
   const baseOf = m => isPc() ? (m.tot + (m.addPrev ? m.prev : 0)) : (m._cbBase || 0);

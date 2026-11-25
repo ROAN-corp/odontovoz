@@ -1,4 +1,4 @@
-/* ===== 1.30: «Qué hice hoy» → prácticas con precio → «Para cobrar» en recepción (o cobra el profesional) → resumen y cierre del día ===== */
+/* ===== 1.30: «Qué hice hoy» → prácticas con precio → «Para cobrar» en secretaría (o cobra el profesional) → resumen y cierre del día ===== */
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, P = window.OdontoParser;
@@ -16,7 +16,7 @@
   const TOOTH = /\b([1-4][1-8]|[5-8][1-5])\b/g;
   const pnum = pid => String(pid).replace(/\D/g, '') || '0';
 
-  /* ---------- quién cobra a cada profesional: recepción o él mismo ---------- */
+  /* ---------- quién cobra a cada profesional: secretaría o él mismo ---------- */
   const cobraOf = pid => { const c = (A.CFG.cobra || {})[pid]; if (c) return c; return (isSolo() ? 'pro' : 'rcp'); };
 
   /* =====================================================================
@@ -148,13 +148,13 @@
     const osTot = m.items.filter(i => i.on && i.os).reduce((t, i) => t + (i.os.cov || 0) * (i.qty || 1), 0);
     b += '<div class="po-tot"><span>' + (osTot ? 'Paga el paciente hoy' : 'Total a cobrar hoy') + '</span><b id="poTot">' + money(tot) + '</b></div>';
     if (osTot) b += '<div class="po-tot po-os"><span>A cobrarle a ' + esc(os ? os.sigla : 'la obra social') + ' (queda en su resumen del mes)</span><b>' + money(osTot) + '</b></div>';
-    if (!solo && canCfg()) b += '<label class="po-cfg">A ' + esc(proName(m.pro)) + ' le cobra <select data-chg="poCobra"><option value="rcp"' + (cob === 'rcp' ? ' selected' : '') + '>la recepción</option><option value="pro"' + (cob === 'pro' ? ' selected' : '') + '>el mismo profesional</option></select></label>';
+    if (!solo && canCfg()) b += '<label class="po-cfg">A ' + esc(proName(m.pro)) + ' le cobra <select data-chg="poCobra"><option value="rcp"' + (cob === 'rcp' ? ' selected' : '') + '>la secretaría</option><option value="pro"' + (cob === 'pro' ? ' selected' : '') + '>el mismo profesional</option></select></label>';
     b += '<p class="hint" style="margin:6px 0 0">Las prácticas quedan en la historia clínica y en el odontograma (en rojo, realizadas).</p><div class="hint bad" id="poMsg"></div>';
     const mainRcp = !solo && cob === 'rcp';
     const f = '<button class="btn" data-act="closeModal">Volver</button>' + (m.only ? '' : '<button class="btn ghost" data-act="poGo" data-k="nota">Solo nota, sin cobrar</button>') +
       (solo ? '<button class="btn" data-act="poGo" data-k="later">Cobrar después</button><button class="btn primary" data-act="poGo" data-k="pro">Cobrar ahora</button>'
-        : mainRcp ? '<button class="btn" data-act="poGo" data-k="pro">Cobrar yo</button><button class="btn primary" data-act="poGo" data-k="rcp">Mandar a recepción →</button>'
-          : '<button class="btn" data-act="poGo" data-k="rcp">Mandar a recepción</button><button class="btn primary" data-act="poGo" data-k="pro">Cobrar yo</button>');
+        : mainRcp ? '<button class="btn" data-act="poGo" data-k="pro">Cobrar yo</button><button class="btn primary" data-act="poGo" data-k="rcp">Mandar a secretaría →</button>'
+          : '<button class="btn" data-act="poGo" data-k="rcp">Mandar a secretaría</button><button class="btn primary" data-act="poGo" data-k="pro">Cobrar yo</button>');
     return A.modalShell('Prácticas de hoy', b, f);
   };
   const poSync = () => { const m = S.modal; if (!m || m.type !== 'pracOk') return; A.$$('[data-in="poAmt"]').forEach(i => { const it = m.items[+i.getAttribute('data-i')]; if (it) it.pay = A.parseMoney(String(i.value)) || 0; }); };
@@ -191,11 +191,11 @@
     if (k !== 'nota' && items.length) pd.odonDate = pd.odonDate || d;
     A.touchPd(pid);
     if (a && (m.done || k !== 'nota') && a.status !== 'atendido') A.setStatus(a.id, 'atendido');
-    if (a && k === 'rcp' && A.mutate) A.mutate([a.date], () => { a.toRcp = new Date().toISOString(); }, 'Mandado a recepción');
-    if (A.empAudit && k !== 'nota') A.empAudit(proName(m.pro) + ' cargó ' + items.length + ' práctica' + (items.length === 1 ? '' : 's') + ' a ' + (A.PAT(pid) || {}).name + (k === 'rcp' ? ' y lo mandó a recepción' : '') + '.');
+    if (a && k === 'rcp' && A.mutate) A.mutate([a.date], () => { a.toRcp = new Date().toISOString(); }, 'Mandado a secretaría');
+    if (A.empAudit && k !== 'nota') A.empAudit(proName(m.pro) + ' cargó ' + items.length + ' práctica' + (items.length === 1 ? '' : 's') + ' a ' + (A.PAT(pid) || {}).name + (k === 'rcp' ? ' y lo mandó a secretaría' : '') + '.');
     S.modal = null; A.renderModal(); A.save();
     if (k === 'pro') { openPay(pid); return; }
-    A.toast(k === 'nota' ? 'Guardado en la historia clínica.' : k === 'rcp' ? (A.PAT(pid) || {}).name + ' pasó a «Para cobrar» en la recepción.' : 'Queda en «Para cobrar».');
+    A.toast(k === 'nota' ? 'Guardado en la historia clínica.' : k === 'rcp' ? (A.PAT(pid) || {}).name + ' pasó a «Para cobrar» en la secretaría.' : 'Queda en «Para cobrar».');
     if (A.renderPanel) A.renderPanel(); A.refresh();
   };
 
@@ -241,7 +241,7 @@
       return '<li class="pc-it"><div class="pc-l"><button class="pc-nm" data-act="pcOpenPat" data-pid="' + it.pid + '" title="Ver la ficha de ' + esc(it.name) + '">' + esc(it.name) + ' <span aria-hidden="true">›</span></button><small>' + esc([it.room, pro].filter(Boolean).join(' · ')) + osTxt + (it.date !== today() ? ' · del ' + A.fmtDMY(it.date) : it.at ? ' · ' + new Date(it.at).toTimeString().slice(0, 5) : '') + (it.who === 'pro' && !isSolo() ? ' · lo cobra el profesional' : '') + '</small>' +
         '<span class="pc-det">' + it.items.map(e => esc(e.desc.split(' · ').slice(0, 2).join(' · '))).join(' · ') + '</span></div>' +
         '<div class="pc-r"><b class="pc-amt">' + money(it.tot) + '</b>' + (it.prev ? '<small>+ debía ' + money(it.prev) + '</small>' : '') +
-        (canCobrar(it) ? '<button class="btn small primary" data-act="pcPay" data-pid="' + it.pid + '">Cobrar</button>' : '<small>espera en recepción</small>') + '</div></li>';
+        (canCobrar(it) ? '<button class="btn small primary" data-act="pcPay" data-pid="' + it.pid + '">Cobrar</button>' : '<small>espera en secretaría</small>') + '</div></li>';
     }).join('') + '</ul>';
     return h + '</section>';
   };
@@ -337,7 +337,7 @@
   };
   A.acts.pcClose = () => { S.modal = null; A.renderModal(); S.tab = 'caja'; S.caja = S.caja || {}; S.caja.sub = 'cierre'; S.caja.cdate = today(); A.refresh(); window.scrollTo(0, 0); };
 
-  /* ---------- aviso en la recepción cuando llega alguien para cobrar ---------- */
+  /* ---------- aviso en la secretaría cuando llega alguien para cobrar ---------- */
   let known = null;
   const arPrev = A.afterRefresh;
   A.afterRefresh = () => {

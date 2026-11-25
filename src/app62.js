@@ -108,7 +108,7 @@
     if (add && gap > 0) pd.ledger.push({ id: A.uid(), date: d, type: 'cargo', amount: gap, desc: 'Saldo anterior (anotado en la evolución)', pro: pat.pro, by, fromNote: m.noteId || true });
     pd.rcpSeq = pd.rcpSeq || 0;
     const e = { id: A.uid(), date: d, type: 'pago', amount: m.paid, desc: 'Cobro (anotado en la evolución)', method: ($('#evpMeth') || {}).value || m.method || 'Efectivo', pro: pat.pro, rcp: 'R-' + pnum(pid) + '-' + (++pd.rcpSeq), by, fromNote: m.noteId || true };
-    /* si hoy quedaron prácticas «para cobrar» de este paciente y el pago las cubre, salen de la cola (así recepción no las cobra de nuevo) */
+    /* si hoy quedaron prácticas «para cobrar» de este paciente y el pago las cubre, salen de la cola (así secretaría no las cobra de nuevo) */
     const pend = (pd.ledger || []).filter(x => x.type === 'cargo' && x.cob && !x.cobOk && x.date === d);
     const sum = pend.reduce((t, x) => t + (+x.amount || 0), 0);
     if (pend.length && m.paid >= sum) { pend.forEach(x => { x.cobOk = 'nota'; x.cobDone = new Date().toISOString(); x.cobDoneBy = by; x.pagoId = e.id; }); e.pcIds = pend.map(x => x.id); }

@@ -1080,3 +1080,7 @@ Planes de tratamiento en PDF (`src/app118.js`): tarjeta arriba de «Plan y presu
 
 ## 1.33.1 (compilación 1.88.1)
 Turno con paciente nuevo (`src/app119.js`): obra social con lista/escritura libre, N.º de afiliado y plan (chips de `app91`), igual que la ficha. `--vvh` (app115) se recalcula al salir de un campo, al volver a la pantalla y cada 1,5 s, con un piso de 360 px.
+
+
+## 1.34.0 (compilación 1.89.0)
+«Recepción» pasa a llamarse «Secretaría» (el valor interno sigue siendo `recepcion`). La secretaría administra agenda, cobros, caja y cuentas; `app66` bloquea solo lo clínico (`SECRE_BLOCK`: evoluciones, fotos, recetas, anular tratamientos) y borrar/archivar pacientes. SQL: `supabase/secretaria.sql` (el guardián de cobros solo protege al asistente). Buscador de arriba (`app120`): resultados a todo el ancho en pantallas chicas.

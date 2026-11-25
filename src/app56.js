@@ -222,7 +222,7 @@
       '<div class="mg-list">' + (l.length ? l.map(x => '<button class="mg-it" data-act="mgSel" data-pid="' + esc(p.id) + '" data-to="' + esc(x.id) + '"><b>' + esc(x.name) + (isTest(x) ? ' <span class="pt-tag">Prueba</span>' : '') + '</b><span>' + [x.dni ? 'DNI ' + esc(x.dni) : '', x.phone ? esc(x.phone) : '', x.cov && x.cov !== 'Particular' ? esc(x.cov) : ''].filter(Boolean).join(' · ') + '</span></button>').join('') : '<p class="hint">' + (q ? 'No encontré a nadie con eso.' : 'No encontré fichas parecidas. Buscala por nombre arriba.') + '</p>') + '</div>';
     return A.modalShell('Unir con otra ficha', b, '<button class="btn" data-act="closeModal">Cancelar</button>');
   };
-  A.acts.mgOpen = el => { if (!desk()) { A.toast('Esto lo hace el dueño, un administrador o recepción.'); return; } S.modal = { type: 'mgPick', pid: el.getAttribute('data-pid'), q: '' }; A.renderModal(); };
+  A.acts.mgOpen = el => { if (!desk()) { A.toast('Esto lo hace el dueño, un administrador o secretaría.'); return; } S.modal = { type: 'mgPick', pid: el.getAttribute('data-pid'), q: '' }; A.renderModal(); };
   A.ins = A.ins || {};
   A.ins.mgQ = el => { if (!S.modal) return; S.modal.q = el.value; const pos = el.selectionStart; A.renderModal(); const i = $('#mgQ'); if (i) { i.focus(); try { i.setSelectionRange(pos, pos); } catch (e) { /* nada */ } } };
   MF.mgOk = m => {
@@ -261,7 +261,7 @@
     else if (!m.rows) b = '<p class="hint">Buscando el historial…</p>';
     else {
       const rows = m.rows, it = [];
-      for (let i = 0; i < rows.length; i++) { const n = rows[i], o = rows[i + 1]; const ch = o ? sum(o.v, n.v) : ['Creó la ficha']; if (ch.length) it.push('<li><div class="au-h"><b>' + esc(n.who || '') + '</b>' + (n.who_role ? ' <span class="au-r">' + esc({ dueno: 'dueño', admin: 'administrador', recepcion: 'recepción', profesional: 'profesional', asistente: 'asistente' }[n.who_role] || n.who_role) + '</span>' : '') + '<span class="au-d">' + (n.saved_at ? new Date(n.saved_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '') + (n.device ? ' · ' + esc(n.device) : '') + '</span></div><ul>' + ch.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></li>'); }
+      for (let i = 0; i < rows.length; i++) { const n = rows[i], o = rows[i + 1]; const ch = o ? sum(o.v, n.v) : ['Creó la ficha']; if (ch.length) it.push('<li><div class="au-h"><b>' + esc(n.who || '') + '</b>' + (n.who_role ? ' <span class="au-r">' + esc({ dueno: 'dueño', admin: 'administrador', recepcion: 'secretaría', profesional: 'profesional', asistente: 'asistente' }[n.who_role] || n.who_role) + '</span>' : '') + '<span class="au-d">' + (n.saved_at ? new Date(n.saved_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '') + (n.device ? ' · ' + esc(n.device) : '') + '</span></div><ul>' + ch.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></li>'); }
       b = it.length ? '<ol class="au-list">' + it.join('') + '</ol>' : '<p class="hint">Todavía no hay cambios registrados.</p>';
     }
     return A.modalShell('Historial de cambios', '<p class="hint" style="margin-top:0">Lo guarda el servidor y no se puede borrar ni modificar desde la app. Sirve para saber quién cargó, cambió o anuló cada cosa.</p>' + b, '<button class="btn primary" data-act="closeModal">Listo</button>');

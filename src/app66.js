@@ -1,4 +1,4 @@
-/* ===== 1.48: permisos (precios solo el dueño; recepción y asistente cargan sin cambiar lo hecho), aumentos por porcentaje, coseguro claro al cobrar y DNI que abre la ficha ===== */
+/* ===== 1.48: permisos (precios solo el dueño; secretaría y asistente cargan sin cambiar lo hecho), aumentos por porcentaje, coseguro claro al cobrar y DNI que abre la ficha ===== */
 (function () {
   'use strict';
   const A = window.App, S = A.S, MF = A.modalFns;
@@ -14,13 +14,17 @@
   const BOSS_ACT = ['catDel', 'catAdd', 'catReset', 'osDel', 'osNew', 'osPct', 'osPctGo', 'osCode', 'dlRuleDel', 'dlRuleAdd', 'dlBase', 'liqRuleDel', 'liqRuleAdd', 'liqDedDel', 'liqDedAdd', 'liqPay',
     'osPayNew', 'osPayGo', 'osPayUndo', 'pctOpen', 'pctGo', 'osPctAll', 'osPctAllGo', 'fornOpen', 'fornGo', 'fornAll', 'fornAllGo', 'fornUpdGo', 'cfgProDel', 'costOpen', 'costGo', 'fixAdd', 'fixDel', 'stkPriceGo'];
   const BOSS_CHG = ['catEdit', 'aranEdit', 'osAr', 'osField', 'dlSet', 'dlRulePct', 'liqPct', 'liqRulePct', 'liqMode', 'liqModBy', 'liqModPrice', 'fixF', 'stkPrice'];
-  /* recepción y asistente: dan turnos, cargan pacientes, cobran y suben archivos; no borran ni anulan lo hecho */
+  /* secretaría y asistente: dan turnos, cargan pacientes, cobran y suben archivos; no borran ni anulan lo hecho */
   const CARGA_ACT = ['apDelAsk', 'apDelGo', 'evDelAsk', 'evDelGo', 'evVoidAsk', 'evVoidGo', 'ledVoid', 'txVoid', 'mvDel', 'pmDel', 'pdGo', 'arOpen', 'arGo', 'mgOpen', 'mgGo', 'imDel', 'rxDel', 'odPlanDel',
     'tpBudDelAsk', 'tpBudDelGo', 'tpDel', 'labDel', 'labItDel', 'labOneDel', 'leDel', 'leDelGo', 'pcDelAsk', 'pcDelGo', 'stkDel', 'tpFree', 'clReopen'];
+  /* 1.34: la secretaría administra agenda, pacientes, cobros, caja y cuentas: solo no toca lo clínico ni borra/archiva pacientes */
+  const isSecre = () => role() === 'recepcion';
+  const SECRE_BLOCK = ['evDelAsk', 'evDelGo', 'evVoidAsk', 'evVoidGo', 'txVoid', 'tpDel', 'imDel', 'rxDel', 'odPlanDel', 'pdGo', 'arOpen', 'arGo', 'pmDel'];
+  const SECRE_FILL = ['hcText', 'reField'];
   const CARGA_FILL = ['profField', 'hcText', 'reField', 'tpField']; /* completar lo vacío sí; cambiar lo cargado, no */
-  const why = boss => boss ? 'Solo el dueño o un administrador pueden cambiar precios, aranceles y acuerdos.' : 'Tu usuario puede cargar datos nuevos, pero no cambiar ni borrar lo que ya está. Pedíselo al dueño o a un administrador.';
+  const why = boss => boss ? 'Solo el dueño o un administrador pueden cambiar precios, aranceles y acuerdos.' : (isSecre() ? 'Eso es de la historia clínica o de los datos del consultorio: lo hace el odontólogo, el dueño o un administrador.' : 'Tu usuario puede cargar datos nuevos, pero no cambiar ni borrar lo que ya está. Pedíselo al dueño o a un administrador.');
   A.permWhy = why;
-  const blockedAct = a => (!A.isBoss() && BOSS_ACT.indexOf(a) >= 0) ? 'boss' : (A.isCarga() && CARGA_ACT.indexOf(a) >= 0) ? 'carga' : '';
+  const blockedAct = a => (!A.isBoss() && BOSS_ACT.indexOf(a) >= 0) ? 'boss' : (A.isCarga() && (isSecre() ? SECRE_BLOCK : CARGA_ACT).indexOf(a) >= 0) ? 'carga' : '';
   A.permBlocked = blockedAct;
   document.addEventListener('click', e => {
     const el = e.target.closest && e.target.closest('[data-act]'); if (!el) return;
@@ -30,7 +34,7 @@
   document.addEventListener('change', e => {
     const el = e.target; if (!el || !el.getAttribute) return; const c = el.getAttribute('data-chg'); if (!c) return;
     if (!A.isBoss() && BOSS_CHG.indexOf(c) >= 0) { e.stopImmediatePropagation(); if (el.type === 'checkbox') el.checked = el.defaultChecked; else el.value = el.defaultValue; A.toast(why(true)); return; }
-    if (A.isCarga() && CARGA_FILL.indexOf(c) >= 0 && el.type !== 'checkbox' && String(el.defaultValue || '').trim() && el.value !== el.defaultValue) {
+    if (A.isCarga() && (isSecre() ? SECRE_FILL : CARGA_FILL).indexOf(c) >= 0 && el.type !== 'checkbox' && String(el.defaultValue || '').trim() && el.value !== el.defaultValue) {
       e.stopImmediatePropagation(); el.value = el.defaultValue; A.toast(why(false));
     }
   }, true);
@@ -38,9 +42,10 @@
   const css0 = document.createElement('style');
   css0.textContent = BOSS_ACT.map(a => 'body.pm-noboss [data-act="' + a + '"]').join(',') + '{display:none!important}' +
     CARGA_ACT.map(a => 'body.pm-carga [data-act="' + a + '"]').join(',') + '{display:none!important}' +
+    SECRE_BLOCK.map(a => 'body.pm-secre [data-act="' + a + '"]').join(',') + '{display:none!important}' +
     'body.pm-noboss .m-body [data-chg="catEdit"],body.pm-noboss .m-body [data-chg="aranEdit"],body.pm-noboss .m-body [data-chg="osAr"]{pointer-events:none;background:transparent;border-color:transparent}';
   document.head.appendChild(css0);
-  const mark = () => { document.body.classList.toggle('pm-noboss', !A.isBoss()); document.body.classList.toggle('pm-carga', A.isCarga()); };
+  const mark = () => { document.body.classList.toggle('pm-noboss', !A.isBoss()); document.body.classList.toggle('pm-carga', A.isCarga() && !isSecre()); document.body.classList.toggle('pm-secre', isSecre()); };
   const arPrev = A.afterRefresh; A.afterRefresh = function () { const r = arPrev ? arPrev.apply(this, arguments) : undefined; mark(); return r; };
   const rmPrev = A.renderModal; A.renderModal = function () { mark(); const r = rmPrev.apply(this, arguments); if (!A.isBoss()) { const h = $('.m-body'); if (h && S.modal && /^(catalog|osEdit|cfg)$/.test(S.modal.type)) h.querySelectorAll('[data-chg="catEdit"],[data-chg="aranEdit"],[data-chg="osAr"],[data-chg="osField"],[data-chg^="dl"]').forEach(i => { i.disabled = true; }); } return r; };
 

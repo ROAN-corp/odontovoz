@@ -98,7 +98,7 @@
   const mfPrev = MF.notif;
   if (mfPrev) MF.notif = m => {
     const p = pref();
-    return mfPrev(m).replace('<h3 class="nt-h">Cuando recepción marca que llegó un paciente</h3>', '<h3 class="nt-h">Cuando un paciente saca turno por el turnero online</h3><label class="nt-row"><span><b>Avisarme</b><small>Cartel en la app con el nombre, el día, la hora y el consultorio; suena y vibra según lo de abajo. Con «Notificación del sistema» activada, también te llega al celular.</small></span><input type="checkbox" role="switch" data-chg="notifOnl"' + (p.online ? ' checked' : '') + '></label><h3 class="nt-h">Cuando recepción marca que llegó un paciente</h3>');
+    return mfPrev(m).replace('<h3 class="nt-h">Cuando secretaría marca que llegó un paciente</h3>', '<h3 class="nt-h">Cuando un paciente saca turno por el turnero online</h3><label class="nt-row"><span><b>Avisarme</b><small>Cartel en la app con el nombre, el día, la hora y el consultorio; suena y vibra según lo de abajo. Con «Notificación del sistema» activada, también te llega al celular.</small></span><input type="checkbox" role="switch" data-chg="notifOnl"' + (p.online ? ' checked' : '') + '></label><h3 class="nt-h">Cuando secretaría marca que llegó un paciente</h3>');
   };
   A.chg.notifOnl = el => { if (!A.notifPrefSave) return; const p = A.notifPref(); p.online = el.checked; A.notifPrefSave(p); };
   const testPrev = A.acts.notifTest;

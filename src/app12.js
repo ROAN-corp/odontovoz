@@ -307,7 +307,7 @@
   };
 
   /* =====================================================================
-     AVISOS: LLEGÓ UN PACIENTE (marcado desde otro equipo, por ejemplo recepción)
+     AVISOS: LLEGÓ UN PACIENTE (marcado desde otro equipo, por ejemplo secretaría)
      ===================================================================== */
   const NL = () => window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
   let nid = 1;
@@ -353,11 +353,11 @@
   MF.notif = () => {
     const p = PREF(), sw = (k, l, sub) => '<label class="nt-row"><span><b>' + l + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span><input type="checkbox" role="switch" data-chg="notifSet" data-k="' + k + '"' + (p[k] ? ' checked' : '') + '></label>';
     const perm = NL() ? '' : ('Notification' in window ? Notification.permission : 'unsupported');
-    let b = '<h3 class="nt-h">Cuando recepción marca que llegó un paciente</h3>' + sw('sound', 'Sonido de aviso', 'Un timbre corto y suave') + sw('vibrate', 'Vibrar', 'En el celular') + sw('system', 'Notificación del sistema', 'Aparece aunque estés en otra app o con la pantalla bloqueada (si el teléfono no cerró OdontoVoz)');
+    let b = '<h3 class="nt-h">Cuando secretaría marca que llegó un paciente</h3>' + sw('sound', 'Sonido de aviso', 'Un timbre corto y suave') + sw('vibrate', 'Vibrar', 'En el celular') + sw('system', 'Notificación del sistema', 'Aparece aunque estés en otra app o con la pantalla bloqueada (si el teléfono no cerró OdontoVoz)');
     if (p.system && perm && perm !== 'granted') b += '<div class="row-btns"><button class="btn small primary" data-act="notifPerm">Permitir notificaciones</button></div>' + (perm === 'denied' ? '<p class="hint bad">El navegador tiene bloqueadas las notificaciones de OdontoVoz: habilitalas desde el candado de la barra de direcciones.</p>' : '');
     b += '<div class="field" style="margin-top:8px"><label for="ntPro">Avisarme de los pacientes de</label><select id="ntPro" data-chg="notifPro"><option value="">Todos los profesionales</option>' + A.PROS.map(x => '<option value="' + x.id + '"' + (p.pro === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></div>';
     b += '<h3 class="nt-h">Al abrir la app</h3>' + sw('splash', 'Logo animado al abrir', 'Un segundo y medio') + sw('splashSound', 'Sonido al abrir', 'Un acorde suave y corto');
-    b += '<p class="small-note">El aviso se ve, suena y vibra en este equipo cuando el cambio lo hace otro (por ejemplo, la PC de recepción). Para que llegue, OdontoVoz tiene que estar abierta o en segundo plano en este equipo.</p>';
+    b += '<p class="small-note">El aviso se ve, suena y vibra en este equipo cuando el cambio lo hace otro (por ejemplo, la PC de secretaría). Para que llegue, OdontoVoz tiene que estar abierta o en segundo plano en este equipo.</p>';
     return A.modalShell('Avisos y sonidos', b, '<button class="btn" data-act="notifTest">Probar aviso</button><button class="btn primary" data-act="closeModal">Listo</button>');
   };
   A.chg.notifSet = el => {

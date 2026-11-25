@@ -50,7 +50,7 @@
   /* todos los pacientes con datos (también archivados) */
   A.allPids = () => { const o = {}; A.PATS.forEach(p => { o[p.id] = 1; }); Object.keys(A.S.pd || {}).forEach(k => { o[k] = 1; }); return Object.keys(o); };
   A.osPayStore = () => A.CFG.osPay || (A.CFG.osPay = {});
-  /* prácticas que en recepción se cobraron como particular: la obra social ya no las paga (ajuste con osOff = id del cargo) */
+  /* prácticas que en secretaría se cobraron como particular: la obra social ya no las paga (ajuste con osOff = id del cargo) */
   A.osOffSet = pd => { const o = {}; ((pd && pd.ledger) || []).forEach(x => { if (x.type === 'ajuste' && x.osOff && !x.voided && !x.anula) o[x.osOff] = 1; }); return o; };
   A.osDue = () => {
     const by = {};

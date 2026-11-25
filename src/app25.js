@@ -19,8 +19,8 @@
   const DESC = {
     lite: '1 profesional, en uno o varios consultorios',
     basico: '1 profesional, en uno o varios consultorios',
-    consultorio: 'Hasta 5 profesionales y 6 equipos, con recepción',
-    centro: 'Hasta 8 profesionales y 12 equipos, con recepción (plan anterior)',
+    consultorio: 'Hasta 5 profesionales y 6 equipos, con secretaría',
+    centro: 'Hasta 8 profesionales y 12 equipos, con secretaría (plan anterior)',
     empresa: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño',
     red: 'De 2 a 5 consultorios: personal, cajas, estadísticas y panel del dueño'
   };

@@ -19,7 +19,7 @@
   const kmoney = n => { const a = Math.abs(n); return (n < 0 ? '−' : '') + (a >= 1e6 ? '$' + (Math.round(a / 1e5) / 10).toString().replace('.', ',') + ' M' : a >= 1e4 ? '$' + Math.round(a / 1e3) + ' mil' : money(a)); };
   const num = v => { const n = parseInt(String(v || '').replace(/[^\d-]/g, ''), 10); return isNaN(n) ? 0 : n; };
   const COLORS = ['#0b6b6f', '#7b4fc4', '#c2571a', '#2f6fd1', '#a3326b'];
-  const ROLES = [['dueno', 'Dueño'], ['admin', 'Administración'], ['recepcion', 'Recepción'], ['profesional', 'Profesional'], ['asistente', 'Asistente'], ['otro', 'Otro (limpieza, mantenimiento…)']];
+  const ROLES = [['dueno', 'Dueño'], ['admin', 'Administración'], ['recepcion', 'Secretaría'], ['profesional', 'Profesional'], ['asistente', 'Asistente'], ['otro', 'Otro (limpieza, mantenimiento…)']];
   const RN = {}; ROLES.forEach(r => { RN[r[0]] = r[1]; });
 
   /* =====================================================================
@@ -322,7 +322,7 @@
       for (let k = 75; k >= 0; k--) {
         const d = A.add(t, -k); if (A.dow(d) === 0) continue;
         EG.forEach(g => { if (g[3] ? d.slice(8) === '05' : r() < 0.18) c.moves.push({ id: A.uid(), date: d, type: 'egreso', cat: g[0], desc: g[1], amount: Math.round(g[2] * (0.7 + r() * 0.6) * (1 + li * 0.15) / 1000) * 1000, method: r() < 0.5 ? 'Efectivo' : 'Transferencia', status: 'pagado' }); });
-        if (k > 0 && r() < 0.9) c.closes.push({ id: A.uid(), date: d, loc: l.id, open: 20000, exp: 0, counted: 0, diff: r() < 0.15 ? -Math.round(r() * 8) * 1000 : 0, by: 'Recepción', at: d + 'T20:00:00' });
+        if (k > 0 && r() < 0.9) c.closes.push({ id: A.uid(), date: d, loc: l.id, open: 20000, exp: 0, counted: 0, diff: r() < 0.15 ? -Math.round(r() * 8) * 1000 : 0, by: 'Secretaría', at: d + 'T20:00:00' });
       }
       E.stock[l.id] = [['Guantes de nitrilo (cajas)', 'cajas', 14, 10], ['Anestesia (cartuchos)', 'cartuchos', 38, 50], ['Composite A2', 'jeringas', 6, 4], ['Barbijos', 'cajas', 9, 6]].map(x => ({ id: A.uid(), name: x[0], unit: x[1], qty: Math.max(0, Math.round(x[2] * (0.6 + r() * 0.8))), min: x[3] }));
       E.empo.goals[l.id] = { fact: 4500000 + li * 1500000, turnos: 220 + li * 60, nuevos: 25 };

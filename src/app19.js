@@ -38,7 +38,7 @@
   const upgradeLink = what => { const sup = A.SUPPORT || {}, L = A.limits(), nx = L && NEXT[L.plan]; const t = 'Hola, quiero ' + (nx ? 'pasar al plan ' + PLAN[nx].name : 'ampliar mi plan') + ' de OdontoVoz (' + what + '). Mi cuenta: ' + ((CL.session && CL.session.user.email) || ''); return sup.whatsapp ? 'https://wa.me/' + String(sup.whatsapp).replace(/\D/g, '') + '?text=' + encodeURIComponent(t) : 'mailto:' + (sup.email || 'somosroan@gmail.com') + '?subject=' + encodeURIComponent('Cambio de plan') + '&body=' + encodeURIComponent(t); };
   function planBlock(kind) {
     const L = A.limits(), nx = L && NEXT[L.plan], back = S.modal;
-    const txt = { pros: 'Tu plan <b>' + esc(L.name) + '</b> incluye <b>' + L.pros + ' profesional' + (L.pros > 1 ? 'es' : '') + '</b>.', type: 'Tu plan <b>' + esc(L.name) + '</b> es para <b>un profesional</b>. Para trabajar como consultorio o centro, con varios odontólogos y recepción, hace falta el plan Consultorio o Centro.', devices: 'Tu plan <b>' + esc(L.name) + '</b> permite <b>' + L.devices + ' equipos</b>.' }[kind];
+    const txt = { pros: 'Tu plan <b>' + esc(L.name) + '</b> incluye <b>' + L.pros + ' profesional' + (L.pros > 1 ? 'es' : '') + '</b>.', type: 'Tu plan <b>' + esc(L.name) + '</b> es para <b>un profesional</b>. Para trabajar como consultorio o centro, con varios odontólogos y secretaría, hace falta el plan Consultorio o Centro.', devices: 'Tu plan <b>' + esc(L.name) + '</b> permite <b>' + L.devices + ' equipos</b>.' }[kind];
     S.modal = { type: 'planLim', html: txt, nx, what: { pros: 'más profesionales', type: 'trabajar como centro', devices: 'más equipos' }[kind], back };
     A.renderModal();
   }
@@ -60,9 +60,9 @@
   /* los nombres de los tipos de cuenta, iguales a los planes de la web */
   const rename = h => h
     .replace('<b>Soy un odontólogo</b><span>Consultorio individual</span>', '<b>Profesional</b><span>Un odontólogo, en uno o varios consultorios</span>')
-    .replace('<b>Somos un centro odontológico</b><span>Dos o más odontólogos</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y recepción (plan Consultorio o Centro)</span>')
+    .replace('<b>Somos un centro odontológico</b><span>Dos o más odontólogos</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y secretaría (plan Consultorio o Centro)</span>')
     .replace('<b>Odontólogo</b><span>Consultorio individual</span>', '<b>Profesional</b><span>Un odontólogo</span>')
-    .replace('<b>Centro odontológico</b><span>Dos o más profesionales</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y recepción</span>');
+    .replace('<b>Centro odontológico</b><span>Dos o más profesionales</span>', '<b>Consultorio o centro</b><span>Varios odontólogos y secretaría</span>');
   const limLine = () => { const L = A.limits(); return L ? '<div class="pl-line">Tu plan: <b>' + esc(L.name) + '</b> · hasta ' + L.pros + ' profesional' + (L.pros > 1 ? 'es' : '') + ' · ' + L.devices + ' equipos</div>' : ''; };
   ['setup', 'acctType'].forEach(k => { const prev = MF[k]; if (!prev) return; MF[k] = m => { const h = rename(prev(m)); return h.replace('<div class="setup-grid">', limLine() + '<div class="setup-grid">'); }; });
   /* la lista de profesionales muestra cuántos permite el plan */

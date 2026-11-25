@@ -1,4 +1,4 @@
-/* ===== 1.7: cobro desde la evolución: primero «¿quién cobra?», varias prácticas juntas bien leídas, cartel en recepción con lo que escribió el odontólogo y cobro corregible ===== */
+/* ===== 1.7: cobro desde la evolución: primero «¿quién cobra?», varias prácticas juntas bien leídas, cartel en secretaría con lo que escribió el odontólogo y cobro corregible ===== */
 (function () {
   'use strict';
   const A = window.App, S = A.S, MF = A.modalFns;
@@ -120,7 +120,7 @@
       (tot ? '<div class="pw-tot"><span>Paga el paciente</span><b>' + money(tot) + '</b></div>' : '') + (osTot ? '<p class="pw-os">' + (tot ? 'Y ' : '') + money(osTot) + ' van a la obra social.</p>' : '') +
       (on.some(i => i.os) ? '<p class="pw-os">Si cobra la secretaría, ella elige cómo se cobra cada práctica: coseguro, diferencial, particular o nada.</p>' : '') +
       '<h3 class="pw-q">¿Quién le cobra?</h3><div class="pw-btns">' +
-      '<button class="pw-b primary" data-act="pwGo" data-k="rcp"><span class="pw-i" aria-hidden="true">🧾</span><b>Cobra secretaría</b><small>Le llega a recepción con lo que anotaste y ella decide cómo cobrarlo</small></button>' +
+      '<button class="pw-b primary" data-act="pwGo" data-k="rcp"><span class="pw-i" aria-hidden="true">🧾</span><b>Cobra secretaría</b><small>Le llega a secretaría con lo que anotaste y ella decide cómo cobrarlo</small></button>' +
       '<button class="pw-b" data-act="pwGo" data-k="pro"><span class="pw-i" aria-hidden="true">💵</span><b>Lo cobro yo</b><small>Elegís vos cómo se cobra y cobrás acá</small></button></div>' +
       '<div class="pw-more"><button class="btn small ghost" data-act="pwGo" data-k="fix">Corregir prácticas antes de mandar</button><button class="btn small ghost" data-act="pwGo" data-k="nota">Solo guardar en la historia, sin cobrar</button></div><div class="hint bad" id="poMsg"></div>';
     return A.modalShell('¿Quién cobra?', b, '<button class="btn" data-act="closeModal">Volver</button>');
@@ -144,7 +144,7 @@
   };
   A.acts.pwBack = () => { const m = S.modal; if (m) { delete m.who; A.renderModal(); } };
 
-  /* lo que escribió el odontólogo viaja con el cobro (para el cartel de recepción) */
+  /* lo que escribió el odontólogo viaja con el cobro (para el cartel de secretaría) */
   const poPrev = A.acts.poGo;
   A.acts.poGo = function (el) {
     const m = S.modal, k = el && el.getAttribute ? el.getAttribute('data-k') : null;
@@ -286,7 +286,7 @@
       if (x.off) { e.cobOk = 'quitado'; e.cobDone = at; e.cobDoneBy = by; m.ids = m.ids.filter(i => i !== e.id); }
     });
     (m.add || []).forEach(a => {
-      const id = A.uid(); pd.ledger.push({ id, date: d, type: 'cargo', amount: a.amt, desc: a.label + ' · agregada en recepción' + (why ? ' · ' + why : ''), why: why || undefined, pro: base.pro || (A.PAT(m.pid) || {}).pro, cob: 'rcp', cobAt: at, cobBy: by, apptId: base.apptId, loc: base.loc, rcpFix: 1 });
+      const id = A.uid(); pd.ledger.push({ id, date: d, type: 'cargo', amount: a.amt, desc: a.label + ' · agregada en secretaría' + (why ? ' · ' + why : ''), why: why || undefined, pro: base.pro || (A.PAT(m.pid) || {}).pro, cob: 'rcp', cobAt: at, cobBy: by, apptId: base.apptId, loc: base.loc, rcpFix: 1 });
       m.ids.push(id);
     });
     if (A.cjLog) A.cjLog('correccion', 'Corrigió el cobro de ' + ((A.PAT(m.pid) || {}).name || '') + ' antes de cobrar' + (why ? ': ' + why : ''));

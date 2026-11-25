@@ -1,4 +1,4 @@
-/* ===== cuenta con usuario y contraseña, y nube: los mismos datos en el teléfono, la recepción y la PC ===== */
+/* ===== cuenta con usuario y contraseña, y nube: los mismos datos en el teléfono, la secretaría y la PC ===== */
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns;
@@ -241,7 +241,7 @@
     else if (A.cloudExtra && A.cloudExtra(k)) A.cloudExtra(k).set(v);
     if (A.journalSeen) A.journalSeen(k); /* lo que llega de otro equipo no se anota como cambio propio */
   }
-  /* avisos de lo que hizo otro equipo (por ejemplo, la recepción) */
+  /* avisos de lo que hizo otro equipo (por ejemplo, la secretaría) */
   function watchDay(old, nw) {
     const om = {}; old.forEach(a => { om[a.id] = a; });
     nw.forEach(a => {
@@ -400,7 +400,7 @@
     const dot = { ok: 'ok', busy: 'busy', err: 'err', offline: 'err' }[CL.state] || '';
     let h;
     if (!conf()) h = '<div class="acct-box"><b>Sin cuenta en la nube</b><span>Los datos quedan solo en este dispositivo. Hacé copias de seguridad desde Ajustes.</span><button class="btn small" data-act="cloudAdmin">Conectar servidor…</button></div>';
-    else if (!CL.session) h = '<div class="acct-box"><b>No ingresaste</b><span>Ingresá con tu correo y contraseña para tener los mismos datos en la PC, la recepción y el teléfono.</span><button class="btn small primary" data-act="loginOpen">Ingresar o crear cuenta</button></div>';
+    else if (!CL.session) h = '<div class="acct-box"><b>No ingresaste</b><span>Ingresá con tu correo y contraseña para tener los mismos datos en la PC, la secretaría y el teléfono.</span><button class="btn small primary" data-act="loginOpen">Ingresar o crear cuenta</button></div>';
     else h = '<div class="acct-box"><b>' + esc(CL.who(CL.session.user.email)) + '</b><span><i class="sync-dot ' + dot + '"></i>' + (CL.state === 'busy' ? 'Sincronizando…' : CL.state === 'err' ? esc(CL.msg || 'Error al sincronizar') : CL.state === 'offline' ? 'Sin conexión: se sube al volver' : 'Sincronizado ' + ago(CL.last)) + '</span><button class="btn small" data-act="acctOpen">Cuenta y equipos</button></div>';
     if (host) host.innerHTML = h;
     if (foot) foot.textContent = CL.session ? (CL.state === 'ok' ? '☁ al día' : CL.state === 'busy' ? '☁ …' : '☁ pendiente') : '';
@@ -522,7 +522,7 @@
   MF.acct = () => {
     const s = CL.session; if (!s) return A.modalShell('Cuenta', '<p>No ingresaste.</p>', '<button class="btn primary" data-act="loginOpen">Ingresar</button>');
     const b = '<div class="acct-box"><b>' + esc(s.user.email) + '</b><span><i class="sync-dot ' + ({ ok: 'ok', busy: 'busy' }[CL.state] || 'err') + '"></i>Última sincronización: ' + ago(CL.last) + '</span></div>' +
-      '<div class="field" style="margin-top:10px"><label for="devName">Nombre de este equipo (lo ven los demás al cargar algo)</label><input id="devName" data-chg="devName" value="' + esc(A.deviceLabel()) + '" placeholder="Ej.: Recepción, Consultorio, PC"></div>' +
+      '<div class="field" style="margin-top:10px"><label for="devName">Nombre de este equipo (lo ven los demás al cargar algo)</label><input id="devName" data-chg="devName" value="' + esc(A.deviceLabel()) + '" placeholder="Ej.: Secretaría, Consultorio, PC"></div>' +
       '<div class="hint">Para que la secretaria y vos vean lo mismo, ingresen con esta misma cuenta en cada equipo (teléfono, tablet o la página web en la PC). Los cambios aparecen en los otros equipos en unos segundos.</div>' +
       '<div class="row-btns"><button class="btn" data-act="cloudSyncNow">Sincronizar ahora</button><button class="btn" data-act="acctPass">Cambiar contraseña</button><button class="btn" data-act="privacyOpen">Privacidad</button></div>' +
       '<div class="block"><h3>Bloqueo con PIN</h3><div class="hint" style="margin:0">' + (CL.pinOn() ? 'Activo: la app pide el PIN al abrirla.' : 'Opcional: pide un PIN al abrir la app en este equipo.') + '</div><div class="row-btns">' + (CL.pinOn() ? '<button class="btn small" data-act="pinSetOpen">Cambiar PIN</button><button class="btn small" data-act="pinOff">Quitar PIN</button>' : '<button class="btn small primary" data-act="pinSetOpen">Poner PIN</button>') + '</div></div>' +

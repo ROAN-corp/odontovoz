@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Versión actual: **1.33.1** (compilación 1.88.1), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
+Leé esto antes de tocar nada. Versión actual: **1.34.0** (compilación 1.89.0), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -16,7 +16,7 @@ Leé esto antes de tocar nada. Versión actual: **1.33.1** (compilación 1.88.1)
 
 ## Cómo está armado
 - La app es **un solo archivo**: `index.html` (`window.App`, alias `A`; estado `A.S`).
-- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39, app40, app41, app42, app43, app44, app45, app46, app47, app48, app49, app50, app51, app52, app53, app54, app55 … app119). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
+- Los módulos nuevos van en `src/*.js` y se copian dentro de `index.html` con `node scripts/inline-src.js` (orden en ese script: ovcmd, app5 … app14, app15, app16, app17, app18, app19, app20, app21, app22, app23, app24, app25, app26, app27, app28, app29, app30, app31, app32, app33, app34, app35, app36, app37, app38, app39, app40, app41, app42, app43, app44, app45, app46, app47, app48, app49, app50, app51, app52, app53, app54, app55 … app120). **Editá siempre `src/` y después corré el script.** La primera línea de cada módulo empieza con `/* =====` y ninguna otra línea puede empezar así.
 - Acciones del HTML: `data-act` / `data-chg` / `data-in` / `data-sub` → `A.acts` / `A.chg` / `A.ins` / `A.subs`. Modales: `A.modalFns`, `A.modalShell`.
 - `A.refresh` se redefine en la sección «arranque»: los módulos **no** deben envolverlo; usen `A.afterRefresh`, `A.load` o funciones de render.
 - Voz: `src/ovcmd.js` (parser, `window.OVCmd`, testeado con `node tests/ovcmd.test.js`) + `A.cmd.exec(texto)` que devuelve `{ok, msg}`; los módulos lo envuelven (`const execPrev = A.cmd.exec; A.cmd.exec = …`). `src/app14.js` tiene el periodontograma y los comandos rioplatenses extra.
@@ -46,7 +46,7 @@ Leé esto antes de tocar nada. Versión actual: **1.33.1** (compilación 1.88.1)
 - Caja y liquidaciones: `app86`/`app87` (caja en 6 secciones), `app64`/`app65` (obras sociales que deben, `cobAlloc`, liquidaciones).
 - Obras sociales: `app7` (editor y aranceles), `app67` (Federación de Río Negro, `sitio/aranceles/forn.json`), `app91`/`app92` (planes por obra social `o.pl`, plan del paciente `p.plan`, plan al cobrar).
 - Ventana de actualización: `app92` (`#updPop`). Novedades: `app55` (sumar arriba cada versión). Importes con centavos: `A.parseMoney`/`A.moneyIn` en `index.html`.
-- Permisos por puesto: `app66` (`A.isBoss`, `A.isCarga`); servidor `ov_keep_old` (recepción no modifica cargos guardados: las correcciones van como `ajuste`).
+- Permisos por puesto: `app66` (desde 1.34 «Recepción» se llama «Secretaría»: administra agenda/cobros/caja/cuentas; solo se le bloquea lo clínico y borrar pacientes; SQL `supabase/secretaria.sql`) (`A.isBoss`, `A.isCarga`); servidor `ov_keep_old` (recepción no modifica cargos guardados: las correcciones van como `ajuste`).
 
 ## Ojo (errores que ya pasaron)
 - El `MF.pracOk` visible es el de `app74`. Las cadenas de envoltorios (`poGo`, `ppGo`, `pracParse`) se encadenan por orden de módulo.

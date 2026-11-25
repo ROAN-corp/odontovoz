@@ -235,7 +235,7 @@
       case 'hands': V.start('hands'); return ok('Manos libres activo. Decí «' + (A.wakeLabel ? A.wakeLabel() : 'odontovoz') + '» antes de cada pedido.');
       case 'mode':
         if (pr.ui) { A.acts.uiMode(fake({ 'data-ui': pr.ui })); return ok(pr.ui === 'atencion' ? 'Modo atención: tu agenda del día.' : 'Modo administración.'); }
-        if (pr.role) { if (A.isSolo()) return no('En un consultorio individual no hay vista de recepción.'); A.acts.role(fake({ 'data-role': pr.role })); return ok(pr.role === 'recepcion' ? 'Vista de recepción.' : 'Vista de profesional.'); }
+        if (pr.role) { if (A.isSolo()) return no('En un consultorio individual no hay vista de secretaría.'); A.acts.role(fake({ 'data-role': pr.role })); return ok(pr.role === 'recepcion' ? 'Vista de secretaría.' : 'Vista de profesional.'); }
         if (pr.theme) { A.acts.themeSet(fake({ 'data-theme-set': pr.theme })); return ok(pr.theme === 'dark' ? 'Tema oscuro.' : 'Tema claro.'); }
         return no('');
       case 'flowNext': if (!S.visit) return no('No hay una atención en curso. Decí «atender a» y el paciente.'); A.flow.next(); return ok('Paso: ' + A.flow.cur().t + '.');
@@ -483,7 +483,7 @@
      FLUJO GUIADO DE LA ATENCIÓN
      ===================================================================== */
   const STEPS = [
-    { k: 'recepcion', t: 'Recepción', tab: 'datos', hint: 'Confirmá los datos personales y la cobertura del paciente.' },
+    { k: 'recepcion', t: 'Secretaría', tab: 'datos', hint: 'Confirmá los datos personales y la cobertura del paciente.' },
     { k: 'hc', t: 'Historia clínica', tab: 'datos', hint: 'Repasá antecedentes, medicación y alergias. Podés dictar: «agregá en la historia…».', act: ['hcConfirm', 'Confirmar datos al día'] },
     { k: 'odon', t: 'Odontograma', tab: 'odon', hint: 'Dictá lo que ves pieza por pieza o tocá las caras. El micrófono sigue escuchando hasta que lo apagás.' },
     { k: 'cons', t: 'Consentimiento', tab: 'docs', hint: 'Antes de un procedimiento con riesgo (extracción, endodoncia, implante), firmá el consentimiento.', act: ['consentPick', 'Elegir consentimiento'] },
@@ -543,7 +543,7 @@
     [IC.mic, 'La voz, siempre a mano', 'El botón redondo de abajo a la derecha escucha y hace lo que pedís: «turno para Pérez mañana a las 10», «abrí la ficha de Gómez», «caries oclusal del 36». Sigue escuchando hasta que lo tocás de nuevo o decís «terminar dictado».'],
     [IC.hf, 'Manos libres', 'Con «Manos libres» activo, la app espera que digas «odontovoz» antes de cada pedido. Ideal para atender con guantes sin tocar la pantalla.'],
     [IC.cal, 'Agenda', 'Tocá un día de la tira o usá las flechas ‹ Hoy › de abajo. «+ Turno» da un turno; en «Más» están el sobreturno, los bloqueos y los recordatorios por WhatsApp.'],
-    [IC.flow, 'La atención, paso a paso', 'Al tocar «Atender», la ficha te guía en orden: recepción, historia clínica, odontograma, consentimiento, plan, presupuesto, cobro y próximo turno. Decí «siguiente paso» para avanzar.'],
+    [IC.flow, 'La atención, paso a paso', 'Al tocar «Atender», la ficha te guía en orden: secretaría, historia clínica, odontograma, consentimiento, plan, presupuesto, cobro y próximo turno. Decí «siguiente paso» para avanzar.'],
     [IC.flask, A.DEMO ? 'Modo prueba y uso real' : 'Tus datos', A.DEMO ? 'Ahora estás en modo prueba, con pacientes de ejemplo para mostrar la app. Cuando quieras empezar con tus datos, entrá al menú → «Modo prueba y uso real».' : 'Estás usando la app con tus datos reales. Hacé una copia de seguridad seguido desde el menú → «Copia de seguridad».']
   ];
   A.openTutorial = () => { A.hideDrawer(); S.modal = { type: 'tutorial', i: 0 }; A.renderModal(); };

@@ -4,7 +4,7 @@
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, CL = A.cloud;
   if (!CL) return;
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* nada */ } } };
-  const RN = { dueno: 'Dueño', admin: 'Administración', recepcion: 'Recepción', profesional: 'Profesional', asistente: 'Asistente' };
+  const RN = { dueno: 'Dueño', admin: 'Administración', recepcion: 'Secretaría', profesional: 'Profesional', asistente: 'Asistente' };
   const places = () => { if (CL.places && CL.places.length) return CL.places; try { const l = JSON.parse(LS.get('odontovoz.places.list', '[]')); return Array.isArray(l) ? l : []; } catch (e) { return []; } };
   const curOwner = () => CL.ownerId || null;
   const here = () => places().filter(p => p.owner === curOwner())[0] || null;

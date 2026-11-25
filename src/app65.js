@@ -136,7 +136,7 @@
       const name = (A.PAT(pid) || {}).name || (pd.prof && pd.prof.name) || 'Paciente';
       const cargos = pd.ledger.filter(e => e.type === 'cargo' && !e.voided && !e.anula).slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
       const left = {}; cargos.forEach(e => { left[e.id] = Math.max(0, +e.amount || 0); });
-      /* correcciones de recepción sobre una práctica (coseguro → particular, importe corregido): cuentan para esa práctica */
+      /* correcciones de secretaría sobre una práctica (coseguro → particular, importe corregido): cuentan para esa práctica */
       pd.ledger.forEach(a => { if (a.type === 'ajuste' && a.adjFor && !a.voided && !a.anula && left[a.adjFor] != null && !(a.adj && a.adj.k === 'pl')) left[a.adjFor] = Math.max(0, left[a.adjFor] + (+a.amount || 0)); });
       const osOff = A.osOffSet ? A.osOffSet(pd) : {};
       const piece = (e, amt, date, via, method, osId) => { if (amt > 0) out.push({ pid, patient: name, cargo: e, pro: e.pro || 'pr1', desc: e.desc, cat: (e.txId && txCat[e.txId]) || (A.catOf ? A.catOf({ desc: e.desc }) : ''), date, amount: amt, via, method: method || '', os: osId || null, osMonth: osId ? e.date.slice(0, 7) : null }); };

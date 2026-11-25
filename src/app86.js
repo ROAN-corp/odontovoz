@@ -568,7 +568,7 @@
   if (execPrev) A.cmd.exec = function (text) {
     const s = String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/^\s*(navi|odontovoz|asistente)[,\s]+/, '').trim();
     const go = sub => { S.tab = 'caja'; S.caja = S.caja || {}; S.caja.sub = sub; A.refresh(); };
-    const no = { ok: true, msg: 'Eso lo ve recepción o el dueño.' };
+    const no = { ok: true, msg: 'Eso lo ve secretaría o el dueño.' };
     try {
       if (/^(abri|abrir|abrime|abramos)( la)? caja\b/.test(s)) { if (!moneyOk()) return no; go('hoy'); if (openOf(T()) || closeOf(T())) return { ok: true, msg: closeOf(T()) ? 'La caja de hoy ya está cerrada.' : 'La caja ya está abierta.' }; A.acts.cjOpenOpen(); return { ok: true, msg: 'Contá la plata del cajón.' }; }
       if (/^(cerra|cerrar|cerrame|cerremos|hace el cierre|haceme el cierre)( (la|de) )?caja\b|^cierre de caja$/.test(s)) { if (!moneyOk()) return no; go('hoy'); if (closeOf(T())) return { ok: true, msg: 'La caja de hoy ya está cerrada.' }; A.acts.cjCloseOpen(); return { ok: true, msg: 'Contá la plata del cajón.' }; }
