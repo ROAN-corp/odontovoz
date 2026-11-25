@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.34.1', b: '1.89.1', d: '2026-11-26', items: [
+      { t: 'Ficha del paciente en el celular: el selector de secciones ahora dice «Estás en…» con el ícono de la sección y un botón verde «Cambiar sección» (que late las primeras veces). Al abrirlo, cada sección es una tarjeta con ícono y una línea que explica qué hay adentro.' },
+      { t: 'Ortodoncia: ícono nuevo, un diente con bracket y arco por delante.' }] },
     { v: '1.34.0', b: '1.89.0', d: '2026-11-26', items: [
       { t: 'El puesto «Recepción» ahora se llama «Secretaría» y administra el consultorio: da y borra turnos, maneja pacientes (datos y cuenta), cobros, caja y cuentas. No modifica la historia clínica, los precios ni borra o archiva pacientes. Para que pueda corregir cobros hay que correr una vez supabase/secretaria.sql.' },
       { t: 'Arreglo en el celular: al buscar un paciente arriba en el inicio, los resultados se veían cortados y con las letras en vertical; ahora ocupan todo el ancho.' }] },

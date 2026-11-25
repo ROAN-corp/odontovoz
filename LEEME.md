@@ -1084,3 +1084,7 @@ Turno con paciente nuevo (`src/app119.js`): obra social con lista/escritura libr
 
 ## 1.34.0 (compilación 1.89.0)
 «Recepción» pasa a llamarse «Secretaría» (el valor interno sigue siendo `recepcion`). La secretaría administra agenda, cobros, caja y cuentas; `app66` bloquea solo lo clínico (`SECRE_BLOCK`: evoluciones, fotos, recetas, anular tratamientos) y borrar/archivar pacientes. SQL: `supabase/secretaria.sql` (el guardián de cobros solo protege al asistente). Buscador de arriba (`app120`): resultados a todo el ancho en pantallas chicas.
+
+
+## 1.34.1 (compilación 1.89.1)
+Ficha en el celular (`app97`): selector «Estás en … / Cambiar sección», tarjetas con ícono y descripción, ícono de ortodoncia (diente con bracket y arco).

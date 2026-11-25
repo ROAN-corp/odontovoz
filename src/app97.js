@@ -67,24 +67,28 @@
     lab: SV('<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/>'),
     rx: SV('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h4"/>'),
     img: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 8"/>'),
+    orto: SV('<path d="M12 3.2c-1.6 0-2.4.9-4 .9C6 4.1 4.6 5.2 4.6 7.7c0 1.6.8 3 1.2 4.6.5 2 .6 4.5 1.4 6.8.35 1.1 1.7 1.3 2.2.2.6-1.4.9-3.5 2.6-3.5s2 2.1 2.6 3.5c.5 1.1 1.85.9 2.2-.2.8-2.3.9-4.8 1.4-6.8.4-1.6 1.2-3 1.2-4.6 0-2.5-1.4-3.6-3.4-3.6-1.6 0-2.4-.9-4-.9z"/><rect x="9.3" y="7.4" width="5.4" height="4" rx="1" fill="currentColor" fill-opacity=".22"/><path d="M1.8 9.4h20.4" stroke-width="2.2"/>'),
     docs: SV('<path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/>'),
     cuenta: SV('<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/>')
   };
   const DEF_IC = SV('<circle cx="12" cy="12" r="8"/>');
+  const DESC = { datos: 'Datos, anamnesis y evolución', odon: 'Estado de cada diente', perio: 'Encías y sondaje', plan: 'Tratamientos y presupuestos', hecho: 'Lo ya realizado', lab: 'Trabajos de laboratorio', rx: 'Recetas e indicaciones', img: 'Imágenes del paciente', orto: 'Controles y fotos', docs: 'Consentimientos y firmas', cuenta: 'Pagos y saldo' };
+  const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* nada */ } } };
   const mobile = () => window.innerWidth < 700;
   function tabs() {
     const v = document.getElementById('view-ficha'); if (!v || v.hidden) return;
     const bar = v.querySelector(':scope > .ftabs'); if (!bar) return;
-    bar.querySelectorAll('.ftab').forEach(b => { if (!b.querySelector('svg')) b.insertAdjacentHTML('afterbegin', ICON[b.getAttribute('data-tab')] || DEF_IC); });
+    bar.querySelectorAll('.ftab').forEach(b => { const k = b.getAttribute('data-tab'); b.setAttribute('data-k', k); if (!b.querySelector('svg')) b.insertAdjacentHTML('afterbegin', ICON[k] || DEF_IC); if (!b.querySelector('.ft-d') && DESC[k]) b.insertAdjacentHTML('beforeend', '<small class="ft-d">' + DESC[k] + '</small>'); });
     bar.classList.add('ft-pro');
     let sel = v.querySelector(':scope > .fsel');
     const cur = bar.querySelector('.ftab[aria-selected="true"]') || bar.querySelector('.ftab');
     if (!sel) { sel = document.createElement('button'); sel.className = 'fsel'; sel.setAttribute('data-act', 'fselToggle'); sel.setAttribute('aria-haspopup', 'true'); bar.before(sel); }
-    const n = bar.querySelectorAll('.ftab').length, html = (cur ? cur.innerHTML : '') + '<span class="fs-more">Secciones (' + n + ') <b aria-hidden="true">▾</b></span>';
+    const n = bar.querySelectorAll('.ftab').length, ck = cur ? cur.getAttribute('data-tab') : '', lab = cur ? (cur.childNodes.length ? Array.prototype.filter.call(cur.childNodes, x => x.nodeType === 3).map(x => x.textContent).join('').trim() || cur.textContent.trim() : '') : '', open = bar.classList.contains('ft-open'), html = '<span class="fs-ic">' + (ICON[ck] || DEF_IC) + '</span><span class="fs-t"><small>Estás en</small><b>' + esc(lab) + '</b></span><span class="fs-more">' + (open ? 'Cerrar' : 'Cambiar sección') + ' <b aria-hidden="true">' + (open ? '▴' : '▾') + '</b></span>';
     if (sel.innerHTML !== html) sel.innerHTML = html;
     sel.setAttribute('aria-expanded', String(bar.classList.contains('ft-open')));
+    sel.classList.toggle('fs-pulse', LS.get('odontovoz.fselUsed', 0) < 4);
   }
-  A.acts.fselToggle = () => { const bar = $('#view-ficha > .ftabs'); if (!bar) return; bar.classList.toggle('ft-open'); tabs(); };
+  A.acts.fselToggle = () => { const bar = $('#view-ficha > .ftabs'); if (!bar) return; bar.classList.toggle('ft-open'); if (bar.classList.contains('ft-open')) LS.set('odontovoz.fselUsed', LS.get('odontovoz.fselUsed', 0) + 1); tabs(); };
   document.addEventListener('click', e => {
     const bar = $('#view-ficha > .ftabs'); if (!bar || !bar.classList.contains('ft-open')) return;
     if (e.target.closest('.ftab')) { setTimeout(() => { const b = $('#view-ficha > .ftabs'); if (b) b.classList.remove('ft-open'); tabs(); }, 0); return; }
@@ -122,16 +126,22 @@
     '#view-ficha > .ftabs.ft-pro .ftab svg { width: 17px; height: 17px; color: var(--accent); flex: none; }',
     '#view-ficha > .ftabs.ft-pro .ftab::after { display: none !important; }',
     '#view-ficha > .ftabs.ft-pro .ftab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); } #view-ficha > .ftabs.ft-pro .ftab[aria-selected="true"] svg { color: var(--accent-ink); }',
-    '#view-ficha > .fsel { display: none; }',
+    '#view-ficha > .fsel { display: none; } #view-ficha > .ftabs .ft-d { display: none; }',
     /* en el celular: un botón con la sección actual que despliega todas como tarjetas */
     '@media (max-width: 699px) {',
-    '  #view-ficha > .fsel { position: sticky; top: var(--appbar-h, 52px); z-index: 21; display: flex; align-items: center; gap: 8px; width: 100%; margin: 0 0 8px; padding: 10px 12px; border: 1.5px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 14px; background: var(--surface); color: var(--ink); font: 600 15px inherit; box-shadow: 0 2px 10px rgba(8, 20, 24, .08); cursor: pointer; }',
-    '  #view-ficha > .fsel svg { width: 20px; height: 20px; color: var(--accent); flex: none; }',
-    '  #view-ficha > .fsel .fs-more { margin-left: auto; font-size: 12.5px; color: var(--accent); font-weight: 600; }',
+    '  #view-ficha > .fsel { position: sticky; top: var(--appbar-h, 52px); z-index: 21; display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 8px; padding: 8px 8px 8px 10px; border: 1.5px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 16px; background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, var(--surface)), var(--surface)); color: var(--ink); font: inherit; text-align: left; box-shadow: 0 3px 12px rgba(8, 20, 24, .08); cursor: pointer; }',
+    '  #view-ficha > .fsel .fs-ic { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }',
+    '  #view-ficha > .fsel .fs-ic svg { width: 22px; height: 22px; }',
+    '  #view-ficha > .fsel .fs-t { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; } #view-ficha > .fsel .fs-t small { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); } #view-ficha > .fsel .fs-t b { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
+    '  #view-ficha > .fsel .fs-more { margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 13px; font-weight: 700; box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 35%, transparent); }',
+    '  #view-ficha > .fsel.fs-pulse .fs-more { animation: fsPulse 1.8s ease-out infinite; }',
+    '  @keyframes fsPulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); } 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }',
     '  #view-ficha > .ftabs.ft-pro { display: none; position: static; }',
-    '  #view-ficha > .ftabs.ft-pro.ft-open { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }',
-    '  #view-ficha > .ftabs.ft-pro.ft-open .ftab { flex-direction: column; justify-content: center; gap: 4px; padding: 10px 4px; border-radius: 12px; white-space: normal; text-align: center; font-size: 12.5px; line-height: 1.2; min-height: 66px; }',
-    '  #view-ficha > .ftabs.ft-pro.ft-open .ftab svg { width: 22px; height: 22px; }',
+    '  #view-ficha > .ftabs.ft-pro.ft-open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px; }',
+    '  #view-ficha > .ftabs.ft-pro.ft-open .ftab { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: end; align-content: center; justify-content: stretch; overflow-wrap: anywhere; padding: 10px; border-radius: 14px; white-space: normal; text-align: left; font-size: 13px; font-weight: 700; line-height: 1.2; min-height: 64px; background: var(--surface-2); }',
+    '  #view-ficha > .ftabs.ft-pro.ft-open .ftab svg { grid-row: 1 / span 2; align-self: center; width: 34px; height: 34px; padding: 7px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); box-sizing: border-box; }',
+    '  #view-ficha > .ftabs.ft-pro.ft-open .ftab .ft-d { display: block; grid-column: 2; align-self: start; font-size: 11.5px; font-weight: 400; color: var(--ink-2); line-height: 1.25; }',
+    '  #view-ficha > .ftabs.ft-pro.ft-open .ftab[aria-selected="true"] { background: var(--accent); } #view-ficha > .ftabs.ft-pro.ft-open .ftab[aria-selected="true"] svg { background: color-mix(in srgb, var(--accent-ink) 22%, transparent); color: var(--accent-ink); } #view-ficha > .ftabs.ft-pro.ft-open .ftab[aria-selected="true"] .ft-d { color: color-mix(in srgb, var(--accent-ink) 80%, transparent); }',
     '}'
   ].join('\n');
   document.head.appendChild(css);
