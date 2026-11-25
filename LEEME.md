@@ -1064,3 +1064,7 @@ Por dentro, Android usa el número de compilación (siempre creciente), así que
 
 ## 1.30.0 (compilación 1.85.0)
 Stock rediseñado (`src/app115.js`): «Mi stock» (indicadores, buscador, categorías, orden, agrupar/compacto, −/+ rápido, compartir, costo por unidad) y «Comprar stock» (Lo que falta, Rutiden, Mi pedido, Surdental próximamente), más Movimientos y Consumo por práctica.
+
+
+## 1.31.0 (compilación 1.86.0)
+Agenda (`src/app116.js`): arrastrar un paciente de la burbuja a la agenda para crear el turno (ratón: arrastrar; táctil: mantener ~0,4 s) y estirar el borde de abajo de un turno o bloqueo para cambiar la duración de a 15 min (con aviso de conflicto).

@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.31.0', b: '1.86.0', d: '2026-11-25', items: [
+      { t: 'Agenda: dar turno arrastrando. En la burbuja de un espacio libre, arrastrá un paciente (en el celu, mantenelo presionado un instante) hasta el horario que quieras de la agenda y soltalo: se crea el turno ahí. Mientras arrastrás ves dónde cae y si está ocupado.' },
+      { t: 'Agenda: estirá el borde de abajo de cualquier turno o bloqueo (la rayita gris) hacia abajo o arriba para cambiar la duración de a 15 minutos: 45 min, 1 hora, etc. Si se pisa con otro turno, te pregunta qué hacer.' }] },
     { v: '1.30.4', b: '1.85.4', d: '2026-11-25', items: [
       { t: 'Tablets: las ventanas (por ejemplo Nuevo turno) se ajustan al espacio visible y los botones de abajo ya no quedan tapados por la barra del teclado.' }] },
     { v: '1.30.3', b: '1.85.3', d: '2026-11-25', items: [

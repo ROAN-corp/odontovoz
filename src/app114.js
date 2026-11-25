@@ -130,7 +130,7 @@
       '<button data-act="bubAct" data-k="block"><i>🔒</i><span><b>Bloquear</b><small>que no den turnos</small></span></button>' +
       '<button data-act="bubAct" data-k="note"><i>✎</i><span><b>Nota</b><small>un recordatorio</small></span></button></div>' +
       '<div class="bub-pats"><label class="bub-s"><span aria-hidden="true">🔍</span><input id="bubQ" type="search" placeholder="Paciente: nombre, apellido o DNI" autocomplete="off" aria-label="Buscar paciente"></label><div class="bub-pt">' + (document.getElementById('bubQ') ? '' : '') + 'Recientes</div><ul class="bub-list" id="bubList">' + patRows('') + '</ul></div></div>' +
-      '<div class="bub-f"><span>💡 Mantené presionado y arrastrá para bloquear varias horas.</span><label>⏱ <select id="bubHold" aria-label="Tiempo para mantener presionado">' + [[500, '0,5 s'], [1000, '1 s'], [2000, '2 s'], [4000, '4 s']].map(o => '<option value="' + o[0] + '"' + (holdMs() === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label></div>';
+      '<div class="bub-f"><span>💡 Arrastrá un paciente a la agenda para darle turno (en el celu, mantenelo presionado). Para bloquear horas, mantené presionado un espacio libre y arrastrá.</span><label>⏱ <select id="bubHold" aria-label="Tiempo para mantener presionado">' + [[500, '0,5 s'], [1000, '1 s'], [2000, '2 s'], [4000, '4 s']].map(o => '<option value="' + o[0] + '"' + (holdMs() === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label></div>';
     document.body.appendChild(d); bub.d = d; place(d);
     requestAnimationFrame(() => d.classList.add('in'));
     const q = $('#bubQ'); if (q && window.innerWidth > 700) q.focus({ preventScroll: true });
