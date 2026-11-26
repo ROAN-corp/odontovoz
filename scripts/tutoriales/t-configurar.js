@@ -45,7 +45,7 @@ module.exports = {
       hace: async h => { await aj(h); await h.move(h.page.locator('.modal [data-act="importOpen"]').first()); await h.sleep(2200); await h.move(h.page.locator('.modal [data-act="hcpOpen"]').first()); await h.sleep(2200); } },
     { dice: 'Paso cinco: el turnero online. Es una página para que tus pacientes pidan turno solos, eligiendo profesional, día y horario. Ven solamente los horarios realmente libres. Vos definís la seña, con cuánta anticipación pueden pedir, hasta cuántos días adelante, y los motivos que pueden elegir. Los pedidos te llegan a la agenda para que los confirmes.',
       muestra: 'Paso 5: Turnero online. Seña, anticipación, días adelante y motivos. Los pedidos te llegan para confirmar.',
-      hace: async h => { await aj(h); await fila(h, 'tnOpen'); await h.sleep(1500); await h.scroll(h.modalBody, 350, 2600); await h.sleep(800); } },
+      hace: async h => { await aj(h); await fila(h, 'tnOpen'); await h.sleep(900); await h.click('.modal [data-act="ajClose"]'); await h.sleep(1800); await h.page.mouse.wheel(0, 300); await h.sleep(2200); await h.ev(() => window.App.acts.ajOpen({ getAttribute: () => null })); await h.sleep(800); await fila(h, 'cfgOpen', 0); await tab(h, 'Turnero online'); await h.sleep(800); await h.scroll(h.modalBody, 350, 2600); } },
     { dice: 'Paso seis: medios de pago y recargos. Acá definís el recargo por cuotas de tarjeta y el descuento por pago en efectivo, para que al cobrar la cuenta ya salga bien.',
       muestra: 'Paso 6: Medios de pago y recargos (cuotas de tarjeta, descuento en efectivo).',
       hace: async h => { await aj(h); await fila(h, 'payRatesOpen'); await h.sleep(2500); await aj(h); } },
@@ -57,6 +57,6 @@ module.exports = {
       hace: async h => { await aj(h); await h.scroll(h.modalBody, 420, 1800); await h.move(h.page.locator('.modal [data-act="planOpen"]').first()); await h.sleep(1800); await h.move(h.page.locator('.modal [data-act="cfgOpen"][data-k="datos"], .modal [data-act="cfgOpen"]').last()); await h.sleep(2200); } },
     { dice: 'Cuando termines estos seis pasos, tu consultorio ya está listo para trabajar: la agenda, los precios, las obras sociales y el stock quedan armados. Si algo te trabás, tenés Ayuda y soporte en el mismo menú de Ajustes. Y en los próximos videos te muestro cómo dar turnos y cómo usar la ficha del paciente.',
       muestra: 'Con estos seis pasos tu consultorio queda listo. ¿Dudas? Ayuda y soporte, en Ajustes.',
-      hace: async h => { await aj(h); await h.click(h.page.locator('.modal [data-act="ajClose"]').first()); await h.sleep(1500); } }
+      hace: async h => { await aj(h); await h.click(h.page.locator('.modal [data-act="ajClose"]').first()); await h.sleep(800); await h.ev(() => { const A = window.App; A.S.tab = 'inicio'; A.refresh(); window.scrollTo(0, 0); }); await h.sleep(1800); } }
   ]
 };
