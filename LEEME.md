@@ -1149,3 +1149,6 @@ Stock: botones unificados (`sbOpen` = compra/llegó mercadería; `saOpen` = «Ed
 
 ## 1.45.0 (compilación 1.100.0)
 `app128`: en iPhone/iPad (`A.isIOS()`, incluye iPad que se presenta como Mac) `A.acts.pwaInstall` abre la ventana `iosInst` con los 4 pasos (Compartir › Agregar a inicio › Agregar) y «Copiar enlace» (`iosCopy`); avisa si está dentro de otra app (WhatsApp, Instagram…). Fuera de iOS sigue el comportamiento de `beforeinstallprompt`.
+
+## 1.46.0 (compilación 1.101.0)
+`app129`: envuelve el `MF.pracOk` de `app89` (primera pantalla «¿Quién cobra?»): cada práctica con tilde «Cobrar» (`A.chg.poCob`, reutiliza `poFree`/`poCm` de `app74` → `it.free` / `os.mode='free'`); destildar abre el motivo obligatorio (`data-in="poWhy"`, lo valida el `poGo` de `app89`) y la práctica queda hecha con `e.free`/`e.freeWhy`, `cobOk='bonif'`. Si todo queda sin cobro, botón `pwFree` («Guardar · no se cobra nada»). En la hoja de siempre (`app74`) el tilde también pasa a «Cobrar» y la ✕ saca lo que no se hizo (`poDrop`/`poBack`). `A.pcHTML` muestra «No se cobra: … (motivo)» bajo el paciente en «Para cobrar».
