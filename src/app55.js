@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.38.0', b: '1.93.0', d: '2026-11-26', items: [
+      { t: 'Animaciones suaves en las ventanas emergentes: las ventanas aparecen con un pequeño rebote (en el celular suben un poco), se desvanecen al cerrarlas con la X o «Cerrar», y lo mismo la ventanita del turno, los menús y los avisos. Los botones se hunden un poquito al tocarlos. Si tu celular tiene activada la opción de reducir movimiento, se apagan solas.' }] },
     { v: '1.37.0', b: '1.92.0', d: '2026-11-26', items: [
       { t: 'Agenda, arrastrar pacientes: ahora la tarjetita del paciente se levanta con una animación, el horario donde cae late suave (y se pone rojo si está ocupado), y al soltar el paciente «vuela» hasta el turno, que aparece con un resplandor.' },
       { t: 'Apenas se crea el turno sale un cuadrito con animación para escribir el motivo, con botones rápidos (Control, Limpieza, Dolor, Urgencia…). Se guarda con Enter o «Guardar», y «Omitir» lo cierra. En el celular aparece desde abajo.' }] },

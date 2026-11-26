@@ -1112,3 +1112,7 @@ Calendario (`app24`): celdas que se ajustan al alto de la pantalla (`--mcell`), 
 
 ## 1.37.0 (compilación 1.92.0)
 Agenda (`app116`): animaciones del arrastre de pacientes (levantar, cartelito que late, vuelo al turno, resplandor `blk-new`) y cuadrito `#mvPop` para escribir el motivo del turno recién creado (guarda `a.motivo` y `A.setMotivo`).
+
+
+## 1.38.0 (compilación 1.93.0)
+Animaciones de ventanas (`app123`): `m-anim` solo cuando una ventana se abre o cambia de tipo (no en cada redibujado), `m-out` al cerrar con `closeModal`, `pop-anim` en `#tpop`/`#waPick`/`#updPop`, avisos y menús. Usa las propiedades `translate`/`scale` para no pisar el `transform` de las ventanas arrastradas.

@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.37.0';
+  A.VERSION = '1.38.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.92.0';
+  A.VBUILD = '1.93.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18574,6 +18574,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.38.0', b: '1.93.0', d: '2026-11-26', items: [
+      { t: 'Animaciones suaves en las ventanas emergentes: las ventanas aparecen con un pequeño rebote (en el celular suben un poco), se desvanecen al cerrarlas con la X o «Cerrar», y lo mismo la ventanita del turno, los menús y los avisos. Los botones se hunden un poquito al tocarlos. Si tu celular tiene activada la opción de reducir movimiento, se apagan solas.' }] },
     { v: '1.37.0', b: '1.92.0', d: '2026-11-26', items: [
       { t: 'Agenda, arrastrar pacientes: ahora la tarjetita del paciente se levanta con una animación, el horario donde cae late suave (y se pone rojo si está ocupado), y al soltar el paciente «vuela» hasta el turno, que aparece con un resplandor.' },
       { t: 'Apenas se crea el turno sale un cuadrito con animación para escribir el motivo, con botones rápidos (Control, Limpieza, Dolor, Urgencia…). Se guarda con Enter o «Guardar», y «Omitir» lo cierra. En el celular aparece desde abajo.' }] },
@@ -28954,6 +28956,54 @@ const OVMenu = (function () {
 
   const css = document.createElement('style');
   css.textContent = '.gb-offlbl{position:absolute;left:6px;right:6px;top:10px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;text-align:center}.gb-offlbl span{background:color-mix(in srgb,var(--red) 14%,var(--surface));color:color-mix(in srgb,var(--red) 65%,var(--ink));border:1px solid color-mix(in srgb,var(--red) 35%,var(--line));border-radius:999px;padding:4px 14px;font-size:.82rem;font-weight:800}.gb-offlbl small{color:var(--ink-2);font-size:.74rem}';
+  document.body.appendChild(css);
+})();
+/* ===== 1.38: animaciones suaves en las ventanas emergentes (ventanas, ventanita del turno, avisos y menús) ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, $ = q => document.querySelector(q);
+  const reduce = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* una ventana anima solo cuando se abre (o cambia a otra), no cada vez que se vuelve a dibujar por dentro */
+  let last = null;
+  const rmPrev = A.renderModal;
+  A.renderModal = function () {
+    const r = rmPrev.apply(this, arguments);
+    try { const m = S.modal, key = m ? m.type : null, sc = $('#modalHost .modal-scrim'); if (sc && key !== last && !reduce()) sc.classList.add('m-anim'); last = key; } catch (e) { /* nada */ }
+    return r;
+  };
+  /* al cerrar con la X o «Cerrar»: se desvanece un instante antes de irse */
+  const cmPrev = A.acts.closeModal;
+  if (cmPrev) A.acts.closeModal = function (el, ev) {
+    const sc = $('#modalHost .modal-scrim'), m = S.modal;
+    if (!sc || !m || reduce() || sc.classList.contains('m-out')) return cmPrev.apply(this, arguments);
+    sc.classList.remove('m-anim'); sc.classList.add('m-out'); const self = this, args = arguments;
+    setTimeout(() => { if (S.modal === m) cmPrev.apply(self, args); }, 150);
+  };
+
+  /* ventanitas que se crean sueltas en el body: ventanita del turno, elegir WhatsApp, aviso de actualización */
+  const IDS = { tpop: 1, waPick: 1, updPop: 1 }, closedAt = {};
+  try {
+    new MutationObserver(list => list.forEach(rec => {
+      rec.removedNodes.forEach(n => { if (n.id && IDS[n.id]) closedAt[n.id] = Date.now(); });
+      rec.addedNodes.forEach(n => { if (n.nodeType === 1 && n.id && IDS[n.id] && Date.now() - (closedAt[n.id] || 0) > 500 && !reduce()) n.classList.add('pop-anim'); });
+    })).observe(document.body, { childList: true });
+  } catch (e) { /* nada */ }
+
+  const css = document.createElement('style');
+  css.textContent = '@keyframes scrimIn{from{opacity:0}}@keyframes scrimOut{to{opacity:0}}' +
+    '@keyframes modalIn{0%{opacity:0;translate:0 18px;scale:.94}60%{opacity:1}100%{translate:0 0;scale:1}}@keyframes modalOut{to{opacity:0;translate:0 10px;scale:.96}}' +
+    '@keyframes popIn{0%{opacity:0;translate:0 10px;scale:.93}100%{opacity:1;translate:0 0;scale:1}}' +
+    '@keyframes toastIn{0%{opacity:0;translate:0 16px;scale:.95}100%{opacity:1;translate:0 0;scale:1}}@keyframes toastInTop{0%{opacity:0;translate:0 -16px;scale:.95}100%{opacity:1;translate:0 0;scale:1}}' +
+    '@keyframes menuIn{0%{opacity:0;translate:0 -6px;scale:.96}100%{opacity:1;translate:0 0;scale:1}}' +
+    '.modal-scrim.m-anim{animation:scrimIn .22s ease-out}.modal-scrim.m-anim .modal{animation:modalIn .38s cubic-bezier(.2,1.25,.3,1)}' +
+    '.modal-scrim.m-out{animation:scrimOut .15s ease-in forwards}.modal-scrim.m-out .modal{animation:modalOut .15s ease-in forwards}' +
+    '#tpop.pop-anim,#waPick.pop-anim,#updPop.pop-anim .up-card{animation:popIn .3s cubic-bezier(.2,1.3,.4,1);transform-origin:top left}' +
+    '#toastHost .toast{animation:toastIn .32s cubic-bezier(.2,1.3,.4,1)}' +
+    '.more-menu,.menu:not(.drawer){animation:menuIn .18s ease-out}' +
+    '.btn{transition:scale .12s ease,box-shadow .15s,background .15s,border-color .15s}.btn:active:not(:disabled){scale:.96}' +
+    '@media (max-width:640px){#toastHost .toast{animation-name:toastInTop}.modal-scrim.m-anim .modal{animation-name:modalInM}@keyframes modalInM{0%{opacity:0;translate:0 26px;scale:.97}100%{translate:0 0;scale:1}}}' +
+    '@media (prefers-reduced-motion:reduce){.modal-scrim,.modal-scrim .modal,#tpop,#waPick,#updPop .up-card,#toastHost .toast,.more-menu,.menu{animation:none!important}.btn{transition:none}}';
   document.body.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
