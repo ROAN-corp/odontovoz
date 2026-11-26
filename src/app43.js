@@ -129,7 +129,8 @@
   A.stockList = sd => list(sd || place()).map(norm1);
   /* 1.30: lo que necesita la pantalla rediseñada (app115) */
   A.stkApi = { list: sd => list(sd || place()).map(norm1), status, expSoon, daysLeft, use30, fq, canCfg, place, sedeName, isEmp,
-    adjust: (id, d, note) => { const i = itemById(id); if (!i) return null; norm1(i); i.qty = Math.max(0, Math.round((i.qty + d) * 1000) / 1000); mvAdd(i, d, d < 0 ? 'uso' : 'compra', note || 'ajuste rápido'); save(); return i; } };
+    adjust: (id, d, note, type) => { const i = itemById(id); if (!i) return null; norm1(i); i.qty = Math.max(0, Math.round((i.qty + d) * 1000) / 1000); mvAdd(i, d, type || (d < 0 ? 'uso' : 'compra'), note || 'ajuste rápido'); save(); return i; },
+    remove: id => { const sd = place(), L = list(sd), i = itemById(id); if (!i) return null; ST()[sd] = L.filter(x => x !== i); save(); return () => { list(sd).push(i); save(); }; } };
   A.stkRec = { recOf: k => recOf(k), recKey: it => recKey(it), RNAME, CATI, BASE };
   /* 1.40: los «tipos» del kit (composite, anestesia…) que usan las recetas; cada producto concreto (marca, tono) cuelga de un tipo por su `ck` */
   A.stkTypes = () => CAT.map(c => ({ ck: c[0], name: c[1], cat: c[2], unit: c[3], uses: c[4] }));

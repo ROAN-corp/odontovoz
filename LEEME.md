@@ -1132,3 +1132,7 @@ Stock por producto concreto (`app125`): ventana «Agregar producto» (catálogo 
 
 ## 1.41.0 (compilación 1.96.0)
 Stock: `app125` suma «Cargar una compra» (`S.sb`, `A.EMP.stock._cfg.compras`, historial de precios `item.ph`, precio al dictar «a 18500»); `app115` muestra las categorías como acordeón contraído (`s.opn`) con ícono y avisos.
+
+
+## 1.42.0 (compilación 1.97.0)
+Stock: botones unificados (`sbOpen` = compra/llegó mercadería; `saOpen` = «Editar stock», pestaña «Mi stock» en `app125` con `miHTML`, cantidades con `K.adjust(...,'conteo')` y `K.remove`). Se sacaron «Contar el stock», «Insumo nuevo» y «Llegó mercadería» de la fila de acciones.

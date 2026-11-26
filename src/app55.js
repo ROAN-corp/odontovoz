@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.42.0', b: '1.97.0', d: '2026-11-26', items: [
+      { t: 'Stock más simple: «Llegó mercadería» y «Cargar una compra» eran lo mismo y ahora es un solo botón: «Cargar compra · llegó mercadería». «Contar el stock» e «Insumo nuevo» se juntaron en un solo botón, «Editar stock».' },
+      { t: 'Editar stock: ves todo lo que tenés por categoría (desplegable), cambiás la cantidad exacta con − y + o escribiéndola, sacás un producto (con deshacer), y con «＋ Agregar producto» buscás en el catálogo (por ejemplo «composite») y elegís la variedad que tenés, o cargás hablando o a mano.' }] },
     { v: '1.41.1', b: '1.96.1', d: '2026-11-26', items: [
       { t: 'Stock en la PC: los botones de arriba (Llegó mercadería, Usé algo, Contar el stock…) y las categorías ahora se acomodan en varias líneas y se ven completos; si no entraran, se arrastran con el mouse o con la rueda.' }] },
     { v: '1.41.0', b: '1.96.0', d: '2026-11-26', items: [

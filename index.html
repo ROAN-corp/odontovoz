@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.41.1';
+  A.VERSION = '1.42.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.96.1';
+  A.VBUILD = '1.97.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -15888,7 +15888,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.stockList = sd => list(sd || place()).map(norm1);
   /* 1.30: lo que necesita la pantalla rediseñada (app115) */
   A.stkApi = { list: sd => list(sd || place()).map(norm1), status, expSoon, daysLeft, use30, fq, canCfg, place, sedeName, isEmp,
-    adjust: (id, d, note) => { const i = itemById(id); if (!i) return null; norm1(i); i.qty = Math.max(0, Math.round((i.qty + d) * 1000) / 1000); mvAdd(i, d, d < 0 ? 'uso' : 'compra', note || 'ajuste rápido'); save(); return i; } };
+    adjust: (id, d, note, type) => { const i = itemById(id); if (!i) return null; norm1(i); i.qty = Math.max(0, Math.round((i.qty + d) * 1000) / 1000); mvAdd(i, d, type || (d < 0 ? 'uso' : 'compra'), note || 'ajuste rápido'); save(); return i; },
+    remove: id => { const sd = place(), L = list(sd), i = itemById(id); if (!i) return null; ST()[sd] = L.filter(x => x !== i); save(); return () => { list(sd).push(i); save(); }; } };
   A.stkRec = { recOf: k => recOf(k), recKey: it => recKey(it), RNAME, CATI, BASE };
   /* 1.40: los «tipos» del kit (composite, anestesia…) que usan las recetas; cada producto concreto (marca, tono) cuelga de un tipo por su `ck` */
   A.stkTypes = () => CAT.map(c => ({ ck: c[0], name: c[1], cat: c[2], unit: c[3], uses: c[4] }));
@@ -18586,6 +18587,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.42.0', b: '1.97.0', d: '2026-11-26', items: [
+      { t: 'Stock más simple: «Llegó mercadería» y «Cargar una compra» eran lo mismo y ahora es un solo botón: «Cargar compra · llegó mercadería». «Contar el stock» e «Insumo nuevo» se juntaron en un solo botón, «Editar stock».' },
+      { t: 'Editar stock: ves todo lo que tenés por categoría (desplegable), cambiás la cantidad exacta con − y + o escribiéndola, sacás un producto (con deshacer), y con «＋ Agregar producto» buscás en el catálogo (por ejemplo «composite») y elegís la variedad que tenés, o cargás hablando o a mano.' }] },
     { v: '1.41.1', b: '1.96.1', d: '2026-11-26', items: [
       { t: 'Stock en la PC: los botones de arriba (Llegó mercadería, Usé algo, Contar el stock…) y las categorías ahora se acomodan en varias líneas y se ven completos; si no entraran, se arrastran con el mouse o con la rueda.' }] },
     { v: '1.41.0', b: '1.96.0', d: '2026-11-26', items: [
@@ -28328,7 +28332,7 @@ const OVMenu = (function () {
     const s = st2(), n = info(L), cats = {}; L.forEach(i => { cats[i.cat] = (cats[i.cat] || 0) + 1; });
     let h = kpisHTML(n, L.length, s);
     if (n.out + n.low > 0 && s.f === 'all' && !s.q && !s.cat) h += '<div class="s2-alert"><span>⚠️ <b>' + (n.out + n.low) + ' insumo' + (n.out + n.low === 1 ? '' : 's') + '</b> con poco o nada' + (n.out ? ' (' + n.out + ' sin stock)' : '') + '.</span><button class="btn small primary" data-act="stkTab" data-t="comprar">Comprar ahora</button></div>';
-    h += '<div class="s2-acts"><button data-act="stkIn"><i>📦</i><b>Llegó mercadería</b></button><button data-act="stkUseM"><i>✋</i><b>Usé algo</b></button><button data-act="stkCount"><i>🔢</i><b>Contar el stock</b></button><button data-act="stkNew"><i>＋</i><b>Insumo nuevo</b></button><button data-act="s2Share"><i>↗</i><b>Compartir</b></button></div>';
+    h += '<div class="s2-acts"><button data-act="sbOpen" class="sa-main"><i>🧾</i><b>Cargar compra · llegó mercadería</b></button><button data-act="saOpen" class="sa-main"><i>✎</i><b>Editar stock</b></button><button data-act="stkUseM"><i>✋</i><b>Usé algo</b></button><button data-act="s2Share"><i>↗</i><b>Compartir</b></button></div>';
     h += '<div class="s2-bar"><label class="s2-search"><span aria-hidden="true">🔍</span><input type="search" id="s2Q" placeholder="Buscar insumo o categoría…" value="' + esc(s.q) + '" data-in="s2Q" aria-label="Buscar insumo"></label>' +
       '<select data-chg="s2Sort" aria-label="Ordenar"><option value="urg"' + (s.sort === 'urg' ? ' selected' : '') + '>Lo más urgente primero</option><option value="name"' + (s.sort === 'name' ? ' selected' : '') + '>Nombre (A a Z)</option><option value="exp"' + (s.sort === 'exp' ? ' selected' : '') + '>Vence antes</option><option value="use"' + (s.sort === 'use' ? ' selected' : '') + '>Más usado</option><option value="val"' + (s.sort === 'val' ? ' selected' : '') + '>Mayor valor</option></select>' +
       '<div class="s2-view" role="group" aria-label="Vista"><button data-act="s2View" data-v="g" aria-pressed="' + s.group + '" title="Agrupar por categoría">▤</button><button data-act="s2View" data-v="d" aria-pressed="' + s.dense + '" title="Lista compacta">☰</button></div></div>';
@@ -29146,7 +29150,7 @@ const OVMenu = (function () {
   if (!A.stkApi || !A.stkAddItem || !A.rutFind) return;
   const K = A.stkApi, norm = s => (A.norm ? A.norm(s) : String(s || '').toLowerCase());
   const money = n => '$' + Math.round(n).toLocaleString('es-AR');
-  const sa = () => S.sa || (S.sa = { tab: 'cat', q: '', qty: {}, text: '', rows: null, added: [], man: { name: '', brand: '', det: '', unit: 'unidades', qty: '1', min: '0', cat: '' } });
+  const sa = () => S.sa || (S.sa = { tab: 'mi', fq: '', opn: {}, q: '', qty: {}, text: '', rows: null, added: [], man: { name: '', brand: '', det: '', unit: 'unidades', qty: '1', min: '0', cat: '' } });
   /* nombres del catálogo en MAYÚSCULAS → Título legible (se respetan A2, 3M, 4G…) */
   const nice = x => { x = String(x || ''); const L = x.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g, ''), U = L.replace(/[^A-ZÁÉÍÓÚÑ]/g, ''); if (!L.length || U.length / L.length < 0.6) return x; return x.toLowerCase().replace(/[a-záéíóúñ0-9.]+/g, w => /\d/.test(w) ? w.toUpperCase() : (/^(x|de|del|y|con|para|gr|ml|mm|cc|g|mg|kg)$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))); };
   const NUM = { un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, doce: 12, quince: 15, veinte: 20 };
@@ -29172,12 +29176,12 @@ const OVMenu = (function () {
   A.stkAddProduct = addProduct;
 
   /* ---------- ventana ---------- */
-  A.acts.saOpen = () => { const s = sa(); s.rows = null; S.modal = { type: 'saAdd' }; A.renderModal(); if (A.rutLoad && !A.rutReady()) A.rutLoad(); };
+  A.acts.saOpen = () => { const s = sa(); s.rows = null; s.tab = 'mi'; S.modal = { type: 'saAdd' }; A.renderModal(); if (A.rutLoad && !A.rutReady()) A.rutLoad(); };
   const back = () => { S.modal = { type: 'stk' }; if (S.stk) S.stk.tab = 'lista'; A.renderModal(); };
   A.acts.saDone = () => back();
   A.acts.saTab = el => { sa().tab = el.getAttribute('data-t'); paint(); };
   const paint = () => { const h = $('#saHost'); if (h) h.innerHTML = body(); else A.renderModal(); };
-  const tabs = () => '<div class="seg sa-tabs" role="tablist">' + [['cat', '🔎 Buscar en el catálogo'], ['voz', '🎙 Cargar hablando'], ['man', '✎ A mano']].map(t => '<button type="button" role="tab" data-act="saTab" data-t="' + t[0] + '" aria-pressed="' + (sa().tab === t[0]) + '">' + t[1] + '</button>').join('') + '</div>';
+  const tabs = () => '<div class="seg sa-tabs" role="tablist">' + [['mi', '📦 Mi stock'], ['cat', '🔎 Agregar del catálogo'], ['voz', '🎙 Hablando'], ['man', '✎ A mano']].map(t => '<button type="button" role="tab" data-act="saTab" data-t="' + t[0] + '" aria-pressed="' + (sa().tab === t[0]) + '">' + t[1] + '</button>').join('') + '</div>';
   const addedBar = () => { const n = sa().added.length; return n ? '<div class="sa-added"><b>✔ ' + n + ' agregado' + (n === 1 ? '' : 's') + ':</b> ' + sa().added.slice(-4).map(x => esc(x)).join(' · ') + (n > 4 ? ' …' : '') + '</div>' : ''; };
   const qtyBox = code => { const q = sa().qty[code] || 1; return '<span class="sa-q"><button type="button" data-act="saQty" data-code="' + esc(code) + '" data-d="-1" aria-label="Menos">−</button><b>' + q + '</b><button type="button" data-act="saQty" data-code="' + esc(code) + '" data-d="1" aria-label="Más">+</button></span>'; };
   const resRow = (r, extra) => '<li class="sa-r"><div class="sa-n"><b>' + esc(nice(r.name)) + '</b><small>' + esc([r.brand, r.cat ? r.cat : '', 'cód. ' + r.code].filter(Boolean).join(' · ')) + '</small></div>' + (extra || qtyBox(r.code) + '<button type="button" class="btn small primary" data-act="saAdd" data-code="' + esc(r.code) + '">Agregar</button>') + '</li>';
@@ -29206,8 +29210,8 @@ const OVMenu = (function () {
     const m = sa().man, f = (id, l, v, ph, ex) => '<div class="field"><label for="sm_' + id + '">' + l + '</label><input id="sm_' + id + '" data-chg="saMan" data-k="' + id + '" value="' + esc(v) + '" placeholder="' + (ph || '') + '"' + (ex || '') + '></div>';
     return '<p class="hint sa-hint">Para lo que no está en el catálogo: poné el nombre completo y los detalles que le pedirías al proveedor.</p>' + f('name', 'Producto', m.name, 'Ej.: Composite Filtek Z350 XT') + '<div class="row2">' + f('brand', 'Marca', m.brand, '3M, Voco, Ultradent…') + f('det', 'Tono / presentación', m.det, 'A2 · jeringa 4 g') + '</div><div class="row3">' + f('unit', 'Unidad', m.unit, 'jeringas, cajas…') + f('qty', 'Cuánto tengo', m.qty, '', ' inputmode="decimal"') + f('min', 'Avisar cuando queden', m.min, '', ' inputmode="decimal"') + '</div>' + f('cat', 'Categoría', m.cat, 'Restauración, Anestesia…') + '<div class="hint bad" id="saMsg"></div><div class="row-btns"><button class="btn primary" data-act="saManGo">Agregar a mi stock</button></div>';
   }
-  const body = () => tabs() + addedBar() + (sa().tab === 'voz' ? vozHTML() : sa().tab === 'man' ? manHTML() : catHTML());
-  MF.saAdd = () => A.modalShell('Agregar a mi stock', '<div id="saHost">' + body() + '</div>', '<button class="btn primary" data-act="saDone">Listo, volver al stock</button>', true);
+  const body = () => tabs() + (sa().tab === 'mi' ? '' : addedBar()) + (sa().tab === 'voz' ? vozHTML() : sa().tab === 'man' ? manHTML() : sa().tab === 'cat' ? catHTML() : miHTML());
+  MF.saAdd = () => A.modalShell('Editar mi stock', '<div id="saHost">' + body() + '</div>', '<button class="btn primary" data-act="saDone">Listo</button>', true);
 
   /* ---------- acciones ---------- */
   A.ins.saQ = el => { sa().q = el.value; const l = $('#saList'), h = $('#saHost'); if (!h) return; const p = el.selectionStart; paintKeep(el); };
@@ -29294,9 +29298,24 @@ const OVMenu = (function () {
     try { rec2.start(); } catch (e) { rec2 = null; }
   };
 
-  /* el botón del «Mi stock» ahora es «Agregar producto» */
-  const stkHTMLp = A.stkHTML;
-  A.stkHTML = function () { const h = stkHTMLp.apply(this, arguments); return h.replace('<button data-act="stkNew"><i>＋</i><b>Insumo nuevo</b></button>', '<button data-act="saOpen" class="sa-main"><i>＋</i><b>Agregar producto</b></button><button data-act="sbOpen" class="sa-main"><i>🧾</i><b>Cargar una compra</b></button>'); };
+  /* ---------- «Mi stock»: editar lo que hay (cantidad exacta, sacar, agregar) ---------- */
+  const CICON = (A.stkCatIcon || (() => '📦'));
+  function miHTML() {
+    const s = sa(), L = K.list(), fq = norm(s.fq || '');
+    const V = L.filter(i => !fq || norm(i.name + ' ' + i.cat).indexOf(fq) >= 0).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    let h = '<label class="sa-s"><span aria-hidden="true">🔍</span><input id="saFq" type="search" autocomplete="off" placeholder="Buscar en mi stock…" value="' + esc(s.fq || '') + '" data-in="saFq" aria-label="Buscar en mi stock"></label>' +
+      '<div class="sa-bar"><span>' + L.length + ' producto' + (L.length === 1 ? '' : 's') + '</span><span class="sa-bb"><button type="button" class="btn small primary" data-act="saTab" data-t="cat">＋ Agregar producto</button></span></div>';
+    if (!L.length) return h + '<div class="empty">Todavía no cargaste nada. Tocá <b>＋ Agregar producto</b> y buscá, por ejemplo, «composite»: te muestro las variedades para que elijas la que tenés.</div>';
+    if (!V.length) return h + '<div class="empty">No encontré «' + esc(s.fq) + '» en tu stock. <button class="linkbtn" data-act="saTab" data-t="cat">Buscarlo en el catálogo</button></div>';
+    const g = {}; V.forEach(i => { (g[i.cat] = g[i.cat] || []).push(i); });
+    return h + Object.keys(g).sort((a, b) => a.localeCompare(b, 'es')).map(c => { const open = !!fq || !!s.opn[c]; return '<section class="sa-g' + (open ? ' open' : '') + '"><button type="button" class="sa-gh" data-act="saCat" data-c="' + esc(c) + '" aria-expanded="' + open + '"><b>' + esc(c) + '</b><small>' + g[c].length + '</small><i aria-hidden="true">▾</i></button>' + (open ? '<ul class="sa-ml">' + g[c].map(i => '<li class="sa-mi"><div class="sa-mn"><b>' + esc(i.name) + '</b><small>' + esc(i.unit || '') + (i.min > 0 ? ' · mínimo ' + K.fq(i.min) : '') + '</small></div><span class="sa-q"><button type="button" data-act="saMiQ" data-id="' + esc(i.id) + '" data-d="-1" aria-label="Menos">−</button><input inputmode="decimal" value="' + K.fq(i.qty) + '" data-chg="saSetQ" data-id="' + esc(i.id) + '" aria-label="Cantidad de ' + esc(i.name) + '"><button type="button" data-act="saMiQ" data-id="' + esc(i.id) + '" data-d="1" aria-label="Más">+</button></span><button type="button" class="sa-edit" data-act="stkItem" data-id="' + esc(i.id) + '" aria-label="Más datos (mínimo, vencimiento, costo)" title="Más datos">⋯</button><button type="button" class="sb-x" data-act="saMiDel" data-id="' + esc(i.id) + '" aria-label="Sacar de mi stock" title="Sacar de mi stock">🗑</button></li>').join('') + '</ul>' : '') + '</section>'; }).join('');
+  }
+  A.ins.saFq = el => { sa().fq = el.value; paintKeep(el); };
+  A.acts.saCat = el => { const s = sa(), c = el.getAttribute('data-c'); if (s.opn[c]) delete s.opn[c]; else s.opn[c] = 1; paint(); };
+  A.acts.saMiQ = el => { const d = +el.getAttribute('data-d'); K.adjust(el.getAttribute('data-id'), d, 'Ajuste de stock', 'conteo'); paint(); };
+  A.chg.saSetQ = el => { const id = el.getAttribute('data-id'), i = K.list().filter(x => x.id === id)[0]; if (!i) return; const v = Math.max(0, A.parseMoney ? A.parseMoney(el.value) : (+String(el.value).replace(',', '.') || 0)); if (v !== i.qty) K.adjust(id, v - i.qty, 'Conteo', 'conteo'); paint(); };
+  A.acts.saMiDel = el => { const id = el.getAttribute('data-id'), i = K.list().filter(x => x.id === id)[0], undo = K.remove(id); if (!undo) return; paint(); A.toast('Sacaste «' + (i ? i.name : 'el producto') + '» de tu stock.', () => { undo(); paint(); }); };
+
   /* cuando el catálogo termina de bajar, se repinta la ventana */
   const rl = A.rutLoad; if (rl) A.rutLoad = function () { const r = rl.apply(this, arguments); setTimeout(() => { if (S.modal && S.modal.type === 'saAdd') paint(); }, 1500); return r; };
 
@@ -29312,13 +29331,15 @@ const OVMenu = (function () {
   document.addEventListener('wheel', e => { const row = e.target.closest && e.target.closest(dragRows); if (row && row.scrollWidth > row.clientWidth + 2 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { row.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
 
   const css = document.createElement('style');
-  css.textContent = '.sa-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}.sa-tabs button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:9px 6px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer}.sa-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}' +
+  css.textContent = '.sa-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}.sa-tabs button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:9px 6px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer}.sa-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}' +
     '.sa-added{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:.84rem}.sa-s{display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:12px;padding:0 10px;background:var(--surface)}.sa-s:focus-within{border-color:var(--accent)}.sa-s input{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;padding:11px 0;outline:none;min-width:0}.sa-hint{margin:8px 2px}' +
     '.sa-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;max-height:48vh;overflow:auto}.sa-r{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--surface)}.sa-n{flex:1;min-width:0;display:flex;flex-direction:column}.sa-n b{font-size:.9rem;line-height:1.25}.sa-n small{color:var(--ink-2);font-size:.72rem}' +
     '.sa-q{display:inline-flex;align-items:center;gap:4px}.sa-q button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--accent);font-size:1rem;cursor:pointer;padding:0}.sa-q b{min-width:20px;text-align:center}' +
     '.sa-voz textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;background:var(--surface);color:var(--ink);resize:vertical}.sa-vb{display:flex;gap:8px;margin:8px 0}' +
     '.sa-row{border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:var(--surface)}.sa-row.done{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--surface))}.sa-say{margin-bottom:6px;font-size:.92rem}.sa-ok{color:var(--ok);font-weight:700;font-size:.82rem}.sa-opts{display:flex;flex-wrap:wrap;gap:6px}' +
     '.sa-opt{display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;padding:6px 10px;font:inherit;cursor:pointer;max-width:100%}.sa-opt b{font-size:.82rem}.sa-opt small{color:var(--ink-2);font-size:.7rem}.sa-opt:hover{border-color:var(--accent)}.sa-own{border-style:dashed;justify-content:center;font-size:.8rem;color:var(--ink-2)}' +
+    '.sa-bar{display:flex;justify-content:space-between;align-items:center;margin:8px 2px;font-size:.84rem;color:var(--ink-2)}.sa-g{margin:0 0 8px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}.sa-gh{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--surface)),var(--surface));color:var(--ink);padding:10px 12px;cursor:pointer;font:inherit}.sa-gh b{flex:1}.sa-gh small{color:var(--ink-2)}.sa-gh i{font-style:normal;color:var(--accent);transition:transform .2s}.sa-g.open .sa-gh i{transform:rotate(180deg)}' +
+    '.sa-ml{list-style:none;margin:0;padding:6px 8px 8px;display:grid;gap:6px}.sa-mi{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 8px}.sa-mn{flex:1;min-width:0;display:flex;flex-direction:column}.sa-mn b{font-size:.88rem;line-height:1.25}.sa-mn small{color:var(--ink-2);font-size:.72rem}.sa-q input{width:54px;box-sizing:border-box;text-align:center;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 2px;font:inherit;font-weight:700}.sa-edit{border:0;background:none;color:var(--ink-2);font-size:1.2rem;cursor:pointer;padding:0 4px}' +
     '.s2-acts .sa-main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}@media (min-width:700px){.s2-acts,.s2-chips{flex-wrap:wrap;overflow:visible}}.s2-acts.dragging,.s2-chips.dragging{cursor:grabbing;user-select:none}.s2-acts,.s2-chips{cursor:grab}.s2-acts button,.s2-chips button{cursor:pointer}' +
     '.sb-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}.sb-l{display:grid;grid-template-columns:1fr 64px 96px auto 24px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--surface)}.sb-n{min-width:0;display:flex;flex-direction:column;gap:3px}.sb-n b{font-size:.9rem;line-height:1.25}.sb-n small{font-size:.74rem;color:var(--ink-2)}.sb-n small .up{color:var(--red);font-weight:700}.sb-n small .dn{color:var(--ok);font-weight:700}.sb-n select{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:8px;padding:4px 6px;font:inherit;font-size:.76rem;max-width:100%}' +
     '.sb-f{display:flex;flex-direction:column;gap:1px}.sb-f small{font-size:.66rem;color:var(--ink-2)}.sb-f input{width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px;font:inherit;text-align:right}.sb-t{font-size:.86rem;min-width:70px;text-align:right}.sb-x{border:0;background:none;color:var(--ink-2);cursor:pointer;font-size:1rem}' +
