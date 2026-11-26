@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.52.0', b: '1.107.0', d: '2026-11-26', items: [
+      { t: 'Mensajes de WhatsApp editables: en Ajustes › La app en este equipo › WhatsApp para recordatorios › «Editar los mensajes» cambiás el texto del recordatorio de turno como quieras. Las palabras entre llaves ({nombre}, {fecha}, {hora}…) se reemplazan solas, y abajo ves cómo queda. Podés volver al texto original.' }
+    ] },
     { v: '1.51.0', b: '1.106.0', d: '2026-11-26', items: [
       { t: 'Cada profesional del equipo completa sus propios datos: en Cuenta › «Mis datos profesionales» carga su especialidad, sus matrículas, el sello, la firma y la foto de la matrícula, una sola vez y desde su usuario. El dueño los recibe en su cuenta, así no hace falta mandar fotos por mensaje.' }
     ] },
