@@ -6,6 +6,8 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.41.1', b: '1.96.1', d: '2026-11-26', items: [
+      { t: 'Stock en la PC: los botones de arriba (Llegó mercadería, Usé algo, Contar el stock…) y las categorías ahora se acomodan en varias líneas y se ven completos; si no entraran, se arrastran con el mouse o con la rueda.' }] },
     { v: '1.41.0', b: '1.96.0', d: '2026-11-26', items: [
       { t: 'Stock: «Cargar una compra». Dictás o escribís lo que llegó con su precio («5 composite 3M A3 a 18500, 2 composite 3M A1 a 18500…»), la app arma las líneas con el producto del catálogo, corregís cantidad y precio, y al confirmar se suma todo al stock con el costo de cada uno. Podés repetir una compra anterior.' },
       { t: 'Comparación de precios: cada producto guarda el historial de lo que pagaste; al cargar una nueva compra ves «última vez $X» con la diferencia (▲ sube, ▼ baja), y en el stock aparece el último precio con su variación.' },
