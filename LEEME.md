@@ -1136,3 +1136,7 @@ Stock: `app125` suma «Cargar una compra» (`S.sb`, `A.EMP.stock._cfg.compras`, 
 
 ## 1.42.0 (compilación 1.97.0)
 Stock: botones unificados (`sbOpen` = compra/llegó mercadería; `saOpen` = «Editar stock», pestaña «Mi stock» en `app125` con `miHTML`, cantidades con `K.adjust(...,'conteo')` y `K.remove`). Se sacaron «Contar el stock», «Insumo nuevo» y «Llegó mercadería» de la fila de acciones.
+
+
+## 1.42.1 (compilación 1.97.1)
+`app125`: `mapCat`/`fixCats` unifican las categorías de Rutiden con las del stock (`A.stkFixCats`, se corre al mostrar «Mi stock» y al abrir «Editar stock») y asignan `ck`/`uses` por nombre (Z100, Z250, etc.).

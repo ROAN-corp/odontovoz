@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.42.0';
+  A.VERSION = '1.42.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.97.0';
+  A.VBUILD = '1.97.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18587,6 +18587,8 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.42.1', b: '1.97.1', d: '2026-11-26', items: [
+      { t: 'Stock: lo que agregás del catálogo ahora se acomoda en las categorías del stock (por ejemplo, «Composites y resinas» pasa a «Restauración») y queda asociado a su tipo, así el descuento automático por práctica funciona. Lo que ya habías cargado se corrige solo al abrir el stock.' }] },
     { v: '1.42.0', b: '1.97.0', d: '2026-11-26', items: [
       { t: 'Stock más simple: «Llegó mercadería» y «Cargar una compra» eran lo mismo y ahora es un solo botón: «Cargar compra · llegó mercadería». «Contar el stock» e «Insumo nuevo» se juntaron en un solo botón, «Editar stock».' },
       { t: 'Editar stock: ves todo lo que tenés por categoría (desplegable), cambiás la cantidad exacta con − y + o escribiéndola, sacás un producto (con deshacer), y con «＋ Agregar producto» buscás en el catálogo (por ejemplo «composite») y elegís la variedad que tenés, o cargás hablando o a mano.' }] },
@@ -28367,6 +28369,7 @@ const OVMenu = (function () {
 
   /* ---------- la pantalla ---------- */
   A.stkHTML = () => {
+    try { if (A.stkFixCats) A.stkFixCats(); } catch (e) { /* nada */ }
     const s = S.stk || (S.stk = { tab: 'lista' }), t = s.tab || 'lista', c = secOf(t), L = K.list();
     if (c.s === 'mi') {
       const h0 = inner();   /* para la elección de centro y, si no hay insumos, el kit recomendado */
@@ -29155,8 +29158,25 @@ const OVMenu = (function () {
   const nice = x => { x = String(x || ''); const L = x.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g, ''), U = L.replace(/[^A-ZÁÉÍÓÚÑ]/g, ''); if (!L.length || U.length / L.length < 0.6) return x; return x.toLowerCase().replace(/[a-záéíóúñ0-9.]+/g, w => /\d/.test(w) ? w.toUpperCase() : (/^(x|de|del|y|con|para|gr|ml|mm|cc|g|mg|kg)$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))); };
   const NUM = { un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, doce: 12, quince: 15, veinte: 20 };
 
+  /* las categorías de Rutiden («Composites y resinas»…) se unifican con las del stock («Restauración»…), que son las que usan las recetas */
+  const CATMAP = [[/composit|resina|adhes|bond|grabad|acido|selladores?|cement|ionom|liner|restaur|aislam|dique|matriz|matrices|cuna|pulid|fresa|piedra|disco|amalgama|microbrush/, 'Restauración'], [/endod|lima|gutaper|conducto|hipoclor/, 'Endodoncia'], [/anest|aguja|carticain|lidocain/, 'Anestesia'], [/implant|cirug|sutur|bisturi|hemost|injert/, 'Cirugía'], [/protes|corona|provision|laborat|yeso/, 'Prótesis'], [/ortod|bracket|ligad|arco/, 'Ortodoncia'], [/impres|alginat|silicon|cubeta/, 'Impresiones'], [/radiol|\brx\b|pelicula/, 'Radiología'], [/esteril|desinf|bioseg|enzimat/, 'Esterilización'], [/descart|guante|barbij|babero|eyector|vaso|gasa|algodon|rollito/, 'Descartables'], [/periodon|profila|fluor|blanque|higien|cepillo/, 'Periodoncia']];
+  const stockCats = () => { const o = []; (A.stkTypes ? A.stkTypes() : []).forEach(t => { if (o.indexOf(t.cat) < 0) o.push(t.cat); }); return o; };
+  const mapCat = text => { const t = norm(text), have = stockCats(); for (const m of CATMAP) if (m[0].test(t) && have.indexOf(m[1]) >= 0) return m[1]; return null; };
+  const typeOf = ck => (A.stkTypes ? A.stkTypes() : []).filter(t => t.ck === ck)[0] || null;
+  /* a lo que ya se cargó: asigna el tipo y pasa el producto a la categoría del stock (una sola vez, sin tocar lo que armó a mano) */
+  function fixCats() {
+    const cats = stockCats(); if (!cats.length) return; let ch = false;
+    K.list().forEach(i => {
+      if (!(i.spec || i.rut)) return;
+      if (!i.ck) { const ck = ckOf(i.name + ' ' + i.cat); if (ck) { i.ck = ck; const ty = typeOf(ck); if (ty && (!i.uses || i.uses <= 1)) i.uses = ty.uses; ch = true; } }
+      const ty = i.ck ? typeOf(i.ck) : null, want = ty ? ty.cat : (cats.indexOf(i.cat) < 0 ? mapCat(i.cat + ' ' + i.name) : null);
+      if (want && i.cat !== want) { i.cat = want; ch = true; }
+    });
+    if (ch) A.stkSave();
+  }
+  A.stkFixCats = fixCats;
   /* ¿de qué «tipo» del kit es? (para que las recetas descuenten del producto concreto) */
-  const MAP = [[/composit|resina|filtek|brillant|estelite|z350|charisma/, 'composite'], [/adhesiv|bond|single bond|ambar|futurabond/, 'adhesivo'], [/grabador|acido|etch|fosforic/, 'grabador'], [/anestesi|carticain|articain|lidocain|mepivac/, 'anestesia'], [/aguja/, 'agujas'], [/guante/, 'guantes'], [/barbijo|mascarilla/, 'barbijos'], [/babero/, 'baberos'], [/eyector/, 'eyectores'], [/gasa/, 'gasas'], [/algodon|rollito/, 'algodon'], [/microbrush|aplicador/, 'microbrush'], [/matriz|matrices/, 'matrices'], [/cuna/, 'cunas'], [/ionomero|vitremer|fuji/, 'ionomero'], [/amalgama/, 'amalgama'], [/gutapercha|cono/, 'gutapercha'], [/hipoclorito/, 'hipoclorito'], [/clorhexidina/, 'clorhex'], [/sutura|hilo de sutura/, 'suturas'], [/bisturi|hoja de bisturi/, 'bisturi'], [/alginato/, 'alginato'], [/silicona/, 'silicona']];
+  const MAP = [[/composit|resina|filtek|brillant|estelite|z100|z250|z350|charisma|tetric|herculite|opallis|llumina|vitra|aura|esthet|ultrafil|permaflo|flow\b/, 'composite'], [/adhesiv|bond|single bond|ambar|futurabond/, 'adhesivo'], [/grabador|acido|etch|fosforic/, 'grabador'], [/anestesi|carticain|articain|lidocain|mepivac/, 'anestesia'], [/aguja/, 'agujas'], [/guante/, 'guantes'], [/barbijo|mascarilla/, 'barbijos'], [/babero/, 'baberos'], [/eyector/, 'eyectores'], [/gasa/, 'gasas'], [/algodon|rollito/, 'algodon'], [/microbrush|aplicador/, 'microbrush'], [/matriz|matrices/, 'matrices'], [/cuna/, 'cunas'], [/ionomero|vitremer|fuji/, 'ionomero'], [/amalgama/, 'amalgama'], [/gutapercha|cono/, 'gutapercha'], [/hipoclorito/, 'hipoclorito'], [/clorhexidina/, 'clorhex'], [/sutura|hilo de sutura/, 'suturas'], [/bisturi|hoja de bisturi/, 'bisturi'], [/alginato/, 'alginato'], [/silicona/, 'silicona']];
   const ckOf = text => { const t = norm(text), types = A.stkTypes ? A.stkTypes() : []; for (const m of MAP) if (m[0].test(t) && types.some(x => x.ck === m[1])) return m[1]; return null; };
 
   /* sumar un producto concreto: si el kit tenía el tipo «en blanco» (sin cantidad), se completa ese; si no, es uno nuevo */
@@ -29167,7 +29187,7 @@ const OVMenu = (function () {
     if (!it) {
       const ty = ck && A.stkTypes ? A.stkTypes().filter(t => t.ck === ck)[0] : null, ph = ck ? A.stkFind(i => i.ck === ck && !i.spec && !i.rut && !(i.qty > 0)) : null;
       if (ph) { Object.assign(ph, { name: o.name, unit: o.unit || ph.unit, rut: o.rut || null, brand: o.brand || '', det: o.det || '', cost: o.cost || 0, supplier: o.rut ? 'rut' : '', spec: true, min: o.min != null ? o.min : (ph.min || 1) }); if (o.cat && !ph.cat) ph.cat = o.cat; A.stkSave(); it = ph; }
-      else it = A.stkAddItem({ name: o.name, unit: o.unit || (ty && ty.unit) || 'unidades', uses: ty ? ty.uses : 1, min: o.min != null ? o.min : 1, cat: o.cat || 'Otros', ck, rut: o.rut || null, brand: o.brand || '', det: o.det || '', cost: o.cost || 0, supplier: o.rut ? 'rut' : '', spec: true });
+      else it = A.stkAddItem({ name: o.name, unit: o.unit || (ty && ty.unit) || 'unidades', uses: ty ? ty.uses : 1, min: o.min != null ? o.min : 1, cat: (ty && ty.cat) || mapCat((o.cat || '') + ' ' + o.name) || o.cat || 'Otros', ck, rut: o.rut || null, brand: o.brand || '', det: o.det || '', cost: o.cost || 0, supplier: o.rut ? 'rut' : '', spec: true });
     } else if (!qty && !price) A.toast('Ya lo tenés: ' + it.name);
     if (qty) K.adjust(it.id, qty, o.note || (price ? 'Compra' + (sup ? ' a ' + sup : '') + ' · ' + money(price) + ' c/u' : 'Stock inicial'));
     if (price) { it.cost = price; (it.ph = it.ph || []).push({ d: o.date || A.today(), p: price, q: qty, s: sup }); if (it.ph.length > 30) it.ph.shift(); A.stkSave(); }
@@ -29176,7 +29196,7 @@ const OVMenu = (function () {
   A.stkAddProduct = addProduct;
 
   /* ---------- ventana ---------- */
-  A.acts.saOpen = () => { const s = sa(); s.rows = null; s.tab = 'mi'; S.modal = { type: 'saAdd' }; A.renderModal(); if (A.rutLoad && !A.rutReady()) A.rutLoad(); };
+  A.acts.saOpen = () => { try { fixCats(); } catch (e) { /* nada */ } const s = sa(); s.rows = null; s.tab = 'mi'; S.modal = { type: 'saAdd' }; A.renderModal(); if (A.rutLoad && !A.rutReady()) A.rutLoad(); };
   const back = () => { S.modal = { type: 'stk' }; if (S.stk) S.stk.tab = 'lista'; A.renderModal(); };
   A.acts.saDone = () => back();
   A.acts.saTab = el => { sa().tab = el.getAttribute('data-t'); paint(); };
@@ -29210,7 +29230,8 @@ const OVMenu = (function () {
     const m = sa().man, f = (id, l, v, ph, ex) => '<div class="field"><label for="sm_' + id + '">' + l + '</label><input id="sm_' + id + '" data-chg="saMan" data-k="' + id + '" value="' + esc(v) + '" placeholder="' + (ph || '') + '"' + (ex || '') + '></div>';
     return '<p class="hint sa-hint">Para lo que no está en el catálogo: poné el nombre completo y los detalles que le pedirías al proveedor.</p>' + f('name', 'Producto', m.name, 'Ej.: Composite Filtek Z350 XT') + '<div class="row2">' + f('brand', 'Marca', m.brand, '3M, Voco, Ultradent…') + f('det', 'Tono / presentación', m.det, 'A2 · jeringa 4 g') + '</div><div class="row3">' + f('unit', 'Unidad', m.unit, 'jeringas, cajas…') + f('qty', 'Cuánto tengo', m.qty, '', ' inputmode="decimal"') + f('min', 'Avisar cuando queden', m.min, '', ' inputmode="decimal"') + '</div>' + f('cat', 'Categoría', m.cat, 'Restauración, Anestesia…') + '<div class="hint bad" id="saMsg"></div><div class="row-btns"><button class="btn primary" data-act="saManGo">Agregar a mi stock</button></div>';
   }
-  const body = () => tabs() + (sa().tab === 'mi' ? '' : addedBar()) + (sa().tab === 'voz' ? vozHTML() : sa().tab === 'man' ? manHTML() : sa().tab === 'cat' ? catHTML() : miHTML());
+  const body = () => { try { fixCats(); } catch (e) { /* nada */ } return bodyH(); };
+  const bodyH = () => tabs() + (sa().tab === 'mi' ? '' : addedBar()) + (sa().tab === 'voz' ? vozHTML() : sa().tab === 'man' ? manHTML() : sa().tab === 'cat' ? catHTML() : miHTML());
   MF.saAdd = () => A.modalShell('Editar mi stock', '<div id="saHost">' + body() + '</div>', '<button class="btn primary" data-act="saDone">Listo</button>', true);
 
   /* ---------- acciones ---------- */

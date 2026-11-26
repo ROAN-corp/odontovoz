@@ -92,6 +92,7 @@
 
   /* ---------- la pantalla ---------- */
   A.stkHTML = () => {
+    try { if (A.stkFixCats) A.stkFixCats(); } catch (e) { /* nada */ }
     const s = S.stk || (S.stk = { tab: 'lista' }), t = s.tab || 'lista', c = secOf(t), L = K.list();
     if (c.s === 'mi') {
       const h0 = inner();   /* para la elección de centro y, si no hay insumos, el kit recomendado */
