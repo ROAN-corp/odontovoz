@@ -50,7 +50,12 @@
     const o = document.createElement('canvas'); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1; o.getContext('2d').drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height); return o.toDataURL('image/png');
   }
   function toJpg(im) { const mx = 900, r = Math.min(1, mx / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * r); c.height = Math.round(im.height * r); const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.62); }
-  const stampReg = p => { const a = A.actor ? A.actor() : { who: '' }, cr = p.cred || {}; cr.at = new Date().toISOString(); cr.by = a.who || ''; cr.h = sha256((cr.sello || '') + '|' + (cr.firma || '') + '|' + (cr.matFoto || '') + '|' + (p.mat || '')); p.cred = cr; };
+  const stampReg = p => { const a = A.actor ? A.actor() : { who: '' }, cr = p.cred || {}; cr.at = new Date().toISOString(); cr.by = a.who || ''; cr.h = sha256((cr.sello || '') + '|' + (cr.firma || '') + '|' + (cr.matFoto || '') + '|' + (p.mat || '') + ((p.mats || []).length > 1 ? '|' + p.mats.slice(1).map(x => (x.n || '') + '~' + (x.j || '') + '~' + (x.sello || '') + '~' + (x.matFoto || '')).join('|') : '')); p.cred = cr; };
+  A.credImg = { loadImg, toInk, toJpg }; A.credStamp = stampReg;
+  /* 1.47: profesionales con más de una matrícula: las fichas FORN (Federación de Río Negro) usan la de Río Negro */
+  const isRN = x => /r[ií]o\s*negro|\brn\b/i.test(String(x || ''));
+  A.credPick = p => { const cr = (p && p.cred) || {}, M = (p && p.mats) || [], i = M.findIndex(x => x && x.n && isRN(x.j)); return i > 0 && M[i].sello ? { firma: cr.firma, sello: M[i].sello, matFoto: M[i].matFoto } : cr; };
+  A.matRN = p => { const m = ((p && p.mats) || []).filter(x => x && x.n && isRN(x.j))[0]; return m ? m.n : (p && p.mat) || ''; };
   A.chg.credFile = async el => {
     const id = el.getAttribute('data-id'), k = el.getAttribute('data-k'), p = A.PRO(id), f = el.files && el.files[0]; if (!p || !f) return;
     try {
@@ -102,14 +107,14 @@
 
   /* ---------- en el PDF: sello y firma del profesional, nota de presentación ---------- */
   function fit(d, data, x, y, w, h, fmt) { try { const pr = d.getImageProperties(data), r = Math.min(w / pr.width, h / pr.height), iw = pr.width * r, ih = pr.height * r; d.addImage(data, fmt || 'PNG', x + (w - iw) / 2, y + (h - ih) / 2, iw, ih, undefined, 'FAST'); } catch (e) { /* nada */ } }
-  A.frnStamp = (d, pr, f) => { const cr = (pr && pr.cred) || {}; if (cr.firma) fit(d, cr.firma, 174, 92, 52, 17); if (cr.sello) fit(d, cr.sello, 230, 91, 54, 19); };
+  A.frnStamp = (d, pr, f) => { const cr = (A.credPick ? A.credPick(pr) : (pr && pr.cred)) || {}; if (cr.firma) fit(d, cr.firma, 174, 92, 52, 17); if (cr.sello) fit(d, cr.sello, 230, 91, 54, 19); };
   A.frnCover = (d, mes, L, pro) => {
     const by = {}; L.forEach(x => { (by[x.f.pro || ''] = by[x.f.pro || ''] || []).push(x); });
     Object.keys(by).forEach(pid => {
-      const items = by[pid], P = A.PRO(pid) || {}, cr = P.cred || {}, MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'], mt = MES[+mes.slice(5) - 1] + ' de ' + mes.slice(0, 4);
+      const items = by[pid], P = A.PRO(pid) || {}, cr = (A.credPick ? A.credPick(P) : P.cred) || {}, MES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'], mt = MES[+mes.slice(5) - 1] + ' de ' + mes.slice(0, 4);
       d.addPage('a4', 'landscape'); d.setTextColor(20, 20, 20); d.setFont('helvetica', 'bold'); d.setFontSize(16); d.text('Nota de presentación mensual · FORN', 10, 18);
       d.setFont('helvetica', 'normal'); d.setFontSize(10);
-      const txt = 'Quien suscribe, ' + (P.name || '') + (P.mat ? ', Matrícula Profesional N° ' + P.mat : '') + ', declara que ' + (items.length === 1 ? 'la ficha incluida' : 'las ' + items.length + ' fichas incluidas') + ' en este archivo, correspondientes a ' + mt + ', se refieren a prestaciones realizadas por el/la suscripto/a, que los datos consignados son veraces y que cada ficha cuenta con la conformidad del paciente mediante su firma electrónica (Ley 25.506, art. 5) cuando así se indica. Las fichas se sellan al presentarse: no pueden modificarse y cualquier corrección se hace con una ficha de corrección nueva. Cada ficha lleva un código de verificación; si el archivo o una ficha se alteran, el código deja de coincidir.';
+      const txt = 'Quien suscribe, ' + (P.name || '') + (A.matRN(P) ? ', Matrícula Profesional N° ' + A.matRN(P) : '') + ', declara que ' + (items.length === 1 ? 'la ficha incluida' : 'las ' + items.length + ' fichas incluidas') + ' en este archivo, correspondientes a ' + mt + ', se refieren a prestaciones realizadas por el/la suscripto/a, que los datos consignados son veraces y que cada ficha cuenta con la conformidad del paciente mediante su firma electrónica (Ley 25.506, art. 5) cuando así se indica. Las fichas se sellan al presentarse: no pueden modificarse y cualquier corrección se hace con una ficha de corrección nueva. Cada ficha lleva un código de verificación; si el archivo o una ficha se alteran, el código deja de coincidir.';
       d.text(d.splitTextToSize(txt.replace(/[−–—]/g, '-'), 277), 10, 28);
       d.setFont('helvetica', 'bold'); d.setFontSize(9); d.text('Código del lote: ' + A.frnLote(items), 10, 60); d.setFont('helvetica', 'normal'); d.text('Armada el ' + hm(new Date().toISOString()) + ' con OdontoVoz · ' + (A.CLINIC || ''), 10, 65);
       d.setDrawColor(150, 160, 165); d.rect(180, 50, 107, 46); d.setFontSize(8); d.setFont('helvetica', 'bold'); d.text('FIRMA Y SELLO DEL PROFESIONAL', 183, 55); d.setFont('helvetica', 'normal');

@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.47.0', b: '1.102.0', d: '2026-11-26', items: [
+      { t: 'Profesionales: la especialidad ahora se elige de una lista (con «Otra» para escribirla) y se pueden cargar varias matrículas, cada una con su provincia o colegio (por ejemplo Río Negro y Neuquén). Salen todas juntas en las indicaciones y firmas, y las fichas de la FORN usan la de Río Negro.' },
+      { t: 'Sello y foto de la matrícula: si tenés más de una matrícula, cada una puede tener su propio sello y su foto (la firma es una sola).' }
+    ] },
     { v: '1.46.0', b: '1.101.0', d: '2026-11-26', items: [
       { t: 'Al cargar lo que hiciste desde la evolución, cada práctica tiene su tilde «Cobrar». Si destildás una (por ejemplo la consulta), queda registrada en la historia clínica pero no se cobra, y escribís el motivo: la secretaría lo ve en «Para cobrar» y en la cuenta del paciente. Después elegís igual si cobra la secretaría o cobrás vos.' }
     ] },

@@ -346,7 +346,7 @@
     /* odontólogo */
     d.setLineWidth(0.3); d.rect(170, 61, 117, 50);
     lbl('ODONTÓLOGO', 172, 66); d.setFontSize(9.5); d.text(clean(pr.name || ''), 172, 71);
-    d.line(170, 74, 287, 74); lbl('Matrícula Profesional N°', 172, 79); d.setFontSize(9.5); d.text(clean(pr.mat || ''), 210, 79);
+    d.line(170, 74, 287, 74); lbl('Matrícula Profesional N°', 172, 79); d.setFontSize(9.5); d.text(clean((A.matRN ? A.matRN(pr) : pr.mat) || ''), 210, 79);
     d.line(170, 82, 287, 82); lbl('Lugar y Fecha', 172, 87); d.setFontSize(9.5); d.text(clean(((A.CFG && A.CFG.addr) || '').split(',').pop().trim() + '  ' + dmy(A.today())), 194, 87);
     d.line(170, 90, 287, 90); lbl('FIRMA Y SELLO', 215, 109); if (A.frnStamp) A.frnStamp(d, pr, f);
     /* prácticas */
@@ -429,7 +429,7 @@
     d.setTextColor(20, 20, 20); d.setFont('helvetica', 'bold'); d.setFontSize(15); d.text('Presentación FORN · ' + clean(mesTxt(mes)), 10, 16);
     d.setFont('helvetica', 'normal'); d.setFontSize(9.5);
     const P = pro ? proOf(pro) : null;
-    d.text(clean((P ? P.name + (P.mat ? ' · Matrícula ' + P.mat : '') + ' · ' : '') + A.CLINIC + ' · ' + L.length + ' fichas · ' + L.reduce((s, x) => s + x.f.rows.length, 0) + ' prácticas'), 10, 23);
+    d.text(clean((P ? P.name + ((A.matRN ? A.matRN(P) : P.mat) ? ' · Matrícula ' + (A.matRN ? A.matRN(P) : P.mat) : '') + ' · ' : '') + A.CLINIC + ' · ' + L.length + ' fichas · ' + L.reduce((s, x) => s + x.f.rows.length, 0) + ' prácticas'), 10, 23);
     const cols = [['#', 8], ['Paciente', 58], ['DNI', 24], ['Obra social', 40], ['N° afiliado', 32], ['Prácticas (código · pieza · cara)', 104], ['Firma', 14]];
     let y = 31, x = 10; d.setFont('helvetica', 'bold'); d.setFontSize(8); cols.forEach(c => { d.text(c[0], x + 1, y); x += c[1]; }); d.setFont('helvetica', 'normal'); d.line(10, y + 1.5, 290, y + 1.5); y += 6;
     L.forEach((it, i) => {
