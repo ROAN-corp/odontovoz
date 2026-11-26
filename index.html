@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.43.0';
+  A.VERSION = '1.44.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.98.0';
+  A.VBUILD = '1.99.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18587,6 +18587,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.44.0', b: '1.99.0', d: '2026-11-26', items: [
+      { t: 'Cada profesional ve solo su agenda: en Usuarios del equipo hay una opción nueva, «Cada profesional ve solo su agenda». Prendida, los usuarios con puesto Profesional o Asistente ven únicamente los turnos de su profesional. El dueño, los socios, la administración y la secretaría siguen viendo todas las agendas.' }
+    ] },
     { v: '1.43.0', b: '1.98.0', d: '2026-11-26', items: [
       { t: 'Tope mensual de prácticas por obra social: en Ajustes › Obras sociales, en cada una podés poner cuántas prácticas por mes cubre. En la ficha del paciente (y en la resumida) aparece un aviso: cuántas prácticas lleva este mes, «le queda 1» cuando está por llegar, y en rojo cuando llegó o se pasó del tope. Tocando el aviso ves cuáles son. También te avisa al registrar la práctica que llega al tope.', top: true }
     ] },
@@ -29477,6 +29480,49 @@ const OVMenu = (function () {
     '.ostp-red { border-color: var(--red); border-left-color: var(--red); background: var(--surface-2); }',
     '.ostp-red .ostp-i, .ostp-red .ostp-t { color: var(--red); }'
   ].join('\n');
+  document.head.appendChild(css);
+})();
+/* ===== 1.44: cada profesional ve solo su propia agenda (opción del dueño en Usuarios del equipo) ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns;
+  /* Con la opción prendida (A.CFG.agOwn), los usuarios con puesto Profesional o Asistente ven solo a su profesional.
+     Dueño, socios, administración y secretaría siguen viendo todo. */
+  const mine = () => {
+    if (!A.CFG || !A.CFG.agOwn) return null;
+    const m = A.memberNow && A.memberNow(); if (!m || (m.role !== 'profesional' && m.role !== 'asistente')) return null;
+    return (A.mbPro && A.mbPro()) || null;
+  };
+  A.agOwnPro = mine;
+
+  const vpPrev = A.visPros;
+  A.visPros = function () {
+    const l = vpPrev.apply(this, arguments), id = mine(); if (!id) return l;
+    const f = l.filter(p => p.id === id); return f.length ? f : (A.PRO(id) ? [A.PRO(id)] : l);
+  };
+  const keepPrev = A.locKeep;
+  A.locKeep = function (a) {
+    const id = mine();
+    if (id && a && a.pro && a.pro !== id) return false;
+    return keepPrev ? keepPrev.apply(this, arguments) : true;
+  };
+  const arPrev = A.afterRefresh;
+  A.afterRefresh = function () {
+    const id = mine(); if (id && !(S.proSel && S.proSel.length === 1 && S.proSel[0] === id)) S.proSel = [id];
+    return arPrev ? arPrev.apply(this, arguments) : undefined;
+  };
+
+  /* el interruptor, arriba de «Usuarios del equipo» (solo dueño y socios) */
+  const teamPrev = MF.team;
+  if (teamPrev) MF.team = function () {
+    let h = teamPrev.apply(this, arguments); if (typeof h !== 'string' || (A.memberNow && A.memberNow())) return h;
+    const box = '<label class="chk ag-own"><input type="checkbox" data-chg="agOwn"' + (A.CFG.agOwn ? ' checked' : '') + '> <span><b>Cada profesional ve solo su agenda</b><small>Los usuarios con puesto Profesional o Asistente no ven los turnos de los otros profesionales. Vos, los socios, la administración y la secretaría siguen viendo todo. Se oculta en pantalla; no es una barrera de seguridad de los datos.</small></span></label>';
+    const k = '<div class="tm-code">'; return h.indexOf(k) >= 0 ? h.replace(k, box + k) : h.replace('<div class="tm-me">', box + '<div class="tm-me">');
+  };
+  A.chg.agOwn = el => { A.CFG.agOwn = !!el.checked; A.save(); A.toast(A.CFG.agOwn ? 'Listo: cada profesional ve solo su agenda.' : 'Listo: todos los profesionales ven todas las agendas.'); A.refresh(); };
+
+  const css = document.createElement('style'); css.id = 'ovApp127';
+  css.textContent = '.ag-own{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 12px;background:var(--surface-2)}.ag-own small{display:block;color:var(--ink-2);font-weight:400;margin-top:2px;line-height:1.35}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.44.0', b: '1.99.0', d: '2026-11-26', items: [
+      { t: 'Cada profesional ve solo su agenda: en Usuarios del equipo hay una opción nueva, «Cada profesional ve solo su agenda». Prendida, los usuarios con puesto Profesional o Asistente ven únicamente los turnos de su profesional. El dueño, los socios, la administración y la secretaría siguen viendo todas las agendas.' }
+    ] },
     { v: '1.43.0', b: '1.98.0', d: '2026-11-26', items: [
       { t: 'Tope mensual de prácticas por obra social: en Ajustes › Obras sociales, en cada una podés poner cuántas prácticas por mes cubre. En la ficha del paciente (y en la resumida) aparece un aviso: cuántas prácticas lleva este mes, «le queda 1» cuando está por llegar, y en rojo cuando llegó o se pasó del tope. Tocando el aviso ves cuáles son. También te avisa al registrar la práctica que llega al tope.', top: true }
     ] },

@@ -1143,3 +1143,6 @@ Stock: botones unificados (`sbOpen` = compra/llegó mercadería; `saOpen` = «Ed
 
 ## 1.43.0 (compilación 1.98.0)
 `app126`: tope mensual de prácticas por obra social. `o.tope` (campo «Tope de prácticas por mes» en el editor de la obra social, `A.chg.osTope`); `A.osTope(pid)` cuenta las `pd.tx` hechas este mes con la obra social del paciente; aviso `.ostp` (info / «queda 1» / rojo al llegar o pasarse) arriba de la ficha completa y debajo del encabezado de la resumida; toast al registrar la práctica que llega al tope (envuelve `A.onTxDone`). Sin tope: solo informa cuántas lleva.
+
+## 1.44.0 (compilación 1.99.0)
+`app127`: opción `A.CFG.agOwn` («Cada profesional ve solo su agenda», interruptor arriba de Usuarios del equipo, `A.chg.agOwn`, solo dueño/socio). `A.agOwnPro()` da el profesional del usuario si su puesto es Profesional o Asistente y la opción está prendida; envuelve `A.visPros` (una sola columna), `A.locKeep` (turnos de otros no pasan) y `A.afterRefresh` (fuerza `S.proSel`). Es solo de pantalla: los datos igual llegan al equipo.
