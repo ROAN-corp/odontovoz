@@ -1,4 +1,8 @@
-// OdontoVoz · push-hook: manda notificaciones al teléfono (Firebase Cloud Messaging) cuando cambia algo en el lugar.
+// OdontoVoz · push-hook: manda notificaciones al teléfono cuando cambia algo en el lugar:
+//   · Android con el APK → Firebase Cloud Messaging.
+//   · iPhone, iPad, PC y Android sin el APK → Web Push estándar (VAPID + cifrado aes128gcm, RFC 8291), sin librerías.
+//   Las claves VAPID las genera la propia función la primera vez y quedan en la tabla ov_wpush_vapid (solo la lee la clave de servicio).
+//   GET devuelve la clave pública para que los navegadores se suscriban.
 // La despierta la base (supabase/push.sql, pg_net) cada vez que entra un cambio a la cola ov_push_q.
 // Verify JWT: NO (la llama la base). No recibe datos de afuera: solo procesa la cola, que únicamente escriben los triggers.
 // Secretos: FCM_SERVICE_ACCOUNT (el JSON de la cuenta de servicio de Firebase, pegado entero). SUPABASE_URL y
@@ -106,6 +110,62 @@ async function send(sa: any, m: Msg, t: Tok): Promise<'ok' | 'gone' | 'err'> {
   return r.status === 404 || /UNREGISTERED|INVALID_ARGUMENT.*token|registration-token-not-registered/i.test(txt) ? 'gone' : 'err';
 }
 
+/* ======================= Web Push (iPhone, iPad, PC, Android sin APK) ======================= */
+export type WSub = { endpoint: string; p256dh: string; auth: string };
+const ub64 = (s: string) => { let t = s.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; return Uint8Array.from(atob(t), c => c.charCodeAt(0)); };
+const cat = (...a: Uint8Array[]) => { const o = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let p = 0; a.forEach(x => { o.set(x, p); p += x.length; }); return o; };
+const hkdf = async (ikm: Uint8Array, salt: Uint8Array, info: Uint8Array, len: number) => {
+  const k = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveBits']);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info }, k, len * 8));
+};
+/* RFC 8291 (aes128gcm): cifra el mensaje para la suscripción de ese navegador */
+export async function encryptPush(payload: Uint8Array, p256dh: string, auth: string): Promise<Uint8Array> {
+  const ua = ub64(p256dh), authSecret = ub64(auth), enc = new TextEncoder();
+  const eph = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']) as CryptoKeyPair;
+  const asPub = new Uint8Array(await crypto.subtle.exportKey('raw', eph.publicKey));
+  const uaKey = await crypto.subtle.importKey('raw', ua, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+  const shared = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: uaKey }, eph.privateKey, 256));
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const ikm = await hkdf(shared, authSecret, cat(enc.encode('WebPush: info\0'), ua, asPub), 32);
+  const cek = await hkdf(ikm, salt, enc.encode('Content-Encoding: aes128gcm\0'), 16);
+  const nonce = await hkdf(ikm, salt, enc.encode('Content-Encoding: nonce\0'), 12);
+  const aes = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt']);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aes, cat(payload, new Uint8Array([2]))));
+  const head = new Uint8Array(21); head.set(salt, 0); new DataView(head.buffer).setUint32(16, 4096); head[20] = asPub.length;
+  return cat(head, asPub, ct);
+}
+type VKeys = { pub: string; priv: CryptoKey };
+let vcache: VKeys | null = null;
+/* claves VAPID: se crean una sola vez y quedan guardadas (la clave privada nunca sale de la base) */
+export async function vapidKeys(): Promise<VKeys> {
+  if (vcache) return vcache;
+  const read = async () => { const r = await db('/rest/v1/ov_wpush_vapid?select=pub,jwk&id=eq.1'); return r && r[0] ? r[0] : null; };
+  let row = await read();
+  if (!row) {
+    const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']) as CryptoKeyPair;
+    const pub = b64url(await crypto.subtle.exportKey('raw', kp.publicKey)), jwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+    await db('/rest/v1/ov_wpush_vapid', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' }, body: JSON.stringify({ id: 1, pub, jwk }) });
+    row = await read(); if (!row) throw new Error('No se pudieron guardar las claves de Web Push');
+  }
+  const priv = await crypto.subtle.importKey('jwk', row.jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  vcache = { pub: row.pub, priv }; return vcache;
+}
+export async function vapidAuth(endpoint: string, V: VKeys, now = Date.now()): Promise<string> {
+  const head = b64url(JSON.stringify({ typ: 'JWT', alg: 'ES256' }));
+  const claim = b64url(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(now / 1000) + 12 * 3600, sub: 'https://odontovoz.com.ar' }));
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, V.priv, new TextEncoder().encode(head + '.' + claim));
+  return 'vapid t=' + head + '.' + claim + '.' + b64url(sig) + ', k=' + V.pub;
+}
+export function webPayload(m: Msg) { return JSON.stringify({ title: m.title, body: m.body, tag: m.tag, data: Object.assign({ kind: m.kind }, m.data) }); }
+async function sendWeb(m: Msg, s: WSub, V: VKeys): Promise<'ok' | 'gone' | 'err'> {
+  const body = await encryptPush(new TextEncoder().encode(webPayload(m)), s.p256dh, s.auth);
+  const r = await fetch(s.endpoint, { method: 'POST', headers: { Authorization: await vapidAuth(s.endpoint, V), 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream', TTL: '3600', Urgency: 'high' }, body });
+  if (r.ok) return 'ok';
+  return r.status === 404 || r.status === 410 ? 'gone' : 'err';
+}
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': '*' };
+const J = { 'Content-Type': 'application/json' };
+
 /* ======================= base (clave de servicio, solo dentro del servidor) ======================= */
 const db = async (path: string, init: RequestInit = {}) => {
   const r = await fetch(env('SUPABASE_URL') + path, Object.assign({}, init, { headers: Object.assign({ apikey: env('SUPABASE_SERVICE_ROLE_KEY'), Authorization: 'Bearer ' + env('SUPABASE_SERVICE_ROLE_KEY'), 'Content-Type': 'application/json' }, init.headers || {}) }));
@@ -121,16 +181,25 @@ async function namesFor(owner: string): Promise<Names> {
   return { pat: id => P[id] || '', pro: id => R[id] || '', sede: id => L[id] || '' };
 }
 
-export async function serve(_req: Request): Promise<Response> {
+export async function serve(req: Request): Promise<Response> {
+  /* el navegador pregunta la clave pública para suscribirse a los avisos */
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  if (req.method === 'GET') {
+    try { const V = await vapidKeys(); return new Response(JSON.stringify({ ok: true, key: V.pub }), { headers: Object.assign({}, J, CORS) }); }
+    catch (_e) { return new Response(JSON.stringify({ ok: false }), { status: 200, headers: Object.assign({}, J, CORS) }); }
+  }
   let sa: any = null; try { sa = JSON.parse(env('FCM_SERVICE_ACCOUNT') || 'null'); } catch (_e) { sa = null; }
+  const fcmOk = !!(sa && sa.private_key);
   const q: Ev[] = await db('/rest/v1/rpc/ov_push_claim', { method: 'POST', body: JSON.stringify({ p_n: 100 }) }) || [];
-  if (!q.length) return new Response(JSON.stringify({ ok: true, n: 0 }), { headers: { 'Content-Type': 'application/json' } });
-  if (!sa || !sa.private_key) return new Response(JSON.stringify({ ok: false, msg: 'Falta FCM_SERVICE_ACCOUNT' }), { status: 200 });
+  if (!q.length) return new Response(JSON.stringify({ ok: true, n: 0 }), { headers: J });
   const byOwner: Record<string, Ev[]> = {}; q.forEach(e => { (byOwner[e.owner] = byOwner[e.owner] || []).push(e); });
-  let sent = 0, gone = 0, errs = 0;
+  let sent = 0, gone = 0, errs = 0, web = 0, webGone = 0, webErrs = 0, V: VKeys | null = null;
   for (const owner of Object.keys(byOwner)) {
-    const toks: Tok[] = await db('/rest/v1/ov_push_tokens?select=*&owner=eq.' + owner) || [];
-    if (!toks.length) continue;
+    const toks: Tok[] = fcmOk ? (await db('/rest/v1/ov_push_tokens?select=*&owner=eq.' + owner) || []) : [];
+    /* suscripciones web (iPhone, PC…): si todavía no está el SQL de Web Push, se sigue sin ellas */
+    let wsubs: Array<Tok & WSub> = [];
+    try { wsubs = ((await db('/rest/v1/ov_wpush_subs?select=*&owner=eq.' + owner)) || []).map((x: any) => Object.assign({}, x, { token: x.endpoint })); } catch (_e) { wsubs = []; }
+    if (!toks.length && !wsubs.length) continue;
     const N = await namesFor(owner), seen = new Set<string>();
     for (const ev of byOwner[owner]) {
       for (const m of events(ev, N)) {
@@ -141,10 +210,19 @@ export async function serve(_req: Request): Promise<Response> {
             if (r === 'ok') sent++; else if (r === 'gone') { gone++; await db('/rest/v1/ov_push_tokens?token=eq.' + encodeURIComponent(t.token), { method: 'DELETE' }); } else errs++;
           } catch (_e) { errs++; }
         }
+        for (const t of recipients(m, wsubs, ev) as Array<Tok & WSub>) {
+          const key = t.endpoint + '|' + m.tag; if (seen.has(key)) continue; seen.add(key);
+          try {
+            V = V || await vapidKeys();
+            const r = await sendWeb(m, t, V);
+            if (r === 'ok') web++; else if (r === 'gone') { webGone++; await db('/rest/v1/ov_wpush_subs?endpoint=eq.' + encodeURIComponent(t.endpoint), { method: 'DELETE' }); } else webErrs++;
+          } catch (_e) { webErrs++; }
+        }
       }
     }
   }
-  return new Response(JSON.stringify({ ok: true, n: q.length, sent, gone, errs }), { headers: { 'Content-Type': 'application/json' } });
+  if (!fcmOk && !web && !webGone && !webErrs) return new Response(JSON.stringify({ ok: false, msg: 'Falta FCM_SERVICE_ACCOUNT', n: q.length }), { status: 200 });
+  return new Response(JSON.stringify({ ok: true, n: q.length, sent, gone, errs, web, webGone, webErrs }), { headers: J });
 }
 
 if ((globalThis as any).Deno?.serve) (globalThis as any).Deno.serve(serve);

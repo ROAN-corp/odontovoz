@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.48.0', b: '1.103.0', d: '2026-11-26', items: [
+      { t: 'Avisos con la app cerrada también en iPhone, iPad y PC: en Menú › Avisos y sonidos, tocá «Activar avisos con la app cerrada». En el iPhone, primero instalá OdontoVoz en la pantalla de inicio (botón «Instalar como aplicación») y abrila desde ese ícono. Te llega cuando llega un paciente, cancelan un turno, hay una nota de otro, queda poco stock o piden un turno online.' }
+    ] },
     { v: '1.47.0', b: '1.102.0', d: '2026-11-26', items: [
       { t: 'Profesionales: la especialidad ahora se elige de una lista (con «Otra» para escribirla) y se pueden cargar varias matrículas, cada una con su provincia o colegio (por ejemplo Río Negro y Neuquén). Salen todas juntas en las indicaciones y firmas, y las fichas de la FORN usan la de Río Negro.' },
       { t: 'Sello y foto de la matrícula: si tenés más de una matrícula, cada una puede tener su propio sello y su foto (la firma es una sola).' }

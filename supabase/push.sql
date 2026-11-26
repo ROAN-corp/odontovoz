@@ -9,6 +9,7 @@
 --     anota el cambio en la cola ov_push_q y despierta la función «push-hook» (pg_net).
 --  3) La función compara antes y después (llegó un paciente, canceló, nota de otra persona, stock bajo,
 --     turno online) y manda la notificación a los otros teléfonos del lugar, nunca al que hizo el cambio.
+-- Avisos en iPhone/PC/Android sin APK (Web Push): ver supabase/webpush.sql (si volvés a correr este archivo, corré también ese).
 -- La cola solo la escriben los triggers y solo la lee la función (con la clave de servicio, que no sale del servidor).
 -- =====================================================================
 

@@ -1,8 +1,8 @@
 // Odonto Voz: funcionamiento sin conexión y avisos de versión nueva.
 // Cambiar VERSION en cada actualización publicada para que los teléfonos la reciban.
 // VERSION es interno (sigue subiendo); NAME es el número que ve la gente.
-const VERSION = 'odontovoz-1.102.0';
-const NAME = '1.47.0';
+const VERSION = 'odontovoz-1.103.0';
+const NAME = '1.48.0';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'jspdf.umd.min.js', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'icon-180.png'];
 
 self.addEventListener('install', e => {
@@ -29,8 +29,23 @@ self.addEventListener('fetch', e => {
   }
 });
 
-// al tocar una notificación (por ejemplo «Llegó …»), se abre o se trae al frente la app
+// avisos con la app cerrada (Web Push: iPhone, iPad, PC y Android sin el APK). Apple exige mostrar siempre una notificación.
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { try { d = { body: e.data.text() }; } catch (y) { d = {}; } }
+  e.waitUntil(self.registration.showNotification(d.title || 'OdontoVoz', {
+    body: d.body || '', tag: d.tag || undefined, icon: 'icon-192.png', badge: 'icon-192.png', data: d.data || {}, renotify: !!d.tag
+  }));
+});
+// si el navegador renueva la suscripción, la app se vuelve a anotar la próxima vez que se abre
+self.addEventListener('pushsubscriptionchange', e => { e.waitUntil(self.clients.matchAll({ includeUncontrolled: true }).then(cs => cs.forEach(c => c.postMessage({ type: 'ov-push-renew' })))); });
+
+// al tocar una notificación (por ejemplo «Llegó …»), se abre o se trae al frente la app y se le pasa qué se tocó
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => { for (const c of cs) { if ('focus' in c) return c.focus(); } return self.clients.openWindow ? self.clients.openWindow('./') : null; }));
+  const data = (e.notification && e.notification.data) || {};
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+    for (const c of cs) { if ('focus' in c) { try { c.postMessage({ type: 'ov-push', data }); } catch (x) { /* nada */ } return c.focus(); } }
+    return self.clients.openWindow ? self.clients.openWindow('./?ovp=' + encodeURIComponent(JSON.stringify(data))) : null;
+  }));
 });

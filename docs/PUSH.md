@@ -45,3 +45,10 @@ Correr `supabase/push.sql` en Supabase › SQL Editor (se puede volver a correr 
 Nunca le llega al equipo que hizo el cambio. En Empresa, cada consultorio recibe lo suyo. Los avisos que se pierden (teléfono apagado más de unas semanas, app desinstalada) se descartan solos.
 
 Archivos: `supabase/push.sql`, `supabase/functions/push-hook/index.ts`, `src/app59.js`, prueba `tests/push/push.test.mjs`.
+
+## iPhone, iPad y PC (Web Push, sin Firebase ni claves para pegar)
+Los avisos con la app cerrada en iPhone/iPad (iOS 16.4 o más nuevo, con la app instalada desde Safari en la pantalla de inicio), en la PC y en Android sin el APK salen por Web Push. No hace falta crear nada en Firebase: la propia función crea sus claves la primera vez.
+1. Correr `supabase/webpush.sql` en Supabase › SQL Editor (después de `push.sql`; se puede volver a correr).
+2. La función `push-hook` se sube sola al cambiar el repositorio (Actions › Publicar funciones…). Para comprobarla: abrir `https://hcppfvioiaaejayzzhpa.supabase.co/functions/v1/push-hook` en el navegador; tiene que mostrar `{"ok":true,"key":"B…"}`.
+3. En el iPhone: instalar OdontoVoz (Compartir › Agregar a inicio), abrirla desde el ícono, Menú › Avisos y sonidos › «Activar avisos con la app cerrada» y aceptar el permiso.
+Limitaciones: solo funciona con la app instalada y abierta desde su ícono en el iPhone; Apple puede demorar o recortar avisos; si el usuario bloquea las notificaciones hay que habilitarlas en Ajustes del teléfono.

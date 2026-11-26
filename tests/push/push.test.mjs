@@ -90,5 +90,69 @@ ok(DELETED[0] === 'eq.T3' && out.gone === 1, 'el teléfono que desinstaló la ap
 const out2 = await (await P.serve(new Request('https://x/push-hook', { method: 'POST', body: '{}' }))).json();
 ok(out2.n === 0, 'cola vacía: no hace nada');
 
+
+/* 4) Web Push (iPhone, PC…): cifrado, firma VAPID y envío, con un navegador y la base simulados */
+const b64u = b => Buffer.from(b).toString('base64url');
+const ecdh = crypto.createECDH('prime256v1'); ecdh.generateKeys();
+const uaPub = ecdh.getPublicKey(), authSecret = crypto.randomBytes(16);
+const decryptPush = body => {
+  const salt = body.subarray(0, 16), rs = body.readUInt32BE(16), idlen = body[20], asPub = body.subarray(21, 21 + idlen), ct = body.subarray(21 + idlen);
+  const shared = ecdh.computeSecret(asPub);
+  const ikm = Buffer.from(crypto.hkdfSync('sha256', shared, authSecret, Buffer.concat([Buffer.from('WebPush: info\0'), uaPub, asPub]), 32));
+  const cek = Buffer.from(crypto.hkdfSync('sha256', ikm, salt, Buffer.from('Content-Encoding: aes128gcm\0'), 16));
+  const nonce = Buffer.from(crypto.hkdfSync('sha256', ikm, salt, Buffer.from('Content-Encoding: nonce\0'), 12));
+  const d = crypto.createDecipheriv('aes-128-gcm', cek, nonce); d.setAuthTag(ct.subarray(ct.length - 16));
+  const pt = Buffer.concat([d.update(ct.subarray(0, ct.length - 16)), d.final()]);
+  return { rs, idlen, text: pt.subarray(0, pt.lastIndexOf(2)).toString() };
+};
+const enc = await P.encryptPush(new TextEncoder().encode('Llegó Ana Pérez · 10:00'), b64u(uaPub), b64u(authSecret));
+const dec = decryptPush(Buffer.from(enc));
+ok(dec.text === 'Llegó Ana Pérez · 10:00' && dec.rs === 4096 && dec.idlen === 65, 'Web Push: el mensaje cifrado lo descifra el navegador (RFC 8291)');
+ok(Buffer.from(enc).length < 4096, 'Web Push: entra en un solo bloque');
+
+const VROW = { id: 1 }; let vposts = 0; const WSUBS = [
+  { member: 'angel', owner: 'o', device: 'iphone-angel', endpoint: 'https://web.push.apple.com/abc', p256dh: b64u(uaPub), auth: b64u(authSecret), role: 'profesional', pro: 'a' },
+  { member: 'marta', owner: 'o', device: 'iphone-marta', endpoint: 'https://web.push.apple.com/marta', p256dh: b64u(uaPub), auth: b64u(authSecret), role: 'recepcion' },
+  { member: 'dueño', owner: 'o', device: 'pc-recep', endpoint: 'https://fcm.googleapis.com/wp/gone', p256dh: b64u(uaPub), auth: b64u(authSecret), role: 'dueno' }];
+const WSENT = [], WDEL = [];
+globalThis.fetch = async (url, init = {}) => {
+  const u = new URL(url), res = (j, st = 200) => new Response(j == null ? null : JSON.stringify(j), { status: st, headers: { 'Content-Type': 'application/json' } });
+  if (u.host === 'sb.test') {
+    if (u.pathname.endsWith('/rpc/ov_push_claim')) return res(Q.splice(0));
+    if (u.pathname.endsWith('/ov_push_tokens')) return res([]);
+    if (u.pathname.endsWith('/ov_wpush_vapid')) { if (init.method === 'POST') { vposts++; Object.assign(VROW, JSON.parse(init.body)); return res(null, 201); } return res(VROW.pub ? [VROW] : []); }
+    if (u.pathname.endsWith('/ov_wpush_subs') && (init.method || 'GET') === 'GET') return res(WSUBS);
+    if (u.pathname.endsWith('/ov_wpush_subs') && init.method === 'DELETE') { WDEL.push(u.searchParams.get('endpoint')); return res(null); }
+    if (u.pathname.endsWith('/ov_records')) return res([{ k: 'pats', v: [{ id: 'p1', first: 'Ana', last: 'Pérez', name: 'Ana Pérez' }] }, { k: 'pros', v: [{ id: 'r', name: 'Rodrigo' }] }]);
+  }
+  if (u.host === 'web.push.apple.com' || (u.host === 'fcm.googleapis.com' && u.pathname.startsWith('/wp/'))) {
+    WSENT.push({ url: String(url), h: init.headers, body: Buffer.from(init.body) });
+    return u.pathname.endsWith('/gone') ? new Response(null, { status: 410 }) : new Response(null, { status: 201 });
+  }
+  return res({}, 404);
+};
+const gk = await (await P.serve(new Request('https://x/push-hook', { method: 'GET' }))).json();
+ok(gk.ok && gk.key && Buffer.from(gk.key, 'base64url').length === 65 && vposts === 1, 'Web Push: la primera vez crea las claves y devuelve la pública (65 bytes)');
+const gk2 = await (await P.serve(new Request('https://x/push-hook', { method: 'GET' }))).json();
+ok(gk2.key === gk.key && vposts === 1, 'Web Push: las claves no se vuelven a crear');
+const opt = await P.serve(new Request('https://x/push-hook', { method: 'OPTIONS' }));
+ok(opt.status === 204 && opt.headers.get('Access-Control-Allow-Origin') === '*', 'Web Push: el navegador puede pedir la clave desde la app (CORS)');
+Q.push({ owner: 'o', k: 'day:' + today, device: 'pc-recep', old_v: [ap('t1')], new_v: [ap('t1', { status: 'llego' })] });
+const o3 = await (await P.serve(new Request('https://x/push-hook', { method: 'POST', body: '{}' }))).json();
+const toApple = WSENT.filter(x => x.url.includes('apple.com'));
+ok(o3.ok && o3.web === 1 && toApple.length === 1 && toApple[0].url.endsWith('/marta'), 'Web Push: «Llegó» va a la secretaria (no a Angel, que es otro odontólogo, ni al equipo que lo marcó)');
+const msg = JSON.parse(decryptPush(toApple[0].body).text);
+ok(msg.title === 'Llegó Ana Pérez' && msg.data.appt === 't1' && msg.data.kind === 'llego', 'Web Push: el mensaje trae el título y el turno para abrirlo al tocar');
+const hd = toApple[0].h, auth = hd.Authorization, mm = auth.match(/^vapid t=([^,]+), k=(.+)$/);
+ok(!!mm && mm[2] === gk.key && hd['Content-Encoding'] === 'aes128gcm' && hd.Urgency === 'high', 'Web Push: encabezados VAPID y de cifrado');
+const [vh, vc, vs] = mm[1].split('.'), vcl = JSON.parse(Buffer.from(vc, 'base64url')), pk = Buffer.from(gk.key, 'base64url');
+const vkey = crypto.createPublicKey({ key: { kty: 'EC', crv: 'P-256', x: b64u(pk.subarray(1, 33)), y: b64u(pk.subarray(33, 65)) }, format: 'jwk' });
+ok(crypto.verify('sha256', Buffer.from(vh + '.' + vc), { key: vkey, dsaEncoding: 'ieee-p1363' }, Buffer.from(vs, 'base64url')) && vcl.aud === 'https://web.push.apple.com' && vcl.exp - Date.now() / 1000 < 24 * 3600, 'Web Push: la firma VAPID es válida, para el servicio de Apple y vence en menos de 24 h');
+const tgone = WSENT.filter(x => x.url.includes('/gone'));
+ok(tgone.length === 0, 'Web Push: el equipo que lo marcó no recibe su propio aviso');
+Q.push({ owner: 'o', k: 'day:' + today, device: 'otro', old_v: [ap('t1')], new_v: [ap('t1', { status: 'llego' })] });
+const o4 = await (await P.serve(new Request('https://x/push-hook', { method: 'POST', body: '{}' }))).json();
+ok(o4.webGone === 1 && WDEL.length === 1 && WDEL[0] === 'eq.https://fcm.googleapis.com/wp/gone', 'Web Push: el navegador que ya no existe (410) se borra de la lista');
+
 console.log(fails ? fails + ' FALLAS' : 'todo bien');
 process.exit(fails ? 1 : 0);
