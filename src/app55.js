@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.41.0', b: '1.96.0', d: '2026-11-26', items: [
+      { t: 'Stock: «Cargar una compra». Dictás o escribís lo que llegó con su precio («5 composite 3M A3 a 18500, 2 composite 3M A1 a 18500…»), la app arma las líneas con el producto del catálogo, corregís cantidad y precio, y al confirmar se suma todo al stock con el costo de cada uno. Podés repetir una compra anterior.' },
+      { t: 'Comparación de precios: cada producto guarda el historial de lo que pagaste; al cargar una nueva compra ves «última vez $X» con la diferencia (▲ sube, ▼ baja), y en el stock aparece el último precio con su variación.' },
+      { t: 'Mi stock ahora muestra las categorías contraídas, como botones con ícono, la cantidad de productos y un aviso de cuántos hay que reponer. Tocás una y se despliega; hay «Abrir todas / Cerrar todas», y al buscar o filtrar se abren solas.' }] },
     { v: '1.40.0', b: '1.95.0', d: '2026-11-26', items: [
       { t: 'Stock con productos concretos: en Mi stock, «Agregar producto» te deja buscar en el catálogo de Rutiden (marca, tono, presentación: «composite voco b2»), cargar hablando («2 composite 3M A2, una jeringa de composite Voco B2, baberos…») o cargar a mano. Cada producto queda con su código, así el pedido sale exacto.' },
       { t: 'Si tenés varios productos del mismo tipo (por ejemplo, composites de 3M y de Voco), el descuento automático por práctica gasta primero el que vence antes y, si no, el que más tiene.' }] },

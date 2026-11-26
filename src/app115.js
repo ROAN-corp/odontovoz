@@ -5,7 +5,7 @@
   if (!A.stkApi || !A.stkHTML) return;
   const K = A.stkApi, fq = K.fq;
   const money = n => '$' + Math.round(n).toLocaleString('es-AR');
-  const st2 = () => S.stk2 || (S.stk2 = { q: '', cat: '', f: 'all', sort: 'urg', group: true, dense: false, col: {} });
+  const st2 = () => S.stk2 || (S.stk2 = { q: '', cat: '', f: 'all', sort: 'urg', group: true, dense: false, col: {}, opn: {} });
   const inner = A.stkHTML;   /* la versión anterior: da «para comprar», movimientos, receta y Rutiden */
   const strip = h => h.replace(/<div class="seg stk-tabs"[\s\S]*?<\/div>/, '');
   const pre = h => ((h.match(/<div class="stk-sede">[\s\S]*?<\/div>|<p class="stk-where">[\s\S]*?<\/p>/) || [''])[0]);
@@ -42,12 +42,13 @@
     return '<div class="s2-kpis">' + card('all', 'all', total, 'insumos', n.val ? 'valen ' + money(n.val) : '') + card('ok', 'all', n.ok, 'bien', '') +
       card('low', 'low', n.out + n.low, 'poco o nada', n.out ? n.out + ' sin stock' : '') + card('exp', 'exp', n.exp, 'vencen pronto', 'en 45 días') + '</div>';
   }
+  const priceTxt = i => { const ph = i.ph || []; if (ph.length >= 2) { const a = ph[ph.length - 1].p, b = ph[ph.length - 2].p, d = b ? Math.round((a - b) / b * 100) : 0; return 'último precio ' + money(a) + (d > 0 ? ' ▲' + d + '%' : d < 0 ? ' ▼' + Math.abs(d) + '%' : ' (igual)'); } return i.cost > 0 ? 'costo ' + money(i.cost) : ''; };
   function itemHTML(i, s) {
     const stt = K.status(i), dl = K.daysLeft(i), u = K.use30(i), pct = i.min > 0 ? Math.min(100, Math.round(i.qty / (i.min * 3) * 100)) : (i.qty > 0 ? 70 : 0), mk = i.min > 0 ? Math.round(1 / 3 * 100) : 0;
     const badge = stt === 'out' ? '<span class="s2-b out">Sin stock</span>' : stt === 'low' ? '<span class="s2-b low">Poco</span>' : '';
     const ex = K.expSoon(i) ? '<span class="s2-b exp">Vence ' + (A.fmtDMY ? A.fmtDMY(i.exp) : i.exp) + '</span>' : '';
     const rt = i.rut ? '<span class="s2-b rut">Rutiden</span>' : '';
-    const meta = [i.cat, i.min > 0 ? 'mínimo ' + fq(i.min) : '', i.uses > 1 ? 'rinde ' + i.uses + ' usos' : '', u > 0 ? 'usa ~' + fq(u) + ' por mes' : '', dl != null ? 'alcanza ~' + dl + ' días' : '', i.cost > 0 ? 'costo ' + money(i.cost) : ''].filter(Boolean).map(esc).join(' · ');
+    const meta = [i.cat, i.min > 0 ? 'mínimo ' + fq(i.min) : '', i.uses > 1 ? 'rinde ' + i.uses + ' usos' : '', u > 0 ? 'usa ~' + fq(u) + ' por mes' : '', dl != null ? 'alcanza ~' + dl + ' días' : '', priceTxt(i)].filter(Boolean).map(esc).join(' · ');
     return '<li class="s2-it ' + stt + (s.dense ? ' dn' : '') + '"><button class="s2-main" data-act="stkItem" data-id="' + i.id + '"><span class="s2-top"><b>' + esc(i.name) + '</b>' + badge + ex + rt + '</span>' + (s.dense ? '' : '<span class="s2-meta">' + meta + '</span>') +
       '<span class="s2-meter" aria-hidden="true"><i style="width:' + pct + '%"></i>' + (mk ? '<u style="left:' + mk + '%"></u>' : '') + '</span></button>' +
       '<div class="s2-q"><button data-act="s2Adj" data-id="' + i.id + '" data-d="-1" aria-label="Usé uno"' + (i.qty > 0 ? '' : ' disabled') + '>−</button><span><b>' + fq(i.qty) + '</b><small>' + esc(i.unit || '') + '</small></span><button data-act="s2Adj" data-id="' + i.id + '" data-d="1" aria-label="Llegó uno">+</button></div></li>';
@@ -69,8 +70,15 @@
     if (!V.length) return '<p class="s2-none">No hay insumos con ese filtro. <button class="linkbtn" data-act="s2Clear">Ver todos</button></p>';
     if (!s.group || s.sort !== 'urg' && s.sort !== 'name') return '<ul class="s2-list">' + V.map(i => itemHTML(i, s)).join('') + '</ul>';
     const g = {}; V.forEach(i => { (g[i.cat] = g[i.cat] || []).push(i); });
-    return Object.keys(g).sort((a, b) => a.localeCompare(b, 'es')).map(c => { const open = !s.col[c]; return '<section class="s2-g"><button class="s2-gh" data-act="s2Col" data-c="' + esc(c) + '" aria-expanded="' + open + '"><b>' + esc(c) + '</b><small>' + g[c].length + ' · ' + g[c].filter(i => K.status(i) !== 'ok').length + ' por reponer</small><i aria-hidden="true">' + (open ? '▾' : '▸') + '</i></button>' + (open ? '<ul class="s2-list">' + g[c].map(i => itemHTML(i, s)).join('') + '</ul>' : '') + '</section>'; }).join('');
+    const cats = Object.keys(g).sort((x, y) => x.localeCompare(y, 'es')), force = !!(s.q || s.cat || s.f !== 'all'), nOpen = cats.filter(c => force || s.opn[c]).length;
+    const head = cats.length > 2 ? '<div class="s2-allbar"><span>' + cats.length + ' categorías</span><button class="linkbtn" data-act="s2All" data-o="' + (nOpen < cats.length ? 1 : 0) + '">' + (nOpen < cats.length ? 'Abrir todas' : 'Cerrar todas') + '</button></div>' : '';
+    return head + cats.map(c => {
+      const open = force || !!s.opn[c], bad = g[c].filter(i => K.status(i) !== 'ok').length, out = g[c].filter(i => K.status(i) === 'out').length;
+      return '<section class="s2-g' + (open ? ' open' : '') + '"><button class="s2-gh" data-act="s2Col" data-c="' + esc(c) + '" aria-expanded="' + open + '"><span class="s2-gi" aria-hidden="true">' + catIcon(c) + '</span><span class="s2-gt"><b>' + esc(c) + '</b><small>' + g[c].length + ' producto' + (g[c].length === 1 ? '' : 's') + '</small></span>' + (bad ? '<span class="s2-gb ' + (out ? 'out' : 'low') + '">' + bad + ' por reponer</span>' : '<span class="s2-gb ok">todo bien</span>') + '<i class="s2-gc" aria-hidden="true">▾</i></button>' + (open ? '<ul class="s2-list">' + g[c].map(i => itemHTML(i, s)).join('') + '</ul>' : '') + '</section>';
+    }).join('');
   }
+  const CIC = [[/composit|resina|restaur|obtur/, '🦷'], [/adhes|bond|grab|acido|selladores?/, '💧'], [/cement|ionom|base|liner/, '🧱'], [/fres|piedra|disco|pulid/, '🔩'], [/endo|lima|gutaper|conduct/, '📍'], [/implant/, '🔧'], [/protes|corona|provision|laborat/, '👑'], [/ortod|bracket|arco|ligad/, '😁'], [/desc|guante|barbij|babero|eyect|vaso|gasa|algod/, '🧤'], [/anest|aguja|jering/, '💉'], [/higien|desinf|esteril|limpi/, '🧼'], [/rx|radio|pelicula/, '🩻'], [/impres|alginat|silicon|cubeta/, '🧫'], [/cirug|sutur|bisturi|hemost/, '🩺'], [/periodon|profila|fluor|blanque/, '✨']];
+  const catIcon = c => { const t = (A.norm ? A.norm(c) : String(c).toLowerCase()); for (const m of CIC) if (m[0].test(t)) return m[1]; return '📦'; };
 
   /* ---------- COMPRAR STOCK ---------- */
   function buyHub(sub, L) {
@@ -104,7 +112,8 @@
   A.acts.s2Cat = el => { st2().cat = el.getAttribute('data-c') || ''; repaint(); };
   A.acts.s2Clear = () => { const s = st2(); s.q = ''; s.cat = ''; s.f = 'all'; repaint(); };
   A.acts.s2View = el => { const s = st2(); if (el.getAttribute('data-v') === 'g') s.group = !s.group; else s.dense = !s.dense; repaint(); };
-  A.acts.s2Col = el => { const s = st2(), c = el.getAttribute('data-c'); if (s.col[c]) delete s.col[c]; else s.col[c] = 1; paintList(); };
+  A.acts.s2Col = el => { const s = st2(), c = el.getAttribute('data-c'); if (s.opn[c]) delete s.opn[c]; else s.opn[c] = 1; paintList(); };
+  A.acts.s2All = el => { const s = st2(), open = el.getAttribute('data-o') === '1'; s.opn = {}; if (open) K.list().forEach(i => { s.opn[i.cat] = 1; }); paintList(); };
   A.acts.s2Soon = () => A.toast('Surdental se suma pronto, con su catálogo, como Rutiden.');
   A.acts.s2Adj = el => {
     const d = +el.getAttribute('data-d'), i = K.adjust(el.getAttribute('data-id'), d); if (!i) return;
@@ -169,6 +178,9 @@
     '.s2-hub{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:8px;margin-bottom:12px}.s2-bc{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:16px;padding:12px;cursor:pointer;font:inherit;transition:transform .12s,border-color .12s}.s2-bc:hover{transform:translateY(-2px);border-color:var(--accent)}' +
     '.s2-bc.on{border-color:var(--accent);background:var(--accent-soft)}.s2-bc.hot{border-color:var(--accent)}.s2-bc.dis{opacity:.6}.s2-bi{font-size:1.4rem;height:34px;display:flex;align-items:center}.s2-bi img{height:34px;width:34px;border-radius:9px;object-fit:cover}.s2-bc b{font-size:.95rem}.s2-bc small{color:var(--ink-2);font-size:.76rem}' +
     '.modal-scrim{height:var(--vvh,100%);bottom:auto}.modal{max-height:calc(var(--vvh,100vh) - 32px)}@media (max-width:640px){.modal{max-height:calc(var(--vvh,100vh) - 16px)}}' +
+    '.s2-allbar{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;color:var(--ink-2);margin:2px 2px 8px}.s2-g{margin:0 0 8px;border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}.s2-g.open{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}.s2-g .s2-gh{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 5%,var(--surface)),var(--surface));color:var(--ink);padding:11px 12px;cursor:pointer;font:inherit}.s2-g.open .s2-gh{border-bottom:1px solid var(--line)}' +
+    '.s2-gi{flex:none;width:38px;height:38px;border-radius:12px;background:var(--accent-soft);display:grid;place-items:center;font-size:1.2rem}.s2-gt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}.s2-gt b{font:800 .98rem var(--display,inherit)}.s2-gt small{color:var(--ink-2);font-size:.76rem}' +
+    '.s2-gb{flex:none;font-size:.72rem;font-weight:700;border-radius:999px;padding:3px 10px}.s2-gb.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}.s2-gb.low{background:color-mix(in srgb,var(--warn) 20%,transparent);color:color-mix(in srgb,var(--warn) 70%,var(--ink))}.s2-gb.out{background:var(--red);color:#fff}.s2-gc{flex:none;font-style:normal;color:var(--accent);transition:transform .2s}.s2-g.open .s2-gc{transform:rotate(180deg)}.s2-g .s2-list{padding:8px}' +
     '@media (max-width:560px){.s2-kpis{grid-template-columns:repeat(2,1fr)}.s2-tabs button span{font-size:.8rem}.s2-tabs{grid-template-columns:repeat(2,1fr)}}';
   document.body.appendChild(css);
 })();

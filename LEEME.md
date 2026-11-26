@@ -1128,3 +1128,7 @@ Tutoriales nuevos con voz (`scripts/tutoriales/`, ver su README): `configurar`, 
 
 ## 1.40.0 (compilación 1.95.0)
 Stock por producto concreto (`app125`): ventana «Agregar producto» (catálogo de Rutiden con `A.rutFind`, cargar hablando con `parse()`, a mano). Los productos llevan `ck` (tipo del kit), `rut` (código), `brand`, `det`, `spec`. `A.stockConsume` (`app43`) reparte el consumo entre los productos del mismo `ck`.
+
+
+## 1.41.0 (compilación 1.96.0)
+Stock: `app125` suma «Cargar una compra» (`S.sb`, `A.EMP.stock._cfg.compras`, historial de precios `item.ph`, precio al dictar «a 18500»); `app115` muestra las categorías como acordeón contraído (`s.opn`) con ícono y avisos.
