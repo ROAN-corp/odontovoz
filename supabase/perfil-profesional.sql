@@ -8,6 +8,7 @@
 --   · lo escribe y lo lee ese usuario (el que está asignado a ese profesional),
 --   · lo leen y escriben el dueño y la administración,
 --   · nadie más del equipo lo ve (los sellos y las firmas no circulan).
+-- Lo mismo vale para `rp:<id>`: los pagos del alquiler de ese profesional (lo que avisa que pagó y lo que cobra el centro).
 -- El dueño recibe los datos en su cuenta automáticamente y los pasa a la ficha del profesional.
 -- =====================================================================
 
@@ -15,8 +16,8 @@ create or replace function public.ov_key_ok(p_k text) returns boolean
 language plpgsql stable security definer set search_path = public as $$
 declare emp boolean; sc text; rl text := public.ov_role(); ms text;
 begin
-  /* datos propios de cada profesional */
-  if p_k like 'pf:%' then
+  /* datos propios de cada profesional (pf:) y pagos de su alquiler (rp:) */
+  if p_k like 'pf:%' or p_k like 'rp:%' then
     if rl in ('dueno', 'admin') then return true; end if;
     return rl in ('profesional', 'asistente') and exists (
       select 1 from public.ov_members m

@@ -86,9 +86,9 @@
   A.liqCalc = (pid, m) => {
     const c = prevCalc(pid, m), cfg = A.liqCfg(pid), mode = cfg.mode || 'pct';
     if ((mode !== 'mod' && mode !== 'pctmod') || !cfg.mod || !(cfg.mod.price > 0)) return c; /* 1.24: el módulo solo cuenta si el acuerdo es módulo */
-    const by = byInfo(cfg.mod.by), fijo = by[0] === 'modulo', u = fijo ? 1 : A.liqUse(pid, m)[by[0]], fee = Math.round(u * cfg.mod.price);
+    const by = byInfo(cfg.mod.by), fijo = by[0] === 'modulo', nMod = Math.max(1, +cfg.mod.n || 1), u = fijo ? nMod : A.liqUse(pid, m)[by[0]], fee = Math.round(u * cfg.mod.price);
     if (!fee) return c;
-    const line = { id: 'modulo', auto: true, desc: fijo ? 'Alquiler de módulo (mes)' + (cfg.mod.hs ? ': ' + String(cfg.mod.hs).replace('.', ',') + ' h por semana' : '') : 'Alquiler de módulo: ' + String(u).replace('.', ',') + ' ' + (u === 1 ? by[2] : by[3]) + ' × ' + A.money(cfg.mod.price), amount: fee };
+    const line = { id: 'modulo', auto: true, desc: fijo ? 'Alquiler de ' + (nMod > 1 ? nMod + ' módulos' : 'módulo') + ' (mes)' + (cfg.mod.hs ? ': ' + String(cfg.mod.hs).replace('.', ',') + ' h por semana' : '') : 'Alquiler de módulo: ' + String(u).replace('.', ',') + ' ' + (u === 1 ? by[2] : by[3]) + ' × ' + A.money(cfg.mod.price), amount: fee };
     c.deds = [line].concat(c.deds); c.ded += fee; c.net = c.dent - c.ded; c.center += fee; c.modFee = fee;
     return c;
   };

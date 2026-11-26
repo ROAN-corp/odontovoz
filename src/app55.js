@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.54.0', b: '1.109.0', d: '2026-11-26', items: [
+      { t: 'Alquiler de módulos y consultorios: en el acuerdo de cada profesional (Liquidaciones o Profesionales) ahora cargás la cantidad de módulos (por ejemplo 3 × $300.000), desde qué día hasta qué día del mes se paga y el WhatsApp del profesional. Podés registrar cada cobro y ves los últimos 6 meses.' },
+      { t: 'El último día para pagar aparece una ventana (y un aviso): a quien alquila le dice «Pagar» y al dueño, los socios y la administración, «Cobrar». Con «Avisar por WhatsApp» se abre el mensaje listo y editable, y el texto original se cambia en «Editar los mensajes».' }
+    ] },
     { v: '1.53.0', b: '1.108.0', d: '2026-11-26', items: [
       { t: 'Consentimientos desde tu propio PDF o foto: en la lista de consentimientos, «+ Desde un PDF o una foto». El paciente lo lee en pantalla y firma en la app; el PDF final lleva las páginas del documento y la hoja de firmas, y se puede mandar por WhatsApp.' }
     ] },

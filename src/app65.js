@@ -64,6 +64,7 @@
       h += '<div class="field"><label for="dlTxt">Cómo es el acuerdo</label><textarea id="dlTxt" rows="2" data-chg="dlSet" data-f="txt" ' + D + ' placeholder="Ej.: 50% de lo cobrado y el laboratorio a medias">' + esc((c.otro || {}).txt || '') + '</textarea></div>' +
         '<div class="field"><label for="dlFix">Además paga por mes (opcional)</label><input id="dlFix" inputmode="numeric" data-chg="dlSet" data-f="fix" ' + D + ' value="' + ((c.otro || {}).fix || '') + '" placeholder="0"></div>';
     }
+    h += A.rentHTML ? A.rentHTML(pid, mode) : ''; /* 1.54: cantidad de módulos, cuándo se paga y los cobros del alquiler */
     h += A.privHTML ? A.privHTML(pid, mode) : '';
     return h + '<div id="dlMsg" class="m-msg"></div></div>';
   }
@@ -78,6 +79,7 @@
     else if (f === 'pct') c.pct = pctNum(v);
     else if (f === 'modBy') { c.mod = c.mod || {}; c.mod.by = v; }
     else if (f === 'modPrice') { c.mod = c.mod || { by: 'modulo' }; c.mod.price = num(v); }
+    else if (f === 'modN') { c.mod = c.mod || { by: 'modulo' }; c.mod.n = Math.max(1, Math.min(40, parseInt(v, 10) || 1)); }
     else if (f === 'modHs') { c.mod = c.mod || { by: 'modulo' }; c.mod.hs = Math.max(0, parseFloat(String(v).replace(',', '.')) || 0); }
     else if (f === 'modHor') { c.mod = c.mod || { by: 'modulo' }; c.mod.hor = v.trim().slice(0, 80); }
     else if (f === 'alq') c.alq = Object.assign({}, c.alq, { price: num(v) });
