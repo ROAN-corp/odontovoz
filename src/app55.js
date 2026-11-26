@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.37.0', b: '1.92.0', d: '2026-11-26', items: [
+      { t: 'Agenda, arrastrar pacientes: ahora la tarjetita del paciente se levanta con una animación, el horario donde cae late suave (y se pone rojo si está ocupado), y al soltar el paciente «vuela» hasta el turno, que aparece con un resplandor.' },
+      { t: 'Apenas se crea el turno sale un cuadrito con animación para escribir el motivo, con botones rápidos (Control, Limpieza, Dolor, Urgencia…). Se guarda con Enter o «Guardar», y «Omitir» lo cierra. En el celular aparece desde abajo.' }] },
     { v: '1.36.2', b: '1.91.2', d: '2026-11-26', items: [
       { t: 'Calendario de la agenda más compacto: los tres meses entran completos en la pantalla sin bajar, aun en pantallas chicas. Arriba hay un selector de mes (hasta un año adelante) para saltar directo a la fecha del turno, por ejemplo dentro de 5 meses.' }] },
     { v: '1.36.1', b: '1.91.1', d: '2026-11-26', items: [

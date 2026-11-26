@@ -1108,3 +1108,7 @@ Tira de días: al cambiar de mes se recuerda el día que estaba en el borde (`an
 
 ## 1.36.2 (compilación 1.91.2)
 Calendario (`app24`): celdas que se ajustan al alto de la pantalla (`--mcell`), contador de turnos arriba a la derecha de cada día, selector «ir a un mes» (`A.chg.agCalJump`, 14 meses) y leyenda más corta.
+
+
+## 1.37.0 (compilación 1.92.0)
+Agenda (`app116`): animaciones del arrastre de pacientes (levantar, cartelito que late, vuelo al turno, resplandor `blk-new`) y cuadrito `#mvPop` para escribir el motivo del turno recién creado (guarda `a.motivo` y `A.setMotivo`).
