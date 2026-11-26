@@ -68,11 +68,14 @@
     rx: SV('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h4"/>'),
     img: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 8"/>'),
     orto: SV('<path d="M12 3.2c-1.6 0-2.4.9-4 .9C6 4.1 4.6 5.2 4.6 7.7c0 1.6.8 3 1.2 4.6.5 2 .6 4.5 1.4 6.8.35 1.1 1.7 1.3 2.2.2.6-1.4.9-3.5 2.6-3.5s2 2.1 2.6 3.5c.5 1.1 1.85.9 2.2-.2.8-2.3.9-4.8 1.4-6.8.4-1.6 1.2-3 1.2-4.6 0-2.5-1.4-3.6-3.4-3.6-1.6 0-2.4-.9-4-.9z"/><rect x="9.3" y="7.4" width="5.4" height="4" rx="1" fill="currentColor" fill-opacity=".22"/><path d="M1.8 9.4h20.4" stroke-width="2.2"/>'),
+    implantes: SV('<path d="M12 2.5v4M9 7.5h6M9.5 10h5M9.8 12.5h4.4M10.2 15h3.6M10.8 17.5h2.4"/><path d="M10.5 20h3l-.6 1.5h-1.8z"/>'),
+    endo: SV('<path d="M12 3.2c-1.6 0-2.4.9-4 .9C6 4.1 4.6 5.2 4.6 7.7c0 1.6.8 3 1.2 4.6.5 2 .6 4.5 1.4 6.8.35 1.1 1.7 1.3 2.2.2.6-1.4.9-3.5 2.6-3.5s2 2.1 2.6 3.5c.5 1.1 1.85.9 2.2-.2.8-2.3.9-4.8 1.4-6.8.4-1.6 1.2-3 1.2-4.6 0-2.5-1.4-3.6-3.4-3.6-1.6 0-2.4-.9-4-.9z"/><path d="M9.5 8l.7 7M14.5 8l-.7 7"/>'),
+    scan: SV('<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12L4 7.5M12 12v9"/>'),
     docs: SV('<path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/>'),
     cuenta: SV('<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/>')
   };
   const DEF_IC = SV('<circle cx="12" cy="12" r="8"/>');
-  const DESC = { datos: 'Datos, anamnesis y evolución', odon: 'Estado de cada diente', perio: 'Encías y sondaje', plan: 'Tratamientos y presupuestos', hecho: 'Lo ya realizado', lab: 'Trabajos de laboratorio', rx: 'Recetas e indicaciones', img: 'Imágenes del paciente', orto: 'Controles y fotos', docs: 'Consentimientos y firmas', cuenta: 'Pagos y saldo' };
+  const DESC = { implantes: 'Cirugía, prótesis y controles', endo: 'Conductos y radiografías periapicales', scan: 'Escaneos y diseños en 3D', datos: 'Datos, anamnesis y evolución', odon: 'Estado de cada diente', perio: 'Encías y sondaje', plan: 'Tratamientos y presupuestos', hecho: 'Lo ya realizado', lab: 'Trabajos de laboratorio', rx: 'Recetas e indicaciones', img: 'Imágenes del paciente', orto: 'Controles y fotos', docs: 'Consentimientos y firmas', cuenta: 'Pagos y saldo' };
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* nada */ } } };
   const mobile = () => window.innerWidth < 700;
   function tabs() {

@@ -3582,7 +3582,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   };
   A.acts.fichaBack = () => { A.stopOd && A.stopOd(); S.tab = S.from && S.from !== 'ficha' ? S.from : 'pacientes'; A.refresh(); };
 
-  const TABS = [['datos', 'Datos e historia'], ['odon', 'Odontograma'], ['perio', 'Periodontograma'], ['plan', 'Plan y presupuesto'], ['hecho', 'Realizado'], ['lab', 'Laboratorios'], ['rx', 'Indicaciones y recetas'], ['img', 'Fotos y radiografías'], ['orto', 'Ortodoncia'], ['docs', 'Documentos y firmas'], ['cuenta', 'Cuenta']];
+  const TABS = [['datos', 'Datos e historia'], ['odon', 'Odontograma'], ['perio', 'Periodontograma'], ['plan', 'Plan y presupuesto'], ['hecho', 'Realizado'], ['lab', 'Laboratorios'], ['rx', 'Indicaciones y recetas'], ['img', 'Fotos y radiografías'], ['orto', 'Ortodoncia'], ['implantes', 'Implantes'], ['endo', 'Endodoncia'], ['scan', 'Escaneos 3D'], ['docs', 'Documentos y firmas'], ['cuenta', 'Cuenta']];
   A.render.ficha = () => {
     const pid = S.fichaPid, p = A.PAT(pid), pd = A.pd(pid), pro = role(), sal = A.saldo(pid), host = $('#view-ficha');
     const tabs = TABS.filter(t => (pro || ['datos', 'docs', 'cuenta'].indexOf(t[0]) >= 0) && !(S.uimode === 'atencion' && t[0] === 'cuenta'));
@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.54.0';
+  A.VERSION = '1.55.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.109.0';
+  A.VBUILD = '1.110.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18587,6 +18587,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.55.0', b: '1.110.0', d: '2026-11-26', items: [
+      { t: 'Tres solapas nuevas en la ficha: «Implantes» (cirugía, marca y lote, prótesis, controles y tarjeta del implante en PDF), «Endodoncia» (diagnóstico, conductos y conductometría, sesiones, obturación, controles y radiografías periapicales por etapa) y «Escaneos 3D» (adjuntás STL, PLY u OBJ y los ves girando y acercando).' },
+      { t: 'Las radiografías del radiovisiógrafo se suben en JPG, PNG, BMP o DICOM (.dcm sin comprimir).' }
+    ] },
     { v: '1.54.0', b: '1.109.0', d: '2026-11-26', items: [
       { t: 'Alquiler de módulos y consultorios: en el acuerdo de cada profesional (Liquidaciones o Profesionales) ahora cargás la cantidad de módulos (por ejemplo 3 × $300.000), desde qué día hasta qué día del mes se paga y el WhatsApp del profesional. Podés registrar cada cobro y ves los últimos 6 meses.' },
       { t: 'El último día para pagar aparece una ventana (y un aviso): a quien alquila le dice «Pagar» y al dueño, los socios y la administración, «Cobrar». Con «Avisar por WhatsApp» se abre el mensaje listo y editable, y el texto original se cambia en «Editar los mensajes».' }
@@ -25992,11 +25996,14 @@ const OVMenu = (function () {
     rx: SV('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h4"/>'),
     img: SV('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 8"/>'),
     orto: SV('<path d="M12 3.2c-1.6 0-2.4.9-4 .9C6 4.1 4.6 5.2 4.6 7.7c0 1.6.8 3 1.2 4.6.5 2 .6 4.5 1.4 6.8.35 1.1 1.7 1.3 2.2.2.6-1.4.9-3.5 2.6-3.5s2 2.1 2.6 3.5c.5 1.1 1.85.9 2.2-.2.8-2.3.9-4.8 1.4-6.8.4-1.6 1.2-3 1.2-4.6 0-2.5-1.4-3.6-3.4-3.6-1.6 0-2.4-.9-4-.9z"/><rect x="9.3" y="7.4" width="5.4" height="4" rx="1" fill="currentColor" fill-opacity=".22"/><path d="M1.8 9.4h20.4" stroke-width="2.2"/>'),
+    implantes: SV('<path d="M12 2.5v4M9 7.5h6M9.5 10h5M9.8 12.5h4.4M10.2 15h3.6M10.8 17.5h2.4"/><path d="M10.5 20h3l-.6 1.5h-1.8z"/>'),
+    endo: SV('<path d="M12 3.2c-1.6 0-2.4.9-4 .9C6 4.1 4.6 5.2 4.6 7.7c0 1.6.8 3 1.2 4.6.5 2 .6 4.5 1.4 6.8.35 1.1 1.7 1.3 2.2.2.6-1.4.9-3.5 2.6-3.5s2 2.1 2.6 3.5c.5 1.1 1.85.9 2.2-.2.8-2.3.9-4.8 1.4-6.8.4-1.6 1.2-3 1.2-4.6 0-2.5-1.4-3.6-3.4-3.6-1.6 0-2.4-.9-4-.9z"/><path d="M9.5 8l.7 7M14.5 8l-.7 7"/>'),
+    scan: SV('<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12L4 7.5M12 12v9"/>'),
     docs: SV('<path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13 7l4 4"/>'),
     cuenta: SV('<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/>')
   };
   const DEF_IC = SV('<circle cx="12" cy="12" r="8"/>');
-  const DESC = { datos: 'Datos, anamnesis y evolución', odon: 'Estado de cada diente', perio: 'Encías y sondaje', plan: 'Tratamientos y presupuestos', hecho: 'Lo ya realizado', lab: 'Trabajos de laboratorio', rx: 'Recetas e indicaciones', img: 'Imágenes del paciente', orto: 'Controles y fotos', docs: 'Consentimientos y firmas', cuenta: 'Pagos y saldo' };
+  const DESC = { implantes: 'Cirugía, prótesis y controles', endo: 'Conductos y radiografías periapicales', scan: 'Escaneos y diseños en 3D', datos: 'Datos, anamnesis y evolución', odon: 'Estado de cada diente', perio: 'Encías y sondaje', plan: 'Tratamientos y presupuestos', hecho: 'Lo ya realizado', lab: 'Trabajos de laboratorio', rx: 'Recetas e indicaciones', img: 'Imágenes del paciente', orto: 'Controles y fotos', docs: 'Consentimientos y firmas', cuenta: 'Pagos y saldo' };
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* nada */ } } };
   const mobile = () => window.innerWidth < 700;
   function tabs() {
@@ -30593,6 +30600,446 @@ const OVMenu = (function () {
   css.textContent = '.rent-box{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:12px 0;background:var(--surface-2)}.rent-tot{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-weight:700}' +
     '.rent-hist{list-style:none;margin:8px 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:.88rem}.rent-hist li{display:flex;justify-content:space-between;gap:10px}.rent-hist b{font-weight:600;color:var(--ink-2)}.rent-hist b.ok{color:var(--ok)}.rent-hist b.warn{color:var(--warn)}' +
     '.rent-it{border:1px solid var(--line);border-left-width:4px;border-radius:12px;padding:10px 12px;margin:0 0 10px;background:var(--surface-2)}.rent-it.last,.rent-it.late{border-left-color:var(--red)}.rent-it.open{border-left-color:var(--accent)}.rent-h{display:flex;justify-content:space-between;gap:8px;align-items:center}.rent-d{color:var(--ink-2);font-size:.9rem;margin-top:2px}.rent-amt{font-size:1.5rem;font-weight:800;margin:6px 0}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.55: solapa Implantes (planificación, cirugía, prótesis, controles, trazabilidad y tarjeta del implante) + lectura de radiografías de radiovisiógrafo (JPG, PNG, BMP y DICOM) ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns, esc = A.esc, $ = q => document.querySelector(q);
+  if (!A.render || !A.imgAdd) return;
+  const dmy = d => (A.fmtDMY ? A.fmtDMY(d) : d);
+
+  /* ---------- radiografías de radiovisiógrafo: JPG, PNG, BMP y DICOM sin comprimir ---------- */
+  const readBuf = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('lectura')); r.readAsArrayBuffer(f); });
+  function dicomToCanvas(buf) {
+    const u8 = new Uint8Array(buf), dv = new DataView(buf); let off = (u8.length > 132 && String.fromCharCode(u8[128], u8[129], u8[130], u8[131]) === 'DICM') ? 132 : 0;
+    const T = { rows: 0, cols: 0, bits: 16, rep: 0, photo: 'MONOCHROME2', spp: 1, wc: null, ww: null, ts: '1.2.840.10008.1.2.1', slope: 1, inter: 0 }; let px = null;
+    const str = (o, l) => String.fromCharCode.apply(null, u8.subarray(o, o + l)).replace(/[\0 ]+$/, '');
+    const LONG = { OB: 1, OW: 1, OF: 1, SQ: 1, UT: 1, UN: 1, OD: 1, OL: 1, UC: 1, UR: 1 };
+    while (off + 8 <= u8.length) {
+      const g = dv.getUint16(off, true), e = dv.getUint16(off + 2, true), vr = String.fromCharCode(u8[off + 4], u8[off + 5]), ex = /^[A-Z]{2}$/.test(vr);
+      let len, hdr; if (ex) { if (LONG[vr]) { len = dv.getUint32(off + 8, true); hdr = 12; } else { len = dv.getUint16(off + 6, true); hdr = 8; } } else { len = dv.getUint32(off + 4, true); hdr = 8; }
+      if (g === 0x7FE0 && e === 0x0010) { if (len === 0xFFFFFFFF) throw new Error('compr'); px = off + hdr; T.pxLen = len; break; }
+      if (len === 0xFFFFFFFF) { /* secuencia de largo indefinido: se salta hasta su delimitador */ let k = off + hdr; while (k + 8 <= u8.length && !(dv.getUint16(k, true) === 0xFFFE && dv.getUint16(k + 2, true) === 0xE0DD)) k++; off = k + 8; continue; }
+      const v = off + hdr;
+      if (g === 0x0028) { if (e === 0x0010) T.rows = dv.getUint16(v, true); else if (e === 0x0011) T.cols = dv.getUint16(v, true); else if (e === 0x0100) T.bits = dv.getUint16(v, true); else if (e === 0x0103) T.rep = dv.getUint16(v, true); else if (e === 0x0004) T.photo = str(v, len); else if (e === 0x0002) T.spp = dv.getUint16(v, true); else if (e === 0x1050) T.wc = parseFloat(str(v, len).split('\\')[0]); else if (e === 0x1051) T.ww = parseFloat(str(v, len).split('\\')[0]); else if (e === 0x1052) T.inter = parseFloat(str(v, len)) || 0; else if (e === 0x1053) T.slope = parseFloat(str(v, len)) || 1; }
+      if (g === 0x0002 && e === 0x0010) T.ts = str(v, len);
+      off = v + len;
+    }
+    if (px == null || !T.rows || !T.cols) throw new Error('dicom');
+    if (!/^1\.2\.840\.10008\.1\.2(\.1)?$/.test(T.ts)) throw new Error('compr');
+    if (T.spp !== 1) throw new Error('color');
+    const n = T.rows * T.cols, out = new Float32Array(n); let mn = Infinity, mx = -Infinity;
+    if (T.bits === 8) for (let i = 0; i < n; i++) { const v = u8[px + i] * T.slope + T.inter; out[i] = v; if (v < mn) mn = v; if (v > mx) mx = v; }
+    else for (let i = 0; i < n; i++) { let v = T.rep ? dv.getInt16(px + i * 2, true) : dv.getUint16(px + i * 2, true); v = v * T.slope + T.inter; out[i] = v; if (v < mn) mn = v; if (v > mx) mx = v; }
+    let lo = mn, hi = mx;
+    if (T.wc != null && T.ww > 0) { lo = T.wc - T.ww / 2; hi = T.wc + T.ww / 2; }
+    else { const h = new Uint32Array(1024), k = (mx - mn) || 1; for (let i = 0; i < n; i++) h[Math.min(1023, Math.floor((out[i] - mn) / k * 1023))]++; let a = 0, b = 0, c = 0; for (; a < 1024; a++) { c += h[a]; if (c >= n * 0.005) break; } c = 0; for (b = 1023; b > 0; b--) { c += h[b]; if (c >= n * 0.005) break; } lo = mn + a / 1023 * k; hi = mn + b / 1023 * k; }
+    const cv = document.createElement('canvas'); cv.width = T.cols; cv.height = T.rows; const g2 = cv.getContext('2d'), im = g2.createImageData(T.cols, T.rows), d = im.data, sp = (hi - lo) || 1, inv = T.photo === 'MONOCHROME1';
+    for (let i = 0; i < n; i++) { let t = (out[i] - lo) / sp; t = t < 0 ? 0 : t > 1 ? 1 : t; if (inv) t = 1 - t; const q = Math.round(t * 255); d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = q; d[i * 4 + 3] = 255; }
+    g2.putImageData(im, 0, 0); return cv;
+  }
+  const canvasJpg = (cv, max, q) => { const k = Math.min(1, max / Math.max(cv.width, cv.height)), c = document.createElement('canvas'); c.width = Math.round(cv.width * k); c.height = Math.round(cv.height * k); c.getContext('2d').drawImage(cv, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', q); };
+  const fileJpg = (file, max, q) => new Promise((res, rej) => { const u = URL.createObjectURL(file), im = new Image(); im.onload = () => { const k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/jpeg', q)); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('img')); }; im.src = u; });
+  /* un archivo de radiografía → imagen de trabajo y miniatura */
+  A.rxRead = async file => {
+    const isDcm = /\.(dcm|dicom)$/i.test(file.name) || file.type === 'application/dicom';
+    if (isDcm) { const cv = dicomToCanvas(await readBuf(file)); return { full: canvasJpg(cv, 1600, 0.88), thumb: canvasJpg(cv, 160, 0.6) }; }
+    return { full: await fileJpg(file, 1600, 0.85), thumb: await fileJpg(file, 160, 0.6) };
+  };
+  A.rxMsg = e => /compr/.test(String(e && e.message)) ? 'Ese DICOM está comprimido y no se puede abrir. En el programa del sensor exportalo como JPG o PNG.' : /color/.test(String(e && e.message)) ? 'Ese DICOM es a color: exportalo como JPG.' : 'No se pudo leer el archivo. Probá con JPG, PNG, BMP o DICOM sin comprimir (si es TIFF, exportalo como JPG).';
+  A.rxAccept = 'image/*,.dcm,.dicom,.bmp';
+
+  /* ---------- Implantes ---------- */
+  const STAGES = [['plan', 'Planificación'], ['cirugia', 'Cirugía'], ['oseo', 'Oseointegración'], ['segunda', 'Segunda etapa'], ['protesis', 'Prótesis'], ['mant', 'Mantenimiento']];
+  const BRANDS = ['Straumann', 'Nobel Biocare', 'Zimmer Biomet', 'Dentsply Sirona (Astra, Xive)', 'Neodent', 'MIS', 'Osstem', 'Bioner', 'Implacil De Bortoli', 'Cortex', 'SIN', 'Otro'];
+  const TECH = ['Diferido (cicatrización completa)', 'Inmediato post-extracción', 'Inmediato con carga inmediata', 'Guiado (cirugía guiada)'];
+  const BONE = ['D1', 'D2', 'D3', 'D4'];
+  const SINUS = ['No', 'Elevación de seno lateral', 'Elevación de seno crestal'];
+  const HEAL = ['Sumergido (tapa de cierre)', 'Transmucoso (pilar de cicatrización)'];
+  const PTYPE = ['Corona atornillada', 'Corona cementada', 'Puente sobre implantes', 'Sobredentadura (locator / barra)', 'Prótesis híbrida', 'Provisoria inmediata'];
+  const KRX = [['rx-peri', 'Periapical'], ['rx-pano', 'Panorámica'], ['estudio', 'Tomografía / CBCT'], ['intra', 'Foto intraoral']];
+  const list = pid => { const pd = A.pd(pid); return pd.impl || (pd.impl = []); };
+  const byId = (pid, id) => list(pid).filter(x => x.id === id)[0];
+  const opts = (L, v) => '<option value="">—</option>' + L.map(x => '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
+  const stageOf = x => x.final ? 'mant' : x.provisional || x.abutDate ? 'protesis' : x.secondDate ? 'segunda' : x.surgDate && x.surgDate <= A.today() ? (x.surgDate > A.add(A.today(), -90) ? 'oseo' : 'oseo') : x.surgDate ? 'cirugia' : 'plan';
+  const stageName = k => (STAGES.filter(s => s[0] === k)[0] || [])[1] || '';
+  const nextCtl = x => { if (!x.final) return null; const m = [1, 3, 6, 12], done = (x.ctls || []).length; return done < m.length ? { when: A.add(x.final, m[done] * 30), label: 'control a los ' + m[done] + (m[done] === 1 ? ' mes' : ' meses') } : { when: A.add((x.ctls[x.ctls.length - 1] || {}).date || x.final, 365), label: 'control anual' }; };
+  const imgsOf = (pid, x) => (A.pd(pid).images || []).filter(i => i.impl === x.id).sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  A.render.implantesTab = pid => {
+    const L = list(pid);
+    let h = '<div class="im-wrap"><section class="card"><div class="im-top"><div><h2>Implantes <span class="count">' + L.length + '</span></h2><div class="hint" style="margin:2px 0 0">Planificación, cirugía, prótesis y controles de cada implante, con la marca y el lote para la trazabilidad.</div></div><div class="row-btns"><button class="btn primary" data-act="imNew">+ Nuevo implante</button>' + (L.length ? '<button class="btn" data-act="imCard">Tarjeta del implante (PDF)</button>' : '') + '</div></div></section>';
+    if (!L.length) h += '<section class="card"><div class="empty">Todavía no hay implantes. Tocá «+ Nuevo implante» para planificar o registrar uno.</div></section>';
+    L.slice().sort((a, b) => (a.surgDate || a.plannedDate || '') < (b.surgDate || b.plannedDate || '') ? 1 : -1).forEach(x => h += cardHTML(pid, x));
+    return h + '</div>';
+  };
+  function cardHTML(pid, x) {
+    const st = stageOf(x), idx = STAGES.map(s => s[0]).indexOf(st), nx = nextCtl(x), ph = imgsOf(pid, x), dim = [x.diam && x.diam + ' mm', x.len && x.len + ' mm'].filter(Boolean).join(' × ');
+    const line = (l, v) => v ? '<div class="im-kv"><span>' + l + '</span><b>' + esc(v) + '</b></div>' : '';
+    return '<section class="card im-card" data-id="' + esc(x.id) + '"><div class="im-h"><div><h3>Pieza ' + esc(x.tooth || '—') + ' · ' + esc([x.brand, x.line].filter(Boolean).join(' ') || 'Implante') + (dim ? ' ' + esc(dim) : '') + '</h3><div class="sub">' + esc(stageName(st)) + (x.surgDate ? ' · cirugía ' + dmy(x.surgDate) : x.plannedDate ? ' · planificado para ' + dmy(x.plannedDate) : '') + '</div></div>' +
+      '<div class="row-btns"><button class="btn small" data-act="imEd" data-id="' + esc(x.id) + '">✎ Editar</button><button class="btn small ghost" data-act="imDel2" data-id="' + esc(x.id) + '">Borrar</button></div></div>' +
+      '<ol class="im-steps">' + STAGES.map((s, i) => '<li class="' + (i < idx ? 'done' : i === idx ? 'on' : '') + '">' + esc(s[1]) + '</li>').join('') + '</ol>' +
+      '<div class="im-grid">' + line('Lote / REF', [x.lot, x.ref].filter(Boolean).join(' · ')) + line('Técnica', x.tech) + line('Hueso', x.bone) + line('Torque de inserción', x.torque ? x.torque + ' Ncm' : '') + line('ISQ', x.isq) + line('Injerto / seno', [x.graft, x.sinus && x.sinus !== 'No' ? x.sinus : ''].filter(Boolean).join(' · ')) + line('Cicatrización', x.heal) + line('Pilar', [x.abutType, x.abutTorque ? x.abutTorque + ' Ncm' : ''].filter(Boolean).join(' · ')) + line('Prótesis', [x.ptype, x.pmat].filter(Boolean).join(' · ')) + line('Entrega', x.final ? dmy(x.final) : '') + '</div>' +
+      (nx ? '<div class="im-next">Próximo: ' + esc(nx.label) + ' ≈ <b>' + dmy(nx.when) + '</b></div>' : '') +
+      '<h4 class="im-sub">Controles <span class="count">' + (x.ctls || []).length + '</span></h4>' + ((x.ctls || []).length ? '<ul class="im-ctls">' + x.ctls.map(c => '<li><b>' + dmy(c.date) + '</b> · sondaje ' + esc(c.probing || '—') + ' mm' + (c.bleed ? ' · sangrado' : '') + (c.mob ? ' · movilidad' : '') + (c.bone ? ' · pérdida ósea ' + esc(c.bone) + ' mm' : '') + (c.note ? ' · ' + esc(c.note) : '') + '<button class="lnk" data-act="imCtlDel" data-id="' + esc(x.id) + '" data-c="' + esc(c.id) + '">quitar</button></li>').join('') + '</ul>' : '<p class="hint" style="margin:0">Todavía no hay controles.</p>') +
+      '<div class="im-ctlform"><input type="date" id="icD_' + esc(x.id) + '" value="' + A.today() + '" aria-label="Fecha del control"><input id="icP_' + esc(x.id) + '" inputmode="decimal" placeholder="Sondaje mm" aria-label="Sondaje en milímetros"><input id="icB_' + esc(x.id) + '" inputmode="decimal" placeholder="Pérdida ósea mm" aria-label="Pérdida ósea en milímetros"><label class="chk"><input type="checkbox" id="icS_' + esc(x.id) + '"> Sangrado</label><label class="chk"><input type="checkbox" id="icM_' + esc(x.id) + '"> Movilidad</label><input id="icN_' + esc(x.id) + '" placeholder="Nota (opcional)"><button class="btn small primary" data-act="imCtlAdd" data-id="' + esc(x.id) + '">+ Control</button></div>' +
+      '<h4 class="im-sub">Radiografías, tomografías y fotos <span class="count">' + ph.length + '</span></h4><div class="im-up"><select id="iuK_' + esc(x.id) + '" aria-label="Tipo de imagen">' + KRX.map(k => '<option value="' + k[0] + '">' + k[1] + '</option>').join('') + '</select><label class="btn small filebtn">+ Subir<input type="file" accept="' + A.rxAccept + '" multiple hidden data-chg="imRxUp" data-id="' + esc(x.id) + '"></label></div>' +
+      (ph.length ? '<div class="gallery">' + ph.map(i => '<button class="gal-item" data-act="imOpen" data-id="' + esc(i.id) + '"><img alt="" src="' + esc(i.thumb) + '"><span class="gk">' + esc(A.IMG_KINDS[i.kind] || '') + '</span><span class="gd">' + dmy(i.date) + '</span></button>').join('') + '</div>' : '') +
+      (x.notes ? '<div class="small-note">' + esc(x.notes) + '</div>' : '') + '</section>';
+  }
+  A.chg.imRxUp = async el => {
+    const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')), files = Array.prototype.slice.call(el.files || []); if (!x || !files.length) return;
+    const kind = ($('#iuK_' + x.id) || {}).value || 'rx-peri'; let n = 0;
+    A.toast('Procesando ' + files.length + ' imagen' + (files.length === 1 ? '' : 'es') + '…');
+    for (const f of files) { try { const r = await A.rxRead(f), it = await A.imgAdd(pid, { kind, tooth: parseInt(x.tooth, 10) || null, note: 'Implante pieza ' + (x.tooth || '') }, r.full, r.thumb); it.impl = x.id; n++; } catch (e) { A.toast(A.rxMsg(e)); } }
+    el.value = ''; if (n) { A.touchPd(pid); A.refresh(); A.toast(n + ' imagen' + (n === 1 ? '' : 'es') + ' agregada' + (n === 1 ? '' : 's') + ' al implante.'); }
+  };
+  A.acts.imCtlAdd = el => {
+    const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')); if (!x) return; const v = k => ($('#' + k + '_' + x.id) || {});
+    const c = { id: A.uid(), date: v('icD').value || A.today(), probing: v('icP').value.trim(), bone: v('icB').value.trim(), bleed: !!v('icS').checked, mob: !!v('icM').checked, note: v('icN').value.trim() };
+    (x.ctls = x.ctls || []).push(c); x.ctls.sort((a, b) => (a.date < b.date ? -1 : 1)); A.touchPd(pid);
+    const pd = A.pd(pid); pd.notes.unshift({ id: A.uid(), date: c.date, pro: A.PAT(pid).pro, text: 'Control de implante pieza ' + (x.tooth || '') + ': sondaje ' + (c.probing || '—') + ' mm' + (c.bleed ? ', sangrado' : ', sin sangrado') + (c.mob ? ', con movilidad' : ', sin movilidad') + (c.bone ? ', pérdida ósea ' + c.bone + ' mm' : '') + '.' + (c.note ? ' ' + c.note : '') });
+    A.touchPd(pid); A.refresh(); A.toast('Control agregado y anotado en la evolución.');
+  };
+  A.acts.imCtlDel = el => { const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')); if (!x) return; x.ctls = (x.ctls || []).filter(c => c.id !== el.getAttribute('data-c')); A.touchPd(pid); A.refresh(); };
+  A.acts.imDel2 = el => { const m = S.modal = { type: 'imDelAsk', id: el.getAttribute('data-id'), pid: S.fichaPid }; A.renderModal(); };
+  MF.imDelAsk = m => A.modalShell('Borrar el implante', '<p>Se borra el registro del implante (pieza ' + esc((byId(m.pid, m.id) || {}).tooth || '') + '). Las radiografías y fotos siguen en «Fotos y radiografías».</p>', '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="imDelGo">Borrar</button>');
+  A.acts.imDelGo = () => { const m = S.modal; const pd = A.pd(m.pid); pd.impl = list(m.pid).filter(x => x.id !== m.id); (pd.images || []).forEach(i => { if (i.impl === m.id) delete i.impl; }); A.touchPd(m.pid); S.modal = null; A.renderModal(); A.refresh(); A.toast('Implante borrado.'); };
+
+  /* ---------- alta y edición ---------- */
+  A.acts.imNew = () => { S.modal = { type: 'imEd', pid: S.fichaPid, f: { id: A.uid(), isNew: true } }; A.renderModal(); };
+  A.acts.imEd = el => { const x = byId(S.fichaPid, el.getAttribute('data-id')); if (!x) return; S.modal = { type: 'imEd', pid: S.fichaPid, f: JSON.parse(JSON.stringify(x)) }; A.renderModal(); };
+  MF.imEd = m => {
+    const f = m.f, F = (k, l, ph, t) => '<div class="field"><label for="ie_' + k + '">' + l + '</label><input id="ie_' + k + '" ' + (t ? 'type="' + t + '" ' : '') + 'value="' + esc(f[k] || '') + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + '></div>';
+    const SEL = (k, l, L) => '<div class="field"><label for="ie_' + k + '">' + l + '</label><select id="ie_' + k + '">' + opts(L, f[k]) + '</select></div>';
+    const b = '<h4 class="im-sub">Ubicación y planificación</h4><div class="row3">' + F('tooth', 'Pieza (FDI)', 'Ej.: 36') + F('plannedDate', 'Fecha planificada', '', 'date') + SEL('tech', 'Técnica', TECH) + '</div>' +
+      '<h4 class="im-sub">El implante</h4><div class="row3"><div class="field"><label for="ie_brand">Marca / sistema</label><input id="ie_brand" list="ieBrands" value="' + esc(f.brand || '') + '"><datalist id="ieBrands">' + BRANDS.map(x => '<option>' + esc(x) + '</option>').join('') + '</datalist></div>' + F('line', 'Línea / modelo', 'Ej.: BLT, Drive CM') + F('lot', 'Lote', '') + '</div><div class="row3">' + F('ref', 'REF (código)', '') + F('diam', 'Diámetro (mm)', '4,1') + F('len', 'Largo (mm)', '10') + '</div>' +
+      '<h4 class="im-sub">Cirugía</h4><div class="row3">' + F('surgDate', 'Fecha de cirugía', '', 'date') + SEL('bone', 'Calidad ósea', BONE) + F('torque', 'Torque de inserción (Ncm)', '35') + '</div><div class="row3">' + F('isq', 'ISQ', 'Ej.: 72') + SEL('sinus', 'Elevación de seno', SINUS) + F('graft', 'Injerto / membrana', 'Material, lote') + '</div>' +
+      '<h4 class="im-sub">Cicatrización y segunda etapa</h4><div class="row3">' + SEL('heal', 'Protocolo', HEAL) + F('secondDate', 'Fecha de segunda etapa', '', 'date') + F('abutDate', 'Fecha del pilar', '', 'date') + '</div><div class="row3">' + F('abutType', 'Pilar (tipo / marca)', '') + F('abutTorque', 'Torque del pilar (Ncm)', '25') + SEL('impression', 'Impresión', ['Convencional', 'Digital (escáner intraoral)']) + '</div>' +
+      '<h4 class="im-sub">Prótesis</h4><div class="row3">' + SEL('ptype', 'Tipo', PTYPE) + F('pmat', 'Material', 'Zirconio, metal-cerámica…') + F('provisional', 'Fecha de provisorio', '', 'date') + '</div><div class="row2">' + F('final', 'Fecha de entrega definitiva', '', 'date') + F('lab', 'Laboratorio / protesista', '') + '</div>' +
+      '<div class="field"><label for="ie_notes">Notas, complicaciones o indicaciones</label><textarea id="ie_notes" rows="3">' + esc(f.notes || '') + '</textarea></div><div id="ieMsg" class="hint bad"></div>';
+    return A.modalShell(f.isNew ? 'Nuevo implante' : 'Implante pieza ' + (f.tooth || ''), b, '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="imSave">Guardar</button>', true);
+  };
+  A.acts.imSave = () => {
+    const m = S.modal, f = m.f, g = k => (($('#ie_' + k) || {}).value || '').trim(); ['tooth', 'plannedDate', 'tech', 'brand', 'line', 'lot', 'ref', 'diam', 'len', 'surgDate', 'bone', 'torque', 'isq', 'sinus', 'graft', 'heal', 'secondDate', 'abutDate', 'abutType', 'abutTorque', 'impression', 'ptype', 'pmat', 'provisional', 'final', 'lab', 'notes'].forEach(k => { f[k] = g(k); });
+    const t = parseInt(f.tooth, 10); if (!t || !A.P.validTooth(t)) { $('#ieMsg').textContent = 'Escribí una pieza válida (FDI, por ejemplo 36).'; return; }
+    f.tooth = String(t); const L = list(m.pid), i = L.findIndex(x => x.id === f.id), isNew = f.isNew; delete f.isNew;
+    if (i >= 0) L[i] = Object.assign({}, L[i], f); else L.push(Object.assign({ ctls: [] }, f));
+    const pd = A.pd(m.pid); if (isNew) pd.notes.unshift({ id: A.uid(), date: f.surgDate || A.today(), pro: A.PAT(m.pid).pro, text: 'Implante pieza ' + f.tooth + (f.brand ? ': ' + f.brand + (f.line ? ' ' + f.line : '') : '') + (f.diam ? ' ' + f.diam + '×' + f.len + ' mm' : '') + (f.lot ? ', lote ' + f.lot : '') + (f.surgDate ? ', colocado el ' + dmy(f.surgDate) : ', planificado') + '.' });
+    A.touchPd(m.pid); S.modal = null; A.renderModal(); A.refresh(); A.toast('Implante guardado.');
+  };
+
+  /* ---------- tarjeta del implante (para el paciente) ---------- */
+  A.acts.imCard = () => {
+    const pid = S.fichaPid, pat = A.PAT(pid), L = list(pid).filter(x => x.brand || x.lot || x.surgDate), o = A.pdfDoc_ && A.pdfDoc_('Tarjeta del implante'); if (!o) return;
+    o.head('Tarjeta del implante', 'Datos de trazabilidad: guardala, la puede pedir cualquier profesional que te atienda.', pat, '');
+    if (!L.length) o.p('Todavía no hay implantes con marca, lote o fecha cargados.');
+    L.forEach(x => { o.h('Pieza ' + x.tooth); o.rows([['Marca y modelo', [x.brand, x.line].filter(Boolean).join(' ') || '—'], ['Diámetro × largo', [x.diam, x.len].filter(Boolean).join(' × ') + (x.diam ? ' mm' : '') || '—'], ['Lote / REF', [x.lot, x.ref].filter(Boolean).join(' · ') || '—'], ['Fecha de colocación', x.surgDate ? dmy(x.surgDate) : '—'], ['Pilar', x.abutType || '—'], ['Prótesis', [x.ptype, x.pmat].filter(Boolean).join(' · ') || '—'], ['Entrega', x.final ? dmy(x.final) : '—']]); });
+    const pro = A.PRO(pat.pro) || {}; o.y += 4; o.sigs([{ role: 'Profesional', name: pro.name, mat: pro.mat }]);
+    o.finish('tarjeta-implante-' + String(pat.last || pat.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.pdf');
+  };
+
+  const css = document.createElement('style'); css.id = 'ovApp138';
+  css.textContent = '.im-top{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.im-h{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.im-h h3{margin:0;font-size:1.05rem}' +
+    '.im-steps{list-style:none;margin:10px 0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:4px;font-size:11px;text-align:center}.im-steps li{padding:5px 2px;border-radius:8px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--line)}.im-steps li.done{background:var(--accent-soft);color:var(--ink)}.im-steps li.on{background:var(--accent);color:var(--accent-ink);font-weight:700;border-color:var(--accent)}' +
+    '.im-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 12px;margin:8px 0}.im-kv{display:flex;flex-direction:column;font-size:.86rem}.im-kv span{color:var(--ink-2);font-size:.75rem}.im-next{padding:8px 10px;border-radius:10px;background:var(--accent-soft);font-size:.9rem;margin:8px 0}' +
+    '.im-sub{margin:12px 0 6px;font-size:.95rem}.im-ctls{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:4px;font-size:.88rem}.im-ctls .lnk{margin-left:8px}.im-ctlform{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}.im-ctlform input[type=date],.im-ctlform input:not([type]){min-width:0;flex:1 1 110px}.im-up{display:flex;gap:8px;align-items:center;margin:0 0 8px}@media (max-width:560px){.im-steps{grid-template-columns:repeat(3,1fr)}}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.55: solapa Endodoncia: control del tratamiento de conducto (diagnóstico, conductos y conductometría, sesiones, obturación, radiografías periapicales por etapa y controles) ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns, esc = A.esc, $ = q => document.querySelector(q);
+  if (!A.render || !A.imgAdd || !A.rxRead) return;
+  const dmy = d => (A.fmtDMY ? A.fmtDMY(d) : d);
+  const DXP = ['Pulpa normal', 'Pulpitis reversible', 'Pulpitis irreversible sintomática', 'Pulpitis irreversible asintomática', 'Necrosis pulpar', 'Previamente tratado', 'Previamente iniciado'];
+  const DXA = ['Tejidos periapicales normales', 'Periodontitis apical sintomática', 'Periodontitis apical asintomática', 'Absceso apical agudo', 'Absceso apical crónico (con fístula)', 'Osteítis condensante'];
+  const SYS = ['ProTaper Next', 'ProTaper Gold', 'WaveOne Gold', 'Reciproc Blue', 'HyFlex', 'Rotatorio (otro)', 'Reciprocante (otro)', 'Manual'];
+  const IRR = ['Hipoclorito 2,5%', 'Hipoclorito 5,25%', 'EDTA 17%', 'Clorhexidina 2%', 'Activación sónica / ultrasónica'];
+  const MED = ['Ninguna', 'Hidróxido de calcio', 'Pasta antibiótica', 'Otra'];
+  const OBT = ['Condensación lateral', 'Onda continua (vertical caliente)', 'Cono único (biocerámico)', 'Termoplastificada', 'Otra'];
+  const REST = ['Provisoria', 'Definitiva directa (composite)', 'Perno + corona', 'Corona', 'Pendiente'];
+  const PROG = ['Favorable', 'Reservado', 'Desfavorable'];
+  const STG = [['diag', 'Diagnóstica'], ['cond', 'Conductometría'], ['cono', 'Cono maestro'], ['final', 'Obturación final'], ['c6', 'Control 6 meses'], ['c12', 'Control 12 meses'], ['otra', 'Otra']];
+  const RES = ['Curación (sin lesión y sin síntomas)', 'En curación', 'Sin cambios', 'Enfermedad persistente'];
+  const CHIPS = ['Apertura y exploración', 'Conductometría', 'Instrumentación', 'Medicación intraconducto', 'Obturación', 'Restauración', 'Retratamiento', 'Urgencia (dolor)'];
+  const COMP = ['Perforación', 'Instrumento fracturado', 'Conducto calcificado', 'Sobreobturación', 'Fractura radicular', 'Flare-up'];
+  const CANALS = ['Único', 'MV', 'MV2', 'DV', 'Palatino', 'Vestibular', 'Lingual', 'Mesial', 'Distal', 'Mesiolingual', 'Mesiovestibular', 'Distovestibular', 'Distolingual'];
+  const list = pid => { const pd = A.pd(pid); return pd.endo || (pd.endo = []); };
+  const byId = (pid, id) => list(pid).filter(x => x.id === id)[0];
+  const opts = (L, v) => '<option value="">—</option>' + L.map(x => '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
+  const stgName = k => (STG.filter(s => s[0] === k)[0] || [])[1] || '';
+  const imgsOf = (pid, x) => (A.pd(pid).images || []).filter(i => i.endo === x.id).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const state = x => x.status === 'fin' ? 'Terminado' : x.obtDate ? 'Obturado' : x.canals && x.canals.length ? 'En instrumentación' : 'Iniciado';
+
+  A.render.endoTab = pid => {
+    const L = list(pid);
+    let h = '<div class="en-wrap"><section class="card"><div class="im-top"><div><h2>Endodoncia <span class="count">' + L.length + '</span></h2><div class="hint" style="margin:2px 0 0">Control del tratamiento de conducto de cada pieza: diagnóstico, conductos, sesiones, obturación, radiografías periapicales y controles.</div></div><div class="row-btns"><button class="btn primary" data-act="enNew">+ Nuevo tratamiento de conducto</button></div></div></section>';
+    if (!L.length) h += '<section class="card"><div class="empty">Todavía no hay tratamientos de conducto. Tocá «+ Nuevo tratamiento de conducto» para empezar uno.</div></section>';
+    L.slice().sort((a, b) => (a.start || '') < (b.start || '') ? 1 : -1).forEach(x => { h += cardHTML(pid, x); });
+    return h + '</div>';
+  };
+  function cardHTML(pid, x) {
+    const ph = imgsOf(pid, x), id = esc(x.id), line = (l, v) => v ? '<div class="im-kv"><span>' + l + '</span><b>' + esc(v) + '</b></div>' : '';
+    const bySt = {}; ph.forEach(i => { (bySt[i.etapa || 'otra'] = bySt[i.etapa || 'otra'] || []).push(i); });
+    return '<section class="card im-card" data-id="' + id + '"><div class="im-h"><div><h3>Pieza ' + esc(x.tooth) + (x.retreat ? ' · retratamiento' : '') + '</h3><div class="sub"><span class="chip ' + (x.status === 'fin' ? 'ok' : '') + '">' + esc(state(x)) + '</span> inicio ' + dmy(x.start) + (x.obtDate ? ' · obturación ' + dmy(x.obtDate) : '') + '</div></div><div class="row-btns"><button class="btn small" data-act="enEd" data-id="' + id + '">✎ Editar</button><button class="btn small ghost" data-act="enDelAsk" data-id="' + id + '">Borrar</button></div></div>' +
+      '<div class="im-grid">' + line('Diagnóstico pulpar', x.dxP) + line('Diagnóstico periapical', x.dxA) + line('Pruebas', x.tests) + line('Anestesia / aislamiento', [x.anest, x.isol].filter(Boolean).join(' · ')) + line('Instrumentación', x.sys) + line('Irrigación', x.irr) + line('Medicación', x.med) + line('Obturación', [x.obt, x.sealer].filter(Boolean).join(' · ')) + line('Restauración', x.rest) + line('Pronóstico', x.prog) + '</div>' +
+      /* conductos */
+      '<h4 class="im-sub">Conductos y conductometría <span class="count">' + (x.canals || []).length + '</span></h4>' + ((x.canals || []).length ? '<div class="en-tbl"><div class="en-th"><span>Conducto</span><span>Longitud de trabajo</span><span>Referencia</span><span>Lima apical</span><span></span></div>' + x.canals.map(c => '<div class="en-tr"><span>' + esc(c.name) + '</span><span>' + esc(c.wl || '—') + (c.wl ? ' mm' : '') + '</span><span>' + esc(c.ref || '—') + '</span><span>' + esc(c.apical || '—') + '</span><button class="lnk" data-act="enCanalDel" data-id="' + id + '" data-c="' + esc(c.id) + '">quitar</button></div>').join('') + '</div>' : '<p class="hint" style="margin:0">Todavía no hay conductos cargados.</p>') +
+      '<div class="im-ctlform"><input id="ecN_' + id + '" list="enCanals" placeholder="Conducto" aria-label="Conducto"><input id="ecW_' + id + '" inputmode="decimal" placeholder="Long. trabajo mm" aria-label="Longitud de trabajo"><input id="ecR_' + id + '" placeholder="Referencia (cúspide, borde…)" aria-label="Punto de referencia"><input id="ecA_' + id + '" placeholder="Lima apical (ej. 25/.06)" aria-label="Lima apical"><button class="btn small primary" data-act="enCanalAdd" data-id="' + id + '">+ Conducto</button></div><datalist id="enCanals">' + CANALS.map(c => '<option>' + c + '</option>').join('') + '</datalist>' +
+      /* sesiones */
+      '<h4 class="im-sub">Sesiones <span class="count">' + (x.sessions || []).length + '</span></h4>' + ((x.sessions || []).length ? '<ul class="im-ctls">' + x.sessions.map(s => '<li><b>' + dmy(s.date) + '</b> · ' + esc((s.what || []).join(', ') || 'Sesión') + (s.note ? ' · ' + esc(s.note) : '') + '<button class="lnk" data-act="enSesDel" data-id="' + id + '" data-c="' + esc(s.id) + '">quitar</button></li>').join('') + '</ul>' : '') +
+      '<div class="en-chips" id="esC_' + id + '">' + CHIPS.map(c => '<button type="button" class="chip-ex" data-act="enChip" aria-pressed="false">' + esc(c) + '</button>').join('') + '</div><div class="im-ctlform"><input type="date" id="esD_' + id + '" value="' + A.today() + '" aria-label="Fecha de la sesión"><input id="esN_' + id + '" placeholder="Nota de la sesión (opcional)"><button class="btn small primary" data-act="enSesAdd" data-id="' + id + '">+ Sesión</button></div>' +
+      /* radiografías */
+      '<h4 class="im-sub">Radiografías periapicales <span class="count">' + ph.length + '</span></h4><div class="im-up"><select id="euS_' + id + '" aria-label="Etapa">' + STG.map(s => '<option value="' + s[0] + '">' + s[1] + '</option>').join('') + '</select><label class="btn small filebtn">+ Subir<input type="file" accept="' + A.rxAccept + '" multiple hidden data-chg="enRxUp" data-id="' + id + '"></label><span class="hint" style="margin:0">JPG, PNG, BMP o DICOM del radiovisiógrafo</span></div>' +
+      (ph.length ? STG.filter(s => bySt[s[0]]).map(s => '<div class="en-stage"><b>' + s[1] + '</b><div class="gallery">' + bySt[s[0]].map(i => '<button class="gal-item" data-act="imOpen" data-id="' + esc(i.id) + '"><img alt="" src="' + esc(i.thumb) + '"><span class="gd">' + dmy(i.date) + '</span></button>').join('') + '</div></div>').join('') : '') +
+      /* controles */
+      '<h4 class="im-sub">Controles <span class="count">' + (x.ctls || []).length + '</span></h4>' + ((x.ctls || []).length ? '<ul class="im-ctls">' + x.ctls.map(c => '<li><b>' + dmy(c.date) + '</b> · ' + esc(c.res || '—') + (c.note ? ' · ' + esc(c.note) : '') + '<button class="lnk" data-act="enCtlDel" data-id="' + id + '" data-c="' + esc(c.id) + '">quitar</button></li>').join('') + '</ul>' : '') +
+      '<div class="im-ctlform"><input type="date" id="ekD_' + id + '" value="' + A.today() + '" aria-label="Fecha del control"><select id="ekR_' + id + '" aria-label="Resultado">' + RES.map(r => '<option>' + r + '</option>').join('') + '</select><input id="ekN_' + id + '" placeholder="Nota (opcional)"><button class="btn small primary" data-act="enCtlAdd" data-id="' + id + '">+ Control</button></div>' +
+      ((x.complications || []).length ? '<div class="small-note"><b>Complicaciones:</b> ' + esc(x.complications.join(', ')) + '</div>' : '') + (x.notes ? '<div class="small-note">' + esc(x.notes) + '</div>' : '') + '</section>';
+  }
+  A.acts.enChip = el => el.setAttribute('aria-pressed', el.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+  const upd = (pid, msg) => { A.touchPd(pid); A.refresh(); if (msg) A.toast(msg); };
+  const note = (pid, text, date) => A.pd(pid).notes.unshift({ id: A.uid(), date: date || A.today(), pro: A.PAT(pid).pro, text });
+  A.acts.enCanalAdd = el => {
+    const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')); if (!x) return; const v = k => (($('#' + k + '_' + x.id) || {}).value || '').trim(), name = v('ecN'); if (!name) { A.toast('Escribí el nombre del conducto.'); return; }
+    (x.canals = x.canals || []).push({ id: A.uid(), name, wl: v('ecW').replace(',', '.'), ref: v('ecR'), apical: v('ecA') }); upd(pid, 'Conducto agregado.');
+  };
+  A.acts.enCanalDel = el => { const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')); if (!x) return; x.canals = (x.canals || []).filter(c => c.id !== el.getAttribute('data-c')); upd(pid); };
+  A.acts.enSesAdd = el => {
+    const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')); if (!x) return; const w = Array.prototype.slice.call(document.querySelectorAll('#esC_' + x.id + ' [aria-pressed="true"]')).map(b => b.textContent), date = ($('#esD_' + x.id) || {}).value || A.today(), n = (($('#esN_' + x.id) || {}).value || '').trim();
+    (x.sessions = x.sessions || []).push({ id: A.uid(), date, what: w, note: n }); x.sessions.sort((a, b) => (a.date < b.date ? -1 : 1));
+    if (w.indexOf('Obturación') >= 0 && !x.obtDate) x.obtDate = date;
+    note(pid, 'Endodoncia pieza ' + x.tooth + ': ' + (w.join(', ') || 'sesión') + '.' + (n ? ' ' + n : ''), date); upd(pid, 'Sesión agregada y anotada en la evolución.');
+  };
+  A.acts.enSesDel = el => { const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')); if (!x) return; x.sessions = (x.sessions || []).filter(c => c.id !== el.getAttribute('data-c')); upd(pid); };
+  A.acts.enCtlAdd = el => {
+    const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')); if (!x) return; const date = ($('#ekD_' + x.id) || {}).value || A.today(), res = ($('#ekR_' + x.id) || {}).value, n = (($('#ekN_' + x.id) || {}).value || '').trim();
+    (x.ctls = x.ctls || []).push({ id: A.uid(), date, res, note: n }); x.ctls.sort((a, b) => (a.date < b.date ? -1 : 1));
+    note(pid, 'Control de endodoncia pieza ' + x.tooth + ': ' + res + '.' + (n ? ' ' + n : ''), date); upd(pid, 'Control agregado y anotado en la evolución.');
+  };
+  A.acts.enCtlDel = el => { const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')); if (!x) return; x.ctls = (x.ctls || []).filter(c => c.id !== el.getAttribute('data-c')); upd(pid); };
+  A.chg.enRxUp = async el => {
+    const pid = S.fichaPid, x = byId(pid, el.getAttribute('data-id')), files = Array.prototype.slice.call(el.files || []); if (!x || !files.length) return;
+    const etapa = ($('#euS_' + x.id) || {}).value || 'diag'; let n = 0; A.toast('Procesando ' + files.length + ' radiografía' + (files.length === 1 ? '' : 's') + '…');
+    for (const f of files) { try { const r = await A.rxRead(f), it = await A.imgAdd(pid, { kind: 'rx-peri', tooth: parseInt(x.tooth, 10) || null, note: 'Endodoncia · ' + stgName(etapa) }, r.full, r.thumb); it.endo = x.id; it.etapa = etapa; n++; } catch (e) { A.toast(A.rxMsg(e)); } }
+    el.value = ''; if (n) upd(pid, n + ' radiografía' + (n === 1 ? '' : 's') + ' agregada' + (n === 1 ? '' : 's') + ' (' + stgName(etapa) + ').');
+  };
+  A.acts.enDelAsk = el => { S.modal = { type: 'enDelAsk', pid: S.fichaPid, id: el.getAttribute('data-id') }; A.renderModal(); };
+  MF.enDelAsk = m => A.modalShell('Borrar el tratamiento de conducto', '<p>Se borra el registro de la pieza ' + esc((byId(m.pid, m.id) || {}).tooth || '') + '. Las radiografías siguen en «Fotos y radiografías».</p>', '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn danger" data-act="enDelGo">Borrar</button>');
+  A.acts.enDelGo = () => { const m = S.modal, pd = A.pd(m.pid); pd.endo = list(m.pid).filter(x => x.id !== m.id); (pd.images || []).forEach(i => { if (i.endo === m.id) { delete i.endo; delete i.etapa; } }); S.modal = null; A.renderModal(); upd(m.pid, 'Tratamiento borrado.'); };
+
+  /* ---------- alta y edición ---------- */
+  A.acts.enNew = () => { S.modal = { type: 'enEd', pid: S.fichaPid, f: { id: A.uid(), isNew: true, start: A.today(), isol: 'Aislamiento absoluto (dique de goma)' } }; A.renderModal(); };
+  A.acts.enEd = el => { const x = byId(S.fichaPid, el.getAttribute('data-id')); if (!x) return; S.modal = { type: 'enEd', pid: S.fichaPid, f: JSON.parse(JSON.stringify(x)) }; A.renderModal(); };
+  MF.enEd = m => {
+    const f = m.f, F = (k, l, ph, t) => '<div class="field"><label for="ee_' + k + '">' + l + '</label><input id="ee_' + k + '" ' + (t ? 'type="' + t + '" ' : '') + 'value="' + esc(f[k] || '') + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + '></div>';
+    const SEL = (k, l, L) => '<div class="field"><label for="ee_' + k + '">' + l + '</label><select id="ee_' + k + '">' + opts(L, f[k]) + '</select></div>';
+    const b = '<h4 class="im-sub">Pieza y diagnóstico</h4><div class="row3">' + F('tooth', 'Pieza (FDI)', 'Ej.: 36') + F('start', 'Fecha de inicio', '', 'date') + '<label class="chk" style="align-self:end"><input type="checkbox" id="ee_retreat"' + (f.retreat ? ' checked' : '') + '> Es un retratamiento</label></div>' +
+      '<div class="row2">' + SEL('dxP', 'Diagnóstico pulpar', DXP) + SEL('dxA', 'Diagnóstico periapical', DXA) + '</div><div class="field"><label for="ee_tests">Pruebas (frío, calor, percusión, palpación, movilidad, sondaje)</label><input id="ee_tests" value="' + esc(f.tests || '') + '" placeholder="Ej.: frío +, percusión vertical +, sondaje normal"></div>' +
+      '<h4 class="im-sub">Procedimiento</h4><div class="row2">' + F('anest', 'Anestesia', 'Ej.: articaína 4% 1:100.000, 1 carpule') + F('isol', 'Aislamiento', '') + '</div><div class="row2">' + SEL('sys', 'Instrumentación', SYS) + F('irr', 'Irrigación', 'Hipoclorito 5,25% + EDTA 17%') + '</div><div class="row3">' + SEL('med', 'Medicación intraconducto', MED) + SEL('obt', 'Técnica de obturación', OBT) + F('sealer', 'Sellador', 'Ej.: AH Plus, biocerámico') + '</div><div class="row3">' + F('obtDate', 'Fecha de obturación', '', 'date') + SEL('rest', 'Restauración', REST) + SEL('prog', 'Pronóstico', PROG) + '</div>' +
+      '<div class="field"><label>Complicaciones</label><div class="en-chips" id="eeComp">' + COMP.map(c => '<button type="button" class="chip-ex" data-act="enChip" aria-pressed="' + ((f.complications || []).indexOf(c) >= 0) + '">' + c + '</button>').join('') + '</div></div>' +
+      '<div class="row2"><div class="field"><label for="ee_status">Estado</label><select id="ee_status"><option value="act"' + (f.status !== 'fin' ? ' selected' : '') + '>En tratamiento</option><option value="fin"' + (f.status === 'fin' ? ' selected' : '') + '>Terminado</option></select></div></div>' +
+      '<div class="field"><label for="ee_notes">Notas</label><textarea id="ee_notes" rows="3">' + esc(f.notes || '') + '</textarea></div><div id="eeMsg" class="hint bad"></div>';
+    return A.modalShell(f.isNew ? 'Nuevo tratamiento de conducto' : 'Endodoncia pieza ' + (f.tooth || ''), b, '<button class="btn" data-act="closeModal">Cancelar</button><button class="btn primary" data-act="enSave">Guardar</button>', true);
+  };
+  A.acts.enSave = () => {
+    const m = S.modal, f = m.f, g = k => (($('#ee_' + k) || {}).value || '').trim();
+    ['tooth', 'start', 'dxP', 'dxA', 'tests', 'anest', 'isol', 'sys', 'irr', 'med', 'obt', 'sealer', 'obtDate', 'rest', 'prog', 'status', 'notes'].forEach(k => { f[k] = g(k); }); f.retreat = !!($('#ee_retreat') || {}).checked;
+    f.complications = Array.prototype.slice.call(document.querySelectorAll('#eeComp [aria-pressed="true"]')).map(b => b.textContent);
+    const t = parseInt(f.tooth, 10); if (!t || !A.P.validTooth(t)) { $('#eeMsg').textContent = 'Escribí una pieza válida (FDI, por ejemplo 36).'; return; }
+    f.tooth = String(t); const L = list(m.pid), i = L.findIndex(x => x.id === f.id), isNew = f.isNew; delete f.isNew;
+    if (i >= 0) L[i] = Object.assign({}, L[i], f); else L.push(Object.assign({ canals: [], sessions: [], ctls: [] }, f));
+    if (isNew) note(m.pid, 'Se inicia tratamiento de conducto' + (f.retreat ? ' (retratamiento)' : '') + ' en la pieza ' + f.tooth + (f.dxP ? '. Diagnóstico: ' + f.dxP + (f.dxA ? ' / ' + f.dxA : '') : '') + '.', f.start);
+    S.modal = null; A.renderModal(); upd(m.pid, 'Tratamiento guardado.');
+  };
+
+  const css = document.createElement('style'); css.id = 'ovApp139';
+  css.textContent = '.en-tbl{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:6px 0;font-size:.88rem}.en-th,.en-tr{display:grid;grid-template-columns:1.1fr 1.2fr 1.4fr 1.1fr auto;gap:8px;padding:7px 10px;align-items:center}.en-th{background:var(--surface-2);color:var(--ink-2);font-size:.75rem;font-weight:700}.en-tr{border-top:1px solid var(--line)}' +
+    '.en-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.en-chips .chip-ex[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.en-stage{margin:6px 0}.en-stage>b{font-size:.82rem;color:var(--ink-2)}@media (max-width:560px){.en-th,.en-tr{grid-template-columns:1fr 1fr 1fr auto}.en-th span:nth-child(3),.en-tr span:nth-child(3){display:none}}';
+  document.head.appendChild(css);
+})();
+/* ===== 1.55: solapa Escaneos 3D: adjuntar escaneos intraorales y diseños (STL, PLY, OBJ) a la historia clínica y verlos girando, acercando y moviendo ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns, esc = A.esc, $ = q => document.querySelector(q);
+  if (!A.render || !A.media) return;
+  const dmy = d => (A.fmtDMY ? A.fmtDMY(d) : d);
+  const MAXMB = 60;
+  const KINDS = ['Arcada superior', 'Arcada inferior', 'Ambas arcadas + mordida', 'Preparación / muñón', 'Diseño CAD (corona, puente, guía…)', 'Modelo de estudio', 'Otro'];
+  const list = pid => { const pd = A.pd(pid); return pd.scans || (pd.scans = []); };
+  const byId = (pid, id) => list(pid).filter(x => x.id === id)[0];
+  const mb = n => (n / 1048576 < 10 ? (n / 1048576).toFixed(1) : Math.round(n / 1048576)).toString().replace('.', ',') + ' MB';
+
+  /* ---------- lectura de archivos 3D ---------- */
+  const TYPES = { char: 1, uchar: 1, int8: 1, uint8: 1, short: 2, ushort: 2, int16: 2, uint16: 2, int: 4, uint: 4, int32: 4, uint32: 4, float: 4, float32: 4, double: 8, float64: 8 };
+  function rd(dv, o, t, le) { switch (t) { case 'char': case 'int8': return dv.getInt8(o); case 'uchar': case 'uint8': return dv.getUint8(o); case 'short': case 'int16': return dv.getInt16(o, le); case 'ushort': case 'uint16': return dv.getUint16(o, le); case 'int': case 'int32': return dv.getInt32(o, le); case 'uint': case 'uint32': return dv.getUint32(o, le); case 'float': case 'float32': return dv.getFloat32(o, le); default: return dv.getFloat64(o, le); } }
+  /* vértices (x,y,z[,r,g,b]) e índices de triángulos → malla sin índices con normales suaves */
+  function build(V, C, tris) {
+    const nv = V.length / 3, N = new Float32Array(nv * 3);
+    for (let i = 0; i < tris.length; i += 3) {
+      const a = tris[i] * 3, b = tris[i + 1] * 3, c = tris[i + 2] * 3, ux = V[b] - V[a], uy = V[b + 1] - V[a + 1], uz = V[b + 2] - V[a + 2], vx = V[c] - V[a], vy = V[c + 1] - V[a + 1], vz = V[c + 2] - V[a + 2], nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      [a, b, c].forEach(k => { N[k] += nx; N[k + 1] += ny; N[k + 2] += nz; });
+    }
+    for (let i = 0; i < nv; i++) { const l = Math.hypot(N[i * 3], N[i * 3 + 1], N[i * 3 + 2]) || 1; N[i * 3] /= l; N[i * 3 + 1] /= l; N[i * 3 + 2] /= l; }
+    const n = tris.length, pos = new Float32Array(n * 3), nrm = new Float32Array(n * 3), col = C ? new Float32Array(n * 3) : null;
+    for (let i = 0; i < n; i++) { const k = tris[i] * 3; pos[i * 3] = V[k]; pos[i * 3 + 1] = V[k + 1]; pos[i * 3 + 2] = V[k + 2]; nrm[i * 3] = N[k]; nrm[i * 3 + 1] = N[k + 1]; nrm[i * 3 + 2] = N[k + 2]; if (col) { col[i * 3] = C[k]; col[i * 3 + 1] = C[k + 1]; col[i * 3 + 2] = C[k + 2]; } }
+    return { pos, nrm, col, n };
+  }
+  function parseSTL(buf) {
+    const dv = new DataView(buf), cnt = buf.byteLength >= 84 ? dv.getUint32(80, true) : 0;
+    if (84 + cnt * 50 === buf.byteLength && cnt > 0) {
+      const pos = new Float32Array(cnt * 9), nrm = new Float32Array(cnt * 9);
+      for (let t = 0; t < cnt; t++) {
+        const o = 84 + t * 50; for (let v = 0; v < 3; v++) for (let k = 0; k < 3; k++) pos[t * 9 + v * 3 + k] = dv.getFloat32(o + 12 + v * 12 + k * 4, true);
+        const a = t * 9, ux = pos[a + 3] - pos[a], uy = pos[a + 4] - pos[a + 1], uz = pos[a + 5] - pos[a + 2], vx = pos[a + 6] - pos[a], vy = pos[a + 7] - pos[a + 1], vz = pos[a + 8] - pos[a + 2];
+        let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+        for (let v = 0; v < 3; v++) { nrm[a + v * 3] = nx; nrm[a + v * 3 + 1] = ny; nrm[a + v * 3 + 2] = nz; }
+      }
+      return { pos, nrm, col: null, n: cnt * 3 };
+    }
+    const txt = new TextDecoder().decode(buf), re = /vertex\s+(\S+)\s+(\S+)\s+(\S+)/g, V = []; let m;
+    while ((m = re.exec(txt))) V.push(+m[1], +m[2], +m[3]);
+    if (V.length < 9) throw new Error('stl');
+    const tris = new Uint32Array(Math.floor(V.length / 9) * 3).map((_, i) => i), Vf = new Float32Array(V.slice(0, tris.length * 3));
+    return build(Vf, null, tris);
+  }
+  function parsePLY(buf) {
+    const u8 = new Uint8Array(buf); let hEnd = -1; const head = new TextDecoder().decode(u8.subarray(0, Math.min(u8.length, 20000))), i0 = head.indexOf('end_header'); if (i0 < 0) throw new Error('ply');
+    hEnd = i0 + 'end_header'.length; while (u8[hEnd] === 13 || u8[hEnd] === 10) { hEnd++; if (u8[hEnd - 1] === 10) break; }
+    const lines = head.slice(0, i0).split(/\r?\n/), els = []; let fmt = 'ascii';
+    lines.forEach(l => { const p = l.trim().split(/\s+/); if (p[0] === 'format') fmt = p[1]; else if (p[0] === 'element') els.push({ name: p[1], n: +p[2], props: [] }); else if (p[0] === 'property' && els.length) els[els.length - 1].props.push(p[1] === 'list' ? { list: true, ct: p[2], it: p[3], name: p[4] } : { t: p[1], name: p[2] }); });
+    const ve = els.filter(e => e.name === 'vertex')[0], fe = els.filter(e => e.name === 'face')[0]; if (!ve) throw new Error('ply');
+    const V = new Float32Array(ve.n * 3), hasC = ve.props.some(p => p.name === 'red'), C = hasC ? new Float32Array(ve.n * 3) : null, tris = [];
+    if (fmt === 'ascii') {
+      const tk = new TextDecoder().decode(u8.subarray(hEnd)).split(/\s+/).filter(Boolean); let q = 0;
+      for (const e of els) for (let i = 0; i < e.n; i++) { if (e === ve) { e.props.forEach(p => { const v = +tk[q++]; if (p.name === 'x') V[i * 3] = v; else if (p.name === 'y') V[i * 3 + 1] = v; else if (p.name === 'z') V[i * 3 + 2] = v; else if (C && p.name === 'red') C[i * 3] = v / 255; else if (C && p.name === 'green') C[i * 3 + 1] = v / 255; else if (C && p.name === 'blue') C[i * 3 + 2] = v / 255; }); }
+        else { e.props.forEach(p => { if (p.list) { const c = +tk[q++], idx = []; for (let k = 0; k < c; k++) idx.push(+tk[q++]); if (e === fe && /vertex_ind/.test(p.name)) for (let k = 1; k + 1 < idx.length; k++) tris.push(idx[0], idx[k], idx[k + 1]); } else q++; }); } }
+    } else {
+      const le = fmt === 'binary_little_endian', dv = new DataView(buf); let o = hEnd;
+      for (const e of els) for (let i = 0; i < e.n; i++) { for (const p of e.props) {
+        if (p.list) { const c = rd(dv, o, p.ct, le); o += TYPES[p.ct]; const idx = []; for (let k = 0; k < c; k++) { idx.push(rd(dv, o, p.it, le)); o += TYPES[p.it]; } if (e === fe && /vertex_ind/.test(p.name)) for (let k = 1; k + 1 < idx.length; k++) tris.push(idx[0], idx[k], idx[k + 1]); }
+        else { if (e === ve) { const v = rd(dv, o, p.t, le); if (p.name === 'x') V[i * 3] = v; else if (p.name === 'y') V[i * 3 + 1] = v; else if (p.name === 'z') V[i * 3 + 2] = v; else if (C && p.name === 'red') C[i * 3] = v / 255; else if (C && p.name === 'green') C[i * 3 + 1] = v / 255; else if (C && p.name === 'blue') C[i * 3 + 2] = v / 255; } o += TYPES[p.t] || 4; } } }
+    }
+    if (!tris.length) throw new Error('ply');
+    return build(V, C, new Uint32Array(tris));
+  }
+  function parseOBJ(buf) {
+    const lines = new TextDecoder().decode(buf).split(/\r?\n/), V = [], Cc = [], tris = []; let hasC = false;
+    for (const l of lines) {
+      if (l.charCodeAt(0) === 118 && l.charCodeAt(1) === 32) { const p = l.trim().split(/\s+/); V.push(+p[1], +p[2], +p[3]); if (p.length >= 7) { hasC = true; Cc.push(+p[4], +p[5], +p[6]); } else Cc.push(0.9, 0.88, 0.8); }
+      else if (l.charCodeAt(0) === 102 && l.charCodeAt(1) === 32) { const p = l.trim().split(/\s+/).slice(1).map(s => { let k = parseInt(s.split('/')[0], 10); return k < 0 ? V.length / 3 + k : k - 1; }); for (let k = 1; k + 1 < p.length; k++) tris.push(p[0], p[k], p[k + 1]); }
+    }
+    if (!tris.length) throw new Error('obj');
+    return build(new Float32Array(V), hasC ? new Float32Array(Cc) : null, new Uint32Array(tris));
+  }
+  function parse3D(buf, name) {
+    const ext = String(name).toLowerCase().replace(/^.*\./, ''), g = ext === 'ply' ? parsePLY(buf) : ext === 'obj' ? parseOBJ(buf) : parseSTL(buf);
+    const p = g.pos; let mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+    for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) { const v = p[i + k]; if (v < mn[k]) mn[k] = v; if (v > mx[k]) mx[k] = v; }
+    const c = [0, 1, 2].map(k => (mn[k] + mx[k]) / 2), dims = [0, 1, 2].map(k => mx[k] - mn[k]), s = 2 / (Math.max(dims[0], dims[1], dims[2]) || 1);
+    for (let i = 0; i < p.length; i += 3) { p[i] = (p[i] - c[0]) * s; p[i + 1] = (p[i + 1] - c[1]) * s; p[i + 2] = (p[i + 2] - c[2]) * s; }
+    g.dims = dims; g.tris = g.n / 3; return g;
+  }
+  A.scan3dParse = parse3D;
+
+  /* ---------- visor WebGL: girar, acercar y mover ---------- */
+  const VS = 'attribute vec3 aP;attribute vec3 aN;attribute vec3 aC;uniform mat4 uMV;uniform mat4 uPr;varying vec3 vN;varying vec3 vC;void main(){vN=mat3(uMV)*aN;vC=aC;gl_Position=uPr*uMV*vec4(aP,1.0);}';
+  const FS = 'precision mediump float;varying vec3 vN;varying vec3 vC;uniform float uSh;void main(){vec3 n=normalize(vN);if(!gl_FrontFacing)n=-n;float d=max(dot(n,vec3(0.0,0.0,1.0)),0.0);float f=max(dot(n,normalize(vec3(0.4,0.8,0.5))),0.0);float s=pow(max(dot(n,normalize(vec3(0.2,0.3,1.0))),0.0),24.0)*0.25;vec3 c=vC*(0.28+0.5*d+0.32*f)*uSh+vec3(s);gl_FragColor=vec4(c,1.0);}';
+  const mul = (a, b) => { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s; } return o; };
+  const rotX = a => { const c = Math.cos(a), s = Math.sin(a); return new Float32Array([1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1]); };
+  const rotY = a => { const c = Math.cos(a), s = Math.sin(a); return new Float32Array([c, 0, -s, 0, 0, 1, 0, 0, s, 0, c, 0, 0, 0, 0, 1]); };
+  const trans = (x, y, z) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1]);
+  function persp(f, a, n, fa) { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); }
+  function viewer(cv, g) {
+    const gl = cv.getContext('webgl', { antialias: true, preserveDrawingBuffer: true }) || cv.getContext('experimental-webgl', { preserveDrawingBuffer: true }); if (!gl) throw new Error('webgl');
+    const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error('shader'); return o; };
+    const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); gl.useProgram(pr);
+    const buf = (arr, name) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, arr, gl.STATIC_DRAW); const l = gl.getAttribLocation(pr, name); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, 3, gl.FLOAT, false, 0, 0); };
+    buf(g.pos, 'aP'); buf(g.nrm, 'aN'); const col = g.col || (() => { const c = new Float32Array(g.n * 3); for (let i = 0; i < g.n; i++) { c[i * 3] = 0.93; c[i * 3 + 1] = 0.9; c[i * 3 + 2] = 0.82; } return c; })(); buf(col, 'aC');
+    const uMV = gl.getUniformLocation(pr, 'uMV'), uPr = gl.getUniformLocation(pr, 'uPr'), uSh = gl.getUniformLocation(pr, 'uSh');
+    const V = { yaw: 0, pitch: 0, dist: 3.2, tx: 0, ty: 0, auto: false, dark: true }; let raf = 0, dirty = true;
+    const draw = () => {
+      const w = cv.clientWidth, h = cv.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1); if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+      gl.viewport(0, 0, cv.width, cv.height); const bg = V.dark ? [0.06, 0.13, 0.15] : [0.93, 0.95, 0.96]; gl.clearColor(bg[0], bg[1], bg[2], 1); gl.enable(gl.DEPTH_TEST); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      const mv = mul(trans(V.tx, V.ty, -V.dist), mul(rotX(V.pitch), rotY(V.yaw))); gl.uniformMatrix4fv(uMV, false, mv); gl.uniformMatrix4fv(uPr, false, persp(0.62, cv.width / Math.max(1, cv.height), 0.05, 50)); gl.uniform1f(uSh, 1);
+      gl.drawArrays(gl.TRIANGLES, 0, g.n); dirty = false;
+    };
+    const loop = () => { if (!document.body.contains(cv)) { cancelAnimationFrame(raf); return; } if (V.auto) { V.yaw += 0.01; dirty = true; } if (dirty) draw(); raf = requestAnimationFrame(loop); };
+    loop();
+    /* mouse y táctil */
+    const P = {}; let last = null; const clampP = () => { V.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, V.pitch)); };
+    cv.addEventListener('contextmenu', e => e.preventDefault());
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); P[e.pointerId] = { x: e.clientX, y: e.clientY, b: e.button, sh: e.shiftKey }; last = null; V.auto = false; });
+    cv.addEventListener('pointermove', e => {
+      const p = P[e.pointerId]; if (!p) return; const ids = Object.keys(P);
+      if (ids.length === 2) { const q = P[ids.filter(k => +k !== e.pointerId)[0]], d0 = Math.hypot(p.x - q.x, p.y - q.y), cx0 = (p.x + q.x) / 2, cy0 = (p.y + q.y) / 2; p.x = e.clientX; p.y = e.clientY; const d1 = Math.hypot(p.x - q.x, p.y - q.y), cx1 = (p.x + q.x) / 2, cy1 = (p.y + q.y) / 2; if (d0 > 5) V.dist = Math.max(0.6, Math.min(12, V.dist * d0 / d1)); V.tx += (cx1 - cx0) * V.dist / cv.clientHeight * 1.1; V.ty -= (cy1 - cy0) * V.dist / cv.clientHeight * 1.1; dirty = true; return; }
+      const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+      if (p.b === 2 || p.sh) { V.tx += dx * V.dist / cv.clientHeight * 1.1; V.ty -= dy * V.dist / cv.clientHeight * 1.1; } else { V.yaw += dx * 0.01; V.pitch += dy * 0.01; clampP(); } dirty = true;
+    });
+    const up = e => { delete P[e.pointerId]; }; cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    cv.addEventListener('wheel', e => { e.preventDefault(); V.dist = Math.max(0.6, Math.min(12, V.dist * Math.exp(e.deltaY * 0.0015))); dirty = true; }, { passive: false });
+    return { V, redraw: () => { dirty = true; }, view: (n) => { const m = { front: [0, 0], top: [0, Math.PI / 2], bottom: [0, -Math.PI / 2], right: [-Math.PI / 2, 0], left: [Math.PI / 2, 0], back: [Math.PI, 0] }[n] || [0, 0]; V.yaw = m[0]; V.pitch = m[1]; V.tx = V.ty = 0; V.dist = 3.2; dirty = true; }, thumb: () => { draw(); const t = document.createElement('canvas'); t.width = 160; t.height = Math.max(1, Math.round(160 * cv.height / cv.width)); t.getContext('2d').drawImage(cv, 0, 0, t.width, t.height); return t.toDataURL('image/jpeg', 0.7); } };
+  }
+
+  /* ---------- la pestaña ---------- */
+  A.render.scanTab = pid => {
+    const L = list(pid).slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+    let h = '<div class="sc-wrap"><section class="card"><div class="im-top"><div><h2>Escaneos 3D <span class="count">' + L.length + '</span></h2><div class="hint" style="margin:2px 0 0">Adjuntá los escaneos intraorales y los diseños de este paciente (STL, PLY u OBJ) y mirálos girando, acercando y moviendo, sin salir de la historia clínica.</div></div></div>' +
+      '<div class="row3" style="margin-top:10px"><div class="field"><label for="scK">Tipo</label><select id="scK">' + KINDS.map(k => '<option>' + k + '</option>').join('') + '</select></div><div class="field"><label for="scT">Pieza (opcional)</label><input id="scT" inputmode="numeric" placeholder="ej. 36"></div><div class="field"><label for="scD">Fecha del escaneo</label><input id="scD" type="date" value="' + A.today() + '"></div></div><div class="field"><label for="scN">Nota (opcional)</label><input id="scN" placeholder="Ej.: preparación de 46 para corona, escáner Medit i700"></div>' +
+      '<div class="row-btns"><label class="btn primary filebtn">+ Subir escaneo<input type="file" id="scF" accept=".stl,.ply,.obj" hidden data-chg="scUp" multiple></label></div><div id="scMsg" class="hint bad"></div><div class="small-note">Hasta ' + MAXMB + ' MB por archivo. Si tu escáner exporta otro formato, exportalo como STL o PLY (el PLY conserva el color).</div></section>';
+    h += L.length ? '<section class="card"><div class="sc-grid">' + L.map(x => '<button class="sc-it" data-act="scOpen" data-id="' + esc(x.id) + '"><img alt="" src="' + esc(x.thumb || '') + '"><b>' + esc(x.name) + '</b><span>' + esc(x.kind) + (x.tooth ? ' · pieza ' + esc(x.tooth) : '') + '</span><small>' + dmy(x.date) + ' · ' + esc(x.fmt.toUpperCase()) + ' · ' + mb(x.size) + '</small></button>').join('') + '</div></section>' : '<section class="card"><div class="empty">Todavía no hay escaneos. Subí el primero con «+ Subir escaneo».</div></section>';
+    return h + '</div>';
+  };
+  const readData = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('lectura')); r.readAsDataURL(f); });
+  const readBuf = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('lectura')); r.readAsArrayBuffer(f); });
+  A.chg.scUp = async el => {
+    const pid = S.fichaPid, files = Array.prototype.slice.call(el.files || []), msg = $('#scMsg'); if (!files.length) return; el.value = '';
+    const kind = ($('#scK') || {}).value || KINDS[0], tooth = ($('#scT') || {}).value.trim(), date = ($('#scD') || {}).value || A.today(), note = ($('#scN') || {}).value.trim(); let n = 0;
+    for (const f of files) {
+      if (!/\.(stl|ply|obj)$/i.test(f.name)) { msg.textContent = '«' + f.name + '»: el formato tiene que ser STL, PLY u OBJ.'; continue; }
+      if (f.size > MAXMB * 1048576) { msg.textContent = '«' + f.name + '» pesa ' + mb(f.size) + ': el máximo es ' + MAXMB + ' MB.'; continue; }
+      msg.textContent = 'Procesando «' + f.name + '»…'; await new Promise(r => setTimeout(r, 30));
+      try {
+        const g = parse3D(await readBuf(f), f.name), cv = document.createElement('canvas'); cv.style.cssText = 'position:fixed;left:-9999px;top:0;width:320px;height:240px'; document.body.appendChild(cv); let thumb = '';
+        try { const vw = viewer(cv, g); thumb = vw.thumb(); } finally { cv.remove(); }
+        const id = A.uid(); await A.media.put('scan_' + id, await readData(f));
+        list(pid).push({ id, name: f.name.replace(/\.[^.]+$/, ''), date, kind, tooth, note, fmt: f.name.toLowerCase().replace(/^.*\./, ''), size: f.size, tris: g.tris, dims: g.dims.map(v => Math.round(v * 10) / 10), thumb, pro: A.PAT(pid).pro });
+        A.pd(pid).notes.unshift({ id: A.uid(), date, pro: A.PAT(pid).pro, text: 'Se adjuntó un escaneo 3D: ' + kind + (tooth ? ', pieza ' + tooth : '') + ' (' + f.name + ').' }); n++;
+      } catch (e) { msg.textContent = /webgl/.test(String(e && e.message)) ? 'Este equipo no puede mostrar 3D (WebGL).' : 'No se pudo leer «' + f.name + '». Revisá que sea un STL, PLY u OBJ válido.'; }
+    }
+    if (n) { msg.textContent = ''; A.touchPd(pid); A.refresh(); A.toast(n + ' escaneo' + (n === 1 ? '' : 's') + ' agregado' + (n === 1 ? '' : 's') + '.'); }
+  };
+  A.acts.scOpen = el => { S.modal = { type: 'scan', pid: S.fichaPid, id: el.getAttribute('data-id') }; A.renderModal(); };
+  MF.scan = m => {
+    const x = byId(m.pid, m.id); if (!x) return '';
+    const b = '<div class="sc-stage"><canvas id="scCv" aria-label="Escaneo 3D de ' + esc(x.name) + '"></canvas><div class="sc-load" id="scLoad">Cargando el modelo…</div></div>' +
+      '<div class="sc-bar"><button class="btn small" data-act="scView" data-v="front">Frente</button><button class="btn small" data-act="scView" data-v="top">Oclusal</button><button class="btn small" data-act="scView" data-v="bottom">Desde abajo</button><button class="btn small" data-act="scView" data-v="left">Izquierda</button><button class="btn small" data-act="scView" data-v="right">Derecha</button><button class="btn small" data-act="scView" data-v="back">Atrás</button><button class="btn small" data-act="scAuto" id="scAutoB" aria-pressed="false">Girar solo</button><button class="btn small" data-act="scBg">Fondo claro / oscuro</button><button class="btn small" data-act="scFull">Pantalla completa</button></div>' +
+      '<div class="small-note">Mouse: arrastrar gira · rueda acerca · botón derecho o Shift mueve. Celular: un dedo gira, dos dedos acercan y mueven. <b>Tamaño:</b> ' + esc((x.dims || []).join(' × ')) + ' (en las unidades del archivo, normalmente mm) · ' + Math.round((x.tris || 0) / 1000).toLocaleString('es-AR') + ' mil triángulos</div>' +
+      '<div class="row2"><div class="field"><label for="scNm">Nombre</label><input id="scNm" data-chg="scField" data-k="name" data-id="' + esc(x.id) + '" value="' + esc(x.name) + '"></div><div class="field"><label for="scNo">Nota</label><input id="scNo" data-chg="scField" data-k="note" data-id="' + esc(x.id) + '" value="' + esc(x.note || '') + '"></div></div>';
+    return A.modalShell(x.kind + ' · ' + dmy(x.date), b, '<button class="btn danger" data-act="scDel" data-id="' + esc(x.id) + '">Borrar</button><button class="btn" data-act="scDl" data-id="' + esc(x.id) + '">Descargar</button><button class="btn primary" data-act="closeModal">Cerrar</button>', true);
+  };
+  let VW = null;
+  A.modalAfter.scan = async m => {
+    const x = byId(m.pid, m.id), cv = $('#scCv'), ld = $('#scLoad'); VW = null; if (!x || !cv) return;
+    try {
+      const data = await A.media.get('scan_' + x.id); if (!data) { ld.textContent = 'El archivo todavía no está en este equipo (esperá a que sincronice).'; return; }
+      const buf = await (await fetch(data)).arrayBuffer(), g = parse3D(buf, x.name + '.' + x.fmt); if (!document.body.contains(cv)) return;
+      VW = viewer(cv, g); ld.remove();
+    } catch (e) { if (ld) ld.textContent = /webgl/.test(String(e && e.message)) ? 'Este equipo no puede mostrar 3D (WebGL).' : 'No se pudo abrir el modelo.'; }
+  };
+  A.acts.scView = el => { if (VW) VW.view(el.getAttribute('data-v')); };
+  A.acts.scAuto = el => { if (!VW) return; VW.V.auto = !VW.V.auto; el.setAttribute('aria-pressed', String(VW.V.auto)); };
+  A.acts.scBg = () => { if (!VW) return; VW.V.dark = !VW.V.dark; VW.redraw(); };
+  A.acts.scFull = () => { const s = $('.sc-stage'); try { if (s.requestFullscreen) s.requestFullscreen(); else if (s.webkitRequestFullscreen) s.webkitRequestFullscreen(); } catch (e) { /* nada */ } };
+  A.chg.scField = el => { const x = byId(S.modal.pid, el.getAttribute('data-id')); if (!x) return; x[el.getAttribute('data-k')] = el.value.trim() || (el.getAttribute('data-k') === 'name' ? x.name : ''); A.touchPd(S.modal.pid); };
+  A.acts.scDl = async el => { const x = byId(S.modal.pid, el.getAttribute('data-id')), d = x && await A.media.get('scan_' + x.id); if (!d) { A.toast('El archivo todavía no está en este equipo.'); return; } A.saveFile(x.name + '.' + x.fmt, await (await fetch(d)).blob()); };
+  A.acts.scDel = el => { const pid = S.modal.pid, id = el.getAttribute('data-id'); const pd = A.pd(pid); pd.scans = list(pid).filter(x => x.id !== id); A.media.del('scan_' + id); A.touchPd(pid); S.modal = null; A.renderModal(); A.refresh(); A.toast('Escaneo borrado.'); };
+
+  const css = document.createElement('style'); css.id = 'ovApp140';
+  css.textContent = '.sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}.sc-it{display:flex;flex-direction:column;gap:3px;text-align:left;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;color:var(--ink)}.sc-it img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:var(--surface-2)}.sc-it span,.sc-it small{color:var(--ink-2);font-size:.8rem}' +
+    '.sc-stage{position:relative;width:100%;height:min(58vh,520px);border-radius:12px;overflow:hidden;background:#0f2226}.sc-stage canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}.sc-load{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:.95rem;text-align:center;padding:20px;pointer-events:none}.sc-bar{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.sc-bar .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}';
   document.head.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
