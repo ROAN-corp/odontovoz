@@ -73,21 +73,21 @@
 
   /* ---------- videos tutoriales por modo ---------- */
   const VBASE = 'https://odontovoz.com.ar/video/';
-  const VIDS = [['pro', 'Profesional'], ['centro', 'Consultorio o centro'], ['empresa', 'Empresa']];
-  const myVid = () => (A.liteOn && A.liteOn()) ? 'lite' : !S.setup ? 'centro' : S.setup.type === 'empresa' ? 'empresa' : S.setup.type === 'solo' ? 'pro' : 'centro';
+  const VIDS = [['configurar', 'Configurá tu consultorio'], ['agenda', 'La agenda'], ['ficha', 'Ficha y ortodoncia']];
+  const myVid = () => 'configurar';
   A.acts.tutVid = el => { if (A.hideDrawer) A.hideDrawer(); S.modal = { type: 'tutVid', v: (el && el.getAttribute && el.getAttribute('data-v')) || myVid() }; A.renderModal(); };
   MF.tutVid = m => {
     const v = m.v || myVid();
     return A.modalShell('Videos tutoriales',
-      '<div class="seg tv-seg" role="group" aria-label="Elegí el video">' + VIDS.map(x => '<button data-act="tutVid" data-v="' + x[0] + '" aria-pressed="' + (v === x[0]) + '">' + esc(x[1]) + (x[0] === myVid() ? ' ·&nbsp;el tuyo' : '') + '</button>').join('') + '</div>' +
+      '<div class="seg tv-seg" role="group" aria-label="Elegí el video">' + VIDS.map(x => '<button data-act="tutVid" data-v="' + x[0] + '" aria-pressed="' + (v === x[0]) + '">' + esc(x[1]) + (x[0] === 'configurar' ? ' ·&nbsp;empezá acá' : '') + '</button>').join('') + '</div>' +
       '<div class="tv-box"><video src="' + VBASE + 'tut-' + v + '.mp4" poster="' + VBASE + 'poster-tut-' + v + '.jpg" controls playsinline preload="metadata"></video></div>' +
-      '<p class="hint" style="text-align:center">Dura menos de un minuto. Si no carga, revisá la conexión a internet.</p>',
+      '<p class="hint" style="text-align:center">' + (v === 'configurar' ? 'Es lo primero que tenés que hacer con la app: te lleva unos diez minutos. ' : '') + 'Tiene voz y subtítulos. Si no carga, revisá la conexión a internet.</p>',
       '<button class="btn" data-act="tutorialOpen">Tutorial paso a paso</button><button class="btn primary" data-act="closeModal">Cerrar</button>', true);
   };
   const tutPrev = MF.tutorial;
   if (tutPrev) MF.tutorial = function () {
     const h = tutPrev.apply(this, arguments);
-    return h.replace('<div class="tut">', '<button class="tv-cta" data-act="tutVid">▶ Ver el video de tu modo (1 minuto)</button><div class="tut">');
+    return h.replace('<div class="tut">', '<button class="tv-cta" data-act="tutVid">▶ Ver los videos tutoriales (con voz)</button><div class="tut">');
   };
 
   /* ---------- menú: una sola entrada «Ajustes» con la tuerquita ---------- */

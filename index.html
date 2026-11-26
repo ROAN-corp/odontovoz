@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.38.1';
+  A.VERSION = '1.39.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.93.1';
+  A.VBUILD = '1.94.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -16995,21 +16995,21 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 
   /* ---------- videos tutoriales por modo ---------- */
   const VBASE = 'https://odontovoz.com.ar/video/';
-  const VIDS = [['pro', 'Profesional'], ['centro', 'Consultorio o centro'], ['empresa', 'Empresa']];
-  const myVid = () => (A.liteOn && A.liteOn()) ? 'lite' : !S.setup ? 'centro' : S.setup.type === 'empresa' ? 'empresa' : S.setup.type === 'solo' ? 'pro' : 'centro';
+  const VIDS = [['configurar', 'Configurá tu consultorio'], ['agenda', 'La agenda'], ['ficha', 'Ficha y ortodoncia']];
+  const myVid = () => 'configurar';
   A.acts.tutVid = el => { if (A.hideDrawer) A.hideDrawer(); S.modal = { type: 'tutVid', v: (el && el.getAttribute && el.getAttribute('data-v')) || myVid() }; A.renderModal(); };
   MF.tutVid = m => {
     const v = m.v || myVid();
     return A.modalShell('Videos tutoriales',
-      '<div class="seg tv-seg" role="group" aria-label="Elegí el video">' + VIDS.map(x => '<button data-act="tutVid" data-v="' + x[0] + '" aria-pressed="' + (v === x[0]) + '">' + esc(x[1]) + (x[0] === myVid() ? ' ·&nbsp;el tuyo' : '') + '</button>').join('') + '</div>' +
+      '<div class="seg tv-seg" role="group" aria-label="Elegí el video">' + VIDS.map(x => '<button data-act="tutVid" data-v="' + x[0] + '" aria-pressed="' + (v === x[0]) + '">' + esc(x[1]) + (x[0] === 'configurar' ? ' ·&nbsp;empezá acá' : '') + '</button>').join('') + '</div>' +
       '<div class="tv-box"><video src="' + VBASE + 'tut-' + v + '.mp4" poster="' + VBASE + 'poster-tut-' + v + '.jpg" controls playsinline preload="metadata"></video></div>' +
-      '<p class="hint" style="text-align:center">Dura menos de un minuto. Si no carga, revisá la conexión a internet.</p>',
+      '<p class="hint" style="text-align:center">' + (v === 'configurar' ? 'Es lo primero que tenés que hacer con la app: te lleva unos diez minutos. ' : '') + 'Tiene voz y subtítulos. Si no carga, revisá la conexión a internet.</p>',
       '<button class="btn" data-act="tutorialOpen">Tutorial paso a paso</button><button class="btn primary" data-act="closeModal">Cerrar</button>', true);
   };
   const tutPrev = MF.tutorial;
   if (tutPrev) MF.tutorial = function () {
     const h = tutPrev.apply(this, arguments);
-    return h.replace('<div class="tut">', '<button class="tv-cta" data-act="tutVid">▶ Ver el video de tu modo (1 minuto)</button><div class="tut">');
+    return h.replace('<div class="tut">', '<button class="tv-cta" data-act="tutVid">▶ Ver los videos tutoriales (con voz)</button><div class="tut">');
   };
 
   /* ---------- menú: una sola entrada «Ajustes» con la tuerquita ---------- */
@@ -18578,6 +18578,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.39.0', b: '1.94.0', d: '2026-11-26', items: [
+      { t: 'Tutoriales nuevos, grabados con la app como está hoy y con una voz que te va explicando: «Configurá tu consultorio» (lo primero que tenés que hacer: Primeros pasos y todos los Ajustes), «La agenda» y «Ficha y ortodoncia». Los videos viejos se borraron.' },
+      { t: 'En Inicio, en la tarjeta de Primeros pasos, y arriba en Ajustes hay un botón para mirar el video de cómo configurar tu consultorio. También están en Ajustes › Videos tutoriales y en la web, en Tutoriales.' }] },
     { v: '1.38.1', b: '1.93.1', d: '2026-11-26', items: [
       { t: 'Agenda: mantené apretado un turno (o un bloqueo) y, después de un instante, sale un menú chiquito para borrarlo (con aviso de deshacer). Mientras apretás se llena un anillo rojo que muestra cuánto falta. El tiempo es el mismo que el de bloquear horas (mínimo 1,5 s; se puede subir a 4 s desde la burbuja).' },
       { t: 'Calendario de la agenda: el selector de mes ahora es un botón que abre una grilla de meses, se cierra al volver a tocarlo o al tocar afuera.' },
@@ -29073,6 +29076,22 @@ const OVMenu = (function () {
     '.btn{transition:scale .12s ease,box-shadow .15s,background .15s,border-color .15s}.btn:active:not(:disabled){scale:.96}' +
     '@media (max-width:640px){#toastHost .toast{animation-name:toastInTop}.modal-scrim.m-anim .modal{animation-name:modalInM}@keyframes modalInM{0%{opacity:0;translate:0 26px;scale:.97}100%{translate:0 0;scale:1}}}' +
     '@media (prefers-reduced-motion:reduce){.modal-scrim,.modal-scrim .modal,#tpop,#waPick,#updPop .up-card,#toastHost .toast,.more-menu,.menu{animation:none!important}.btn{transition:none}}';
+  document.body.appendChild(css);
+})();
+/* ===== 1.39: acceso al video «Configurá tu consultorio» desde Primeros pasos (Inicio) y desde Ajustes ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, $ = q => document.querySelector(q);
+  function links() {
+    const go = $('[data-act="psGo"]');
+    if (go && go.parentNode && !go.parentNode.querySelector('.ps-tut')) go.parentNode.insertAdjacentHTML('beforeend', '<button class="btn ps-tut" data-act="tutVid" data-v="configurar">▶ Ver el video (con voz)</button>');
+    if (S.modal && S.modal.type === 'ajustes') { const b = $('.modal .m-body'); if (b && !b.querySelector('.aj-tutv')) b.insertAdjacentHTML('afterbegin', '<button class="aj-tutv" data-act="tutVid" data-v="configurar"><span aria-hidden="true">▶</span><div><b>Mirá el video: cómo configurar tu consultorio</b><small>Es lo primero que tenés que hacer · con voz que te va explicando</small></div></button>'); }
+  }
+  let rq = 0; const sched = () => { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; try { links(); } catch (e) { /* nada */ } }); };
+  try { new MutationObserver(sched).observe(document.body, { childList: true, subtree: true }); } catch (e) { /* nada */ }
+  sched();
+  const css = document.createElement('style');
+  css.textContent = '.aj-tutv{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:0 0 12px;padding:12px 14px;border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:16px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 9%,var(--surface)),var(--surface));color:var(--ink);font:inherit;cursor:pointer}.aj-tutv>span{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:1rem}.aj-tutv b{display:block;font-size:.95rem}.aj-tutv small{color:var(--ink-2);font-size:.78rem}.ps-tut{margin-left:6px}';
   document.body.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */

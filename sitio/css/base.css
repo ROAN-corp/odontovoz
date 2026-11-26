@@ -363,3 +363,10 @@ body.ix-lock { overflow: hidden; }
 .ix [hidden] { display: none !important; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) main a:not([class]), :root:not([data-theme="light"]) .steps a, :root:not([data-theme="light"]) .faq a, :root:not([data-theme="light"]) .dl.main a:not(.btn), :root:not([data-theme="light"]) .day time, :root:not([data-theme="light"]) .mode small { color: #4cc3c4; } :root:not([data-theme="light"]) .badge { color: #e5efee; } }
 :root[data-theme="dark"] main a:not([class]), :root[data-theme="dark"] .steps a, :root[data-theme="dark"] .faq a, :root[data-theme="dark"] .day time, :root[data-theme="dark"] .mode small { color: #4cc3c4; } :root[data-theme="dark"] .badge { color: #e5efee; }
+
+/* tutoriales con voz (1.39): videos apaisados */
+.tut-wide-list { display: grid; gap: 34px; max-width: 920px; margin: 0 auto; }
+.tut-w { margin: 0; position: relative; }
+.tut-w video { width: 100%; aspect-ratio: 16 / 9; border-radius: 20px; border: 6px solid #10282a; background: #08484b; display: block; }
+.tut-w figcaption { margin-top: 10px; color: var(--ink-2); font-size: 15.5px; line-height: 1.45; } .tut-w figcaption b { display: block; color: var(--ink); font-size: 18px; margin-bottom: 2px; }
+.tut-badge { position: absolute; z-index: 2; top: 14px; left: 14px; background: var(--accent, #0b6b6f); color: #fff; font-weight: 800; font-size: 13px; padding: 5px 12px; border-radius: 999px; }

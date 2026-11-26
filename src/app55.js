@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.39.0', b: '1.94.0', d: '2026-11-26', items: [
+      { t: 'Tutoriales nuevos, grabados con la app como está hoy y con una voz que te va explicando: «Configurá tu consultorio» (lo primero que tenés que hacer: Primeros pasos y todos los Ajustes), «La agenda» y «Ficha y ortodoncia». Los videos viejos se borraron.' },
+      { t: 'En Inicio, en la tarjeta de Primeros pasos, y arriba en Ajustes hay un botón para mirar el video de cómo configurar tu consultorio. También están en Ajustes › Videos tutoriales y en la web, en Tutoriales.' }] },
     { v: '1.38.1', b: '1.93.1', d: '2026-11-26', items: [
       { t: 'Agenda: mantené apretado un turno (o un bloqueo) y, después de un instante, sale un menú chiquito para borrarlo (con aviso de deshacer). Mientras apretás se llena un anillo rojo que muestra cuánto falta. El tiempo es el mismo que el de bloquear horas (mínimo 1,5 s; se puede subir a 4 s desde la burbuja).' },
       { t: 'Calendario de la agenda: el selector de mes ahora es un botón que abre una grilla de meses, se cierra al volver a tocarlo o al tocar afuera.' },
