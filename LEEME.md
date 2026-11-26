@@ -1124,3 +1124,7 @@ Agenda (`app116`): menú `#delMini` al mantener apretado un turno (`holdDel` = m
 
 ## 1.39.0 (compilación 1.94.0)
 Tutoriales nuevos con voz (`scripts/tutoriales/`, ver su README): `configurar`, `agenda` y `ficha`, grabados con Playwright + voz Piper (es_MX-claude-high). Se borraron los videos viejos `tut-pro/centro/empresa/lite`. `app124`: accesos al video desde Primeros pasos y Ajustes; `app48`: lista de videos; la página `sitio/tutoriales/` se rehízo.
+
+
+## 1.40.0 (compilación 1.95.0)
+Stock por producto concreto (`app125`): ventana «Agregar producto» (catálogo de Rutiden con `A.rutFind`, cargar hablando con `parse()`, a mano). Los productos llevan `ck` (tipo del kit), `rut` (código), `brand`, `det`, `spec`. `A.stockConsume` (`app43`) reparte el consumo entre los productos del mismo `ck`.

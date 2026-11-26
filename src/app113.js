@@ -27,6 +27,22 @@
     refresh();
   }
   A.rutLoad = load;
+  /* 1.40: buscar productos concretos (marca, tono, presentación) para armar «Mi stock» */
+  const STOP = { de: 1, del: 1, la: 1, el: 1, los: 1, las: 1, y: 1, con: 1, para: 1, una: 1, un: 1, uno: 1, tengo: 1, tenemos: 1, marca: 1, jeringa: 1, jeringas: 1, caja: 1, cajas: 1, unidad: 1, unidades: 1, frasco: 1, frascos: 1, paquete: 1, paquetes: 1, bolsa: 1, bolsas: 1, kit: 1, kits: 1, tubo: 1, tubos: 1 };
+  const SYN = { boco: 'voco', ultrafil: 'ultradent', ultrafill: 'ultradent', tresm: '3m', filtec: 'filtek' };
+  A.rutReady = () => !!CAT;
+  A.rutFind = (q, n) => {
+    if (!CAT) return null;
+    const toks = norm(q).replace(/[,;.]/g, ' ').split(/\s+/).filter(Boolean).map(t => SYN[t] || t).filter(t => !STOP[t] && !/^\d+$/.test(t) || /^\d+[a-z]+$/.test(t));
+    if (!toks.length) return [];
+    const need = Math.max(1, Math.ceil(toks.length * 0.6)), out = [];
+    CAT.f.forEach((f, i) => {
+      const ft = IDX[i].t; if (toks.filter(w => ft.indexOf(w) >= 0).length < need) return;
+      f[3].forEach(v => { const vt = norm((f[0] || '') + ' ' + (f[2] || '') + ' ' + (v[1] || '') + ' ' + (v[2] || '')), m = toks.filter(w => vt.indexOf(w) >= 0).length; if (m >= need) out.push({ s: m / toks.length, code: v[0], name: pretty(v[2] || f[0]), label: v[1] || '', fam: f[0], cat: catName(f[1]), brand: f[2] || '' }); });
+    });
+    out.sort((a, b) => b.s - a.s || a.name.length - b.name.length); return out.slice(0, n || 30);
+  };
+  A.rutProd = code => { const x = findV(code); if (!x) return null; const c = cfg(); return { code, name: pretty(fullName(x)), cat: catName(x.f[1]), brand: x.f[2] || '', cost: c.c[code] || c.p[code] || 0 }; };
   A.rutInfo = () => { const t = cartTotal(); return { n: cartCount(), total: t.t, all: t.all, logo: P.logo, name: P.name, count: CAT ? CAT.f.reduce((n, f) => n + f[3].length, 0) : 0 }; };
   const KEEP = { FG: 1, CA: 1, LED: 1, UV: 1, PVC: 1, RX: 1, RVG: 1, HP: 1, EDTA: 1, MTA: 1, ZOE: 1, GC: 1, IRM: 1, PKT: 1, TBASE: 1, UCLA: 1, ANMAT: 1, USA: 1, PTFE: 1, CAD: 1, CAM: 1 };
   const pretty = s => { s = String(s); if (/[a-záéíóúñ]/.test(s)) return s; return s.toLowerCase().replace(/(^|[\s(\/-])([a-záéíóúñ])/g, (m, a, b) => a + b.toUpperCase()).replace(/\b([a-záéíóúñ0-9.]+)\b/gi, w => (KEEP[w.toUpperCase()] || /\d/.test(w) ? w.toUpperCase() : w)).replace(/\bX\b/g, 'x'); };

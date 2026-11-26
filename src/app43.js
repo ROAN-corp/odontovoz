@@ -131,6 +131,8 @@
   A.stkApi = { list: sd => list(sd || place()).map(norm1), status, expSoon, daysLeft, use30, fq, canCfg, place, sedeName, isEmp,
     adjust: (id, d, note) => { const i = itemById(id); if (!i) return null; norm1(i); i.qty = Math.max(0, Math.round((i.qty + d) * 1000) / 1000); mvAdd(i, d, d < 0 ? 'uso' : 'compra', note || 'ajuste rápido'); save(); return i; } };
   A.stkRec = { recOf: k => recOf(k), recKey: it => recKey(it), RNAME, CATI, BASE };
+  /* 1.40: los «tipos» del kit (composite, anestesia…) que usan las recetas; cada producto concreto (marca, tono) cuelga de un tipo por su `ck` */
+  A.stkTypes = () => CAT.map(c => ({ ck: c[0], name: c[1], cat: c[2], unit: c[3], uses: c[4] }));
 
   /* ---------- descuento automático al cargar prácticas («Prácticas de hoy») ---------- */
   A.stockConsume = (items, pid, sdIn) => {
@@ -142,7 +144,13 @@
     if (!c.done[key]) { add(recOf('atencion'), 1); c.done[key] = 1; const ks = Object.keys(c.done); if (ks.length > 500) ks.slice(0, ks.length - 400).forEach(k => delete c.done[k]); }
     items.forEach(it => { const k = recKey(it); if (!k) return; const m = /×\s*(\d+)/.exec(it.label || ''); add(recOf(k), m ? +m[1] : 1); });
     let n = 0; const pn = (A.PAT(pid) || {}).name || '';
-    Object.keys(need).forEach(ck => { const i = byCk(sd, ck); if (!i) return; norm1(i); const d = need[ck] / i.uses; i.qty = Math.max(0, Math.round((i.qty - d) * 1000) / 1000); mvAdd(i, -d, 'uso', pn); n++; });
+    Object.keys(need).forEach(ck => {
+      /* 1.40: si hay varios productos del mismo tipo (3M A2, Voco B2…), se gasta primero el que vence antes y, si no, el que tiene más */
+      const vs = list(sd).filter(x => x.ck === ck).map(norm1).sort((x, y) => (x.exp || '9999') < (y.exp || '9999') ? -1 : (x.exp || '9999') > (y.exp || '9999') ? 1 : y.qty - x.qty);
+      if (!vs.length) return; let rest = need[ck];
+      for (let k = 0; k < vs.length && rest > 1e-9; k++) { const i = vs[k], unidades = rest / i.uses, d = (k === vs.length - 1) ? unidades : Math.min(i.qty, unidades); if (d <= 0) continue; i.qty = Math.max(0, Math.round((i.qty - d) * 1000) / 1000); mvAdd(i, -d, 'uso', pn); rest -= d * i.uses; }
+      n++;
+    });
     if (n) { save(); checkAlerts(sd); }
     return n;
   };

@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.40.0', b: '1.95.0', d: '2026-11-26', items: [
+      { t: 'Stock con productos concretos: en Mi stock, «Agregar producto» te deja buscar en el catálogo de Rutiden (marca, tono, presentación: «composite voco b2»), cargar hablando («2 composite 3M A2, una jeringa de composite Voco B2, baberos…») o cargar a mano. Cada producto queda con su código, así el pedido sale exacto.' },
+      { t: 'Si tenés varios productos del mismo tipo (por ejemplo, composites de 3M y de Voco), el descuento automático por práctica gasta primero el que vence antes y, si no, el que más tiene.' }] },
     { v: '1.39.0', b: '1.94.0', d: '2026-11-26', items: [
       { t: 'Tutoriales nuevos, grabados con la app como está hoy y con una voz que te va explicando: «Configurá tu consultorio» (lo primero que tenés que hacer: Primeros pasos y todos los Ajustes), «La agenda» y «Ficha y ortodoncia». Los videos viejos se borraron.' },
       { t: 'En Inicio, en la tarjeta de Primeros pasos, y arriba en Ajustes hay un botón para mirar el video de cómo configurar tu consultorio. También están en Ajustes › Videos tutoriales y en la web, en Tutoriales.' }] },

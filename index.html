@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.39.0';
+  A.VERSION = '1.40.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.94.0';
+  A.VBUILD = '1.95.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -15890,6 +15890,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   A.stkApi = { list: sd => list(sd || place()).map(norm1), status, expSoon, daysLeft, use30, fq, canCfg, place, sedeName, isEmp,
     adjust: (id, d, note) => { const i = itemById(id); if (!i) return null; norm1(i); i.qty = Math.max(0, Math.round((i.qty + d) * 1000) / 1000); mvAdd(i, d, d < 0 ? 'uso' : 'compra', note || 'ajuste rápido'); save(); return i; } };
   A.stkRec = { recOf: k => recOf(k), recKey: it => recKey(it), RNAME, CATI, BASE };
+  /* 1.40: los «tipos» del kit (composite, anestesia…) que usan las recetas; cada producto concreto (marca, tono) cuelga de un tipo por su `ck` */
+  A.stkTypes = () => CAT.map(c => ({ ck: c[0], name: c[1], cat: c[2], unit: c[3], uses: c[4] }));
 
   /* ---------- descuento automático al cargar prácticas («Prácticas de hoy») ---------- */
   A.stockConsume = (items, pid, sdIn) => {
@@ -15901,7 +15903,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     if (!c.done[key]) { add(recOf('atencion'), 1); c.done[key] = 1; const ks = Object.keys(c.done); if (ks.length > 500) ks.slice(0, ks.length - 400).forEach(k => delete c.done[k]); }
     items.forEach(it => { const k = recKey(it); if (!k) return; const m = /×\s*(\d+)/.exec(it.label || ''); add(recOf(k), m ? +m[1] : 1); });
     let n = 0; const pn = (A.PAT(pid) || {}).name || '';
-    Object.keys(need).forEach(ck => { const i = byCk(sd, ck); if (!i) return; norm1(i); const d = need[ck] / i.uses; i.qty = Math.max(0, Math.round((i.qty - d) * 1000) / 1000); mvAdd(i, -d, 'uso', pn); n++; });
+    Object.keys(need).forEach(ck => {
+      /* 1.40: si hay varios productos del mismo tipo (3M A2, Voco B2…), se gasta primero el que vence antes y, si no, el que tiene más */
+      const vs = list(sd).filter(x => x.ck === ck).map(norm1).sort((x, y) => (x.exp || '9999') < (y.exp || '9999') ? -1 : (x.exp || '9999') > (y.exp || '9999') ? 1 : y.qty - x.qty);
+      if (!vs.length) return; let rest = need[ck];
+      for (let k = 0; k < vs.length && rest > 1e-9; k++) { const i = vs[k], unidades = rest / i.uses, d = (k === vs.length - 1) ? unidades : Math.min(i.qty, unidades); if (d <= 0) continue; i.qty = Math.max(0, Math.round((i.qty - d) * 1000) / 1000); mvAdd(i, -d, 'uso', pn); rest -= d * i.uses; }
+      n++;
+    });
     if (n) { save(); checkAlerts(sd); }
     return n;
   };
@@ -18578,6 +18586,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.40.0', b: '1.95.0', d: '2026-11-26', items: [
+      { t: 'Stock con productos concretos: en Mi stock, «Agregar producto» te deja buscar en el catálogo de Rutiden (marca, tono, presentación: «composite voco b2»), cargar hablando («2 composite 3M A2, una jeringa de composite Voco B2, baberos…») o cargar a mano. Cada producto queda con su código, así el pedido sale exacto.' },
+      { t: 'Si tenés varios productos del mismo tipo (por ejemplo, composites de 3M y de Voco), el descuento automático por práctica gasta primero el que vence antes y, si no, el que más tiene.' }] },
     { v: '1.39.0', b: '1.94.0', d: '2026-11-26', items: [
       { t: 'Tutoriales nuevos, grabados con la app como está hoy y con una voz que te va explicando: «Configurá tu consultorio» (lo primero que tenés que hacer: Primeros pasos y todos los Ajustes), «La agenda» y «Ficha y ortodoncia». Los videos viejos se borraron.' },
       { t: 'En Inicio, en la tarjeta de Primeros pasos, y arriba en Ajustes hay un botón para mirar el video de cómo configurar tu consultorio. También están en Ajustes › Videos tutoriales y en la web, en Tutoriales.' }] },
@@ -27873,6 +27884,22 @@ const OVMenu = (function () {
     refresh();
   }
   A.rutLoad = load;
+  /* 1.40: buscar productos concretos (marca, tono, presentación) para armar «Mi stock» */
+  const STOP = { de: 1, del: 1, la: 1, el: 1, los: 1, las: 1, y: 1, con: 1, para: 1, una: 1, un: 1, uno: 1, tengo: 1, tenemos: 1, marca: 1, jeringa: 1, jeringas: 1, caja: 1, cajas: 1, unidad: 1, unidades: 1, frasco: 1, frascos: 1, paquete: 1, paquetes: 1, bolsa: 1, bolsas: 1, kit: 1, kits: 1, tubo: 1, tubos: 1 };
+  const SYN = { boco: 'voco', ultrafil: 'ultradent', ultrafill: 'ultradent', tresm: '3m', filtec: 'filtek' };
+  A.rutReady = () => !!CAT;
+  A.rutFind = (q, n) => {
+    if (!CAT) return null;
+    const toks = norm(q).replace(/[,;.]/g, ' ').split(/\s+/).filter(Boolean).map(t => SYN[t] || t).filter(t => !STOP[t] && !/^\d+$/.test(t) || /^\d+[a-z]+$/.test(t));
+    if (!toks.length) return [];
+    const need = Math.max(1, Math.ceil(toks.length * 0.6)), out = [];
+    CAT.f.forEach((f, i) => {
+      const ft = IDX[i].t; if (toks.filter(w => ft.indexOf(w) >= 0).length < need) return;
+      f[3].forEach(v => { const vt = norm((f[0] || '') + ' ' + (f[2] || '') + ' ' + (v[1] || '') + ' ' + (v[2] || '')), m = toks.filter(w => vt.indexOf(w) >= 0).length; if (m >= need) out.push({ s: m / toks.length, code: v[0], name: pretty(v[2] || f[0]), label: v[1] || '', fam: f[0], cat: catName(f[1]), brand: f[2] || '' }); });
+    });
+    out.sort((a, b) => b.s - a.s || a.name.length - b.name.length); return out.slice(0, n || 30);
+  };
+  A.rutProd = code => { const x = findV(code); if (!x) return null; const c = cfg(); return { code, name: pretty(fullName(x)), cat: catName(x.f[1]), brand: x.f[2] || '', cost: c.c[code] || c.p[code] || 0 }; };
   A.rutInfo = () => { const t = cartTotal(); return { n: cartCount(), total: t.t, all: t.all, logo: P.logo, name: P.name, count: CAT ? CAT.f.reduce((n, f) => n + f[3].length, 0) : 0 }; };
   const KEEP = { FG: 1, CA: 1, LED: 1, UV: 1, PVC: 1, RX: 1, RVG: 1, HP: 1, EDTA: 1, MTA: 1, ZOE: 1, GC: 1, IRM: 1, PKT: 1, TBASE: 1, UCLA: 1, ANMAT: 1, USA: 1, PTFE: 1, CAD: 1, CAM: 1 };
   const pretty = s => { s = String(s); if (/[a-záéíóúñ]/.test(s)) return s; return s.toLowerCase().replace(/(^|[\s(\/-])([a-záéíóúñ])/g, (m, a, b) => a + b.toUpperCase()).replace(/\b([a-záéíóúñ0-9.]+)\b/gi, w => (KEEP[w.toUpperCase()] || /\d/.test(w) ? w.toUpperCase() : w)).replace(/\bX\b/g, 'x'); };
@@ -29092,6 +29119,123 @@ const OVMenu = (function () {
   sched();
   const css = document.createElement('style');
   css.textContent = '.aj-tutv{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:0 0 12px;padding:12px 14px;border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:16px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 9%,var(--surface)),var(--surface));color:var(--ink);font:inherit;cursor:pointer}.aj-tutv>span{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:1rem}.aj-tutv b{display:block;font-size:.95rem}.aj-tutv small{color:var(--ink-2);font-size:.78rem}.ps-tut{margin-left:6px}';
+  document.body.appendChild(css);
+})();
+/* ===== 1.40: stock con productos concretos: «Agregar producto» (catálogo de Rutiden, cargar hablando o a mano) ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, MF = A.modalFns, esc = A.esc, $ = q => document.querySelector(q);
+  if (!A.stkApi || !A.stkAddItem || !A.rutFind) return;
+  const K = A.stkApi, norm = s => (A.norm ? A.norm(s) : String(s || '').toLowerCase());
+  const money = n => '$' + Math.round(n).toLocaleString('es-AR');
+  const sa = () => S.sa || (S.sa = { tab: 'cat', q: '', qty: {}, text: '', rows: null, added: [], man: { name: '', brand: '', det: '', unit: 'unidades', qty: '1', min: '0', cat: '' } });
+  /* nombres del catálogo en MAYÚSCULAS → Título legible (se respetan A2, 3M, 4G…) */
+  const nice = x => { x = String(x || ''); const L = x.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g, ''), U = L.replace(/[^A-ZÁÉÍÓÚÑ]/g, ''); if (!L.length || U.length / L.length < 0.6) return x; return x.toLowerCase().replace(/[a-záéíóúñ0-9.]+/g, w => /\d/.test(w) ? w.toUpperCase() : (/^(x|de|del|y|con|para|gr|ml|mm|cc|g|mg|kg)$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))); };
+  const NUM = { un: 1, una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, doce: 12, quince: 15, veinte: 20 };
+
+  /* ¿de qué «tipo» del kit es? (para que las recetas descuenten del producto concreto) */
+  const MAP = [[/composit|resina|filtek|brillant|estelite|z350|charisma/, 'composite'], [/adhesiv|bond|single bond|ambar|futurabond/, 'adhesivo'], [/grabador|acido|etch|fosforic/, 'grabador'], [/anestesi|carticain|articain|lidocain|mepivac/, 'anestesia'], [/aguja/, 'agujas'], [/guante/, 'guantes'], [/barbijo|mascarilla/, 'barbijos'], [/babero/, 'baberos'], [/eyector/, 'eyectores'], [/gasa/, 'gasas'], [/algodon|rollito/, 'algodon'], [/microbrush|aplicador/, 'microbrush'], [/matriz|matrices/, 'matrices'], [/cuna/, 'cunas'], [/ionomero|vitremer|fuji/, 'ionomero'], [/amalgama/, 'amalgama'], [/gutapercha|cono/, 'gutapercha'], [/hipoclorito/, 'hipoclorito'], [/clorhexidina/, 'clorhex'], [/sutura|hilo de sutura/, 'suturas'], [/bisturi|hoja de bisturi/, 'bisturi'], [/alginato/, 'alginato'], [/silicona/, 'silicona']];
+  const ckOf = text => { const t = norm(text), types = A.stkTypes ? A.stkTypes() : []; for (const m of MAP) if (m[0].test(t) && types.some(x => x.ck === m[1])) return m[1]; return null; };
+
+  /* sumar un producto concreto: si el kit tenía el tipo «en blanco» (sin cantidad), se completa ese; si no, es uno nuevo */
+  function addProduct(o) {
+    const ck = o.ck || ckOf(o.name + ' ' + (o.cat || '')), qty = Math.max(0, +o.qty || 0);
+    const dup = o.rut ? A.stkFind(i => i.rut === o.rut) : A.stkFind(i => i.spec && norm(i.name) === norm(o.name));
+    if (dup) { if (qty) K.adjust(dup.id, qty, 'Stock inicial'); else A.toast('Ya lo tenés: ' + dup.name); return dup; }
+    const ty = ck && A.stkTypes ? A.stkTypes().filter(t => t.ck === ck)[0] : null, ph = ck ? A.stkFind(i => i.ck === ck && !i.spec && !i.rut && !(i.qty > 0)) : null;
+    let it;
+    if (ph) { Object.assign(ph, { name: o.name, unit: o.unit || ph.unit, rut: o.rut || null, brand: o.brand || '', det: o.det || '', cost: o.cost || 0, supplier: o.rut ? 'rut' : '', spec: true, min: o.min != null ? o.min : (ph.min || 1) }); if (o.cat && !ph.cat) ph.cat = o.cat; A.stkSave(); it = ph; }
+    else it = A.stkAddItem({ name: o.name, unit: o.unit || (ty && ty.unit) || 'unidades', uses: ty ? ty.uses : 1, min: o.min != null ? o.min : 1, cat: o.cat || 'Otros', ck, rut: o.rut || null, brand: o.brand || '', det: o.det || '', cost: o.cost || 0, supplier: o.rut ? 'rut' : '', spec: true });
+    if (qty) K.adjust(it.id, qty, 'Stock inicial');
+    return it;
+  }
+  A.stkAddProduct = addProduct;
+
+  /* ---------- ventana ---------- */
+  A.acts.saOpen = () => { const s = sa(); s.rows = null; S.modal = { type: 'saAdd' }; A.renderModal(); if (A.rutLoad && !A.rutReady()) A.rutLoad(); };
+  const back = () => { S.modal = { type: 'stk' }; if (S.stk) S.stk.tab = 'lista'; A.renderModal(); };
+  A.acts.saDone = () => back();
+  A.acts.saTab = el => { sa().tab = el.getAttribute('data-t'); paint(); };
+  const paint = () => { const h = $('#saHost'); if (h) h.innerHTML = body(); else A.renderModal(); };
+  const tabs = () => '<div class="seg sa-tabs" role="tablist">' + [['cat', '🔎 Buscar en el catálogo'], ['voz', '🎙 Cargar hablando'], ['man', '✎ A mano']].map(t => '<button type="button" role="tab" data-act="saTab" data-t="' + t[0] + '" aria-pressed="' + (sa().tab === t[0]) + '">' + t[1] + '</button>').join('') + '</div>';
+  const addedBar = () => { const n = sa().added.length; return n ? '<div class="sa-added"><b>✔ ' + n + ' agregado' + (n === 1 ? '' : 's') + ':</b> ' + sa().added.slice(-4).map(x => esc(x)).join(' · ') + (n > 4 ? ' …' : '') + '</div>' : ''; };
+  const qtyBox = code => { const q = sa().qty[code] || 1; return '<span class="sa-q"><button type="button" data-act="saQty" data-code="' + esc(code) + '" data-d="-1" aria-label="Menos">−</button><b>' + q + '</b><button type="button" data-act="saQty" data-code="' + esc(code) + '" data-d="1" aria-label="Más">+</button></span>'; };
+  const resRow = (r, extra) => '<li class="sa-r"><div class="sa-n"><b>' + esc(nice(r.name)) + '</b><small>' + esc([r.brand, r.cat ? r.cat : '', 'cód. ' + r.code].filter(Boolean).join(' · ')) + '</small></div>' + (extra || qtyBox(r.code) + '<button type="button" class="btn small primary" data-act="saAdd" data-code="' + esc(r.code) + '">Agregar</button>') + '</li>';
+
+  function catHTML() {
+    const s = sa(); let h = '<label class="sa-s"><span aria-hidden="true">🔍</span><input id="saQ" type="search" autocomplete="off" placeholder="Ej.: composite 3M A2 · anestesia carticaína · baberos" value="' + esc(s.q) + '" data-in="saQ" aria-label="Buscar producto"></label>';
+    h += '<p class="hint sa-hint">Escribí marca, tipo y tono, como se lo dirías al proveedor: «composite voco b2», «agujas cortas»… Cada producto queda con su código, así el pedido sale exacto.</p>';
+    if (!A.rutReady()) return h + '<div class="empty">Cargando el catálogo de Rutiden…</div>';
+    const q = s.q.trim(); if (q.length < 2) return h + '<div class="empty">Empezá a escribir para ver las variedades.</div>';
+    const L = A.rutFind(q, 40); if (!L.length) return h + '<div class="empty">No encontré «' + esc(q) + '». Probá con menos palabras, o cargalo <button class="linkbtn" data-act="saTab" data-t="man">a mano</button>.</div>';
+    return h + '<ul class="sa-list" id="saList">' + L.map(r => resRow(r)).join('') + '</ul>';
+  }
+  /* «dos composite 3M A2, una jeringa de composite voco b2, baberos» → filas con opciones para confirmar */
+  function parse(text) {
+    const parts = String(text || '').split(/[\n;,]+|\sy\s(?=(?:\d+|una?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|doce)\b)/i).map(x => (x || '').trim()).filter(Boolean);
+    return parts.map(p => { const m = /^(\d+|[a-záéíóú]+)\b\s*(.*)$/i.exec(p); let qty = 1, rest = p; if (m && (/^\d+$/.test(m[1]) || NUM[norm(m[1])])) { qty = /^\d+$/.test(m[1]) ? +m[1] : NUM[norm(m[1])]; rest = m[2] || ''; } return { text: p, q: rest || p, qty, res: A.rutFind ? (A.rutFind(rest || p, 4) || []) : [], done: false }; });
+  }
+  function vozHTML() {
+    const s = sa(); let h = '<p class="hint sa-hint">Decí o escribí lo que tenés, separado por comas: <i>«2 composite 3M A2, una jeringa de composite Voco B2, baberos Descartables…»</i>. Después confirmás cada uno.</p>' +
+      '<div class="sa-voz"><textarea id="saT" rows="3" placeholder="Tengo dos jeringas de composite 3M A2, una de Voco B2…" data-in="saT" aria-label="Lo que tengo en stock">' + esc(s.text) + '</textarea><div class="sa-vb"><button type="button" class="btn" data-act="saMic" id="saMic">🎙 Hablar</button><button type="button" class="btn primary" data-act="saGo">Entender</button></div></div>';
+    if (!A.rutReady()) h += '<div class="empty">Cargando el catálogo de Rutiden…</div>';
+    if (s.rows) h += s.rows.length ? '<ul class="sa-list">' + s.rows.map((r, i) => '<li class="sa-row' + (r.done ? ' done' : '') + '"><div class="sa-say"><b>' + r.qty + ' ×</b> ' + esc(r.q) + (r.done ? ' <span class="sa-ok">✔ ' + esc(r.done) + '</span>' : '') + '</div>' + (r.done ? '' : '<div class="sa-opts">' + (r.res.length ? r.res.map(x => '<button type="button" class="sa-opt" data-act="saPick" data-i="' + i + '" data-code="' + esc(x.code) + '"><b>' + esc(nice(x.name)) + '</b><small>' + esc(x.brand || x.cat) + '</small></button>').join('') : '<span class="hint">No encontré ese producto en el catálogo.</span>') + '<button type="button" class="sa-opt sa-own" data-act="saOwn" data-i="' + i + '">Cargarlo tal cual: «' + esc(r.q.slice(0, 40)) + '»</button></div>') + '</li>').join('') + '</ul>' : '<div class="empty">No entendí nada. Probá de nuevo.</div>';
+    return h;
+  }
+  function manHTML() {
+    const m = sa().man, f = (id, l, v, ph, ex) => '<div class="field"><label for="sm_' + id + '">' + l + '</label><input id="sm_' + id + '" data-chg="saMan" data-k="' + id + '" value="' + esc(v) + '" placeholder="' + (ph || '') + '"' + (ex || '') + '></div>';
+    return '<p class="hint sa-hint">Para lo que no está en el catálogo: poné el nombre completo y los detalles que le pedirías al proveedor.</p>' + f('name', 'Producto', m.name, 'Ej.: Composite Filtek Z350 XT') + '<div class="row2">' + f('brand', 'Marca', m.brand, '3M, Voco, Ultradent…') + f('det', 'Tono / presentación', m.det, 'A2 · jeringa 4 g') + '</div><div class="row3">' + f('unit', 'Unidad', m.unit, 'jeringas, cajas…') + f('qty', 'Cuánto tengo', m.qty, '', ' inputmode="decimal"') + f('min', 'Avisar cuando queden', m.min, '', ' inputmode="decimal"') + '</div>' + f('cat', 'Categoría', m.cat, 'Restauración, Anestesia…') + '<div class="hint bad" id="saMsg"></div><div class="row-btns"><button class="btn primary" data-act="saManGo">Agregar a mi stock</button></div>';
+  }
+  const body = () => tabs() + addedBar() + (sa().tab === 'voz' ? vozHTML() : sa().tab === 'man' ? manHTML() : catHTML());
+  MF.saAdd = () => A.modalShell('Agregar a mi stock', '<div id="saHost">' + body() + '</div>', '<button class="btn primary" data-act="saDone">Listo, volver al stock</button>', true);
+
+  /* ---------- acciones ---------- */
+  A.ins.saQ = el => { sa().q = el.value; const l = $('#saList'), h = $('#saHost'); if (!h) return; const p = el.selectionStart; paintKeep(el); };
+  function paintKeep(el) { const pos = el.selectionStart, id = el.id; paint(); const n = document.getElementById(id); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* nada */ } } }
+  A.ins.saT = el => { sa().text = el.value; };
+  A.acts.saQty = el => { const s = sa(), c = el.getAttribute('data-code'); s.qty[c] = Math.max(1, (s.qty[c] || 1) + (+el.getAttribute('data-d'))); const q = document.getElementById('saQ'); if (q) paintKeep(q); else paint(); };
+  A.acts.saAdd = el => {
+    const s = sa(), code = el.getAttribute('data-code'), p = A.rutProd(code); if (!p) return;
+    const it = addProduct({ name: nice(p.name), rut: code, cat: p.cat, brand: p.brand, cost: p.cost, qty: s.qty[code] || 1 });
+    s.added.push((s.qty[code] || 1) + '× ' + nice(p.name)); delete s.qty[code]; A.toast('Sumado a tu stock: ' + it.name); const q = document.getElementById('saQ'); if (q) paintKeep(q); else paint();
+  };
+  A.acts.saGo = () => { const s = sa(); s.text = ($('#saT') || {}).value || s.text; s.rows = parse(s.text); paint(); };
+  A.acts.saPick = el => { const r = sa().rows[+el.getAttribute('data-i')], code = el.getAttribute('data-code'), p = A.rutProd(code); if (!r || !p) return; addProduct({ name: nice(p.name), rut: code, cat: p.cat, brand: p.brand, cost: p.cost, qty: r.qty }); r.done = r.qty + '× ' + nice(p.name); sa().added.push(r.done); paint(); };
+  A.acts.saOwn = el => { const r = sa().rows[+el.getAttribute('data-i')]; if (!r) return; const nm = r.q.replace(/^\w/, c => c.toUpperCase()); addProduct({ name: nm, qty: r.qty }); r.done = r.qty + '× ' + nm; sa().added.push(r.done); paint(); };
+  A.chg.saMan = el => { sa().man[el.getAttribute('data-k')] = el.value; };
+  A.acts.saManGo = () => {
+    const m = sa().man; ['name', 'brand', 'det', 'unit', 'qty', 'min', 'cat'].forEach(k => { const e = $('#sm_' + k); if (e) m[k] = e.value; });
+    if (!m.name.trim()) { const e = $('#saMsg'); if (e) e.textContent = 'Poné el nombre del producto.'; return; }
+    const full = [m.name.trim(), m.brand.trim(), m.det.trim()].filter(Boolean).join(' · ');
+    addProduct({ name: full, brand: m.brand.trim(), det: m.det.trim(), unit: m.unit.trim() || 'unidades', qty: A.parseMoney ? A.parseMoney(m.qty) : +m.qty, min: Math.max(0, +String(m.min).replace(',', '.') || 0), cat: m.cat.trim() || 'Otros' });
+    sa().added.push(full); S.sa.man = { name: '', brand: '', det: '', unit: m.unit, qty: '1', min: '0', cat: m.cat }; A.toast('Sumado a tu stock.'); paint();
+  };
+  /* micrófono: reconocimiento de voz del navegador (si no hay, sirve el micrófono del teclado) */
+  let rec = null;
+  A.acts.saMic = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) { A.toast('Tocá el micrófono de tu teclado para dictar.'); const t = $('#saT'); if (t) t.focus(); return; }
+    if (rec) { try { rec.stop(); } catch (e) { /* nada */ } return; }
+    rec = new SR(); rec.lang = 'es-AR'; rec.interimResults = false; rec.continuous = true; const b = $('#saMic'); if (b) b.textContent = '⏹ Listo';
+    rec.onresult = e => { let t = ''; for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) t += e.results[i][0].transcript + ', '; if (t) { const ta = $('#saT'); sa().text = (sa().text ? sa().text.replace(/[,\s]*$/, ', ') : '') + t.replace(/[,\s]+$/, ''); if (ta) ta.value = sa().text; } };
+    rec.onend = () => { rec = null; const m = $('#saMic'); if (m) m.textContent = '🎙 Hablar'; };
+    try { rec.start(); } catch (e) { rec = null; }
+  };
+
+  /* el botón del «Mi stock» ahora es «Agregar producto» */
+  const stkHTMLp = A.stkHTML;
+  A.stkHTML = function () { const h = stkHTMLp.apply(this, arguments); return h.replace('<button data-act="stkNew"><i>＋</i><b>Insumo nuevo</b></button>', '<button data-act="saOpen" class="sa-main"><i>＋</i><b>Agregar producto</b></button>'); };
+  /* cuando el catálogo termina de bajar, se repinta la ventana */
+  const rl = A.rutLoad; if (rl) A.rutLoad = function () { const r = rl.apply(this, arguments); setTimeout(() => { if (S.modal && S.modal.type === 'saAdd') paint(); }, 1500); return r; };
+
+  const css = document.createElement('style');
+  css.textContent = '.sa-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}.sa-tabs button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:9px 6px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer}.sa-tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}' +
+    '.sa-added{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:12px;padding:8px 12px;margin-bottom:10px;font-size:.84rem}.sa-s{display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:12px;padding:0 10px;background:var(--surface)}.sa-s:focus-within{border-color:var(--accent)}.sa-s input{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;padding:11px 0;outline:none;min-width:0}.sa-hint{margin:8px 2px}' +
+    '.sa-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;max-height:48vh;overflow:auto}.sa-r{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--surface)}.sa-n{flex:1;min-width:0;display:flex;flex-direction:column}.sa-n b{font-size:.9rem;line-height:1.25}.sa-n small{color:var(--ink-2);font-size:.72rem}' +
+    '.sa-q{display:inline-flex;align-items:center;gap:4px}.sa-q button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--accent);font-size:1rem;cursor:pointer;padding:0}.sa-q b{min-width:20px;text-align:center}' +
+    '.sa-voz textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;background:var(--surface);color:var(--ink);resize:vertical}.sa-vb{display:flex;gap:8px;margin:8px 0}' +
+    '.sa-row{border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:var(--surface)}.sa-row.done{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--surface))}.sa-say{margin-bottom:6px;font-size:.92rem}.sa-ok{color:var(--ok);font-weight:700;font-size:.82rem}.sa-opts{display:flex;flex-wrap:wrap;gap:6px}' +
+    '.sa-opt{display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;padding:6px 10px;font:inherit;cursor:pointer;max-width:100%}.sa-opt b{font-size:.82rem}.sa-opt small{color:var(--ink-2);font-size:.7rem}.sa-opt:hover{border-color:var(--accent)}.sa-own{border-style:dashed;justify-content:center;font-size:.8rem;color:var(--ink-2)}' +
+    '.s2-acts .sa-main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}';
   document.body.appendChild(css);
 })();
 /* ===== arranque, navegación y eventos ===== */
