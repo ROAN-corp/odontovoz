@@ -1,5 +1,7 @@
 /* Tutorial 1: lo primero que hay que hacer con la app: configurar el consultorio (Ajustes). */
 const cerrar = async h => { await h.click('.modal .m-head .x'); await h.sleep(500); };
+/* asegura que esté abierta la lista de Ajustes (cierra la ventana de una opción o abre Ajustes si no hay nada) */
+const aj = async h => { for (let i = 0; i < 4; i++) { const t = await h.ev(() => (window.App.S.modal || {}).type || ''); if (t === 'ajustes') return; if (!t) { await h.ev(() => window.App.acts.ajOpen({ getAttribute: () => null })); await h.sleep(700); } else { await h.click('.modal .m-head .x'); await h.sleep(700); } } };
 const fila = (h, act, nth) => h.click(h.page.locator('.modal [data-act="' + act + '"]').nth(nth || 0));
 const tab = (h, t) => h.click(h.page.locator('.modal [data-act="cfgTab"]', { hasText: t }).first());
 module.exports = {
@@ -28,33 +30,33 @@ module.exports = {
       hace: async h => { await h.scroll(h.modalBody, 500, 2200); await h.sleep(2200); } },
     { dice: 'En la solapa Agenda elegís qué días de la semana se muestran, cargás los feriados y los días cerrados, con un botón que trae los feriados fijos del año, y definís la duración de turno por defecto. Con esto la agenda ya queda armada a tu medida.',
       muestra: 'Solapa «Agenda»: días que se muestran, feriados y días cerrados, y duración por defecto del turno.',
-      hace: async h => { await cerrar(h); await tab(h, 'Agenda').catch(() => {}); await h.sleep(800); await h.scroll(h.modalBody, 380, 2200); await h.move(h.page.locator('.modal :text("Cargar feriados fijos")').first()); await h.sleep(1200); await h.scroll(h.modalBody, 500, 2200); } },
+      hace: async h => { await tab(h, 'Agenda'); await h.sleep(800); await h.scroll(h.modalBody, 380, 2200); await h.move(h.page.locator('.modal :text("Cargar feriados fijos")').first()); await h.sleep(1200); await h.scroll(h.modalBody, 500, 2200); } },
     { dice: 'Paso dos: prácticas y aranceles. Es tu lista de prácticas con el precio particular de cada una. Con esto la aplicación arma los presupuestos y calcula los cobros. Podés cambiar los precios cuando quieras, subirlos todos por porcentaje, y queda guardado el historial de precios.',
       muestra: 'Paso 2: Prácticas y aranceles. Tu lista de precios particulares; se sube por porcentaje y queda el historial.',
-      hace: async h => { await cerrar(h); await fila(h, 'catalogOpen'); await h.sleep(1500); await h.scroll(h.modalBody, 300, 2400); await h.sleep(800); } },
+      hace: async h => { await aj(h); await fila(h, 'catalogOpen'); await h.sleep(1500); await h.scroll(h.modalBody, 300, 2400); await h.sleep(800); } },
     { dice: 'Paso tres: las obras sociales. Cargás las que atendés, con el porcentaje que paga cada una o su tabla de aranceles, el coseguro y los planes. Ya viene cargada la tabla de la Federación Odontológica de Río Negro, que podés usar tal cual o ajustar.',
       muestra: 'Paso 3: Obras sociales. Porcentaje o tabla de aranceles, coseguro y planes. Viene cargada la FORN.',
-      hace: async h => { await cerrar(h); await fila(h, 'osOpen'); await h.sleep(1500); await h.scroll(h.modalBody, 300, 2400); await h.sleep(800); } },
+      hace: async h => { await aj(h); await fila(h, 'osOpen'); await h.sleep(1500); await h.scroll(h.modalBody, 300, 2400); await h.sleep(800); } },
     { dice: 'Paso cuatro: el stock de insumos. La aplicación te propone un kit recomendado para arrancar, y vos ajustás las cantidades y los mínimos. Después descuenta sola lo que usás en cada práctica, y te avisa cuando algo se está por acabar, para que lo pidas en un toque.',
       muestra: 'Paso 4: Stock de insumos. Kit recomendado, mínimos, descuento automático y pedidos en un toque.',
-      hace: async h => { await cerrar(h); await fila(h, 'stkOpen'); await h.sleep(2500); await h.scroll(h.modalBody, 250, 1800); await h.sleep(800); } },
+      hace: async h => { await aj(h); await fila(h, 'stkOpen'); await h.sleep(2500); await h.scroll(h.modalBody, 250, 1800); await h.sleep(800); } },
     { dice: 'Si venís de otro sistema, como Bilog, Dentalink o una planilla, la opción Mudanza pasa tus pacientes y sus historias, y es gratis. Y si tenés historias clínicas en papel, podés sacarles fotos y subirlas. Las dos opciones son opcionales.',
       muestra: 'Opcionales: «Mudanza desde otro sistema» y «Pasar historias de papel».',
-      hace: async h => { await cerrar(h); await h.move(h.page.locator('.modal [data-act="importOpen"]').first()); await h.sleep(2200); await h.move(h.page.locator('.modal [data-act="hcpOpen"]').first()); await h.sleep(2200); } },
+      hace: async h => { await aj(h); await h.move(h.page.locator('.modal [data-act="importOpen"]').first()); await h.sleep(2200); await h.move(h.page.locator('.modal [data-act="hcpOpen"]').first()); await h.sleep(2200); } },
     { dice: 'Paso cinco: el turnero online. Es una página para que tus pacientes pidan turno solos, eligiendo profesional, día y horario. Ven solamente los horarios realmente libres. Vos definís la seña, con cuánta anticipación pueden pedir, hasta cuántos días adelante, y los motivos que pueden elegir. Los pedidos te llegan a la agenda para que los confirmes.',
       muestra: 'Paso 5: Turnero online. Seña, anticipación, días adelante y motivos. Los pedidos te llegan para confirmar.',
-      hace: async h => { await fila(h, 'tnOpen'); await h.sleep(1500); await h.scroll(h.modalBody, 350, 2600); await h.sleep(800); } },
+      hace: async h => { await aj(h); await fila(h, 'tnOpen'); await h.sleep(1500); await h.scroll(h.modalBody, 350, 2600); await h.sleep(800); } },
     { dice: 'Paso seis: medios de pago y recargos. Acá definís el recargo por cuotas de tarjeta y el descuento por pago en efectivo, para que al cobrar la cuenta ya salga bien.',
       muestra: 'Paso 6: Medios de pago y recargos (cuotas de tarjeta, descuento en efectivo).',
-      hace: async h => { await cerrar(h); await fila(h, 'payRatesOpen'); await h.sleep(2500); await cerrar(h); } },
+      hace: async h => { await aj(h); await fila(h, 'payRatesOpen'); await h.sleep(2500); await aj(h); } },
     { dice: 'Más abajo, en La app en este equipo, está lo personal. Apariencia, para elegir los colores y el tamaño de las letras. El asistente de voz, que te responde en voz alta y te deja manejar la aplicación hablando. Avisos y sonidos. Guatsap para los recordatorios a los pacientes. E instalar como aplicación, para tenerla en el celular o en la computadora como cualquier otra.',
       muestra: 'En «La app en este equipo»: Apariencia, Asistente de voz, Avisos y sonidos, WhatsApp para recordatorios e Instalar como aplicación.',
-      hace: async h => { await h.scroll(h.modalBody, 360, 1600); for (const a of ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall']) { await h.move(h.page.locator('.modal [data-act="' + a + '"]').first()); await h.sleep(1500); } } },
+      hace: async h => { await aj(h); await h.scroll(h.modalBody, 360, 1600); for (const a of ['appearOpen', 'assistOpen', 'notifOpen', 'waCfg', 'pwaInstall']) { await h.move(h.page.locator('.modal [data-act="' + a + '"]').first()); await h.sleep(1500); } } },
     { dice: 'Y en Cuenta y datos tenés tu plan, el tipo de cuenta y los usuarios del equipo, para darle acceso a tu secretaria con los permisos justos. Acá también está la copia de seguridad: te recomendamos hacerla una vez por semana, y siempre antes de cambiar de equipo.',
       muestra: 'En «Cuenta y datos»: tu plan, usuarios del equipo (secretaría) y la copia de seguridad semanal.',
-      hace: async h => { await h.scroll(h.modalBody, 420, 1800); await h.move(h.page.locator('.modal [data-act="planOpen"]').first()); await h.sleep(1800); await h.move(h.page.locator('.modal [data-act="cfgOpen"][data-k="datos"], .modal [data-act="cfgOpen"]').last()); await h.sleep(2200); } },
+      hace: async h => { await aj(h); await h.scroll(h.modalBody, 420, 1800); await h.move(h.page.locator('.modal [data-act="planOpen"]').first()); await h.sleep(1800); await h.move(h.page.locator('.modal [data-act="cfgOpen"][data-k="datos"], .modal [data-act="cfgOpen"]').last()); await h.sleep(2200); } },
     { dice: 'Cuando termines estos seis pasos, tu consultorio ya está listo para trabajar: la agenda, los precios, las obras sociales y el stock quedan armados. Si algo te trabás, tenés Ayuda y soporte en el mismo menú de Ajustes. Y en los próximos videos te muestro cómo dar turnos y cómo usar la ficha del paciente.',
       muestra: 'Con estos seis pasos tu consultorio queda listo. ¿Dudas? Ayuda y soporte, en Ajustes.',
-      hace: async h => { await h.click(h.page.locator('.modal [data-act="ajClose"]').first()); await h.sleep(1500); } }
+      hace: async h => { await aj(h); await h.click(h.page.locator('.modal [data-act="ajClose"]').first()); await h.sleep(1500); } }
   ]
 };
