@@ -6,6 +6,11 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.50.0', b: '1.105.0', d: '2026-11-26', items: [
+      { t: 'Consentimientos editables: en la lista de consentimientos, «✎ Editar» cambia el texto para todos los pacientes (procedimiento, riesgos, alternativas y declaraciones), y «+ Nuevo consentimiento» crea uno propio. Podés volver al texto original cuando quieras.' },
+      { t: 'Antes de firmar, «✎ Agregar o quitar cosas antes de firmar» ajusta el texto solo para esa persona (sirve para cualquier documento: consentimiento, presupuesto, recibo…). Queda escrito en lo que se firma.' },
+      { t: 'Una vez firmado, «Enviar por WhatsApp»: en el teléfono comparte el PDF y elegís el chat; en la PC lo descarga y abre el chat del paciente.' }
+    ] },
     { v: '1.49.0', b: '1.104.0', d: '2026-11-26', items: [
       { t: 'Si trabajás en otro consultorio con un usuario que te dieron (sin correo) y ahora tenés tu propia cuenta, podés vincularlos: en Dónde trabajás tocá «Vincular mi usuario de otro consultorio». El acceso a ese consultorio pasa a tu cuenta y elegís dónde trabajar con un solo ingreso.' }
     ] },
