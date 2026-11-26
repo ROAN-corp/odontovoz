@@ -1146,3 +1146,6 @@ Stock: botones unificados (`sbOpen` = compra/llegó mercadería; `saOpen` = «Ed
 
 ## 1.44.0 (compilación 1.99.0)
 `app127`: opción `A.CFG.agOwn` («Cada profesional ve solo su agenda», interruptor arriba de Usuarios del equipo, `A.chg.agOwn`, solo dueño/socio). `A.agOwnPro()` da el profesional del usuario si su puesto es Profesional o Asistente y la opción está prendida; envuelve `A.visPros` (una sola columna), `A.locKeep` (turnos de otros no pasan) y `A.afterRefresh` (fuerza `S.proSel`). Es solo de pantalla: los datos igual llegan al equipo.
+
+## 1.45.0 (compilación 1.100.0)
+`app128`: en iPhone/iPad (`A.isIOS()`, incluye iPad que se presenta como Mac) `A.acts.pwaInstall` abre la ventana `iosInst` con los 4 pasos (Compartir › Agregar a inicio › Agregar) y «Copiar enlace» (`iosCopy`); avisa si está dentro de otra app (WhatsApp, Instagram…). Fuera de iOS sigue el comportamiento de `beforeinstallprompt`.

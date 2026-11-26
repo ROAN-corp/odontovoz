@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.45.0', b: '1.100.0', d: '2026-11-26', items: [
+      { t: 'iPhone y iPad: el botón «Instalar como aplicación» ahora abre una guía de 4 pasos (Compartir › Agregar a inicio › Agregar), con los íconos de Safari y un botón para copiar el enlace. Apple no permite instalar con un solo toque.' }
+    ] },
     { v: '1.44.0', b: '1.99.0', d: '2026-11-26', items: [
       { t: 'Cada profesional ve solo su agenda: en Usuarios del equipo hay una opción nueva, «Cada profesional ve solo su agenda». Prendida, los usuarios con puesto Profesional o Asistente ven únicamente los turnos de su profesional. El dueño, los socios, la administración y la secretaría siguen viendo todas las agendas.' }
     ] },
