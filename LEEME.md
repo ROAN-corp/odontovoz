@@ -1116,3 +1116,7 @@ Agenda (`app116`): animaciones del arrastre de pacientes (levantar, cartelito qu
 
 ## 1.38.0 (compilación 1.93.0)
 Animaciones de ventanas (`app123`): `m-anim` solo cuando una ventana se abre o cambia de tipo (no en cada redibujado), `m-out` al cerrar con `closeModal`, `pop-anim` en `#tpop`/`#waPick`/`#updPop`, avisos y menús. Usa las propiedades `translate`/`scale` para no pisar el `transform` de las ventanas arrastradas.
+
+
+## 1.38.1 (compilación 1.93.1)
+Agenda (`app116`): menú `#delMini` al mantener apretado un turno (`holdDel` = max(1,5 s, `odontovoz.holdMs`)), `movable()` para la burbuja y el cuadrito del motivo. Calendario (`app24`): selector de mes propio (`agCalPick`/`agCalSet`, `S.calPick`) en lugar del `<select>`.

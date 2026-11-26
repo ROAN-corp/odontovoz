@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.38.0';
+  A.VERSION = '1.38.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.93.0';
+  A.VBUILD = '1.93.1';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -11763,14 +11763,17 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function months() {
     const m0 = S.calM || S.date.slice(0, 7);
     const sel = cur(), p = sel && A.PRO(sel);
-    const base = A.today().slice(0, 7), opts = []; for (let i = -1; i < 14; i++) { const mm = addM(base, i); opts.push('<option value="' + mm + '"' + (mm === m0 ? ' selected' : '') + '>' + esc(A.cap(A.MON[+mm.slice(5) - 1]) + ' ' + mm.slice(0, 4)) + '</option>'); }
-    if (!opts.some(o => o.indexOf('value="' + m0 + '"') >= 0)) opts.unshift('<option value="' + m0 + '" selected>' + esc(A.cap(A.MON[+m0.slice(5) - 1]) + ' ' + m0.slice(0, 4)) + '</option>');
-    return '<div class="mc-head"><button class="btn small" data-act="agCalMon" data-n="-1" aria-label="Meses anteriores">‹</button><label class="mc-jump"><span class="sr">Ir a un mes</span><i aria-hidden="true">📅</i><select data-chg="agCalJump" aria-label="Ir a un mes">' + opts.join('') + '</select></label><button class="btn small" data-act="agCalMon" data-n="1" aria-label="Meses siguientes">›</button></div>' +
+    const base = A.today().slice(0, 7), lbl = A.cap(A.MON[+m0.slice(5) - 1]) + ' ' + m0.slice(0, 4);
+    let pick = ''; if (S.calPick) { const opts = []; for (let i = -1; i < 14; i++) { const mm = addM(base, i); opts.push('<button type="button" class="mc-pm' + (mm === m0 ? ' on' : '') + '" data-act="agCalSet" data-m="' + mm + '">' + esc(A.cap(A.MON[+mm.slice(5) - 1]).slice(0, 3) + ' ' + mm.slice(2, 4)) + '</button>'); } pick = '<div class="mc-pick" role="listbox" aria-label="Elegí un mes">' + opts.join('') + '</div>'; }
+    return '<div class="mc-head"><button class="btn small" data-act="agCalMon" data-n="-1" aria-label="Meses anteriores">‹</button><button type="button" class="mc-jump" data-act="agCalPick" aria-haspopup="listbox" aria-expanded="' + !!S.calPick + '"><i aria-hidden="true">📅</i><span>' + esc(lbl) + '</span><b aria-hidden="true">' + (S.calPick ? '▴' : '▾') + '</b></button><button class="btn small" data-act="agCalMon" data-n="1" aria-label="Meses siguientes">›</button></div>' + pick +
       (p ? '<div class="am-who"><b class="pdot" style="background:' + p.color + '"></b>' + esc(p.name) + '</div>' : '') +
       '<div class="am-leg"><span><i class="lg lg-w"></i>' + (p ? 'Atiende' : 'Hay atención') + '</span><span><i class="lg lg-o"></i>Sin atención</span><span><i class="lg lg-t"></i>Hoy</span><span class="lg-n">Rojo: vacaciones, feriado o agenda cancelada · número chico: turnos</span></div><div class="am-ms">' + [0, 1, 2].map(i => month(addM(m0, i))).join('') + '</div>';
   }
 
-  A.chg.agCalJump = el => { S.calM = el.value; A.render.agenda(); };
+  A.acts.agCalPick = () => { S.calPick = !S.calPick; A.render.agenda(); };
+  A.acts.agCalSet = el => { S.calM = el.getAttribute('data-m'); S.calPick = false; A.render.agenda(); };
+  document.addEventListener('click', e => { if (S.calPick && !(e.target.closest && e.target.closest('.mc-jump, .mc-pick'))) { S.calPick = false; if (A.render.agenda && S.tab === 'agenda') A.render.agenda(); } }, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.calPick) { S.calPick = false; A.render.agenda(); } });
   const prevAgenda = A.render.agenda;
   A.render.agenda = () => {
     prevAgenda();
@@ -11815,7 +11818,8 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     '.am-side .mc-d.today{box-shadow:inset 0 0 0 2px var(--accent)}.am-side .mc-d.sel{outline:none;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 40%,transparent)}.am-side .mc-d.sel .mc-t{color:inherit}' +
     '.am-side .mc-d.am-part::after{content:"";position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red)}.am-side{max-height:calc(100vh - 86px);overflow-y:auto}.am-leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--ink-2);margin:0 0 10px;padding-bottom:8px;border-bottom:1px dashed var(--line)}.am-leg span{display:inline-flex;align-items:center;gap:5px}.am-leg .lg{width:12px;height:12px;border-radius:4px;display:inline-block}.am-leg .lg-w{background:color-mix(in srgb,var(--ok) 35%,var(--surface))}.am-leg .lg-o{background:color-mix(in srgb,var(--red) 35%,var(--surface))}.am-leg .lg-t{box-shadow:inset 0 0 0 2px var(--accent)}.am-leg .lg-n{flex-basis:100%;font-size:9.5px;opacity:.85}' +
     '.am-side{--mcell:clamp(17px,calc((100vh - 395px) / 18),26px);padding:10px!important}.am-side .mc-head{margin-bottom:6px}.am-side .mc-head .btn{width:28px;height:28px;font-size:16px}' +
-    '.mc-jump{flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));background:var(--surface);border-radius:999px;padding:0 6px 0 8px;margin:0 4px}.mc-jump i{font-style:normal;font-size:13px}.mc-jump select{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:800 13px var(--f-display,inherit);padding:6px 0;cursor:pointer;appearance:auto}' +
+    '.mc-jump{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 10px;margin:0 4px;font:800 13px var(--f-display,inherit);cursor:pointer}.mc-jump:hover{background:var(--accent-soft)}.mc-jump i{font-style:normal;font-size:13px}.mc-jump b{color:var(--accent);font-size:11px}' +
+    '.am-side{position:sticky}.mc-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:14px;padding:8px;margin:0 0 8px;box-shadow:0 10px 26px rgba(8,20,24,.16);animation:popIn .2s cubic-bezier(.2,1.3,.4,1)}.mc-pm{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;padding:8px 0;font:700 12px var(--f-sans,inherit);cursor:pointer}.mc-pm:hover{border-color:var(--accent)}.mc-pm.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}' +
     '.am-side .am-ms{gap:8px}.am-side .am-m{padding:6px 6px 5px;border-radius:14px}.am-side .am-t{font-size:12.5px;margin-bottom:3px}.am-side .mc-grid{gap:2px}.am-side .mc-dw{font-size:9px;padding:0}' +
     '.am-side .mc-d{min-height:var(--mcell);padding:0;align-items:center;justify-content:center;font-size:12px}.am-side .mc-d .mc-t{position:absolute;top:0;right:2px;font-size:8px;line-height:1;opacity:.75}' +
     '.am-leg{font-size:10.5px;margin:0 0 6px;padding-bottom:6px}.am-leg .lg{width:10px;height:10px}.am-side .am-who{font-size:12px;margin-bottom:4px}' +
@@ -18574,6 +18578,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.38.1', b: '1.93.1', d: '2026-11-26', items: [
+      { t: 'Agenda: mantené apretado un turno (o un bloqueo) y, después de un instante, sale un menú chiquito para borrarlo (con aviso de deshacer). Mientras apretás se llena un anillo rojo que muestra cuánto falta. El tiempo es el mismo que el de bloquear horas (mínimo 1,5 s; se puede subir a 4 s desde la burbuja).' },
+      { t: 'Calendario de la agenda: el selector de mes ahora es un botón que abre una grilla de meses, se cierra al volver a tocarlo o al tocar afuera.' },
+      { t: 'La burbuja de turnos (menú + lista de pacientes) y el cuadrito del motivo se pueden mover arrastrando su título.' }] },
     { v: '1.38.0', b: '1.93.0', d: '2026-11-26', items: [
       { t: 'Animaciones suaves en las ventanas emergentes: las ventanas aparecen con un pequeño rebote (en el celular suben un poco), se desvanecen al cerrarlas con la X o «Cerrar», y lo mismo la ventanita del turno, los menús y los avisos. Los botones se hunden un poquito al tocarlos. Si tu celular tiene activada la opción de reducir movimiento, se apagan solas.' }] },
     { v: '1.37.0', b: '1.92.0', d: '2026-11-26', items: [
@@ -28558,6 +28566,63 @@ const OVMenu = (function () {
   document.addEventListener('pointercancel', () => rzEnd(true));
   document.addEventListener('touchmove', e => { if (rz && e.cancelable) e.preventDefault(); }, { passive: false });
 
+  /* =====================================================================
+     3) MANTENER APRETADO UN TURNO: sale un menú chiquito para borrarlo
+     ===================================================================== */
+  const holdDel = () => Math.max(1500, +LS.get('odontovoz.holdMs', 1000) || 1000);
+  let dp = null;
+  const miniClose = () => { const m = document.getElementById('delMini'); if (m) { m.classList.add('out'); setTimeout(() => m.remove(), 140); } };
+  const ringOff = () => { document.querySelectorAll('.del-ring').forEach(n => n.remove()); };
+  document.addEventListener('pointerdown', e => {
+    const m0 = document.getElementById('delMini'); if (m0 && !m0.contains(e.target)) miniClose();
+    const blk = e.target.closest && e.target.closest('#gridWrap .blk[data-id]'); if (!blk || e.button > 0) return;
+    if (e.target.closest('.rz, .grip, [data-grip], button, a, input, select, textarea')) return;
+    dp = { id: blk.getAttribute('data-id'), x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, blk, fired: false };
+    const ms = holdDel(); ringOff();
+    const ring = document.createElement('div'); ring.className = 'del-ring'; ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px'; ring.style.setProperty('--ms', ms + 'ms');
+    ring.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16"/></svg>'; document.body.appendChild(ring);
+    dp.tm = setTimeout(() => { if (!dp) return; dp.fired = true; ringOff(); try { if (navigator.vibrate) navigator.vibrate(30); } catch (er) { /* nada */ } showMini(dp); }, ms);
+  }, true);
+  document.addEventListener('pointermove', e => { if (!dp || dp.fired) return; if (Math.hypot(e.clientX - dp.x0, e.clientY - dp.y0) > 10) { clearTimeout(dp.tm); ringOff(); dp = null; } });
+  const dpEnd = () => { if (!dp) return; const d = dp; dp = null; clearTimeout(d.tm); ringOff(); if (d.fired) clickBlock = Date.now() + 500; };
+  document.addEventListener('pointerup', dpEnd); document.addEventListener('pointercancel', dpEnd);
+  document.addEventListener('contextmenu', e => { if (dp || (e.target.closest && e.target.closest('#gridWrap .blk'))) e.preventDefault(); }, true);
+  function showMini(d) {
+    const a = A.apptById ? A.apptById(d.id) : null; if (!a) return;
+    if (A.canEditAppt && !A.canEditAppt(a)) { A.toast('Ese turno es de la agenda de otro profesional: lo borra recepción o la administración.'); return; }
+    const act = a.type === 'block' ? 'apDelBlock' : 'apDelGo', why = A.permBlocked ? A.permBlocked('apDelGo') : '';
+    if (why) { A.toast(A.permWhy ? A.permWhy(why === 'boss') : 'Tu usuario no puede borrar turnos.'); return; }
+    const nm = a.type === 'block' ? (a.label || 'Bloqueo') : ((A.PAT(a.pid) || {}).name || 'Turno');
+    const m = document.createElement('div'); m.id = 'delMini'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Opciones del turno');
+    m.innerHTML = '<small>' + esc(nm) + ' · ' + A.mm(a.start) + '</small><button role="menuitem" data-act="delMiniGo" data-id="' + esc(a.id) + '" data-k="' + act + '"><i aria-hidden="true">🗑</i> Borrar turno</button><button class="dm-x" role="menuitem" data-act="delMiniX">Cancelar</button>';
+    document.body.appendChild(m);
+    const w = m.offsetWidth || 170, h = m.offsetHeight || 96; let left = Math.min(Math.max(8, d.x - w / 2), window.innerWidth - w - 8), top = d.y - h - 14; if (top < 8) top = Math.min(window.innerHeight - h - 8, d.y + 18); m.style.left = left + 'px'; m.style.top = top + 'px';
+  }
+  A.acts.delMiniGo = el => { const id = el.getAttribute('data-id'), k = el.getAttribute('data-k'); miniClose(); setTimeout(() => { if (A.acts[k]) A.acts[k]({ getAttribute: n => (n === 'data-id' ? id : null) }); }, 120); };
+  A.acts.delMiniX = () => miniClose();
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') miniClose(); });
+
+  /* =====================================================================
+     4) LA BURBUJA Y EL CUADRITO DEL MOTIVO SE PUEDEN MOVER DE LUGAR (arrastrando el título)
+     ===================================================================== */
+  function movable(el, handle) {
+    if (!el || el._mv || el.classList.contains('sheet')) return; el._mv = 1;
+    const h = el.querySelector(handle); if (!h) return; h.classList.add('mv-grab');
+    h.addEventListener('pointerdown', e => {
+      if (e.button > 0 || e.target.closest('button, input, select, a')) return;
+      const r = el.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY; let on = false;
+      try { h.setPointerCapture(e.pointerId); } catch (er) { /* nada */ }
+      const mv = ev => { const dx = ev.clientX - x0, dy = ev.clientY - y0; if (!on && Math.hypot(dx, dy) < 5) return; on = true; ev.preventDefault(); const ar = el.querySelector('.bub-arrow, .mv-ar'); if (ar) ar.style.display = 'none'; el.style.left = Math.min(Math.max(6, r.left + dx), window.innerWidth - r.width - 6) + 'px'; el.style.top = Math.min(Math.max(6, r.top + dy), window.innerHeight - 60) + 'px'; el.style.right = ''; el.style.bottom = ''; };
+      const up = () => { h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); };
+      h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+    });
+  }
+  try {
+    new MutationObserver(list => list.forEach(rec => rec.addedNodes.forEach(n => {
+      if (n.nodeType !== 1) return; if (n.id === 'bub') setTimeout(() => movable(n, '.bub-h'), 30); else if (n.id === 'mvPop') setTimeout(() => movable(n, '.mv-h'), 30);
+    }))).observe(document.body, { childList: true });
+  } catch (e) { /* nada */ }
+
   const css = document.createElement('style');
   css.textContent = '#pdGhost{position:fixed;left:0;top:0;z-index:400;pointer-events:none;display:flex;align-items:center;gap:8px;background:var(--surface);color:var(--ink);border:2px solid var(--accent);border-radius:999px;padding:5px 14px 5px 6px;box-shadow:0 10px 28px rgba(0,0,0,.28);font-size:.9rem;opacity:.95}#pdGhost.ok{border-style:solid}#pdGhost:not(.ok){border-style:dashed;opacity:.8}' +
     '.pd-av{width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800}' +
@@ -28578,6 +28643,10 @@ const OVMenu = (function () {
     '.mv-ar{position:absolute;width:14px;height:14px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--line));transform:rotate(45deg)}#mvPop.down .mv-ar{top:-8px;border-right:0;border-bottom:0}#mvPop.up .mv-ar{bottom:-8px;border-left:0;border-top:0}' +
     '.mv-ok{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;color:var(--ok);font-size:1.05rem}.mv-ok svg{width:30px;height:30px;stroke-dasharray:30;stroke-dashoffset:30;animation:mvCheck .45s .05s ease-out forwards}@keyframes mvCheck{to{stroke-dashoffset:0}}#mvPop.done{animation:mvDone .5s ease-out}@keyframes mvDone{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}' +
     '@media (prefers-reduced-motion:reduce){#pdGhost,.pd-av,.pd-hint,.blk.blk-new,#mvPop,.mv-chips button{animation:none!important}}';
+  css.textContent += '.del-ring{position:fixed;z-index:420;width:52px;height:52px;margin:-26px 0 0 -26px;pointer-events:none}.del-ring svg{width:100%;height:100%;transform:rotate(-90deg)}.del-ring circle{fill:color-mix(in srgb,var(--red) 10%,transparent);stroke:var(--red);stroke-width:3;stroke-linecap:round;stroke-dasharray:101;stroke-dashoffset:101;animation:delRing var(--ms,1500ms) linear forwards}@keyframes delRing{to{stroke-dashoffset:0}}' +
+    '#delMini{position:fixed;z-index:430;display:flex;flex-direction:column;gap:4px;min-width:160px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--red) 40%,var(--line));border-radius:14px;padding:8px;box-shadow:0 14px 34px rgba(8,20,24,.3);animation:popIn .22s cubic-bezier(.2,1.4,.4,1)}#delMini.out{opacity:0;transition:opacity .14s}' +
+    '#delMini small{color:var(--ink-2);font-size:.74rem;padding:0 4px 2px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#delMini button{border:0;border-radius:10px;padding:9px 12px;font:inherit;font-weight:700;cursor:pointer;text-align:left;background:color-mix(in srgb,var(--red) 12%,var(--surface));color:var(--red)}#delMini button.dm-x{background:var(--surface-2);color:var(--ink-2);font-weight:500}#delMini button i{font-style:normal;margin-right:4px}' +
+    '#gridWrap .blk{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.mv-grab{cursor:grab;touch-action:none}.mv-grab:active{cursor:grabbing}';
   document.body.appendChild(css);
 })();
 /* ===== 1.32: solapa Ortodoncia en la ficha: tratamiento, controles con fotos (quedan también en Fotos y en la evolución) y comparación antes y ahora ===== */

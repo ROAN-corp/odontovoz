@@ -157,6 +157,63 @@
   document.addEventListener('pointercancel', () => rzEnd(true));
   document.addEventListener('touchmove', e => { if (rz && e.cancelable) e.preventDefault(); }, { passive: false });
 
+  /* =====================================================================
+     3) MANTENER APRETADO UN TURNO: sale un menú chiquito para borrarlo
+     ===================================================================== */
+  const holdDel = () => Math.max(1500, +LS.get('odontovoz.holdMs', 1000) || 1000);
+  let dp = null;
+  const miniClose = () => { const m = document.getElementById('delMini'); if (m) { m.classList.add('out'); setTimeout(() => m.remove(), 140); } };
+  const ringOff = () => { document.querySelectorAll('.del-ring').forEach(n => n.remove()); };
+  document.addEventListener('pointerdown', e => {
+    const m0 = document.getElementById('delMini'); if (m0 && !m0.contains(e.target)) miniClose();
+    const blk = e.target.closest && e.target.closest('#gridWrap .blk[data-id]'); if (!blk || e.button > 0) return;
+    if (e.target.closest('.rz, .grip, [data-grip], button, a, input, select, textarea')) return;
+    dp = { id: blk.getAttribute('data-id'), x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, blk, fired: false };
+    const ms = holdDel(); ringOff();
+    const ring = document.createElement('div'); ring.className = 'del-ring'; ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px'; ring.style.setProperty('--ms', ms + 'ms');
+    ring.innerHTML = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16"/></svg>'; document.body.appendChild(ring);
+    dp.tm = setTimeout(() => { if (!dp) return; dp.fired = true; ringOff(); try { if (navigator.vibrate) navigator.vibrate(30); } catch (er) { /* nada */ } showMini(dp); }, ms);
+  }, true);
+  document.addEventListener('pointermove', e => { if (!dp || dp.fired) return; if (Math.hypot(e.clientX - dp.x0, e.clientY - dp.y0) > 10) { clearTimeout(dp.tm); ringOff(); dp = null; } });
+  const dpEnd = () => { if (!dp) return; const d = dp; dp = null; clearTimeout(d.tm); ringOff(); if (d.fired) clickBlock = Date.now() + 500; };
+  document.addEventListener('pointerup', dpEnd); document.addEventListener('pointercancel', dpEnd);
+  document.addEventListener('contextmenu', e => { if (dp || (e.target.closest && e.target.closest('#gridWrap .blk'))) e.preventDefault(); }, true);
+  function showMini(d) {
+    const a = A.apptById ? A.apptById(d.id) : null; if (!a) return;
+    if (A.canEditAppt && !A.canEditAppt(a)) { A.toast('Ese turno es de la agenda de otro profesional: lo borra recepción o la administración.'); return; }
+    const act = a.type === 'block' ? 'apDelBlock' : 'apDelGo', why = A.permBlocked ? A.permBlocked('apDelGo') : '';
+    if (why) { A.toast(A.permWhy ? A.permWhy(why === 'boss') : 'Tu usuario no puede borrar turnos.'); return; }
+    const nm = a.type === 'block' ? (a.label || 'Bloqueo') : ((A.PAT(a.pid) || {}).name || 'Turno');
+    const m = document.createElement('div'); m.id = 'delMini'; m.setAttribute('role', 'menu'); m.setAttribute('aria-label', 'Opciones del turno');
+    m.innerHTML = '<small>' + esc(nm) + ' · ' + A.mm(a.start) + '</small><button role="menuitem" data-act="delMiniGo" data-id="' + esc(a.id) + '" data-k="' + act + '"><i aria-hidden="true">🗑</i> Borrar turno</button><button class="dm-x" role="menuitem" data-act="delMiniX">Cancelar</button>';
+    document.body.appendChild(m);
+    const w = m.offsetWidth || 170, h = m.offsetHeight || 96; let left = Math.min(Math.max(8, d.x - w / 2), window.innerWidth - w - 8), top = d.y - h - 14; if (top < 8) top = Math.min(window.innerHeight - h - 8, d.y + 18); m.style.left = left + 'px'; m.style.top = top + 'px';
+  }
+  A.acts.delMiniGo = el => { const id = el.getAttribute('data-id'), k = el.getAttribute('data-k'); miniClose(); setTimeout(() => { if (A.acts[k]) A.acts[k]({ getAttribute: n => (n === 'data-id' ? id : null) }); }, 120); };
+  A.acts.delMiniX = () => miniClose();
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') miniClose(); });
+
+  /* =====================================================================
+     4) LA BURBUJA Y EL CUADRITO DEL MOTIVO SE PUEDEN MOVER DE LUGAR (arrastrando el título)
+     ===================================================================== */
+  function movable(el, handle) {
+    if (!el || el._mv || el.classList.contains('sheet')) return; el._mv = 1;
+    const h = el.querySelector(handle); if (!h) return; h.classList.add('mv-grab');
+    h.addEventListener('pointerdown', e => {
+      if (e.button > 0 || e.target.closest('button, input, select, a')) return;
+      const r = el.getBoundingClientRect(), x0 = e.clientX, y0 = e.clientY; let on = false;
+      try { h.setPointerCapture(e.pointerId); } catch (er) { /* nada */ }
+      const mv = ev => { const dx = ev.clientX - x0, dy = ev.clientY - y0; if (!on && Math.hypot(dx, dy) < 5) return; on = true; ev.preventDefault(); const ar = el.querySelector('.bub-arrow, .mv-ar'); if (ar) ar.style.display = 'none'; el.style.left = Math.min(Math.max(6, r.left + dx), window.innerWidth - r.width - 6) + 'px'; el.style.top = Math.min(Math.max(6, r.top + dy), window.innerHeight - 60) + 'px'; el.style.right = ''; el.style.bottom = ''; };
+      const up = () => { h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up); };
+      h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+    });
+  }
+  try {
+    new MutationObserver(list => list.forEach(rec => rec.addedNodes.forEach(n => {
+      if (n.nodeType !== 1) return; if (n.id === 'bub') setTimeout(() => movable(n, '.bub-h'), 30); else if (n.id === 'mvPop') setTimeout(() => movable(n, '.mv-h'), 30);
+    }))).observe(document.body, { childList: true });
+  } catch (e) { /* nada */ }
+
   const css = document.createElement('style');
   css.textContent = '#pdGhost{position:fixed;left:0;top:0;z-index:400;pointer-events:none;display:flex;align-items:center;gap:8px;background:var(--surface);color:var(--ink);border:2px solid var(--accent);border-radius:999px;padding:5px 14px 5px 6px;box-shadow:0 10px 28px rgba(0,0,0,.28);font-size:.9rem;opacity:.95}#pdGhost.ok{border-style:solid}#pdGhost:not(.ok){border-style:dashed;opacity:.8}' +
     '.pd-av{width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800}' +
@@ -177,5 +234,9 @@
     '.mv-ar{position:absolute;width:14px;height:14px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--line));transform:rotate(45deg)}#mvPop.down .mv-ar{top:-8px;border-right:0;border-bottom:0}#mvPop.up .mv-ar{bottom:-8px;border-left:0;border-top:0}' +
     '.mv-ok{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;color:var(--ok);font-size:1.05rem}.mv-ok svg{width:30px;height:30px;stroke-dasharray:30;stroke-dashoffset:30;animation:mvCheck .45s .05s ease-out forwards}@keyframes mvCheck{to{stroke-dashoffset:0}}#mvPop.done{animation:mvDone .5s ease-out}@keyframes mvDone{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}' +
     '@media (prefers-reduced-motion:reduce){#pdGhost,.pd-av,.pd-hint,.blk.blk-new,#mvPop,.mv-chips button{animation:none!important}}';
+  css.textContent += '.del-ring{position:fixed;z-index:420;width:52px;height:52px;margin:-26px 0 0 -26px;pointer-events:none}.del-ring svg{width:100%;height:100%;transform:rotate(-90deg)}.del-ring circle{fill:color-mix(in srgb,var(--red) 10%,transparent);stroke:var(--red);stroke-width:3;stroke-linecap:round;stroke-dasharray:101;stroke-dashoffset:101;animation:delRing var(--ms,1500ms) linear forwards}@keyframes delRing{to{stroke-dashoffset:0}}' +
+    '#delMini{position:fixed;z-index:430;display:flex;flex-direction:column;gap:4px;min-width:160px;background:var(--surface);border:1.5px solid color-mix(in srgb,var(--red) 40%,var(--line));border-radius:14px;padding:8px;box-shadow:0 14px 34px rgba(8,20,24,.3);animation:popIn .22s cubic-bezier(.2,1.4,.4,1)}#delMini.out{opacity:0;transition:opacity .14s}' +
+    '#delMini small{color:var(--ink-2);font-size:.74rem;padding:0 4px 2px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#delMini button{border:0;border-radius:10px;padding:9px 12px;font:inherit;font-weight:700;cursor:pointer;text-align:left;background:color-mix(in srgb,var(--red) 12%,var(--surface));color:var(--red)}#delMini button.dm-x{background:var(--surface-2);color:var(--ink-2);font-weight:500}#delMini button i{font-style:normal;margin-right:4px}' +
+    '#gridWrap .blk{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.mv-grab{cursor:grab;touch-action:none}.mv-grab:active{cursor:grabbing}';
   document.body.appendChild(css);
 })();

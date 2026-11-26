@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.38.1', b: '1.93.1', d: '2026-11-26', items: [
+      { t: 'Agenda: mantené apretado un turno (o un bloqueo) y, después de un instante, sale un menú chiquito para borrarlo (con aviso de deshacer). Mientras apretás se llena un anillo rojo que muestra cuánto falta. El tiempo es el mismo que el de bloquear horas (mínimo 1,5 s; se puede subir a 4 s desde la burbuja).' },
+      { t: 'Calendario de la agenda: el selector de mes ahora es un botón que abre una grilla de meses, se cierra al volver a tocarlo o al tocar afuera.' },
+      { t: 'La burbuja de turnos (menú + lista de pacientes) y el cuadrito del motivo se pueden mover arrastrando su título.' }] },
     { v: '1.38.0', b: '1.93.0', d: '2026-11-26', items: [
       { t: 'Animaciones suaves en las ventanas emergentes: las ventanas aparecen con un pequeño rebote (en el celular suben un poco), se desvanecen al cerrarlas con la X o «Cerrar», y lo mismo la ventanita del turno, los menús y los avisos. Los botones se hunden un poquito al tocarlos. Si tu celular tiene activada la opción de reducir movimiento, se apagan solas.' }] },
     { v: '1.37.0', b: '1.92.0', d: '2026-11-26', items: [
