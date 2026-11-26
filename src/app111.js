@@ -76,6 +76,7 @@
     h += (cr.at ? '<div class="hint">Registrado el ' + esc(hm(cr.at)) + (cr.by ? ' por ' + esc(cr.by) : '') + ' · huella ' + esc(grp(cr.h || '')) + '</div>' : '<div class="hint warn">Todavía no hay sello ni firma registrados: las fichas FORN salen con el recuadro vacío.</div>') + (p && p.mat ? '' : '<div class="hint warn">Falta la matrícula (número) más arriba.</div>') + '</div>';
     return h;
   }
+  A.credBlockHTML = credHTML; /* 1.51: lo usa «Mis datos profesionales» (app134) */
   const cfgPrev = MF.cfg;
   if (cfgPrev) MF.cfg = m => {
     const h = cfgPrev(m);

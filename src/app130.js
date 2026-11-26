@@ -78,6 +78,7 @@
     f.specOther = false; f.spec = el.value; rer();
   };
 
+  A.SPECS = SPECS; A.specFieldHTML = specField; A.matsBlockHTML = matsHTML; A.extraCredHTML = extraHTML; /* 1.51: «Mis datos profesionales» (app134) */
   const cfgPrev = MF.cfg;
   if (cfgPrev) MF.cfg = function (m) {
     let h = cfgPrev.apply(this, arguments); if (typeof h !== 'string' || !m || m.tab !== 'pros') return h;
