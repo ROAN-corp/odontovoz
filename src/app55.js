@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.53.0', b: '1.108.0', d: '2026-11-26', items: [
+      { t: 'Consentimientos desde tu propio PDF o foto: en la lista de consentimientos, «+ Desde un PDF o una foto». El paciente lo lee en pantalla y firma en la app; el PDF final lleva las páginas del documento y la hoja de firmas, y se puede mandar por WhatsApp.' }
+    ] },
     { v: '1.52.0', b: '1.107.0', d: '2026-11-26', items: [
       { t: 'Mensajes de WhatsApp editables: en Ajustes › La app en este equipo › WhatsApp para recordatorios › «Editar los mensajes» cambiás el texto del recordatorio de turno como quieras. Las palabras entre llaves ({nombre}, {fecha}, {hora}…) se reemplazan solas, y abajo ves cómo queda. Podés volver al texto original.' }
     ] },

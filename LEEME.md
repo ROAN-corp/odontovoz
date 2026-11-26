@@ -1170,3 +1170,6 @@ Web Push para iPhone/iPad (app instalada desde Safari, iOS 16.4+), PC y Android 
 
 ## 1.52.0 (compilación 1.107.0)
 `app135`: mensajes de WhatsApp editables. Registro `A.waTplReg(clave, {name, hint, def, vars, sample})`; texto editado en `A.CFG.waTpl[clave]` (solo dueño/administración; el servidor protege `cfg`), `A.waTplText`, `A.waTpl(clave, vars)` y `A.waFill`. El recordatorio de turno (`A.reminderText`) usa el texto editado. Ventana `waTpl` (variables que se suman al tocarlas, vista previa, restaurar) desde `MF.waCfg`. Los mensajes de otros módulos (alquileres) se suman con `A.waTplReg`.
+
+## 1.53.0 (compilación 1.108.0)
+`app136`: consentimientos desde un PDF o una foto. `A.CFG.consentTpl[c_xxx] = {title, file:{id,name,n,hash}}`; las páginas (JPEG de hasta 1200 px, máx. 6; un PDF se pasa a imágenes con `A.pdfPages` de `app68`) viven en el registro propio `cf:<id>` (`A.cloudExtra`, `A.cfGet`) y no se borran nunca (los documentos firmados las necesitan). `A.consentBody` devuelve `body.file`; `MF.sign`/`MF.docView` muestran las páginas; `A.pdfOfDoc` arma el PDF con las páginas más la hoja de firmas (jsPDF). La huella del archivo (`A.sha` de las páginas) queda sellada en el documento. No se usa pdf-lib: el PDF final se arma con las páginas como imagen.
