@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.43.0', b: '1.98.0', d: '2026-11-26', items: [
+      { t: 'Tope mensual de prácticas por obra social: en Ajustes › Obras sociales, en cada una podés poner cuántas prácticas por mes cubre. En la ficha del paciente (y en la resumida) aparece un aviso: cuántas prácticas lleva este mes, «le queda 1» cuando está por llegar, y en rojo cuando llegó o se pasó del tope. Tocando el aviso ves cuáles son. También te avisa al registrar la práctica que llega al tope.', top: true }
+    ] },
     { v: '1.42.1', b: '1.97.1', d: '2026-11-26', items: [
       { t: 'Stock: lo que agregás del catálogo ahora se acomoda en las categorías del stock (por ejemplo, «Composites y resinas» pasa a «Restauración») y queda asociado a su tipo, así el descuento automático por práctica funciona. Lo que ya habías cargado se corrige solo al abrir el stock.' }] },
     { v: '1.42.0', b: '1.97.0', d: '2026-11-26', items: [
@@ -81,7 +84,7 @@
     { v: '1.28.0', b: '1.83.0', d: '2026-11-25', items: [
       { t: 'Stock › Rutiden: la casa de insumos de la zona, adentro del stock. Más de 2.900 productos agrupados por categoría, marca y variantes (colores, medidas). Cargás tus precios (de lista y el último al que compraste), armás el pedido y se lo mandás a Rutiden por WhatsApp. Podés seguir cualquier producto en tu stock.', top: true }] },
     { v: '1.27.1', b: '1.82.1', d: '2026-11-24', items: [
-      { t: 'La fecha de nacimiento ahora se carga en tres casilleros: día, mes y año. Escribís o elegís el día, elegís el mes, escribís el año, y calcula la edad sola. Ya no hay que buscarla en el calendario.', top: true }] },
+      { t: 'La fecha de nacimiento ahora se carga en tres casilleros: día, mes y año. Escribís o elegís el día, elegís el mes, escribís el año, y calcula la edad sola. Ya no hay que buscarla en el calendario.' }] },
     { v: '1.27.0', b: '1.82.0', d: '2026-11-24', items: [
       { t: 'Planes nuevos: Profesional USD 22,21, Consultorio o Centro USD 45 (hasta 5 profesionales y 6 equipos, sin adicionales) y Empresa USD 96. Sin descuentos fijos: consultá por los disponibles. El precio en pesos se actualiza cada lunes con el dólar oficial.', top: true }] },
     { v: '1.26.0', b: '1.81.0', d: '2026-11-24', items: [

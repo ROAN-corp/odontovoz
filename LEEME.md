@@ -1140,3 +1140,6 @@ Stock: botones unificados (`sbOpen` = compra/llegó mercadería; `saOpen` = «Ed
 
 ## 1.42.1 (compilación 1.97.1)
 `app125`: `mapCat`/`fixCats` unifican las categorías de Rutiden con las del stock (`A.stkFixCats`, se corre al mostrar «Mi stock» y al abrir «Editar stock») y asignan `ck`/`uses` por nombre (Z100, Z250, etc.).
+
+## 1.43.0 (compilación 1.98.0)
+`app126`: tope mensual de prácticas por obra social. `o.tope` (campo «Tope de prácticas por mes» en el editor de la obra social, `A.chg.osTope`); `A.osTope(pid)` cuenta las `pd.tx` hechas este mes con la obra social del paciente; aviso `.ostp` (info / «queda 1» / rojo al llegar o pasarse) arriba de la ficha completa y debajo del encabezado de la resumida; toast al registrar la práctica que llega al tope (envuelve `A.onTxDone`). Sin tope: solo informa cuántas lleva.
