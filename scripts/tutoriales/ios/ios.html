@@ -1,0 +1,93 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=720,height=1280">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}html,body{width:720px;height:1280px;overflow:hidden;background:linear-gradient(160deg,#062f31,#0b6b6f 60%,#0f8a8d);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#phone{position:absolute;left:67px;top:36px;width:390px;height:760px;transform:scale(1.5);transform-origin:0 0;border-radius:40px;overflow:hidden;background:#fff;box-shadow:0 0 0 7px #101418,0 0 0 9px #3a4048,0 30px 60px rgba(0,0,0,.5)}
+.sc{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .45s;overflow:hidden}.sc.on{opacity:1}
+.sb{position:absolute;left:0;right:0;top:0;height:30px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:13px;font-weight:700;z-index:5}
+.sb i{display:inline-block;width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;position:relative}.sb i:after{content:"";position:absolute;left:1.5px;top:1.5px;bottom:1.5px;width:70%;background:currentColor;border-radius:1px}
+/* Safari */
+#safari{background:#f4f6f7;color:#111}
+#safari .page,#login .page{position:absolute;top:30px;left:0;right:0;bottom:92px;display:flex;flex-direction:column;align-items:center;padding:60px 28px 0;gap:14px;background:linear-gradient(#fff,#eef5f5)}
+.page{position:absolute;top:30px;left:0;right:0;display:flex;flex-direction:column;align-items:center;padding:60px 28px 0;gap:14px;background:linear-gradient(#fff,#eef5f5)}.logo{width:84px;height:84px;border-radius:20px;box-shadow:0 6px 18px rgba(11,107,111,.35)}.page h2{font-size:26px;color:#0b4f52}.page p{font-size:14px;color:#456;text-align:center}
+.fld{width:100%;height:46px;border-radius:12px;border:1px solid #cfdcdc;background:#fff;padding:13px 14px;color:#9ab;font-size:15px}.btnp{width:100%;height:48px;border-radius:12px;background:#0b6b6f;color:#fff;font-weight:700;display:grid;place-items:center;font-size:16px}
+.bar{position:absolute;left:0;right:0;bottom:0;height:92px;background:rgba(247,248,249,.97);border-top:1px solid #d5d9dc;padding:8px 14px}
+.url{height:38px;border-radius:12px;background:#e4e8ea;display:flex;align-items:center;justify-content:center;font-size:15px;color:#222;gap:6px;transition:box-shadow .3s}.url.hl{box-shadow:0 0 0 3px #0b6b6f}
+.tb{display:flex;justify-content:space-around;margin-top:9px}.tb svg{width:26px;height:26px;stroke:#1a73e8;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tb .g{stroke:#9aa}
+#btnShare{border-radius:8px;transition:background .2s}#btnShare.hl{background:rgba(26,115,232,.18);box-shadow:0 0 0 4px rgba(26,115,232,.18)}
+/* hoja de compartir */
+#dim{position:absolute;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .4s;pointer-events:none;z-index:6}#dim.on{opacity:1}
+#sheet{position:absolute;left:0;right:0;bottom:0;height:470px;background:#f2f2f7;border-radius:18px 18px 0 0;transform:translateY(100%);transition:transform .5s cubic-bezier(.2,.8,.2,1);z-index:7;padding:14px 14px 0;color:#111}#sheet.on{transform:none}
+.sh-h{display:flex;gap:12px;align-items:center;background:#fff;border-radius:12px;padding:10px 12px}.sh-h img{width:44px;height:44px;border-radius:10px}.sh-h b{font-size:15px;display:block}.sh-h small{color:#789;font-size:12px}
+.sh-l{margin-top:12px;background:#fff;border-radius:12px;overflow:hidden}.sh-l div{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;font-size:16px;border-bottom:1px solid #eceef0}.sh-l div:last-child{border:0}.sh-l svg{width:22px;height:22px;stroke:#222;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sh-l .hl{background:#dff2f2;box-shadow:inset 0 0 0 2px #0b6b6f}
+/* agregar a inicio */
+#add{background:#f2f2f7;color:#111}.ah{position:absolute;top:34px;left:0;right:0;height:52px;display:flex;justify-content:space-between;align-items:center;padding:0 16px;font-size:16px;background:#f7f7fa;border-bottom:1px solid #ddd}.ah b{font-size:16px}.ah .c{color:#1a73e8}.ah .a{color:#1a73e8;font-weight:700;border-radius:8px;padding:4px 8px}.ah .a.hl{background:rgba(26,115,232,.2)}
+.card{position:absolute;top:110px;left:16px;right:16px;background:#fff;border-radius:14px;padding:14px;display:flex;gap:14px;align-items:center}.card img{width:64px;height:64px;border-radius:14px}.card .n{font-size:17px;font-weight:600}.card .u{font-size:13px;color:#789;margin-top:4px;border-top:1px solid #eee;padding-top:6px}
+.note{position:absolute;top:218px;left:24px;right:24px;font-size:13px;color:#667;line-height:1.4}
+/* inicio del iPhone */
+#home{background:linear-gradient(160deg,#1c3b74,#5b3aa8 55%,#e0577a);color:#fff}.grid{position:absolute;top:70px;left:18px;right:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:26px 8px}
+.ic{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;text-shadow:0 1px 3px rgba(0,0,0,.4)}.ic div{width:64px;height:64px;border-radius:15px;display:grid;place-items:center}.ic div:after{content:"";width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.85)}
+.ic.ov div{background:none}.ic.ov div:after{display:none}.ic.ov img{width:64px;height:64px;border-radius:15px;display:block}.ic.ov{opacity:0;transform:scale(.3);transition:all .5s cubic-bezier(.2,1.4,.3,1)}.ic.ov.in{opacity:1;transform:none}.ic.ov.hl img{box-shadow:0 0 0 4px #fff,0 0 22px rgba(255,255,255,.8)}
+.dock{position:absolute;bottom:14px;left:14px;right:14px;height:84px;border-radius:28px;background:rgba(255,255,255,.28);display:flex;justify-content:space-around;align-items:center}.dock div{width:60px;height:60px;border-radius:15px;display:grid;place-items:center}.dock div:after{content:"";width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.85)}
+/* imágenes de la app */
+.shot{position:absolute;inset:0;width:390px;height:760px;display:block}
+/* permiso */
+#perm{position:absolute;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .3s;z-index:9}#perm.on{opacity:1}
+.alert{width:270px;background:rgba(246,246,248,.97);border-radius:16px;text-align:center;color:#111;overflow:hidden}.alert .t{padding:18px 16px 6px;font-size:17px;font-weight:700;line-height:1.25}.alert .m{padding:0 16px 16px;font-size:13px;color:#333;line-height:1.35}
+.alert .b{display:flex;border-top:1px solid #c8c8cc}.alert .b div{flex:1;padding:12px;font-size:17px;color:#1a73e8}.alert .b div+div{border-left:1px solid #c8c8cc;font-weight:700}.alert .b .hl{background:rgba(26,115,232,.18)}
+/* pantalla bloqueada */
+#lock{background:linear-gradient(170deg,#0b2b4a,#0b6b6f 60%,#1fa39a);color:#fff;text-align:center}#lock .tm{margin-top:78px;font-size:84px;font-weight:300;letter-spacing:-2px}#lock .dt{font-size:18px;opacity:.9;margin-top:-6px}
+.nt{position:absolute;left:12px;right:12px;top:330px;background:rgba(255,255,255,.92);color:#111;border-radius:18px;padding:12px 14px;text-align:left;display:flex;gap:11px;transform:translateY(-30px) scale(.96);opacity:0;transition:all .6s cubic-bezier(.2,1.2,.3,1);box-shadow:0 10px 30px rgba(0,0,0,.3)}.nt.in{opacity:1;transform:none}
+.nt img{width:38px;height:38px;border-radius:9px;flex:none}.nt .r{display:flex;justify-content:space-between;font-size:12px;color:#556}.nt b{display:block;font-size:14.5px;margin-top:2px}.nt span{display:block;font-size:13.5px;color:#333;line-height:1.3;margin-top:1px}
+/* dedo, subtítulos, títulos */
+#fing{position:absolute;left:-80px;top:-80px;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,255,255,.55);border:3px solid rgba(255,255,255,.95);box-shadow:0 0 0 2px rgba(0,0,0,.25),0 6px 16px rgba(0,0,0,.35);z-index:50;pointer-events:none;transition:left .75s cubic-bezier(.3,.1,.2,1),top .75s cubic-bezier(.3,.1,.2,1),transform .15s,opacity .3s}#fing.dn{transform:scale(.8)}
+.rip{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:4px solid #fff;z-index:49;pointer-events:none;animation:rip .6s ease-out forwards}@keyframes rip{to{transform:scale(3);opacity:0}}
+#tcap{position:absolute;left:30px;right:30px;bottom:34px;min-height:74px;display:grid;place-items:center;z-index:60;background:rgba(6,30,32,.86);color:#fff;font:700 27px/1.3 Inter,system-ui,sans-serif;padding:12px 20px;border-radius:18px;text-align:center;opacity:0;transition:opacity .25s}#tcap.on{opacity:1}
+#ttl{position:absolute;inset:0;z-index:70;display:grid;place-items:center;align-content:center;gap:20px;background:linear-gradient(135deg,#08484b,#0b6b6f);color:#fff;text-align:center;padding:50px;transition:opacity .6s}#ttl img{width:130px;height:130px;border-radius:30px}#ttl h1{font:800 54px/1.15 Inter,system-ui,sans-serif}#ttl p{font:500 28px/1.3 Inter,system-ui,sans-serif;opacity:.9}
+</style></head><body>
+<div id="phone">
+  <!-- 1. Safari -->
+  <div class="sc" id="safari"><div class="sb"><span>9:41</span><i></i></div>
+    <div class="page"><img class="logo" src="icon.png"><h2>OdontoVoz</h2><p>Ingresá con tu cuenta</p><div class="fld">Correo electrónico</div><div class="fld">Contraseña</div><div class="btnp">Ingresar</div></div>
+    <div class="bar"><div class="url" id="url">🔒 odontovoz.com.ar/app</div>
+      <div class="tb"><svg viewBox="0 0 24 24" class="g"><path d="M15 5l-7 7 7 7"/></svg><svg viewBox="0 0 24 24" class="g"><path d="M9 5l7 7-7 7"/></svg>
+        <svg id="btnShare" viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M5 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H5zM19 4h-5"/></svg><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg></div></div>
+    <div id="dim"></div>
+    <div id="sheet"><div class="sh-h"><img src="icon.png"><div><b>OdontoVoz</b><small>odontovoz.com.ar · Opciones ›</small></div></div>
+      <div class="sh-l"><div>Copiar<svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/></svg></div><div>Agregar a marcadores<svg viewBox="0 0 24 24"><path d="M5 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H5z"/></svg></div>
+        <div id="itAdd">Agregar a inicio<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg></div><div>Buscar en la página<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg></div><div>Imprimir<svg viewBox="0 0 24 24"><rect x="6" y="9" width="12" height="8" rx="1"/><path d="M8 9V4h8v5M8 14h8v6H8z"/></svg></div></div></div>
+  </div>
+  <div class="sc" id="login" style="background:#fff"><div class="sb" style="color:#111"><span>9:41</span><i></i></div><div class="page" style="bottom:0;top:30px"><img class="logo" src="icon.png"><h2>OdontoVoz</h2><p>Ingresá con tu cuenta</p><div class="fld">Usuario</div><div class="fld">Contraseña</div><div class="btnp">Ingresar</div></div></div>
+  <!-- 2. Agregar a inicio -->
+  <div class="sc" id="add"><div class="sb" style="color:#111"><span>9:41</span><i></i></div>
+    <div class="ah"><span class="c">Cancelar</span><b>Agregar a inicio</b><span class="a" id="btnAddOk">Agregar</span></div>
+    <div class="card"><img src="icon.png"><div style="flex:1"><div class="n">OdontoVoz</div><div class="u">odontovoz.com.ar/app/</div></div></div>
+    <div class="note">Se agregará un ícono a tu pantalla de inicio para que puedas acceder rápidamente a este sitio web.</div></div>
+  <!-- 3. Pantalla de inicio -->
+  <div class="sc" id="home"><div class="sb"><span>9:41</span><i></i></div>
+    <div class="grid" id="grid"></div><div class="dock"><div style="background:#34c759"></div><div style="background:#0a84ff"></div><div style="background:#ff9f0a"></div><div style="background:#8e8e93"></div></div></div>
+  <!-- 4-6. La app de verdad -->
+  <div class="sc" id="app1"><img class="shot" src="scr1.png"></div>
+  <div class="sc" id="app2"><img class="shot" src="scr2.png"></div>
+  <div class="sc" id="app3"><img class="shot" src="scr3.png"></div>
+  <div id="perm"><div class="alert"><div class="t">“OdontoVoz” quiere enviarte notificaciones</div><div class="m">Las notificaciones pueden incluir alertas, sonidos y globos en los íconos.</div><div class="b"><div>No permitir</div><div id="btnAllow">Permitir</div></div></div></div>
+  <!-- 7. Pantalla bloqueada con el aviso -->
+  <div class="sc" id="lock"><div class="tm">9:41</div><div class="dt">jueves 26 de noviembre</div>
+    <div class="nt" id="nt"><img src="icon.png"><div style="flex:1"><div class="r"><span>OdontoVoz</span><span>ahora</span></div><b>Llegó Ana Pérez</b><span>Turno de las 10:00 · Dra. Vega · está en la sala de espera</span></div></div></div>
+</div>
+<div id="fing"></div><div id="tcap"></div>
+<div id="ttl"><img src="icon.png"><h1 id="ttlh"></h1><p id="ttlp"></p></div>
+<script>
+const $=s=>document.querySelector(s), K=1.5, OX=67, OY=36;
+const names=['Mensajes','Fotos','Cámara','Mapas','Calendario','Notas','Reloj','Ajustes','Salud','Archivos','Música','Libros'], cols=['#34c759','#ff9f0a','#8e8e93','#30b0c7','#ff453a','#ffd60a','#1c1c1e','#8e8e93','#ff375f','#0a84ff','#fa233b','#ff9500'];
+(function(){const g=$('#grid');let h='';for(let i=0;i<12;i++){if(i===9)h+='<div class="ic ov" id="icoOv"><img src="icon.png"><span>OdontoVoz</span></div>';h+='<div class="ic"><div style="background:'+cols[i]+'"></div><span>'+names[i]+'</span></div>';}g.innerHTML=h.replace(/(<div class="ic"><div style="background:#0a84ff"><\/div><span>Archivos<\/span><\/div>)/,'$1');})();
+function show(id){document.querySelectorAll('.sc').forEach(e=>e.classList.toggle('on',e.id===id));}
+function hl(sel,on){const e=$(sel);if(e)e.classList.toggle('hl',on!==false);}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function tapAt(sx,sy){const f=$('#fing');const x=OX+sx*K,y=OY+sy*K;f.style.opacity=1;f.style.left=x+'px';f.style.top=y+'px';await sleep(850);f.classList.add('dn');const r=document.createElement('div');r.className='rip';r.style.left=x+'px';r.style.top=y+'px';document.body.appendChild(r);setTimeout(()=>r.remove(),700);await sleep(220);f.classList.remove('dn');await sleep(180);}
+async function tapEl(sel){const e=$(sel),p=$('#phone').getBoundingClientRect(),b=e.getBoundingClientRect();await tapAt((b.left+b.width/2-p.left)/K,(b.top+b.height/2-p.top)/K);}
+function hideFing(){$('#fing').style.opacity=0;}
+function cap(t){const c=$('#tcap');if(!t){c.classList.remove('on');return;}c.textContent=t;c.classList.add('on');}
+function title(t,s){const d=$('#ttl');if(!t){d.style.opacity=0;d.style.pointerEvents='none';return;}$('#ttlh').textContent=t;$('#ttlp').textContent=s||'';d.style.opacity=1;d.style.pointerEvents='auto';}
+</script></body></html>

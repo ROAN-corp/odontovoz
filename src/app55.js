@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.49.0', b: '1.104.0', d: '2026-11-26', items: [
+      { t: 'Si trabajás en otro consultorio con un usuario que te dieron (sin correo) y ahora tenés tu propia cuenta, podés vincularlos: en Dónde trabajás tocá «Vincular mi usuario de otro consultorio». El acceso a ese consultorio pasa a tu cuenta y elegís dónde trabajar con un solo ingreso.' }
+    ] },
     { v: '1.48.0', b: '1.103.0', d: '2026-11-26', items: [
       { t: 'Avisos con la app cerrada también en iPhone, iPad y PC: en Menú › Avisos y sonidos, tocá «Activar avisos con la app cerrada». En el iPhone, primero instalá OdontoVoz en la pantalla de inicio (botón «Instalar como aplicación») y abrila desde ese ícono. Te llega cuando llega un paciente, cancelan un turno, hay una nota de otro, queda poco stock o piden un turno online.' }
     ] },
