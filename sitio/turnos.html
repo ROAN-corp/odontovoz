@@ -100,14 +100,15 @@ footer a { color: inherit; }
     return d;
   }
   let D = null;
-  const C = { code: '', dni: '', reason: '', res: null, err: '', busy: false, done: false };
+  const C = { code: '', dni: '', tel: '', reason: '', res: null, err: '', busy: false, done: false };
   function cxHTML() {
     let h = '<button class="back" data-a="cxBack">‹ Volver</button><h2>Cancelar un turno</h2>';
     const x = C.res, ap = x && x.appt;
     if (!ap) {
-      h += '<p class="note">Escribí el <b>código</b> que te dimos al pedir el turno (empieza con OV-) y tu <b>DNI</b>.</p>' +
+      h += '<p class="note">Para cuidar tu turno, escribí el <b>código</b> que te dimos al pedir el turno (empieza con OV-), tu <b>DNI</b> y los <b>últimos 4 números de tu celular</b>.</p>' +
         '<label class="f" for="cxCode">Código del turno</label><input class="i" id="cxCode" maxlength="12" autocapitalize="characters" autocomplete="off" placeholder="OV-ABCD" value="' + esc(C.code) + '">' +
         '<label class="f" for="cxDni">DNI</label><input class="i" id="cxDni" inputmode="numeric" autocomplete="off" value="' + esc(C.dni) + '">' +
+        '<label class="f" for="cxTel">Últimos 4 números de tu celular</label><input class="i" id="cxTel" inputmode="numeric" maxlength="4" autocomplete="off" value="' + esc(C.tel) + '">' +
         (C.err ? '<div class="err" role="alert">' + esc(C.err) + '</div>' : '') + '<button class="btn main" data-a="cxFind"' + (C.busy ? ' disabled' : '') + '>' + (C.busy ? 'Buscando…' : 'Buscar mi turno') + '</button>';
       return h;
     }
@@ -190,17 +191,17 @@ footer a { color: inherit; }
       e.preventDefault(); const g = id => ($('#' + id) || {}).value || '';
       if (a === 'cx') { Object.assign(C, { res: null, err: '', done: false, reason: '' }); F.cx = true; window.scrollTo(0, 0); }
       else if (a === 'cxBack') { F.cx = false; window.scrollTo(0, 0); }
-      else if (a === 'cxAgain') { F.cx = false; Object.assign(C, { res: null, done: false, err: '', code: '', dni: '', reason: '' }); Object.assign(F, { step: 1, type: null, date: null, slot: null, done: null, err: '' }); await load(); return; }
+      else if (a === 'cxAgain') { F.cx = false; Object.assign(C, { res: null, done: false, err: '', code: '', dni: '', tel: '', reason: '' }); Object.assign(F, { step: 1, type: null, date: null, slot: null, done: null, err: '' }); await load(); return; }
       else if (a === 'cxFind') {
-        C.code = g('cxCode').trim().toUpperCase(); C.dni = g('cxDni').replace(/\D/g, ''); C.err = '';
-        if (C.code.length < 4 || C.dni.length < 6) { C.err = 'Escribí el código del turno y tu DNI.'; render(); return; }
+        C.code = g('cxCode').trim().toUpperCase(); C.dni = g('cxDni').replace(/\D/g, ''); C.tel = g('cxTel').replace(/\D/g, '').slice(-4); C.err = '';
+        if (C.code.length < 4 || C.dni.length < 6 || C.tel.length < 4) { C.err = 'Escribí el código del turno, tu DNI y los últimos 4 números de tu celular.'; render(); return; }
         C.busy = true; render();
-        try { const r = await rpc('ov_booking_find', { p_slug: slug, p_code: C.code, p_dni: C.dni }); if (r && r.ok) C.res = r; else C.err = (r && r.msg) || 'No encontramos ese turno.'; }
+        try { const r = await rpc('ov_booking_find', { p_slug: slug, p_code: C.code, p_dni: C.dni, p_tel: C.tel }); if (r && r.ok) C.res = r; else C.err = (r && r.msg) || 'No encontramos ese turno.'; }
         catch (er) { C.err = 'No hay conexión. Revisá internet y probá de nuevo.'; }
         C.busy = false;
       } else if (a === 'cxGo') {
         C.reason = g('cxWhy').trim(); C.err = ''; C.busy = true; render();
-        try { const r = await rpc('ov_booking_cancel', { p_slug: slug, p_code: C.code, p_dni: C.dni, p_reason: C.reason }); if (r && r.ok && r.canceled) { C.res = r; C.done = true; } else { C.err = (r && r.msg) || 'No se pudo cancelar.'; if (r && r.appt) C.res = r; } }
+        try { const r = await rpc('ov_booking_cancel', { p_slug: slug, p_code: C.code, p_dni: C.dni, p_tel: C.tel, p_reason: C.reason }); if (r && r.ok && r.canceled) { C.res = r; C.done = true; } else { C.err = (r && r.msg) || 'No se pudo cancelar.'; if (r && r.appt) C.res = r; } }
         catch (er) { C.err = 'No hay conexión. Revisá internet y probá de nuevo.'; }
         C.busy = false; window.scrollTo(0, 0);
       }

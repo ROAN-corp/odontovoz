@@ -2,7 +2,7 @@
 -- OdontoVoz 1.58 · El paciente cancela su turno desde el turnero online
 -- Correr una vez en Supabase › SQL Editor (después de los demás). Se puede volver a correr sin problema.
 --
--- El paciente entra a la página de turnos, escribe el CÓDIGO que le dieron al pedir el turno (OV-XXXX) y su DNI,
+-- El paciente entra a la página de turnos, escribe el CÓDIGO que le dieron al pedir el turno (OV-XXXX), su DNI y los últimos 4 números de su celular,
 -- ve su turno y lo cancela si está dentro del plazo que fijó el consultorio (cancelHours, 24 h por defecto).
 -- La app del consultorio toma la cancelación, pone el turno en «Canceló», libera el horario y avisa.
 -- =====================================================================
@@ -19,11 +19,12 @@ create index if not exists ov_booking_fail_owner on public.ov_booking_fail (owne
 alter table public.ov_booking_fail enable row level security;
 revoke all on public.ov_booking_fail from anon, authenticated;
 
--- Pública: buscar el turno con código + DNI
-create or replace function public.ov_booking_find(p_slug text, p_code text, p_dni text) returns jsonb
+-- Pública: buscar el turno con código + DNI + últimos 4 del celular (los tres tienen que coincidir)
+create or replace function public.ov_booking_find(p_slug text, p_code text, p_dni text, p_tel text default null) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
   b public.ov_booking; r public.ov_booking_req; v_code text := upper(trim(coalesce(p_code, ''))); v_dni text := regexp_replace(coalesce(p_dni, ''), '\D', '', 'g');
+  v_tel text := right(regexp_replace(coalesce(p_tel, ''), '\D', '', 'g'), 4);
   at_ts timestamptz; left_h numeric; win numeric; n int; gone boolean;
 begin
   select * into b from public.ov_booking where slug = lower(coalesce(p_slug, '')) and enabled;
@@ -33,11 +34,12 @@ begin
   if n >= 30 then return jsonb_build_object('ok', false, 'msg', 'Hubo demasiados intentos. Probá más tarde o comunicate con el consultorio.'); end if;
   select * into r from public.ov_booking_req q
    where q.owner = b.owner and q.code = v_code and length(v_dni) >= 6 and regexp_replace(coalesce(q.data->>'dni', ''), '\D', '', 'g') = v_dni
+     and length(v_tel) = 4 and right(regexp_replace(coalesce(q.data->>'phone', ''), '\D', '', 'g'), 4) = v_tel
      and q.status in ('nuevo', 'cargado', 'cancelar', 'cancelado')
    order by q.created_at desc limit 1;
   if not found then
     insert into public.ov_booking_fail (owner) values (b.owner);
-    return jsonb_build_object('ok', false, 'msg', 'No encontramos un turno con ese código y ese DNI. Revisá los datos o comunicate con el consultorio.');
+    return jsonb_build_object('ok', false, 'msg', 'No encontramos un turno con esos datos. Revisá el código, el DNI y los últimos 4 números del celular, o comunicate con el consultorio.');
   end if;
   at_ts := ((r.data->>'date')::date + make_interval(mins => coalesce((r.data->>'start')::int, 0))) at time zone 'America/Argentina/Buenos_Aires';
   left_h := extract(epoch from (at_ts - now())) / 3600;
@@ -49,11 +51,11 @@ begin
 end $$;
 
 -- Pública: cancelar ese turno
-create or replace function public.ov_booking_cancel(p_slug text, p_code text, p_dni text, p_reason text default null) returns jsonb
+create or replace function public.ov_booking_cancel(p_slug text, p_code text, p_dni text, p_tel text, p_reason text default null) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare b public.ov_booking; f jsonb; v_code text := upper(trim(coalesce(p_code, ''))); v_dni text := regexp_replace(coalesce(p_dni, ''), '\D', '', 'g'); n int;
 begin
-  f := public.ov_booking_find(p_slug, p_code, p_dni);
+  f := public.ov_booking_find(p_slug, p_code, p_dni, p_tel);
   if not coalesce((f->>'ok')::boolean, false) then return f; end if;
   if coalesce((f->>'canceled')::boolean, false) then return f || jsonb_build_object('msg', 'Ese turno ya estaba cancelado.'); end if;
   if coalesce((f->>'past')::boolean, false) then return f || jsonb_build_object('ok', false, 'msg', 'Ese turno ya pasó.'); end if;
@@ -61,6 +63,9 @@ begin
     return f || jsonb_build_object('ok', false, 'msg', 'Faltan menos de ' || (f->>'window') || ' horas para el turno: para cancelarlo comunicate directamente con el consultorio.');
   end if;
   select * into b from public.ov_booking where slug = lower(p_slug) and enabled;
+  -- tope de seguridad: como mucho 10 cancelaciones online por día en todo el consultorio (si hay más, que llamen)
+  select count(*) into n from public.ov_booking_req q where q.owner = b.owner and q.status in ('cancelar', 'cancelado') and (q.data->'cancel'->>'at')::timestamptz > now() - interval '1 day';
+  if n >= 10 then return f || jsonb_build_object('ok', false, 'msg', 'Hoy se hicieron muchas cancelaciones online. Para cancelar tu turno comunicate directamente con el consultorio.'); end if;
   update public.ov_booking_req set status = 'cancelar',
          data = data || jsonb_build_object('cancel', jsonb_build_object('at', now(), 'reason', left(coalesce(p_reason, ''), 200)))
    where owner = b.owner and code = v_code and status in ('nuevo', 'cargado') and regexp_replace(coalesce(data->>'dni', ''), '\D', '', 'g') = v_dni;
@@ -69,10 +74,10 @@ begin
   return f || jsonb_build_object('canceled', true, 'can_cancel', false);
 end $$;
 
-revoke all on function public.ov_booking_find(text, text, text) from public;
-revoke all on function public.ov_booking_cancel(text, text, text, text) from public;
-grant execute on function public.ov_booking_find(text, text, text) to anon, authenticated;
-grant execute on function public.ov_booking_cancel(text, text, text, text) to anon, authenticated;
+revoke all on function public.ov_booking_find(text, text, text, text) from public;
+revoke all on function public.ov_booking_cancel(text, text, text, text, text) from public;
+grant execute on function public.ov_booking_find(text, text, text, text) to anon, authenticated;
+grant execute on function public.ov_booking_cancel(text, text, text, text, text) to anon, authenticated;
 
 -- La app toma las cancelaciones de a una vez (si hay dos equipos abiertos, no se duplican)
 create or replace function public.ov_booking_claim_cancels() returns setof public.ov_booking_req

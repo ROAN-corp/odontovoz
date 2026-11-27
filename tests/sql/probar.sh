@@ -48,14 +48,18 @@ P -c "update public.ov_accounts set ai_sheets = ai_sheets - 1 where owner = '111
 U=11111111-1111-1111-1111-111111111111
 P -c "insert into public.ov_booking (owner, slug, data) values ('$U', 'abc123xyz', '{\"cancelHours\": 24, \"wa\": \"5492990000000\"}') on conflict (owner) do update set slug = excluded.slug, data = excluded.data, enabled = true" >/dev/null 2>&1
 P -c "delete from public.ov_booking_req where owner = '$U'" >/dev/null 2>&1
-P -c "insert into public.ov_booking_req (owner, code, status, data) values ('$U', 'OV-AAAA', 'cargado', jsonb_build_object('date', to_char(now() + interval '5 days', 'YYYY-MM-DD'), 'start', 600, 'pro', 'p1', 'type', 'control', 'first', 'Ana', 'dni', '12345678')), ('$U', 'OV-BBBB', 'cargado', jsonb_build_object('date', to_char(now() at time zone 'America/Argentina/Buenos_Aires', 'YYYY-MM-DD'), 'start', 1439, 'pro', 'p1', 'type', 'control', 'first', 'Beto', 'dni', '87654321'))" >/dev/null 2>&1
+P -c "insert into public.ov_booking_req (owner, code, status, data) values ('$U', 'OV-AAAA', 'cargado', jsonb_build_object('date', to_char(now() + interval '5 days', 'YYYY-MM-DD'), 'start', 600, 'pro', 'p1', 'type', 'control', 'first', 'Ana', 'dni', '12345678', 'phone', '2994561234')), ('$U', 'OV-BBBB', 'cargado', jsonb_build_object('date', to_char(now() at time zone 'America/Argentina/Buenos_Aires', 'YYYY-MM-DD'), 'start', 1439, 'pro', 'p1', 'type', 'control', 'first', 'Beto', 'dni', '87654321', 'phone', '2990001111'))" >/dev/null 2>&1
 Q() { P -At -c "select $1"; }
-[ "$(Q "(public.ov_booking_find('abc123xyz', 'OV-AAAA', '99999999')->>'ok')")" = "false" ]; ok $? "el turno no aparece con un DNI que no es"
-[ "$(Q "(public.ov_booking_find('abc123xyz', 'ov-aaaa', '12.345.678')->>'can_cancel')")" = "true" ]; ok $? "con el código y el DNI correctos se ve el turno y se puede cancelar"
-[ "$(Q "(public.ov_booking_cancel('abc123xyz', 'OV-BBBB', '87654321')->>'ok')")" = "false" ]; ok $? "faltando menos de 24 h no deja cancelar online"
+[ "$(Q "(public.ov_booking_find('abc123xyz', 'OV-AAAA', '99999999', '1234')->>'ok')")" = "false" ]; ok $? "el turno no aparece con un DNI que no es"
+[ "$(Q "(public.ov_booking_find('abc123xyz', 'OV-AAAA', '12345678', '9999')->>'ok')")" = "false" ]; ok $? "con el código y el DNI pero sin los últimos 4 del celular no se ve el turno"
+[ "$(Q "(public.ov_booking_find('abc123xyz', 'ov-aaaa', '12.345.678', '1234')->>'can_cancel')")" = "true" ]; ok $? "con el código y el DNI correctos se ve el turno y se puede cancelar"
+[ "$(Q "(public.ov_booking_cancel('abc123xyz', 'OV-BBBB', '87654321', '1111')->>'ok')")" = "false" ]; ok $? "faltando menos de 24 h no deja cancelar online"
 [ "$(Q "status from public.ov_booking_req where code = 'OV-BBBB'")" = "cargado" ]; ok $? "el turno de menos de 24 h queda como estaba"
-[ "$(Q "(public.ov_booking_cancel('abc123xyz', 'OV-AAAA', '12345678', 'no puedo')->>'canceled')")" = "true" ]; ok $? "el paciente cancela su turno"
+[ "$(Q "(public.ov_booking_cancel('abc123xyz', 'OV-AAAA', '12345678', '1234', 'no puedo')->>'canceled')")" = "true" ]; ok $? "el paciente cancela su turno"
 [ "$(Q "status from public.ov_booking_req where code = 'OV-AAAA'")" = "cancelar" ]; ok $? "el pedido queda para que la app lo tome"
-[ "$(Q "(public.ov_booking_cancel('abc123xyz', 'OV-AAAA', '12345678')->>'canceled')")" = "true" ]; ok $? "cancelar dos veces no da error"
-[ "$(Q "count(*) from public.ov_booking_fail where owner = '$U'")" = "1" ]; ok $? "el intento con DNI equivocado quedó anotado para frenar abusos"
+[ "$(Q "(public.ov_booking_cancel('abc123xyz', 'OV-AAAA', '12345678', '1234')->>'canceled')")" = "true" ]; ok $? "cancelar dos veces no da error"
+[ "$(Q "count(*) from public.ov_booking_fail where owner = '$U'")" = "2" ]; ok $? "los intentos con datos equivocados quedan anotados para frenar abusos"
+for i in 1 2 3 4 5 6 7 8 9 10; do P -c "insert into public.ov_booking_req (owner, code, status, data) values ('$U', 'OV-Z$i', 'cancelado', jsonb_build_object('date', to_char(now() + interval '9 days', 'YYYY-MM-DD'), 'start', 600, 'dni', '1', 'cancel', jsonb_build_object('at', now())))" >/dev/null 2>&1; done
+P -c "insert into public.ov_booking_req (owner, code, status, data) values ('$U', 'OV-CCCC', 'cargado', jsonb_build_object('date', to_char(now() + interval '6 days', 'YYYY-MM-DD'), 'start', 600, 'pro', 'p1', 'type', 'control', 'first', 'Cleo', 'dni', '55555555', 'phone', '2995550000'))" >/dev/null 2>&1
+[ "$(Q "(public.ov_booking_cancel('abc123xyz', 'OV-CCCC', '55555555', '0000')->>'ok')")" = "false" ]; ok $? "tope de seguridad: con 10 cancelaciones en el día no deja cancelar más online"
 rm -rf "$T"; if [ "$FALLAS" = "0" ]; then echo "todo bien · $OKS pruebas"; else echo "$FALLAS FALLAS (de $((FALLAS+OKS)))"; exit 1; fi
