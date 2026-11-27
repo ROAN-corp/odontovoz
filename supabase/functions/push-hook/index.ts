@@ -58,6 +58,7 @@ export function events(ev: Ev, N: Names, today = todayAR()): Msg[] {
     });
   } else if (ev.k === 'booking') {
     const b = ev.new_v || {}, nm = [b.first, b.last].filter(Boolean).join(' ') || 'Paciente';
+    if (b.cancelled) { out.push({ kind: 'online', title: 'Canceló un turno: ' + nm, body: dm(b.date) + ' ' + hhmm(+b.start || 0) + (b.pro && N.pro(b.pro) ? ' · ' + N.pro(b.pro) : ''), pro: b.pro, data: { act: 'onlInbox' }, tag: 'onlc:' + (b.date || '') + ':' + (b.start || '') + ':' + nm }); return out; }
     out.push({ kind: 'online', title: 'Turno pedido online: ' + nm, body: dm(b.date) + ' ' + hhmm(+b.start || 0) + (b.pro && N.pro(b.pro) ? ' · ' + N.pro(b.pro) : ''), pro: b.pro, data: { act: 'onlInbox' }, tag: 'onl:' + (b.date || '') + ':' + (b.start || '') + ':' + nm });
   }
   return out;

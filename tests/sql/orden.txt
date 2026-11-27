@@ -29,4 +29,5 @@ webpush
 vincular-usuario
 perfil-profesional
 ia-uso
+turnero-cancelar
 salud

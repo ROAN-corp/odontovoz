@@ -100,7 +100,32 @@ footer a { color: inherit; }
     return d;
   }
   let D = null;
-  const F = { step: 1, type: null, other: '', pro: 'any', date: null, slot: null, first: '', last: '', dni: '', phone: '', email: '', cov: '', note: '', ok: false, err: '', busy: false, done: null };
+  const C = { code: '', dni: '', reason: '', res: null, err: '', busy: false, done: false };
+  function cxHTML() {
+    let h = '<button class="back" data-a="cxBack">‹ Volver</button><h2>Cancelar un turno</h2>';
+    const x = C.res, ap = x && x.appt;
+    if (!ap) {
+      h += '<p class="note">Escribí el <b>código</b> que te dimos al pedir el turno (empieza con OV-) y tu <b>DNI</b>.</p>' +
+        '<label class="f" for="cxCode">Código del turno</label><input class="i" id="cxCode" maxlength="12" autocapitalize="characters" autocomplete="off" placeholder="OV-ABCD" value="' + esc(C.code) + '">' +
+        '<label class="f" for="cxDni">DNI</label><input class="i" id="cxDni" inputmode="numeric" autocomplete="off" value="' + esc(C.dni) + '">' +
+        (C.err ? '<div class="err" role="alert">' + esc(C.err) + '</div>' : '') + '<button class="btn main" data-a="cxFind"' + (C.busy ? ' disabled' : '') + '>' + (C.busy ? 'Buscando…' : 'Buscar mi turno') + '</button>';
+      return h;
+    }
+    const tl = ((D.types || []).filter(t => t.k === ap.type)[0] || {}).label || '', who = proName(ap.pro);
+    const box = '<div class="box sum"><b>' + esc(longDay(ap.date)) + ' · ' + mm(ap.start) + ' h</b>' + (tl ? '<span>' + esc(tl) + '</span>' : '') + (who && (D.pros || []).length > 1 ? '<span>con ' + esc(who) + '</span>' : '') + '<span>Código ' + esc(ap.code) + '</span></div>';
+    const contact = (x.wa ? '<a class="btn line" style="width:100%;margin-top:8px" href="https://wa.me/' + esc(x.wa) + '?text=' + encodeURIComponent('Hola! Necesito cancelar mi turno del ' + longDay(ap.date) + ' a las ' + mm(ap.start) + '. Código ' + ap.code + '.') + '" target="_blank" rel="noopener">Escribir al consultorio por WhatsApp</a>' : '') + (x.phone && !x.wa ? '<p class="note">Teléfono del consultorio: <b>' + esc(x.phone) + '</b></p>' : '');
+    if (C.done || x.canceled) {
+      h = '<div class="ok-ic" aria-hidden="true">✓</div><h2 class="center">Tu turno quedó cancelado</h2>' + box + '<p class="center note">El consultorio ya fue avisado y el horario quedó libre. Si querés, pedí uno nuevo.</p><button class="btn main" data-a="cxAgain">Pedir un turno nuevo</button>';
+    } else if (x.can_cancel) {
+      h += box + '<label class="f" for="cxWhy">¿Querés contarnos el motivo? <span class="note">(opcional)</span></label><textarea class="i" id="cxWhy" rows="2" maxlength="200">' + esc(C.reason) + '</textarea>' +
+        '<p class="note">Podés cancelar hasta ' + esc(x.window) + ' h antes del turno.' + (D.sena ? ' Si cancelás a tiempo, la seña queda a favor para tu próximo turno.' : '') + '</p>' +
+        (C.err ? '<div class="err" role="alert">' + esc(C.err) + '</div>' : '') + '<button class="btn main" data-a="cxGo"' + (C.busy ? ' disabled' : '') + '>' + (C.busy ? 'Cancelando…' : 'Sí, cancelar mi turno') + '</button><button class="back" data-a="cxBack" style="display:block;margin:10px auto 0">No, mantener el turno</button>';
+    } else {
+      h += box + '<div class="box"><b>' + (x.past ? 'Ese turno ya pasó.' : 'Ya no se puede cancelar desde acá.') + '</b>' + (x.past ? '' : '<p style="margin:4px 0 0">Faltan menos de ' + esc(x.window) + ' horas para el turno. Para cancelarlo o cambiarlo, comunicate directamente con el consultorio.</p>') + contact + '</div>';
+    }
+    return h;
+  }
+  const F = { step: 1, type: null, other: '', pro: 'any', date: null, slot: null, first: '', last: '', dni: '', phone: '', email: '', cov: '', note: '', ok: false, err: '', busy: false, done: null, cx: false };
   const steps = n => '<div class="steps" aria-hidden="true">' + [1, 2, 3, 4].map(i => '<span class="' + (i <= n ? 'on' : '') + '"></span>').join('') + '</div>';
   const slotsFor = () => { const s = (D.slots || {})[F.type] || {}, out = {}; Object.keys(s).sort().forEach(k => { const l = s[k].filter(x => F.pro === 'any' || x[0] === F.pro); if (l.length) out[k] = l; }); return out; };
   const typeLabel = () => (F.type === 'otro' && F.other ? F.other : ((D.types.filter(t => t.k === F.type)[0] || {}).label || ''));
@@ -108,18 +133,20 @@ footer a { color: inherit; }
 
   function render() {
     let h = '';
+    if (F.cx) { app.innerHTML = cxHTML(); return; }
     if (F.done) {
       h = '<div class="ok-ic" aria-hidden="true">✓</div><h2 class="center">¡Listo, pediste tu turno!</h2><div class="code">' + esc(F.done.code) + '</div><p class="center note">Guardá este código.</p>' +
         '<div class="box sum"><b>' + esc(longDay(F.date)) + ' · ' + mm(F.slot[1]) + ' h</b><span>' + esc(typeLabel()) + (D.pros.length > 1 ? ' con ' + esc(proName(F.slot[0])) : '') + '</span><span>' + esc(F.first + ' ' + F.last) + '</span></div>' +
         '<div class="box"><b>¿Y ahora?</b><p style="margin:4px 0 0">El consultorio te va a escribir por WhatsApp para <b>confirmar</b> el turno' + (D.sena ? ' y coordinar la seña de <b>' + money(D.sena) + '</b>' : '') + '. Hasta entonces el turno queda reservado como pendiente.</p></div>' +
         (D.wa ? '<a class="btn line" style="width:100%" href="https://wa.me/' + esc(D.wa) + '?text=' + encodeURIComponent('Hola! Pedí un turno online para el ' + longDay(F.date) + ' a las ' + mm(F.slot[1]) + '. Código ' + F.done.code + '. ' + F.first + ' ' + F.last + '.') + '" target="_blank" rel="noopener">Escribirle al consultorio</a>' : '') +
-        '<button class="back" data-a="again" style="display:block;margin:14px auto 0">Pedir otro turno</button>';
+        '<button class="back" data-a="again" style="display:block;margin:14px auto 0">Pedir otro turno</button><p class="note center" style="margin:4px 0 0">¿No vas a poder venir? Con ese código podés <a href="#" data-a="cx">cancelar el turno</a>.</p>';
     } else if (F.step === 1) {
       const isOther = k => k === 'otro';
       h = steps(1) + '<h2>¿Por qué querés venir?</h2><div class="opts">' + D.types.map(t => { const n = Object.keys((D.slots || {})[t.k] || {}).length; return '<button class="opt" data-a="type" data-k="' + esc(t.k) + '"' + (n ? '' : ' disabled') + ' aria-pressed="' + (F.type === t.k) + '"><span>' + esc(t.label) + '</span><small>' + (n ? (isOther(t.k) ? 'lo escribís vos' : n + ' día' + (n > 1 ? 's' : '') + ' con lugar') : 'sin lugar') + '</small></button>'; }).join('') + '</div>';
       if (F.type === 'otro') h += '<label class="f" for="fOther">Contanos el motivo</label><input class="i" id="fOther" maxlength="120" value="' + esc(F.other) + '" placeholder="Ej.: se me rompió un diente, control de una corona…">' + (F.err ? '<div class="err" role="alert">' + esc(F.err) + '</div>' : '') + '<button class="btn main" data-a="otherGo">Seguir</button>';
       if (D.pros.length > 1) h += '<h2>¿Con quién?</h2><div class="opts"><button class="opt" data-a="pro" data-id="any" aria-pressed="' + (F.pro === 'any') + '"><span>Me da igual: el primer horario libre</span></button>' + D.pros.map(p => '<button class="opt" data-a="pro" data-id="' + esc(p.id) + '" aria-pressed="' + (F.pro === p.id) + '"><span>' + esc(p.name) + '</span><small>' + esc(p.spec) + '</small></button>').join('') + '</div>';
       if (D.msg) h += '<p class="note">' + esc(D.msg) + '</p>';
+      h += '<p class="note center" style="margin-top:22px">¿Ya tenés un turno y no podés ir? <a href="#" data-a="cx">Cancelalo acá</a>.</p>';
     } else if (F.step === 2) {
       const s = slotsFor(), days = Object.keys(s);
       h = steps(2) + '<button class="back" data-a="to" data-s="1">‹ Cambiar motivo</button><h2>Elegí el día</h2><p class="note">Debajo de cada día figura cuántos turnos quedan libres.</p>';
@@ -159,6 +186,26 @@ footer a { color: inherit; }
   }
   app.addEventListener('click', async e => {
     const b = e.target.closest('[data-a]'); if (!b) return; const a = b.getAttribute('data-a');
+    if (a === 'cx' || a === 'cxBack' || a === 'cxAgain' || a === 'cxFind' || a === 'cxGo') {
+      e.preventDefault(); const g = id => ($('#' + id) || {}).value || '';
+      if (a === 'cx') { Object.assign(C, { res: null, err: '', done: false, reason: '' }); F.cx = true; window.scrollTo(0, 0); }
+      else if (a === 'cxBack') { F.cx = false; window.scrollTo(0, 0); }
+      else if (a === 'cxAgain') { F.cx = false; Object.assign(C, { res: null, done: false, err: '', code: '', dni: '', reason: '' }); Object.assign(F, { step: 1, type: null, date: null, slot: null, done: null, err: '' }); await load(); return; }
+      else if (a === 'cxFind') {
+        C.code = g('cxCode').trim().toUpperCase(); C.dni = g('cxDni').replace(/\D/g, ''); C.err = '';
+        if (C.code.length < 4 || C.dni.length < 6) { C.err = 'Escribí el código del turno y tu DNI.'; render(); return; }
+        C.busy = true; render();
+        try { const r = await rpc('ov_booking_find', { p_slug: slug, p_code: C.code, p_dni: C.dni }); if (r && r.ok) C.res = r; else C.err = (r && r.msg) || 'No encontramos ese turno.'; }
+        catch (er) { C.err = 'No hay conexión. Revisá internet y probá de nuevo.'; }
+        C.busy = false;
+      } else if (a === 'cxGo') {
+        C.reason = g('cxWhy').trim(); C.err = ''; C.busy = true; render();
+        try { const r = await rpc('ov_booking_cancel', { p_slug: slug, p_code: C.code, p_dni: C.dni, p_reason: C.reason }); if (r && r.ok && r.canceled) { C.res = r; C.done = true; } else { C.err = (r && r.msg) || 'No se pudo cancelar.'; if (r && r.appt) C.res = r; } }
+        catch (er) { C.err = 'No hay conexión. Revisá internet y probá de nuevo.'; }
+        C.busy = false; window.scrollTo(0, 0);
+      }
+      render(); return;
+    }
     if (a === 'type') { F.type = b.getAttribute('data-k'); F.date = null; F.slot = null; F.err = ''; if (F.type !== 'otro') F.step = 2; else { render(); const i = $('#fOther'); if (i) i.focus(); return; } }
     else if (a === 'otherGo') { F.other = (($('#fOther') || {}).value || '').trim(); if (F.other.length < 3) { F.err = 'Escribí brevemente el motivo.'; render(); return; } F.err = ''; F.step = 2; }
     else if (a === 'pro') { F.pro = b.getAttribute('data-id'); F.date = null; F.slot = null; }

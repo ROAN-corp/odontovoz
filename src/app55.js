@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.58.0', b: '1.114.0', d: '2026-11-27', items: [
+      { t: 'Turnero online: ahora el paciente también puede cancelar su turno desde la página de turnos, con su código y su DNI (respeta las horas de anticipación que fijaste). El turno pasa solo a «Canceló», el horario queda libre y te llega un aviso.' }
+    ] },
     { v: '1.57.0', b: '1.113.0', d: '2026-11-27', items: [
       { t: 'Pasar historias de papel con IA: ahora es un servicio por paquetes de hojas. En la pantalla ves cuántas hojas te quedan y desde ahí podés contratar más por WhatsApp. Cargar a mano sigue siendo gratis.' },
       { t: 'Mejoras internas para que podamos acompañarte mejor: guardamos contadores de uso (solo números, nunca datos de tus pacientes).' }

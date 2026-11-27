@@ -35,6 +35,8 @@ m = P.events({ owner: 'o', k: 'stock', old_v: null, new_v: { main: [it('i1', 0, 
 ok(m.length === 0, 'insumo nunca contado ni comprado no avisa');
 m = P.events({ owner: 'o', k: 'booking', new_v: { first: 'Sol', last: 'Ríos', date: add(today, 2), start: 570, pro: 'a' } }, N);
 ok(m.length === 1 && m[0].title === 'Turno pedido online: Sol Ríos' && /09:30 · Angel/.test(m[0].body), 'turno pedido online');
+m = P.events({ owner: 'o', k: 'booking', new_v: { first: 'Sol', last: 'Ríos', date: add(today, 2), start: 570, pro: 'a', cancelled: true } }, N);
+ok(m.length === 1 && m[0].title === 'Canceló un turno: Sol Ríos' && /09:30/.test(m[0].body), 'aviso cuando un paciente cancela online');
 
 /* 2) a quién */
 const T = [
