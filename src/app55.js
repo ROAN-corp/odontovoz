@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.56.0', b: '1.112.0', d: '2026-11-27', items: [
+      { t: 'Informe para un colega: desde Endodoncia, Implantes u Ortodoncia armás un PDF (derivación o contrarreferencia) con el resumen del tratamiento, radiografías, indicaciones, tu sello y tu firma, y lo mandás por WhatsApp.' },
+      { t: 'Logo del consultorio: ahora se sube en Menú › Datos del centro y sale arriba en todos los PDF, con el nombre, la dirección y el teléfono.' }
+    ] },
     { v: '1.55.1', b: '1.111.0', d: '2026-11-27', items: [
       { t: 'Revisión general antes del lanzamiento: se probaron todos los botones de todas las pantallas (celular y PC), la seguridad de los textos y las cuentas de cobros y caja. Se corrigió un detalle de seguridad en la lista de pacientes.' }
     ] },
