@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.60.0', b: '1.116.0', d: '2026-11-27', items: [
+      { t: 'Presupuesto: nuevo botón «Enviar por WhatsApp» en la vista previa. En el teléfono se comparte el PDF directo (elegís el chat del paciente); en la computadora podés compartirlo con la app de WhatsApp instalada o abrir el chat y adjuntarlo.' }
+    ] },
     { v: '1.59.0', b: '1.115.0', d: '2026-11-27', items: [
       { t: 'Membrete profesional en todos los PDF (historia clínica, anamnesis, consentimientos, presupuestos, planes, informes, estado de cuenta y más): logo, nombre, dirección, teléfono, correo y web del consultorio.' },
       { t: 'En Menú › Datos del centro ahora podés subir el logo y cargar el correo y la web (o Instagram) del consultorio.' }

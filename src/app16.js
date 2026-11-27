@@ -249,6 +249,8 @@
     if (p.notes) t += '\n' + p.notes + '\n';
     return t + '\n' + A.CLINIC;
   }
+  /* arma lo que se manda por WhatsApp (lo usa app144 para compartir el PDF) */
+  A.tpWaPdf = async () => { const pid = pidNow(), f = await planBlob(pid); return f ? { pid, blob: f.blob, name: f.name, text: waText(pid), title: 'Plan de tratamiento' } : null; };
   A.acts.tpWa = async () => {
     const pid = pidNow(), pat = A.PAT(pid), txt = waText(pid);
     const f = await planBlob(pid); if (!f) return;
