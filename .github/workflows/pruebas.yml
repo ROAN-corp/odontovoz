@@ -1,0 +1,35 @@
+name: Pruebas
+
+# Corre las pruebas en cada subida a main y en cada pedido de cambios, así un error se ve antes de que llegue a los clientes.
+# Revisa: versiones iguales en todos lados, index.html al día con src/, pantallas sin errores ni botones sin acción,
+# las funciones principales (consentimientos, alquileres, Implantes, Endodoncia, Escaneos 3D…), la voz y los avisos.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar lo necesario
+        run: |
+          npm install --no-save playwright jspdf@2.5.1
+          npx playwright install --with-deps chromium
+      - name: Voz
+        run: |
+          node tests/ovcmd.test.js
+          node tests/ovcmd.charla.test.js
+      - name: Avisos al teléfono
+        run: node --experimental-strip-types --no-warnings tests/push/push.test.mjs
+      - name: Pantallas y funciones
+        run: node tests/ui/humo.js /tmp/ov-humo

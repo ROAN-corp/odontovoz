@@ -27,7 +27,7 @@ Leé esto antes de tocar nada. Versión actual: **1.55.0** (compilación 1.110.0
 
 ## Publicar una versión
 1. Subir la versión. **Desde el 16/11/2026 hay dos números:** el visible (`A.VERSION` en `src/app10.js`, `NAME` en `sw.js`, `package.json`, tag y nombre en `.github/workflows/apk.yml`; arrancó en 1.0) y la compilación interna que nunca baja (`A.VBUILD` en `src/app10.js` y `VERSION` de `sw.js`, `odontovoz-1.55.0` en la 1.0; subirla siempre). En Novedades (`app55`) cada versión nueva lleva `v` (visible) y `b` (compilación). Anotar los cambios en `LEEME.md`.
-2. Correr `node scripts/inline-src.js`, `node tests/ovcmd.test.js` y `node tests/ovcmd.charla.test.js`; probar con Playwright en celular (390×844) y PC (1366×860).
+2. Correr `node scripts/inline-src.js`, `node tests/ovcmd.test.js`, `node tests/ovcmd.charla.test.js` y **`node tests/ui/humo.js`** (pantallas en celular y PC, botones sin acción, versiones, funciones principales; necesita `npm i --no-save playwright jspdf@2.5.1`; en GitHub corre solo: `.github/workflows/pruebas.yml`). Al sumar una función importante, sumale su prueba en `tests/ui/humo.js`.
 3. Subir a `main`: el workflow `web.yml` publica la web y `apk.yml` compila y firma el APK (keystore en los secrets del repo; **nunca** subir el keystore).
 4. Verificar la web en vivo y que la última release sea la nueva.
 
@@ -85,7 +85,7 @@ Leé esto antes de tocar nada. Versión actual: **1.55.0** (compilación 1.110.0
 - Publicar = subir versión (ver arriba), `inline-src`, tests, commit, push y avisar en una o dos líneas.
 
 ## Pendiente
-- **Migración a la cuenta de Claude de la empresa** (20/11/2026): pasos y mensaje inicial en `docs/MIGRACION.md`. Prueba de pantallas: `python3 tests/ui/humo.py /tmp/ov-humo`.
+- **Migración a la cuenta de Claude de la empresa** (20/11/2026): pasos y mensaje inicial en `docs/MIGRACION.md`. Prueba de pantallas: `node tests/ui/humo.js` (la vieja `tests/ui/humo.py` queda de respaldo).
 - **Marca INPI** ODONTOVOZ (14/11/2026, clases 9 y 42, a nombre de Rodrigo): esperar números de acta y notificaciones.
 - **Play Store**: D-U-N-S pedido el 17/11/2026 (hasta 30 días hábiles; datos: BOBADILLA RODRIGO NICOLAS, CUIT 20-36871177-3, Manuel Belgrano 155, Allen, Río Negro 8328). Ya listo de nuestro lado: `.aab` con API 36 (`.github/workflows/play.yml`), capturas en `play/`, textos y formularios en `docs/PLAY.md`. Después: cuenta de Play Console de empresa (la crea y paga el usuario), «Usar mi propia clave» con `odontovoz-firma.jks` (nunca subirlo), cuenta de prueba para revisores (la crea el usuario).
 - **IA de historias de papel** (plan completo en `docs/HC-PAPEL-IA.md`; **método para activarla cuando un cliente paga: §7**; no encender la clave de Anthropic antes de armar el control de saldo por cuenta, y no tocar `supabase/functions/hc-read` hasta el primer pago porque se despliega solo): el usuario crea la clave en console.anthropic.com (límite USD 10/mes) y la pega en Supabase › Edge Functions › Secrets como `ANTHROPIC_API_KEY`. Después probar con 20–30 historias, medir costo por hoja y recién ahí poner precio (propuesta: 500/2.000/5.000 hojas a USD 49/149/299, primeras 100 gratis; tope diario `HC_READ_MAX` 600 hojas).
