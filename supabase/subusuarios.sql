@@ -46,6 +46,8 @@ revoke all on function public.ov_code_get() from public, anon;
 grant execute on function public.ov_code_get() to authenticated;
 
 -- el dueño puede elegir el código mientras todavía no creó usuarios con el código actual
+/* ov_code_set solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_code_set') then execute $fn$
 create or replace function public.ov_code_set(p_code text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare c text := lower(trim(coalesce(p_code, '')));
@@ -57,10 +59,13 @@ begin
   update public.ov_accounts set code = c where owner = auth.uid();
   return jsonb_build_object('ok', true, 'code', c);
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_code_set(text) from public, anon;
 grant execute on function public.ov_code_set(text) to authenticated;
 
 -- 2) crear un usuario del equipo (lo hace el dueño o un administrador)
+/* ov_sub_create solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_sub_create') then execute $fn$
 create or replace function public.ov_sub_create(p_name text, p_user text, p_pass text, p_role text, p_sede text, p_pro text) returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$
 declare o uuid := public.ov_owner(); r text := public.ov_role(); u text := lower(trim(coalesce(p_user, ''))); c text; em text; nid uuid := gen_random_uuid(); n int;
@@ -88,6 +93,7 @@ begin
   values (nid, o, p_role, nullif(p_sede, ''), nullif(p_pro, ''), left(coalesce(p_name, u), 80), em, u, true, true);
   return jsonb_build_object('ok', true, 'member', nid, 'code', c, 'user', u);
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_sub_create(text, text, text, text, text, text) from public, anon;
 grant execute on function public.ov_sub_create(text, text, text, text, text, text) to authenticated;
 
@@ -128,6 +134,8 @@ begin
 end $$;
 
 -- 5) el equipo, ahora con usuario y código
+/* ov_team solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_team') then execute $fn$
 create or replace function public.ov_team() returns jsonb
 language sql stable security definer set search_path = public as $$
   select case when public.ov_role() not in ('dueno', 'admin') then '{"ok":false}'::jsonb else jsonb_build_object('ok', true,
@@ -138,10 +146,13 @@ language sql stable security definer set search_path = public as $$
     'invites', (select coalesce(jsonb_agg(jsonb_build_object('code', i.code, 'role', i.role, 'sede', i.sede, 'pro', i.pro, 'name', i.name, 'created_at', i.created_at, 'expires_at', i.expires_at) order by i.created_at desc), '[]'::jsonb)
       from public.ov_invites i where i.owner = public.ov_owner() and i.used_by is null and not i.revoked and i.expires_at > now())) end;
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_team() from public, anon;
 grant execute on function public.ov_team() to authenticated;
 
 -- 6) quién soy: también el usuario y el código (para mostrarlo arriba)
+/* ov_whoami solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_whoami') then execute $fn$
 create or replace function public.ov_whoami() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
@@ -151,6 +162,7 @@ language sql stable security definer set search_path = public as $$
     'code', (select a.code from public.ov_accounts a where a.owner = public.ov_owner()),
     'account', (select to_jsonb(a) - 'notes' - 'flags' from public.ov_accounts a where a.owner = public.ov_owner()));
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_whoami() from public, anon;
 grant execute on function public.ov_whoami() to authenticated;
 

@@ -53,6 +53,8 @@ begin
   return outv;
 end $$;
 
+/* ov_pd_guard solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_pd_guard') then execute $fn$
 create or replace function public.ov_pd_guard() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare r text;
@@ -69,6 +71,7 @@ begin
   end if;
   return new;
 end $$;
+$fn$; end if; end $guard$;
 
 drop trigger if exists ov_pd_guard_trg on public.ov_records;
 create trigger ov_pd_guard_trg before update on public.ov_records

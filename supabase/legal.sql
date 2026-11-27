@@ -82,6 +82,8 @@ grant execute on function public.ov_request(text, text, text, text) to anon, aut
 
 -- 3) eliminar una cuenta por completo (lo hace un administrador después de confirmar el pedido)
 --    Las fotos se borran desde la app antes de pedir la eliminación (el servidor no permite borrarlas por SQL).
+/* ov_admin_delete_account solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_admin_delete_account') then execute $fn$
 create or replace function public.ov_admin_delete_account(p_owner uuid) returns void
 language plpgsql security definer set search_path = public as $$
 begin
@@ -96,6 +98,7 @@ begin
   delete from public.ov_accounts where owner = p_owner;
   delete from auth.users where id = p_owner;
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_admin_delete_account(uuid) from public, anon;
 grant execute on function public.ov_admin_delete_account(uuid) to authenticated;
 
@@ -119,6 +122,8 @@ revoke all on function public.ov_admin_accounts() from public, anon;
 grant execute on function public.ov_admin_accounts() to authenticated;
 
 -- 4) la prueba de 14 días para las primeras 50 cuentas termina además el 31/12/2026 (bases publicadas en terminos.html)
+/* ov_new_account solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_new_account') then execute $fn$
 create or replace function public.ov_new_account() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare usados int; promo boolean;
@@ -131,3 +136,4 @@ begin
   on conflict (owner) do nothing;
   return new;
 end $$;
+$fn$; end if; end $guard$;

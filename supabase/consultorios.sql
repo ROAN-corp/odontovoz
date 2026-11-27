@@ -3,7 +3,8 @@
 -- Si está vacío: la prueba gratis y el plan Centro tienen 5; los demás planes, 1.
 alter table public.ov_accounts add column if not exists max_locs int check (max_locs between 1 and 5);
 
-drop function if exists public.ov_admin_accounts();
+/* ov_admin_accounts solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_admin_accounts') then execute $fn$
 create function public.ov_admin_accounts() returns table (
   owner uuid, email text, plan text, status text, trial_until date, paid_until date, max_devices int, max_locs int, notes text,
   created_at timestamptz, last_sync timestamptz, records bigint, last_sign_in timestamptz
@@ -16,6 +17,7 @@ create function public.ov_admin_accounts() returns table (
   where public.ov_is_admin()
   order by a.created_at desc;
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_admin_accounts() from public, anon;
 grant execute on function public.ov_admin_accounts() to authenticated;
 

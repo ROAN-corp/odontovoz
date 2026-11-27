@@ -84,6 +84,8 @@ revoke all on function public.ov_leave(uuid) from public, anon;
 grant execute on function public.ov_leave(uuid) to authenticated;
 
 -- 4) quién soy, dónde estoy y en qué lugares puedo trabajar
+/* ov_whoami solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_whoami') then execute $fn$
 create or replace function public.ov_whoami() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
@@ -100,6 +102,7 @@ language sql stable security definer set search_path = public as $$
             'clinic', coalesce((select r.v->>'clinic' from public.ov_records r where r.owner = m.owner and r.k = 'setup'), (select a.email from public.ov_accounts a where a.owner = m.owner)))
           from public.ov_members m where m.member = auth.uid() and m.active) q));
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_whoami() from public, anon;
 grant execute on function public.ov_whoami() to authenticated;
 
@@ -167,6 +170,8 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- 7) cambiar el puesto o quitar el acceso: solo en el equipo de este dueño
+/* ov_member_set solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_member_set') then execute $fn$
 create or replace function public.ov_member_set(p_member uuid, p_role text, p_sede text, p_pro text, p_active boolean) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); m public.ov_members;
@@ -186,6 +191,7 @@ begin
   end if;
   return jsonb_build_object('ok', true);
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_member_set(uuid, text, text, text, boolean) from public, anon;
 grant execute on function public.ov_member_set(uuid, text, text, text, boolean) to authenticated;
 

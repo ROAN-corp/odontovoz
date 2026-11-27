@@ -76,6 +76,7 @@ Leé esto antes de tocar nada. Versión actual: **1.55.0** (compilación 1.110.0
 - Comparar datos de la nube siempre con `J()` de `cloud.js`, nunca `JSON.stringify`.
 - En `css.textContent = '…' + '…'` una coma en lugar de `+` deja solo el último pedazo.
 - Si cambia la primera línea de un módulo, `inline-src.js` lo agrega como nuevo: borrar el bloque viejo de `index.html`.
+- **SQL de Supabase** (`docs/SQL.md`): un archivo nuevo va al final de `tests/sql/orden.txt`; si reemplaza una función o regla de otro, correr `python3 scripts/guardar-sql.py`, sumar su marca en `supabase/salud.sql` y que `bash tests/sql/probar.sh` dé todo bien. Nunca copiar definiciones en un archivo «resumen» (se desactualiza).
 - Antes de crear un `A.acts.X` / `A.chg.X` nuevo, buscar con grep que ese nombre no exista (en 1.12 `naPick` pisó la elección de paciente del turno nuevo).
 - Antes de subir, `git pull --rebase` de `main` (puede haber otra conversación trabajando).
 - Las capturas de Playwright guardarlas en el borrador (scratchpad), nunca dentro del repo.

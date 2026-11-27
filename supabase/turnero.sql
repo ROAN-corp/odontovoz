@@ -14,8 +14,10 @@ create table if not exists public.ov_booking (
   updated_at timestamptz not null default now()
 );
 alter table public.ov_booking enable row level security;
-drop policy if exists "ov_booking_own" on public.ov_booking;
+/* la regla ov_booking_own de public.ov_booking solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_booking' and policyname = 'ov_booking_own') then execute $pol$
 create policy "ov_booking_own" on public.ov_booking for all to authenticated using (owner = auth.uid()) with check (owner = auth.uid());
+$pol$; end if; end $guard$;
 grant select, insert, update, delete on public.ov_booking to authenticated;
 revoke all on public.ov_booking from anon;
 
@@ -29,8 +31,10 @@ create table if not exists public.ov_booking_req (
 );
 create index if not exists ov_booking_req_owner on public.ov_booking_req (owner, status);
 alter table public.ov_booking_req enable row level security;
-drop policy if exists "ov_booking_req_own" on public.ov_booking_req;
+/* la regla ov_booking_req_own de public.ov_booking_req solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_booking_req' and policyname = 'ov_booking_req_own') then execute $pol$
 create policy "ov_booking_req_own" on public.ov_booking_req for all to authenticated using (owner = auth.uid()) with check (owner = auth.uid());
+$pol$; end if; end $guard$;
 grant select, update, delete on public.ov_booking_req to authenticated;
 revoke all on public.ov_booking_req from anon;
 
@@ -88,9 +92,12 @@ grant execute on function public.ov_booking_get(text) to anon, authenticated;
 grant execute on function public.ov_booking_request(text, jsonb) to anon, authenticated;
 
 -- La app toma los pedidos nuevos de a uno por vez (si hay dos equipos abiertos, no se duplican)
+/* ov_booking_claim solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_booking_claim') then execute $fn$
 create or replace function public.ov_booking_claim() returns setof public.ov_booking_req
 language sql security definer set search_path = public as $$
   update public.ov_booking_req set status = 'cargado' where owner = auth.uid() and status = 'nuevo' returning *;
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_booking_claim() from public, anon;
 grant execute on function public.ov_booking_claim() to authenticated;

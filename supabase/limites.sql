@@ -15,6 +15,8 @@ alter table public.ov_accounts add column if not exists lim_pros int check (lim_
 alter table public.ov_accounts add column if not exists lim_devices int check (lim_devices between 1 and 50);
 alter table public.ov_accounts add column if not exists flags text;          -- avisos para el panel (p. ej. prueba desde un equipo ya usado)
 
+/* ov_limits solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_limits') then execute $fn$
 create or replace function public.ov_limits(uid uuid default auth.uid()) returns jsonb
 language sql stable security definer set search_path = public as $$
   select coalesce((
@@ -25,6 +27,7 @@ language sql stable security definer set search_path = public as $$
       'locs', coalesce(a.max_locs, case a.plan when 'centro' then 5 when 'prueba' then 2 else 1 end))
     from public.ov_accounts a where a.owner = uid), '{"plan":"prueba","pros":1,"devices":2,"locs":1}'::jsonb);
 $$;
+$fn$; end if; end $guard$;
 grant execute on function public.ov_limits(uuid) to authenticated;
 
 -- equipos de cada cuenta
@@ -46,13 +49,18 @@ revoke all on public.ov_devices from anon;
 -- el equipo que hace el pedido (lo manda la app en el encabezado x-ov-device)
 create or replace function public.ov_device_id() returns text
 language sql stable as $$ select coalesce(nullif(current_setting('request.headers', true), '')::json->>'x-ov-device', ''); $$;
+/* ov_device_ok solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_ok') then execute $fn$
 create or replace function public.ov_device_ok() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.ov_devices d where d.owner = auth.uid() and d.id = public.ov_device_id() and d.removed_at is null);
 $$;
+$fn$; end if; end $guard$;
 grant execute on function public.ov_device_ok() to authenticated;
 
 -- registrar este equipo (lo hace la app sola al entrar)
+/* ov_device_register solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_register') then execute $fn$
 create or replace function public.ov_device_register(p_id text, p_name text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); lim int; n int; acc public.ov_accounts;
@@ -79,16 +87,22 @@ begin
   end if;
   return jsonb_build_object('ok', true);
 end $$;
+$fn$; end if; end $guard$;
 
 -- lista de equipos y cuántos se pueden liberar este mes
+/* ov_device_list solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_list') then execute $fn$
 create or replace function public.ov_device_list() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object('limit', (public.ov_limits()->>'devices')::int, 'plan', public.ov_limits()->>'plan', 'me', public.ov_device_id(),
     'removals_left', greatest(0, 4 - (select count(*) from public.ov_devices where owner = auth.uid() and removed_at > now() - interval '30 days')),
     'devices', (select coalesce(jsonb_agg(jsonb_build_object('id', id, 'name', name, 'last_seen', last_seen, 'created_at', created_at) order by last_seen desc), '[]'::jsonb) from public.ov_devices where owner = auth.uid() and removed_at is null));
 $$;
+$fn$; end if; end $guard$;
 
 -- liberar un equipo (para cambiar de celular o de PC). Hasta 4 por mes; más, desde soporte.
+/* ov_device_remove solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_remove') then execute $fn$
 create or replace function public.ov_device_remove(p_id text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); n int;
@@ -99,12 +113,15 @@ begin
   update public.ov_devices set removed_at = now() where owner = uid and id = p_id and removed_at is null;
   return jsonb_build_object('ok', found);
 end $$;
+$fn$; end if; end $guard$;
 
 -- administradores: ver y liberar equipos de una cuenta
 create or replace function public.ov_admin_devices(p_owner uuid) returns jsonb
 language sql stable security definer set search_path = public as $$
   select case when public.ov_is_admin() then (select coalesce(jsonb_agg(jsonb_build_object('id', id, 'name', name, 'last_seen', last_seen, 'removed_at', removed_at) order by removed_at nulls first, last_seen desc), '[]'::jsonb) from public.ov_devices where owner = p_owner) end;
 $$;
+/* ov_admin_device_reset solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_admin_device_reset') then execute $fn$
 create or replace function public.ov_admin_device_reset(p_owner uuid, p_id text default null) returns void
 language plpgsql security definer set search_path = public as $$
 begin
@@ -112,6 +129,7 @@ begin
   if p_id is null then delete from public.ov_devices where owner = p_owner;
   else delete from public.ov_devices where owner = p_owner and id = p_id; end if;
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_device_register(text, text) from public, anon;
 revoke all on function public.ov_device_list() from public, anon;
 revoke all on function public.ov_device_remove(text) from public, anon;
@@ -124,6 +142,8 @@ grant execute on function public.ov_admin_devices(uuid) to authenticated;
 grant execute on function public.ov_admin_device_reset(uuid, text) to authenticated;
 
 -- ¿estos datos respetan el plan? (profesionales, tipo de cuenta y consultorios)
+/* ov_rec_ok solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_rec_ok') then execute $fn$
 create or replace function public.ov_rec_ok(p_k text, p_v jsonb) returns boolean
 language plpgsql stable security definer set search_path = public as $$
 declare l jsonb := public.ov_limits();
@@ -137,20 +157,30 @@ begin
   end if;
   return true;
 end $$;
+$fn$; end if; end $guard$;
 grant execute on function public.ov_rec_ok(text, jsonb) to authenticated;
 
 -- reglas de la tabla de datos: solo equipos registrados, con licencia vigente y dentro del plan
-drop policy if exists "ov_records_read" on public.ov_records;
-drop policy if exists "ov_records_insert" on public.ov_records;
-drop policy if exists "ov_records_update" on public.ov_records;
+/* la regla ov_records_read de public.ov_records solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_records' and policyname = 'ov_records_read') then execute $pol$
 create policy "ov_records_read" on public.ov_records for select to authenticated using (owner = (select auth.uid()) and public.ov_device_ok());
+$pol$; end if; end $guard$;
+/* la regla ov_records_insert de public.ov_records solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_records' and policyname = 'ov_records_insert') then execute $pol$
 create policy "ov_records_insert" on public.ov_records for insert to authenticated with check (owner = (select auth.uid()) and public.ov_is_active() and public.ov_device_ok() and public.ov_rec_ok(k, v));
+$pol$; end if; end $guard$;
+/* la regla ov_records_update de public.ov_records solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_records' and policyname = 'ov_records_update') then execute $pol$
 create policy "ov_records_update" on public.ov_records for update to authenticated using (owner = (select auth.uid()) and public.ov_device_ok()) with check (owner = (select auth.uid()) and public.ov_is_active() and public.ov_device_ok() and public.ov_rec_ok(k, v));
-drop policy if exists "ov_history_read_own" on public.ov_history;
+$pol$; end if; end $guard$;
+/* la regla ov_history_read_own de public.ov_history solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_history' and policyname = 'ov_history_read_own') then execute $pol$
 create policy "ov_history_read_own" on public.ov_history for select to authenticated using (owner = (select auth.uid()) and public.ov_device_ok());
+$pol$; end if; end $guard$;
 
 -- panel: el resumen de cuentas suma los límites y los equipos en uso
-drop function if exists public.ov_admin_accounts();
+/* ov_admin_accounts solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_admin_accounts') then execute $fn$
 create function public.ov_admin_accounts() returns table (
   owner uuid, email text, plan text, status text, trial_until date, paid_until date, max_devices int, max_locs int, lim_pros int, lim_devices int, flags text, notes text,
   created_at timestamptz, last_sync timestamptz, records bigint, last_sign_in timestamptz, devices bigint, limits jsonb
@@ -165,6 +195,7 @@ create function public.ov_admin_accounts() returns table (
   where public.ov_is_admin()
   order by a.created_at desc;
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_admin_accounts() from public, anon;
 grant execute on function public.ov_admin_accounts() to authenticated;
 

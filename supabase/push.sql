@@ -86,6 +86,8 @@ exception when others then null;  -- nunca frena el guardado
 end $$;
 revoke all on function public.ov_push_wake() from public, anon, authenticated;
 
+/* ov_push_enq_rec solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_push_enq_rec') then execute $fn$
 create or replace function public.ov_push_enq_rec() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare dev text;
@@ -101,10 +103,13 @@ begin
   end if;
   return new;
 end $$;
+$fn$; end if; end $guard$;
 drop trigger if exists ov_push_rec_trg on public.ov_records;
 create trigger ov_push_rec_trg after insert or update on public.ov_records
   for each row execute function public.ov_push_enq_rec();
 
+/* ov_push_enq_booking solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_push_enq_booking') then execute $fn$
 create or replace function public.ov_push_enq_booking() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
@@ -114,6 +119,7 @@ begin
   end if;
   return new;
 end $$;
+$fn$; end if; end $guard$;
 drop trigger if exists ov_push_booking_trg on public.ov_booking_req;
 create trigger ov_push_booking_trg after insert on public.ov_booking_req
   for each row execute function public.ov_push_enq_booking();

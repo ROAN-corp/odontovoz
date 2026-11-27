@@ -10,6 +10,8 @@
 --
 -- Al pagar, desde el panel se pasa la cuenta al plan contratado y quedan los límites de ese plan.
 
+/* ov_limits solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_limits') then execute $fn$
 create or replace function public.ov_limits(uid uuid default auth.uid()) returns jsonb
 language sql stable security definer set search_path = public as $$
   select coalesce((
@@ -21,4 +23,5 @@ language sql stable security definer set search_path = public as $$
       'centros', case a.plan when 'red' then 5 when 'prueba' then 5 else 1 end)
     from public.ov_accounts a where a.owner = uid), '{"plan":"prueba","pros":40,"devices":5,"locs":5,"centros":5}'::jsonb);
 $$;
+$fn$; end if; end $guard$;
 grant execute on function public.ov_limits(uuid) to authenticated;

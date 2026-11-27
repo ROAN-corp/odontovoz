@@ -3,6 +3,8 @@
 alter table public.ov_accounts add column if not exists promo text;
 alter table public.ov_accounts alter column trial_until set default (current_date + 7);
 
+/* ov_new_account solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_new_account') then execute $fn$
 create or replace function public.ov_new_account() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare usados int;
@@ -14,6 +16,7 @@ begin
   on conflict (owner) do nothing;
   return new;
 end $$;
+$fn$; end if; end $guard$;
 
 -- para ver cuántos lugares del lanzamiento quedan:
 -- select 50 - count(*) as quedan from public.ov_accounts where promo = 'lanzamiento50';

@@ -57,23 +57,34 @@ grant select on public.ov_invites to authenticated;
 revoke all on public.ov_invites from anon;
 
 -- de quién son los datos que usa esta sesión: el dueño (o el mismo usuario si no es parte de un equipo)
+/* ov_owner solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_owner') then execute $fn$
 create or replace function public.ov_owner() returns uuid
 language sql stable security definer set search_path = public as $$
   select coalesce((select m.owner from public.ov_members m where m.member = auth.uid() and m.active), auth.uid());
 $$;
+$fn$; end if; end $guard$;
 grant execute on function public.ov_owner() to authenticated, anon;
+/* ov_role solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_role') then execute $fn$
 create or replace function public.ov_role() returns text
 language sql stable security definer set search_path = public as $$
   select coalesce((select m.role from public.ov_members m where m.member = auth.uid() and m.active), 'dueno');
 $$;
+$fn$; end if; end $guard$;
 grant execute on function public.ov_role() to authenticated;
+/* ov_member_sede solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_member_sede') then execute $fn$
 create or replace function public.ov_member_sede() returns text
 language sql stable security definer set search_path = public as $$
   select m.sede from public.ov_members m where m.member = auth.uid() and m.active;
 $$;
+$fn$; end if; end $guard$;
 grant execute on function public.ov_member_sede() to authenticated;
 
 -- unir a una persona a la cuenta del dueño con un código de invitación (lo usan el registro y «aceptar»)
+/* ov_join_invite solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_join_invite') then execute $fn$
 create or replace function public.ov_join_invite(p_uid uuid, p_email text, p_code text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare inv public.ov_invites;
@@ -94,8 +105,11 @@ begin
   delete from public.ov_devices where owner = p_uid;
   return jsonb_build_object('ok', true, 'role', inv.role, 'sede', inv.sede);
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_join_invite(uuid, text, text) from public, anon, authenticated;
 
+/* ov_new_account solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_new_account') then execute $fn$
 create or replace function public.ov_new_account() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare usados int; con_promo boolean; inv text; r jsonb;
@@ -114,6 +128,7 @@ begin
   on conflict (owner) do nothing;
   return new;
 end $$;
+$fn$; end if; end $guard$;
 
 -- 1) todo lo que era «del usuario» pasa a ser «del dueño de la sesión»
 create or replace function public.ov_is_active(uid uuid default public.ov_owner()) returns boolean
@@ -121,6 +136,8 @@ language sql stable security definer set search_path = public as $$
   select coalesce((select a.status = 'activa' and greatest(a.trial_until, coalesce(a.paid_until, a.trial_until)) >= current_date
                    from public.ov_accounts a where a.owner = uid), false);
 $$;
+/* ov_limits solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_limits') then execute $fn$
 create or replace function public.ov_limits(uid uuid default public.ov_owner()) returns jsonb
 language sql stable security definer set search_path = public as $$
   select coalesce((
@@ -132,6 +149,7 @@ language sql stable security definer set search_path = public as $$
       'centros', case a.plan when 'empresa' then 5 when 'red' then 5 when 'prueba' then 5 else 1 end)
     from public.ov_accounts a where a.owner = uid), '{"plan":"prueba","pros":40,"devices":5,"locs":5,"centros":5}'::jsonb);
 $$;
+$fn$; end if; end $guard$;
 
 -- equipos: pertenecen al dueño; se anota qué persona lo usa
 alter table public.ov_devices add column if not exists member uuid;
@@ -152,6 +170,8 @@ language sql stable security definer set search_path = public as $$
     else '{"ok":false,"unknown":true}'::jsonb end;
 $$;
 
+/* ov_device_register solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_register') then execute $fn$
 create or replace function public.ov_device_register(p_id text, p_name text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare uid uuid := public.ov_owner(); me uuid := auth.uid(); lim int; n int; acc public.ov_accounts; gone public.ov_devices; sc text; mem public.ov_members; forced text;
@@ -187,7 +207,10 @@ begin
   end if;
   return jsonb_build_object('ok', true, 'scope', forced, 'empresa', coalesce(acc.empresa, false));
 end $$;
+$fn$; end if; end $guard$;
 
+/* ov_device_list solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_list') then execute $fn$
 create or replace function public.ov_device_list() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object('limit', (public.ov_limits()->>'devices')::int, 'plan', public.ov_limits()->>'plan', 'me', public.ov_device_id(), 'my_scope', public.ov_my_scope(),
@@ -197,6 +220,7 @@ language sql stable security definer set search_path = public as $$
         'person', (select coalesce(m.name, m.email) from public.ov_members m where m.member = d.member)) order by d.last_seen desc), '[]'::jsonb)
       from public.ov_devices d where d.owner = public.ov_owner() and d.removed_at is null));
 $$;
+$fn$; end if; end $guard$;
 
 -- los equipos los maneja el dueño (y la administración)
 create or replace function public.ov_device_remove(p_id text) returns jsonb
@@ -224,7 +248,7 @@ begin
   if p_scope is not null and p_scope <> 'todo' and p_scope !~ '^sede:[A-Za-z0-9_-]{1,40}$' then return jsonb_build_object('ok', false, 'msg', 'Consultorio inválido.'); end if;
   select * into cur from public.ov_devices where owner = uid and id = p_id and removed_at is null;
   if not found then return jsonb_build_object('ok', false, 'msg', 'Ese equipo no está conectado.'); end if;
-  if cur.member is not null and cur.member <> auth.uid() and exists (select 1 from public.ov_members m where m.member = cur.member and m.active) then
+  if cur.member is not null and cur.member <> auth.uid() and exists (select 1 from public.ov_members m where m.member = cur.member and m.owner = uid and m.active) then
     return jsonb_build_object('ok', false, 'msg', 'Ese equipo lo usa una persona del equipo: su consultorio se cambia desde Personal.');
   end if;
   my := public.ov_my_scope();
@@ -267,6 +291,8 @@ begin
 end $$;
 
 -- 2) qué datos puede leer o escribir esta sesión
+/* ov_key_ok solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_key_ok') then execute $fn$
 create or replace function public.ov_key_ok(p_k text) returns boolean
 language plpgsql stable security definer set search_path = public as $$
 declare emp boolean; sc text; rl text := public.ov_role(); ms text;
@@ -292,8 +318,11 @@ begin
   if p_k like 'caja:%' then return sc is not null and sc = 'sede:' || substr(p_k, 6); end if;
   return true;
 end $$;
+$fn$; end if; end $guard$;
 
 -- escritura: límites del plan y lo que cada puesto puede cambiar
+/* ov_rec_ok solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_rec_ok') then execute $fn$
 create or replace function public.ov_rec_ok(p_k text, p_v jsonb) returns boolean
 language plpgsql stable security definer set search_path = public as $$
 declare l jsonb := public.ov_limits(); rl text := public.ov_role();
@@ -311,6 +340,7 @@ begin
   end if;
   return true;
 end $$;
+$fn$; end if; end $guard$;
 
 -- los datos de la cuenta: de quien sea el dueño de la sesión
 alter table public.ov_records alter column owner set default public.ov_owner();
@@ -338,19 +368,27 @@ drop policy if exists "ov_history_read_own" on public.ov_history;
 create policy "ov_history_read_own" on public.ov_history for select to authenticated using (owner = (select public.ov_owner()) and public.ov_device_ok() and public.ov_key_ok(k));
 
 -- fotos: en la carpeta del dueño
-drop policy if exists "ov_media_read" on storage.objects;
-drop policy if exists "ov_media_insert" on storage.objects;
-drop policy if exists "ov_media_update" on storage.objects;
-drop policy if exists "ov_media_delete" on storage.objects;
+/* la regla ov_media_read de storage.objects solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'ov_media_read') then execute $pol$
 create policy "ov_media_read" on storage.objects for select to authenticated
   using (bucket_id = 'ov-media' and (storage.foldername(name))[1] = (select public.ov_owner())::text);
+$pol$; end if; end $guard$;
+/* la regla ov_media_insert de storage.objects solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'ov_media_insert') then execute $pol$
 create policy "ov_media_insert" on storage.objects for insert to authenticated
   with check (bucket_id = 'ov-media' and (storage.foldername(name))[1] = (select public.ov_owner())::text and public.ov_is_active());
+$pol$; end if; end $guard$;
+/* la regla ov_media_update de storage.objects solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'ov_media_update') then execute $pol$
 create policy "ov_media_update" on storage.objects for update to authenticated
   using (bucket_id = 'ov-media' and (storage.foldername(name))[1] = (select public.ov_owner())::text)
   with check (bucket_id = 'ov-media' and (storage.foldername(name))[1] = (select public.ov_owner())::text and public.ov_is_active());
+$pol$; end if; end $guard$;
+/* la regla ov_media_delete de storage.objects solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'ov_media_delete') then execute $pol$
 create policy "ov_media_delete" on storage.objects for delete to authenticated
   using (bucket_id = 'ov-media' and (storage.foldername(name))[1] = (select public.ov_owner())::text and public.ov_role() in ('dueno', 'admin'));
+$pol$; end if; end $guard$;
 
 -- turnero online: lo actualiza cualquier equipo de la cuenta (los horarios libres cambian con la agenda)
 drop policy if exists "ov_booking_own" on public.ov_booking;
@@ -375,6 +413,8 @@ begin
 end $$;
 
 -- 3) quién soy: el plan del dueño y mi puesto (la app lo usa al abrir)
+/* ov_whoami solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_whoami') then execute $fn$
 create or replace function public.ov_whoami() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
@@ -383,10 +423,13 @@ language sql stable security definer set search_path = public as $$
     'member_off', exists (select 1 from public.ov_members m where m.member = auth.uid() and not m.active),
     'account', (select to_jsonb(a) - 'notes' - 'flags' from public.ov_accounts a where a.owner = public.ov_owner()));
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_whoami() from public, anon;
 grant execute on function public.ov_whoami() to authenticated;
 
 -- 4) invitaciones (las crea el dueño)
+/* ov_invite_create solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_invite_create') then execute $fn$
 create or replace function public.ov_invite_create(p_role text, p_sede text, p_pro text, p_name text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); code text; al constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; n int;
@@ -400,6 +443,7 @@ begin
   insert into public.ov_invites (code, owner, role, sede, pro, name) values (code, uid, p_role, nullif(p_sede, ''), nullif(p_pro, ''), left(p_name, 80));
   return jsonb_build_object('ok', true, 'code', code, 'expires_at', now() + interval '7 days');
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_invite_create(text, text, text, text) from public, anon;
 grant execute on function public.ov_invite_create(text, text, text, text) to authenticated;
 
@@ -436,6 +480,8 @@ revoke all on function public.ov_invite_accept(text) from public, anon;
 grant execute on function public.ov_invite_accept(text) to authenticated;
 
 -- el dueño ve su equipo y las invitaciones
+/* ov_team solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_team') then execute $fn$
 create or replace function public.ov_team() returns jsonb
 language sql stable security definer set search_path = public as $$
   select case when public.ov_role() not in ('dueno', 'admin') then '{"ok":false}'::jsonb else jsonb_build_object('ok', true,
@@ -445,10 +491,13 @@ language sql stable security definer set search_path = public as $$
     'invites', (select coalesce(jsonb_agg(jsonb_build_object('code', i.code, 'role', i.role, 'sede', i.sede, 'pro', i.pro, 'name', i.name, 'created_at', i.created_at, 'expires_at', i.expires_at) order by i.created_at desc), '[]'::jsonb)
       from public.ov_invites i where i.owner = public.ov_owner() and i.used_by is null and not i.revoked and i.expires_at > now())) end;
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_team() from public, anon;
 grant execute on function public.ov_team() to authenticated;
 
 -- cambiar el puesto o el consultorio de una persona, o quitarle el acceso (desconecta sus equipos)
+/* ov_member_set solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_member_set') then execute $fn$
 create or replace function public.ov_member_set(p_member uuid, p_role text, p_sede text, p_pro text, p_active boolean) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); m public.ov_members;
@@ -469,9 +518,12 @@ begin
   end if;
   return jsonb_build_object('ok', true);
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_member_set(uuid, text, text, text, boolean) from public, anon;
 grant execute on function public.ov_member_set(uuid, text, text, text, boolean) to authenticated;
 
+/* ov_invite_revoke solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_invite_revoke') then execute $fn$
 create or replace function public.ov_invite_revoke(p_code text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 begin
@@ -479,10 +531,13 @@ begin
   update public.ov_invites set revoked = true where code = p_code and owner = auth.uid();
   return jsonb_build_object('ok', found);
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_invite_revoke(text) from public, anon;
 grant execute on function public.ov_invite_revoke(text) to authenticated;
 
 -- al borrar una cuenta desde el panel, también su equipo
+/* ov_admin_delete_account solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_admin_delete_account') then execute $fn$
 create or replace function public.ov_admin_delete_account(p_owner uuid) returns void
 language plpgsql security definer set search_path = public as $$
 begin
@@ -499,3 +554,4 @@ begin
   delete from public.ov_accounts where owner = p_owner;
   delete from auth.users where id = p_owner;
 end $$;
+$fn$; end if; end $guard$;

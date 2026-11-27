@@ -17,12 +17,17 @@ create index if not exists ov_records_owner_updated on public.ov_records (owner,
 -- 2) Seguridad por usuario (RLS): cada cuenta solo lee y escribe sus propias filas
 alter table public.ov_records enable row level security;
 drop policy if exists "ov_records_own" on public.ov_records;
+/* la regla ov_records_own de public.ov_records solo se crea si todavía no están las reglas nuevas (ov_records_insert, ov_records_read, ov_records_update): un archivo posterior la reemplaza (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_records' and policyname in ('ov_records_insert', 'ov_records_read', 'ov_records_update')) then execute $pol$
 create policy "ov_records_own" on public.ov_records
   for all to authenticated
   using (owner = (select auth.uid()))
   with check (owner = (select auth.uid()));
+$pol$; end if; end $guard$;
 
 -- 3) La fecha y la versión las pone el servidor (no se pueden falsear desde la app)
+/* ov_touch solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_touch') then execute $fn$
 create or replace function public.ov_touch() returns trigger
 language plpgsql set search_path = public as $$
 begin
@@ -37,6 +42,7 @@ begin
   end if;
   return new;
 end $$;
+$fn$; end if; end $guard$;
 drop trigger if exists ov_touch on public.ov_records;
 create trigger ov_touch before insert or update on public.ov_records
   for each row execute function public.ov_touch();
@@ -53,10 +59,14 @@ create table if not exists public.ov_history (
 );
 create index if not exists ov_history_owner_k on public.ov_history (owner, k, saved_at desc);
 alter table public.ov_history enable row level security;
-drop policy if exists "ov_history_read_own" on public.ov_history;
+/* la regla ov_history_read_own de public.ov_history solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_history' and policyname = 'ov_history_read_own') then execute $pol$
 create policy "ov_history_read_own" on public.ov_history
   for select to authenticated using (owner = (select auth.uid()));
+$pol$; end if; end $guard$;
 
+/* ov_keep_history solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_keep_history') then execute $fn$
 create or replace function public.ov_keep_history() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
@@ -65,11 +75,14 @@ begin
   end if;
   return new;
 end $$;
+$fn$; end if; end $guard$;
 drop trigger if exists ov_history_trg on public.ov_records;
 create trigger ov_history_trg after update on public.ov_records
   for each row execute function public.ov_keep_history();
 
 -- 5) Derecho de supresión: la persona puede borrar todos sus datos de la nube desde la app
+/* ov_delete_my_data solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_delete_my_data') then execute $fn$
 create or replace function public.ov_delete_my_data() returns void
 language plpgsql security definer set search_path = public as $$
 begin
@@ -77,6 +90,7 @@ begin
   delete from public.ov_records where owner = auth.uid();
   delete from public.ov_history where owner = auth.uid();
 end $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_delete_my_data() from public, anon;
 grant execute on function public.ov_delete_my_data() to authenticated;
 

@@ -45,17 +45,22 @@ grant select on public.ov_admins to authenticated;
 revoke all on public.ov_admins from anon;
 
 -- ¿la cuenta puede guardar cambios? (activa y con prueba o pago vigente)
+/* ov_is_active solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_is_active') then execute $fn$
 create or replace function public.ov_is_active(uid uuid default auth.uid()) returns boolean
 language sql stable security definer set search_path = public as $$
   select coalesce((select a.status = 'activa' and greatest(a.trial_until, coalesce(a.paid_until, a.trial_until)) >= current_date
                    from public.ov_accounts a where a.owner = uid), false);
 $$;
+$fn$; end if; end $guard$;
 grant execute on function public.ov_is_active(uuid) to authenticated;
 
 alter table public.ov_accounts add column if not exists promo text;
 alter table public.ov_accounts alter column trial_until set default (current_date + 7);
 
 -- 3) Toda cuenta nueva recibe su licencia de prueba automáticamente
+/* ov_new_account solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_new_account') then execute $fn$
 create or replace function public.ov_new_account() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare usados int;
@@ -68,6 +73,7 @@ begin
   on conflict (owner) do nothing;
   return new;
 end $$;
+$fn$; end if; end $guard$;
 drop trigger if exists ov_new_account on auth.users;
 create trigger ov_new_account after insert on auth.users for each row execute function public.ov_new_account();
 
@@ -76,14 +82,22 @@ insert into public.ov_accounts (owner, email) select id, email from auth.users o
 
 -- 4) El servidor hace cumplir la licencia: leer siempre, escribir solo con licencia vigente
 drop policy if exists "ov_records_own" on public.ov_records;
-drop policy if exists "ov_records_read" on public.ov_records;
-drop policy if exists "ov_records_insert" on public.ov_records;
-drop policy if exists "ov_records_update" on public.ov_records;
+/* la regla ov_records_read de public.ov_records solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_records' and policyname = 'ov_records_read') then execute $pol$
 create policy "ov_records_read" on public.ov_records for select to authenticated using (owner = (select auth.uid()));
+$pol$; end if; end $guard$;
+/* la regla ov_records_insert de public.ov_records solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_records' and policyname = 'ov_records_insert') then execute $pol$
 create policy "ov_records_insert" on public.ov_records for insert to authenticated with check (owner = (select auth.uid()) and public.ov_is_active());
+$pol$; end if; end $guard$;
+/* la regla ov_records_update de public.ov_records solo se crea si todavía no existe: hay una más nueva en un archivo posterior (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'ov_records' and policyname = 'ov_records_update') then execute $pol$
 create policy "ov_records_update" on public.ov_records for update to authenticated using (owner = (select auth.uid())) with check (owner = (select auth.uid()) and public.ov_is_active());
+$pol$; end if; end $guard$;
 
 -- 5) Resumen para el panel de administración (solo administradores)
+/* ov_admin_accounts solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_admin_accounts') then execute $fn$
 create or replace function public.ov_admin_accounts() returns table (
   owner uuid, email text, plan text, status text, trial_until date, paid_until date, max_devices int, notes text,
   created_at timestamptz, last_sync timestamptz, records bigint, last_sign_in timestamptz
@@ -96,6 +110,7 @@ create or replace function public.ov_admin_accounts() returns table (
   where public.ov_is_admin()
   order by a.created_at desc;
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_admin_accounts() from public, anon;
 grant execute on function public.ov_admin_accounts() to authenticated;
 

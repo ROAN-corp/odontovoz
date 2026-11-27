@@ -1,0 +1,31 @@
+# Orden en que se aplican los SQL en una base nueva (de arriba hacia abajo). Los de abajo pisan a los de arriba.
+# Un archivo nuevo va al final, antes de salud. Si un archivo nuevo reemplaza una función de otro, sumá su marca en supabase/salud.sql.
+schema
+licencias
+consultorios
+limites
+equipos-desconectar
+red
+legal
+empresa
+turnero
+equipo
+planes-1-27
+prueba-7-dias
+sugerencias
+fotos
+subusuarios
+vinculos
+socio
+permisos
+secretaria
+agenda_pro
+auditoria
+colaboraciones
+hcpapel
+push
+whatsapp
+webpush
+vincular-usuario
+perfil-profesional
+salud

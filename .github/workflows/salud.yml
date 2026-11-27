@@ -1,0 +1,30 @@
+name: Salud del servidor
+
+# Todos los días le pregunta a Supabase si todo lo importante está instalado en su versión nueva (función ov_health de supabase/salud.sql)
+# y si la función de avisos responde. Si algo falla, GitHub marca la corrida en rojo y avisa por mail.
+# No usa ninguna clave secreta: solo la clave pública que ya está en la app.
+on:
+  schedule:
+    - cron: '17 12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  salud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preguntarle al servidor
+        run: |
+          URL=$(grep -o "supabaseUrl: '[^']*'" index.html | head -1 | cut -d"'" -f2)
+          KEY=$(grep -o "supabaseAnonKey: '[^']*'" index.html | head -1 | cut -d"'" -f2)
+          R=$(curl -sS -m 30 -X POST "$URL/rest/v1/rpc/ov_health" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{}' || true)
+          echo "$R"
+          echo "$R" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{let j;try{j=JSON.parse(s)}catch(e){console.log("::error::El servidor no respondió como se esperaba (¿falta correr salud.sql en Supabase?)");process.exit(1)} if(!j.ok){console.log("::error::Servidor con problemas: "+JSON.stringify(j.faltan||j));process.exit(1)} console.log("Servidor ok")})'
+      - name: Función de avisos
+        run: |
+          URL=$(grep -o "supabaseUrl: '[^']*'" index.html | head -1 | cut -d"'" -f2)
+          curl -sS -m 30 "$URL/functions/v1/push-hook" | tee /dev/stderr | grep -q '"ok":true' || { echo "::error::La función de avisos (push-hook) no responde bien"; exit 1; }

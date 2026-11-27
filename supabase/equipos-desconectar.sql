@@ -5,6 +5,8 @@
 -- de nuevo y entra como equipo nuevo (ocupa un lugar del plan).
 alter table public.ov_devices add column if not exists removed_by text;
 
+/* ov_device_register solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_register') then execute $fn$
 create or replace function public.ov_device_register(p_id text, p_name text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); lim int; n int; acc public.ov_accounts; gone public.ov_devices;
@@ -32,14 +34,20 @@ begin
   end if;
   return jsonb_build_object('ok', true);
 end $$;
+$fn$; end if; end $guard$;
 
+/* ov_device_list solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_list') then execute $fn$
 create or replace function public.ov_device_list() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object('limit', (public.ov_limits()->>'devices')::int, 'plan', public.ov_limits()->>'plan', 'me', public.ov_device_id(),
     'removals_left', greatest(0, 4 - (select count(*) from public.ov_devices where owner = auth.uid() and coalesce(removed_by, 'user') = 'user' and removed_at > now() - interval '30 days')),
     'devices', (select coalesce(jsonb_agg(jsonb_build_object('id', id, 'name', name, 'last_seen', last_seen, 'created_at', created_at) order by last_seen desc), '[]'::jsonb) from public.ov_devices where owner = auth.uid() and removed_at is null));
 $$;
+$fn$; end if; end $guard$;
 
+/* ov_device_remove solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_remove') then execute $fn$
 create or replace function public.ov_device_remove(p_id text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare uid uuid := auth.uid(); n int;
@@ -50,6 +58,7 @@ begin
   update public.ov_devices set removed_at = now(), removed_by = 'user' where owner = uid and id = p_id and removed_at is null;
   return jsonb_build_object('ok', found);
 end $$;
+$fn$; end if; end $guard$;
 
 -- administradores: desconectar (no borrar) uno o todos los equipos de una cuenta; no cuenta para el límite mensual del cliente
 create or replace function public.ov_admin_device_reset(p_owner uuid, p_id text default null) returns void
@@ -60,6 +69,8 @@ begin
 end $$;
 
 -- el equipo que pregunta: ¿sigue conectado?
+/* ov_device_status solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_device_status') then execute $fn$
 create or replace function public.ov_device_status() returns jsonb
 language sql stable security definer set search_path = public as $$
   select case
@@ -67,5 +78,6 @@ language sql stable security definer set search_path = public as $$
     when exists (select 1 from public.ov_devices where owner = auth.uid() and id = public.ov_device_id()) then (select jsonb_build_object('ok', false, 'revoked', true, 'by', coalesce(removed_by, 'user')) from public.ov_devices where owner = auth.uid() and id = public.ov_device_id())
     else '{"ok":false,"unknown":true}'::jsonb end;
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_device_status() from public, anon;
 grant execute on function public.ov_device_status() to authenticated;
