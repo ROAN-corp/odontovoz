@@ -2897,7 +2897,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   function title() {
     if (S.view === 'dia') return cap(A.fmtLong(S.date)) + '<small>' + A.parse(S.date).getFullYear() + (S.date === A.today() ? ' · hoy' : '') + '</small>';
     if (S.view === 'semana') { const m = weekStart(S.date); const vd = visDays(m); return A.fmtShort(vd[0]) + ' – ' + A.fmtShort(vd[vd.length - 1]) + '<small>semana ' + A.parse(m).getFullYear() + '</small>'; }
-    return cap(A.monthLabel(S.date)) + '<small>' + selPros().map(p => p.short).join(' · ') + '</small>';
+    return cap(A.monthLabel(S.date)) + '<small>' + selPros().map(p => esc(p.short)).join(' · ') + '</small>';
   }
   function weekStart(k) { const d = A.dow(k); return A.add(k, d === 0 ? -6 : 1 - d); }
   const visDays = m => { const out = []; for (let i = 0; i < 7; i++) { const k = A.add(m, i); if (A.CFG.days.indexOf(A.dow(k)) >= 0) out.push(k); } return out.length ? out : [m]; };
@@ -3433,7 +3433,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     for (let i = 0; i <= 90; i++) { const k = A.add(t, -i), l = A.day(k).filter(a => a.pid === pid && a.status === 'atendido'); if (l.length) return l[l.length - 1]; }
     return null;
   };
-  const apptTxt = a => a ? A.fmtShort(a.date) + ' ' + A.mm(a.start) + ' · ' + A.PRO(a.pro).short : '—';
+  const apptTxt = a => a ? A.fmtShort(a.date) + ' ' + A.mm(a.start) + ' · ' + esc(A.PRO(a.pro).short) : '—';
   const role = () => S.role === 'profesional';
 
   /* ---------- buscador de la barra superior ---------- */
