@@ -36,9 +36,10 @@ const PANTALLAS = [
   };
   await abrir();
   const problemas = {}; let clicks = 0, pantallas = 0;
-  const anotar = (donde, act, e) => { const k = act + ' | ' + e; if (!problemas[k]) problemas[k] = []; problemas[k].push(donde); };
+  const anotar = (donde, act, e) => { const k = act + ' | ' + e; console.error('PROBLEMA: ' + k + '   ← ' + donde); if (!problemas[k]) problemas[k] = []; problemas[k].push(donde); };
   const botones = () => pg.evaluate(() => Array.from(document.querySelectorAll('[data-act]')).filter(e => e.offsetParent !== null || e.getClientRects().length).map((e, i) => ({ i, act: e.getAttribute('data-act'), txt: (e.textContent || '').trim().slice(0, 30) })));
-  for (const [nombre, js] of PANTALLAS) {
+  const DESDE = process.env.DESDE ? PANTALLAS.findIndex(x => x[0] === process.env.DESDE) : 0, HASTA = process.env.HASTA ? PANTALLAS.findIndex(x => x[0] === process.env.HASTA) : PANTALLAS.length - 1;
+  for (const [nombre, js] of PANTALLAS.slice(Math.max(0, DESDE), HASTA + 1)) {
     try { await pg.evaluate(js); await pg.waitForTimeout(200); } catch (e) { anotar(nombre, '(abrir la pantalla)', String(e.message).split('\n')[0]); try { await abrir(); } catch (e2) { console.error('no se pudo reabrir', e2.message.split('\n')[0]); } continue; }
     pantallas++; if (process.env.VERBOSE) console.error('» ' + nombre); const lista = await botones(), vistos = new Set();
     for (const bt of lista) {
@@ -46,7 +47,7 @@ const PANTALLAS = [
       errs.length = 0;
       try {
         await pg.evaluate(js); await pg.waitForTimeout(80);
-        const hit = await pg.evaluate(([act, txt]) => { const el = Array.from(document.querySelectorAll('[data-act="' + act + '"]')).filter(e => (e.textContent || '').trim().slice(0, 30) === txt)[0]; if (!el) return false; el.click(); return true; }, [bt.act, bt.txt]);
+        const hit = await pg.evaluate(([act, txt]) => { const el = Array.from(document.querySelectorAll('[data-act="' + act + '"]')).filter(e => (e.textContent || '').trim().slice(0, 30) === txt)[0]; if (!el) return false; el.dispatchEvent(new MouseEvent('click', { bubbles: true })); return true; }, [bt.act, bt.txt]);
         if (!hit) continue; clicks++; await pg.waitForTimeout(140);
         if (errs.length) anotar(nombre, bt.act, errs[0].split('\n')[0]);
         /* segundo nivel: lo que se abrió */
@@ -54,7 +55,7 @@ const PANTALLAS = [
         for (const h2 of hijos.slice(0, 40)) {
           if (SALTAR.test(h2.act) || h2.act === bt.act) continue; const c2 = h2.act + '|' + h2.txt; if (vis2.has(c2)) continue; vis2.add(c2); errs.length = 0;
           await pg.evaluate(js); await pg.waitForTimeout(60);
-          await pg.evaluate(([a1, t1, a2, t2]) => { const f = (a, t) => Array.from(document.querySelectorAll('[data-act="' + a + '"]')).filter(e => (e.textContent || '').trim().slice(0, 30) === t)[0]; const e1 = f(a1, t1); if (e1) e1.click(); const e2 = f(a2, t2); if (e2) e2.click(); }, [bt.act, bt.txt, h2.act, h2.txt]);
+          await pg.evaluate(([a1, t1, a2, t2]) => { const f = (a, t) => Array.from(document.querySelectorAll('[data-act="' + a + '"]')).filter(e => (e.textContent || '').trim().slice(0, 30) === t)[0]; const e1 = f(a1, t1); if (e1) e1.dispatchEvent(new MouseEvent('click', { bubbles: true })); const e2 = f(a2, t2); if (e2) e2.dispatchEvent(new MouseEvent('click', { bubbles: true })); }, [bt.act, bt.txt, h2.act, h2.txt]);
           clicks++; await pg.waitForTimeout(100);
           if (errs.length) anotar(nombre + ' › ' + bt.act, h2.act, errs[0].split('\n')[0]);
         }
