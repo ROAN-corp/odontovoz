@@ -5,11 +5,13 @@ globalThis.Deno = { env: { get: k => ENV[k] } };
 const F = await import('../../supabase/functions/hc-read/index.ts');
 let fails = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' + m); if (!c) fails++; };
 
-let calls = [], aiReply = null, hits = 0, hitFail = false;
+let calls = [], aiReply = null, hits = 0, hitFail = false, saldo = 0, gives = 0, takeFail = false;
 globalThis.fetch = async (url, init = {}) => {
   calls.push({ url, init });
   const J = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'Content-Type': 'application/json' } });
   if (url.endsWith('/rpc/ov_whoami')) return init.headers.Authorization === 'Bearer bueno' ? J({ owner: 'own-1' }) : J({ owner: null });
+  if (url.endsWith('/rpc/ov_ai_take')) { if (takeFail) return J({ msg: 'no existe' }, 404); const n = JSON.parse(init.body).p_n; if (saldo < n) return J(-1); saldo -= n; return J(saldo); }
+  if (url.endsWith('/rpc/ov_ai_give')) { gives += JSON.parse(init.body).p_n; saldo += JSON.parse(init.body).p_n; return J(saldo); }
   if (url.endsWith('/rpc/ov_ai_hit')) { if (hitFail) return J({ msg: 'no existe' }, 404); hits += JSON.parse(init.body).p_n; return J(hits); }
   if (url.startsWith('https://api.anthropic.com/')) return aiReply ? J(aiReply) : J({ error: 'x' }, 500);
   return J({}, 404);
@@ -29,6 +31,10 @@ ok(r.status === 400, 'más de 8 hojas no');
 r = await F.serve(req({ images: [img] }, 'Bearer otro'));
 ok(r.status === 403, 'usuario sin cuenta no');
 
+r = await F.serve(req({ images: [img] }));
+ok(r.status === 402 && (await r.json()).nocredit === true && !calls.some(c => c.url.startsWith('https://api.anthropic.com/')), 'sin hojas cargadas no lee ni gasta con la IA');
+takeFail = true; r = await F.serve(req({ images: [img] })); ok(r.status === 402, 'si no se puede comprobar el saldo, no lee'); takeFail = false;
+saldo = 10;
 aiReply = { content: [{ type: 'tool_use', name: 'historia', input: {
   paciente: { first: ' Ariana ', last: 'Quinteros', dni: '35.123.456', birth: '1990-04-12', age: 999, cov: 'OSPe', inventado: 'x' },
   antecedentes: { marcados: ['hta', 'penicilina', 'cualquiera'], medicacion: 'enalapril' },
@@ -47,19 +53,21 @@ const ai = calls.filter(c => c.url.startsWith('https://api.anthropic.com/'))[0],
 ok(body.tool_choice.name === 'historia' && body.messages[0].content.filter(c => c.type === 'image').length === 2, 'manda las fotos a la IA y obliga a usar la herramienta');
 ok(calls.filter(c => c.url.endsWith('/rpc/ov_whoami'))[0].init.headers['x-ov-owner'] === 'own-1', 'respeta el lugar elegido');
 ok(hits === 2, 'cuenta las hojas para el tope');
+ok(saldo === 8 && j.left === 8, 'descuenta las hojas leídas del saldo');
 
 ENV.HC_READ_MAX = '3';
+saldo = 10; gives = 0;
 r = await F.serve(req({ images: [img, img] }));
-ok(r.status === 429 && (await r.json()).limit, 'tope diario por cuenta');
+ok(r.status === 429 && (await r.json()).limit && gives === 2 && saldo === 10, 'tope diario por cuenta (y devuelve las hojas)');
 hitFail = true;
 r = await F.serve(req({ images: [img] }));
 ok(r.status === 200, 'si el SQL del tope no está corrido, sigue andando');
 aiReply = { content: [{ type: 'text', text: 'no puedo' }] };
 r = await F.serve(req({ images: [img] }));
-ok(r.status === 422, 'si la IA no usa la herramienta, avisa');
+ok(r.status === 422 && gives >= 3, 'si la IA no usa la herramienta, avisa y devuelve la hoja');
 aiReply = null;
 r = await F.serve(req({ images: [img] }));
-ok(r.status === 502, 'si la IA falla, avisa');
+ok(r.status === 502 && saldo === 9, 'si la IA falla, avisa y devuelve la hoja');
 
 console.log(fails ? fails + ' FALLAS' : 'todo bien');
 process.exit(fails ? 1 : 0);

@@ -3,7 +3,7 @@
 // Recibe las fotos de UNA historia clínica en papel y devuelve lo que se pudo leer, para que una persona lo revise y lo confirme en la app.
 // No guarda nada: ni las fotos ni el texto. Se publica CON «Verify JWT» (solo usuarios con sesión).
 // Secretos: ANTHROPIC_API_KEY. Opcionales: HC_AI_MODEL (modelo), HC_READ_MAX (hojas por día y cuenta, 600 por defecto).
-// Tope diario: supabase/hcpapel.sql (ov_ai_hit). Si no está corrido, funciona sin tope.
+// Tope diario: supabase/hcpapel.sql (ov_ai_hit). Saldo de hojas por cuenta: supabase/ia-uso.sql (ov_ai_take / ov_ai_give): sin hojas cargadas devuelve 402.
 
 const env = (k: string, d = '') => (globalThis as any).Deno?.env?.get(k) ?? d;
 const SB = () => env('SUPABASE_URL');
@@ -102,10 +102,15 @@ export async function serve(req: Request): Promise<Response> {
   const owner = who && who.owner;
   if (!owner) return out({ ok: false, msg: 'No encontré tu cuenta.' }, 403);
 
+  /* es una función paga: la cuenta tiene que tener hojas cargadas (las carga el administrador cuando el cliente paga un paquete). Si no se puede comprobar, no se lee. */
+  const left = await rpc('ov_ai_take', { p_owner: owner, p_n: imgs.length }).catch(() => -1);
+  if (!(+left >= 0)) return out({ ok: false, nocredit: true, msg: 'Tu cuenta no tiene hojas disponibles para leer con IA. Contratá un paquete (escribinos por WhatsApp) o cargala a mano mirando la foto.' }, 402);
+  const refund = () => rpc('ov_ai_give', { p_owner: owner, p_n: imgs.length }).catch(() => 0);
+
   /* tope diario de hojas por cuenta (cuida el gasto); si el SQL no está corrido, sigue sin tope */
   const max = +env('HC_READ_MAX', '600'), day = new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
   const used = await rpc('ov_ai_hit', { p_owner: owner, p_day: day, p_kind: 'hc', p_n: imgs.length }).catch(() => 0);
-  if (+used > max) return out({ ok: false, limit: true, msg: 'Por hoy se llegó al máximo de hojas leídas de esta cuenta. Mañana se puede seguir (o cargarla a mano mirando la foto).' }, 429);
+  if (+used > max) { await refund(); return out({ ok: false, limit: true, msg: 'Por hoy se llegó al máximo de hojas leídas de esta cuenta. Mañana se puede seguir (o cargarla a mano mirando la foto).' }, 429); }
 
   const content: any[] = imgs.map((i: any) => ({ type: 'image', source: { type: 'base64', media_type: i.type || 'image/jpeg', data: i.data } }));
   content.push({ type: 'text', text: 'Estas ' + imgs.length + ' foto(s) son de la historia clínica en papel de un paciente' + (b.hint ? ' (' + String(b.hint).slice(0, 120) + ')' : '') + '. Transcribila con la herramienta «historia».' });
@@ -114,11 +119,11 @@ export async function serve(req: Request): Promise<Response> {
     headers: { 'x-api-key': env('ANTHROPIC_API_KEY'), 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
     body: JSON.stringify({ model: MODEL(), max_tokens: 8000, system: SYS, tools: [TOOL], tool_choice: { type: 'tool', name: 'historia' }, messages: [{ role: 'user', content }] })
   });
-  if (!r.ok) { const t = await r.text().catch(() => ''); return out({ ok: false, msg: 'No se pudo leer ahora (' + r.status + '). Probá de nuevo en un rato.', detail: t.slice(0, 200) }, 502); }
+  if (!r.ok) { await refund(); const t = await r.text().catch(() => ''); return out({ ok: false, msg: 'No se pudo leer ahora (' + r.status + '). Probá de nuevo en un rato.', detail: t.slice(0, 200) }, 502); }
   const j = await r.json();
   const use = (j.content || []).filter((x: any) => x.type === 'tool_use' && x.name === 'historia')[0];
-  if (!use) return out({ ok: false, msg: 'No se pudo leer la historia. Probá con una foto más nítida o cargala a mano.' }, 422);
-  return out({ ok: true, data: tidy(use.input), pages: imgs.length });
+  if (!use) { await refund(); return out({ ok: false, msg: 'No se pudo leer la historia. Probá con una foto más nítida o cargala a mano.' }, 422); }
+  return out({ ok: true, data: tidy(use.input), pages: imgs.length, left: +left });
 }
 
 if ((globalThis as any).Deno?.serve) (globalThis as any).Deno.serve(serve);

@@ -31,4 +31,17 @@ P -c "create or replace function public.ov_key_ok(p_k text) returns boolean lang
 P -f "$(archivo perfil-profesional)" >/dev/null 2>&1; [ "$(salud)" = "true" ]; ok $? "volver a correr el archivo nuevo repara el aviso"
 P -c "grant select on public.ov_wpush_vapid to authenticated" >/dev/null 2>&1; [ "$(salud)" = "false" ]; ok $? "ov_health() avisa si la clave privada de los avisos queda legible"
 P -c "revoke select on public.ov_wpush_vapid from authenticated" >/dev/null 2>&1
+# saldo de hojas con IA, historial y uso (ia-uso.sql)
+P -c "insert into auth.users (id, email) values ('11111111-1111-1111-1111-111111111111', 'a@x.com') on conflict do nothing" >/dev/null 2>&1
+P -c "insert into public.ov_accounts (owner, email) values ('11111111-1111-1111-1111-111111111111', 'a@x.com') on conflict do nothing" >/dev/null 2>&1
+[ "$(P -At -c "select public.ov_ai_take('11111111-1111-1111-1111-111111111111', 1)")" = "-1" ]; ok $? "sin hojas cargadas la lectura con IA no anda"
+P -c "update public.ov_accounts set ai_sheets = 5 where owner = '11111111-1111-1111-1111-111111111111'" >/dev/null 2>&1
+[ "$(P -At -c "select public.ov_ai_take('11111111-1111-1111-1111-111111111111', 2)")" = "3" ]; ok $? "leer 2 hojas descuenta 2 y quedan 3"
+[ "$(P -At -c "select public.ov_ai_take('11111111-1111-1111-1111-111111111111', 4)")" = "-1" ]; ok $? "no deja leer más hojas de las que hay"
+[ "$(P -At -c "select public.ov_ai_give('11111111-1111-1111-1111-111111111111', 2)")" = "5" ]; ok $? "si la lectura falla se devuelven las hojas"
+[ "$(P -At -c "select ai_sheets from public.ov_accounts where owner = '11111111-1111-1111-1111-111111111111'")" = "5" ]; ok $? "el saldo quedó en 5"
+P -c "update public.ov_accounts set plan = 'basico', notes = 'prueba' where owner = '11111111-1111-1111-1111-111111111111'" >/dev/null 2>&1
+[ "$(P -At -c "select count(*) from public.ov_audit where owner = '11111111-1111-1111-1111-111111111111'")" = "1" ]; ok $? "un cambio de plan queda en el historial"
+P -c "update public.ov_accounts set ai_sheets = ai_sheets - 1 where owner = '11111111-1111-1111-1111-111111111111'" >/dev/null 2>&1
+[ "$(P -At -c "select count(*) from public.ov_audit where owner = '11111111-1111-1111-1111-111111111111'")" = "1" ]; ok $? "el saldo de hojas no llena el historial de cuentas"
 rm -rf "$T"; if [ "$FALLAS" = "0" ]; then echo "todo bien · $OKS pruebas"; else echo "$FALLAS FALLAS (de $((FALLAS+OKS)))"; exit 1; fi

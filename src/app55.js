@@ -6,6 +6,10 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.57.0', b: '1.113.0', d: '2026-11-27', items: [
+      { t: 'Pasar historias de papel con IA: ahora es un servicio por paquetes de hojas. En la pantalla ves cuántas hojas te quedan y desde ahí podés contratar más por WhatsApp. Cargar a mano sigue siendo gratis.' },
+      { t: 'Mejoras internas para que podamos acompañarte mejor: guardamos contadores de uso (solo números, nunca datos de tus pacientes).' }
+    ] },
     { v: '1.56.0', b: '1.112.0', d: '2026-11-27', items: [
       { t: 'Informe para un colega: desde Endodoncia, Implantes u Ortodoncia armás un PDF (derivación o contrarreferencia) con el resumen del tratamiento, radiografías, indicaciones, tu sello y tu firma, y lo mandás por WhatsApp.' },
       { t: 'Logo del consultorio: ahora se sube en Menú › Datos del centro y sale arriba en todos los PDF, con el nombre, la dirección y el teléfono.' }

@@ -33,6 +33,11 @@ jobs:
         run: node --experimental-strip-types --no-warnings tests/push/push.test.mjs
       - name: Pantallas y funciones
         run: node tests/ui/humo.js /tmp/ov-humo
+      - name: Seguridad de textos, plata y panel de administración
+        run: |
+          node tests/ui/xss.js
+          node tests/ui/dinero.js
+          node tests/ui/admin.js
 
   # Los SQL de Supabase: se aplican todos en orden en una base común, se vuelve a correr cada uno solo y no tiene que cambiar nada
   # (así volver a correr un archivo viejo no pisa lo nuevo). Ver docs/SQL.md.

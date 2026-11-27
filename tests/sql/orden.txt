@@ -28,4 +28,5 @@ whatsapp
 webpush
 vincular-usuario
 perfil-profesional
+ia-uso
 salud

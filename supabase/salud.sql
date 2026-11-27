@@ -37,6 +37,7 @@ begin
     public.ov_fn_has('ov_push_enq_rec', 'ov_wpush_subs'),         -- avisos en iPhone/PC (webpush.sql)
     public.ov_fn_has('ov_push_enq_booking', 'ov_wpush_subs'),
     public.ov_fn_has('ov_whoami', 'places'), public.ov_fn_has('ov_whoami', 'socio'),
+    public.ov_fn_has('ov_admin_accounts', 'ai_sheets'), public.ov_fn_has('ov_ai_take', 'ai_sheets'), public.ov_fn_has('ov_usage_add', 'ov_usage'),  -- saldo de hojas con IA y uso (ia-uso.sql)
     public.ov_fn_has('ov_push_register', null), public.ov_fn_has('ov_wpush_register', null), public.ov_fn_has('ov_wpush_unregister', null),
     public.ov_fn_has('ov_link_start', null), public.ov_fn_has('ov_link_accept', null), public.ov_fn_has('ov_new_account', null)
   ] loop if x is not null then f := array_append(f, x); end if; end loop;

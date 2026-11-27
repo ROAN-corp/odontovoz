@@ -62,7 +62,7 @@
     if (A._hcpMock) return A._hcpMock(imgs, it);
     if (!cloudOk()) return { ok: false, manual: true, msg: A.DEMO ? 'En el modo prueba no se lee con IA: cargala a mano mirando la foto.' : 'Para leer con IA hay que entrar con tu cuenta. Mientras, cargala a mano mirando la foto.' };
     try { return await CL.api('/functions/v1/hc-read', { method: 'POST', body: { images: imgs, hint: it.pid ? (A.PAT(it.pid) || {}).name : '' } }); }
-    catch (e) { const d = (e && e.data) || {}; if (e && e.status === 503) return { ok: false, manual: true, off: true, msg: d.msg || 'La lectura automática todavía no está encendida.' }; return { ok: false, msg: d.msg || (navigator.onLine === false ? 'Sin internet: se lee cuando vuelva la conexión.' : 'No se pudo leer ahora. Tocá «Reintentar».'), retry: navigator.onLine === false }; }
+    catch (e) { const d = (e && e.data) || {}; if (e && e.status === 402) return { ok: false, manual: true, off: true, nocredit: true, msg: d.msg || 'Tu cuenta no tiene hojas disponibles para leer con IA.' }; if (e && e.status === 503) return { ok: false, manual: true, off: true, msg: d.msg || 'La lectura automática todavía no está encendida.' }; return { ok: false, msg: d.msg || (navigator.onLine === false ? 'Sin internet: se lee cuando vuelva la conexión.' : 'No se pudo leer ahora. Tocá «Reintentar».'), retry: navigator.onLine === false }; }
   }
   A.hcpRun = async () => {
     if (running) return; running = true;
@@ -73,7 +73,7 @@
         it.st = 'leyendo'; paint();
         const r = await readOne(it);
         if (r && r.ok && r.data) { it.data = r.data; it.st = 'leido'; it.src = 'ia'; it.msg = ''; }
-        else if (r && r.manual) { it.data = it.data || emptyData(); it.st = 'manual'; it.msg = r.msg || ''; if (r.off) S._hcpOff = 1; }
+        else if (r && r.manual) { it.data = it.data || emptyData(); it.st = 'manual'; it.msg = r.msg || ''; if (r.off) S._hcpOff = r.nocredit ? 2 : 1; }
         else { it.st = r && r.retry ? 'cola' : 'error'; it.msg = (r && r.msg) || 'No se pudo leer.'; if (r && r.retry) { await putI(it); paint(); break; } }
         await putI(it); paint();
         if (it.st === 'leido' && A.nfAdd) A.nfAdd({ id: 'hcp:' + it.id, k: 'info', t: 'Historia leída: ' + nameOf(it), b: 'Revisala y confirmala en «Pasar historias de papel».', act: 'hcpOpen' });
@@ -106,7 +106,10 @@
       b += '<div class="hp-start">' + cam('📷 Sacar fotos de una historia', 'primary big') + '<label class="btn big filebtn">Subir fotos o PDF escaneado<input type="file" accept="image/*,application/pdf" multiple hidden data-chg="hcpFiles"></label></div>' +
         '<label class="chk hp-each"><input type="checkbox" id="hpEach"' + (S._hpEach ? ' checked' : '') + ' data-chg="hcpEach"> Al subir archivos: cada archivo es de un paciente distinto</label>';
     }
-    if (S._hcpOff) b += '<div class="hint">La lectura automática con IA todavía no está encendida en esta cuenta. Igual podés pasar las historias: la foto queda al lado y la cargás a mano (también por voz).</div>';
+    const sheets = CL && CL.lic && CL.lic.ai_sheets != null ? +CL.lic.ai_sheets : null, wa = 'https://wa.me/' + ((A.SUPPORT && A.SUPPORT.whatsapp) || '') + '?text=' + encodeURIComponent('Hola, quiero contratar un paquete de hojas para pasar historias de papel con IA en OdontoVoz.');
+    if (sheets != null && cloudOk()) b += '<div class="hint hp-sheets"><b>Hojas con IA disponibles: ' + sheets + '</b>' + (sheets < 20 ? ' · <a href="' + esc(wa) + '" target="_blank" rel="noopener">Contratar un paquete</a> (500, 2.000 o 5.000 hojas)' : '') + '. Cada hoja leída descuenta una.</div>';
+    if (S._hcpOff === 2) b += '<div class="hint">Tu cuenta no tiene hojas para leer con IA: es un servicio pago por paquetes. <a href="' + esc(wa) + '" target="_blank" rel="noopener">Escribinos por WhatsApp para contratarlo</a>. Mientras tanto podés cargar la historia a mano: la foto queda al lado.</div>';
+    else if (S._hcpOff) b += '<div class="hint">La lectura automática con IA todavía no está encendida en esta cuenta. Igual podés pasar las historias: la foto queda al lado y la cargás a mano (también por voz).</div>';
     if (lote.length) {
       const n = k => lote.filter(x => x.st === k).length;
       b += '<h3 class="hp-h">Historias pasadas por foto <span class="count">' + lote.length + '</span></h3><div class="hp-sum">' + (n('leido') ? '<span class="chip ok">' + n('leido') + ' para revisar</span>' : '') + (n('leyendo') + n('cola') ? '<span class="chip">' + (n('leyendo') + n('cola')) + ' leyéndose</span>' : '') + (n('manual') ? '<span class="chip warn">' + n('manual') + ' a mano</span>' : '') + (n('error') ? '<span class="chip bad">' + n('error') + ' con error</span>' : '') + '</div>' +

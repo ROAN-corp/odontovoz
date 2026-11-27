@@ -39,14 +39,13 @@ Es lo que se le cobraría al consultorio, con la ganancia ya incluida. **No es e
 
 | Paquete | Hojas | Precio al cliente | Por hoja |
 |---|---|---|---|
-| Prueba | primeras 100 | gratis | — |
 | Chico | 500 | USD 49 | ~USD 0,10 |
 | Mediano | 2.000 | USD 149 | ~USD 0,075 |
 | Grande | 5.000 | USD 299 | ~USD 0,06 |
 
 **Cómo decidir:**
 - **Ganancia por hoja = precio por hoja − costo por hoja.** Conviene que el costo sea, como mucho, un tercio del precio del paquete grande (más o menos USD 0,02 por hoja). Si da más, subir los precios o achicar los paquetes.
-- Las **100 hojas gratis** las paga ROAN: cuentan como costo para conseguir clientes. Por ejemplo, con un costo de USD 0,02 por hoja, cada cliente nuevo cuesta unos USD 2.
+- **No hay hojas gratis para clientes** (decidido el 27/11/2026): es un servicio pago por paquetes. La prueba de costo del punto 4 la hace ROAN con sus propias historias.
 - Los precios están en dólares, como el resto de los planes, y en Argentina se cobran en pesos al dólar de referencia (`DOLAR` en `src/app25.js`).
 
 ## 6. Qué hacer después de la prueba (tarea para Claude)
@@ -57,7 +56,6 @@ Cuando Rodrigo pase los números (gasto en USD, hojas leídas, cuántas salieron
 2. Programar el **saldo de hojas por cuenta**:
    - columna o tabla en Supabase con las hojas disponibles;
    - descontar en `hc-read` antes de llamar a la IA;
-   - primeras 100 gratis;
    - aviso en la app cuando quede poco, con un botón de WhatsApp para comprar más (como «Mi plan»);
    - carga de paquetes desde `admin.html`.
 3. Agregar el servicio y sus precios a la portada (`sitio/index.html`) y a los términos (`sitio/terminos.html`, subir la versión de términos en `cloud.js` y en las páginas).
@@ -65,30 +63,20 @@ Cuando Rodrigo pase los números (gasto en USD, hojas leídas, cuántas salieron
 
 **Reglas:** Claude no pide, no ve ni pega claves. La clave la pone Rodrigo en Supabase.
 
-## 7. Método de activación cuando un cliente paga (decidido el 24/11/2026; todavía NO está armado, a propósito)
+## 7. Cómo se habilita a quien paga (armado en la 1.57, 27/11/2026)
 
-**Estado hoy:** apagado para todos (no hay clave de IA). No se publica nada hasta que entre el primer pago.
+**Estado:** el control por cuenta **ya está armado**. La IA sigue apagada hasta que Rodrigo ponga la clave (punto 3), y aun con la clave puesta **una cuenta sin hojas no puede leer** (la función responde 402 «sin hojas»).
 
-**Ojo, para no equivocarse:** **no hay que encender la clave de Anthropic (punto 3) antes de armar el control por cuenta (A.1 y A.2)**. Hoy `hc-read` no pregunta si la cuenta pagó: con la clave puesta, cualquier cuenta leería hasta 600 hojas por día gratis.
+**Cómo funciona:**
+- Cada cuenta tiene un saldo de hojas (`ov_accounts.ai_sheets`, arranca en 0). Es solo de pago: no hay hojas gratis.
+- `hc-read` descuenta con `ov_ai_take` **antes** de llamar a la IA. Si no alcanza (o no se puede comprobar), responde 402 y no gasta nada. Si la lectura falla o se pasa del tope diario, devuelve las hojas con `ov_ai_give`.
+- Cada movimiento queda en `ov_ai_ledger` (cuándo, cuántas, quién cargó, motivo).
+- En la app (Pasar historias de papel) la persona ve «Hojas con IA disponibles: N» y, si quedan pocas o ninguna, un botón de WhatsApp para contratar.
 
-**La idea:** el servicio queda apagado para todos y se habilita **cuenta por cuenta con un saldo de hojas**. Es el mismo esquema de los recordatorios de WhatsApp (`ov_wa.rem_plan`, `ov_wa_admin_set`, botón en `admin.html`). Se carga hojas a quien paga y se descuentan al leer.
+**Cada vez que un cliente paga (Rodrigo, 1 minuto):** `admin.html` › Editar la cuenta › «Lectura de historias de papel con IA» › elegir 500 / 2.000 / 5.000 (o «otra cantidad») › **Cargar paquete**. Queda anotado en «Ver movimientos». Después anotar el cobro en las notas de la cuenta.
 
-### A) Cuando entra el primer pago: lo que arma Claude (una sola vez, unas 2 horas y una versión nueva)
-1. **SQL** (agregar a `supabase/hcpapel.sql`, repetible sin riesgo): tabla `ov_ai_credit (owner uuid primary key, hojas int not null default 0, updated_at)` cerrada con RLS; función `ov_ai_take(owner, n)` que descuenta de forma atómica y devuelve las hojas que quedan (o -1 si no alcanzan); función `ov_ai_grant(owner, n)` que suma (solo `service_role` y administradores, con `ov_is_admin()`); y `ov_ai_admin_list()` para el panel.
-2. **`supabase/functions/hc-read/index.ts`**: una vez conocido el `owner`, llamar a `ov_ai_take` con la cantidad de hojas. Si no alcanza, responder **503 con `off: true`** y el mensaje «Este servicio no está activado en tu cuenta. Escribinos y te lo activamos.». La app ya sabe manejarlo (pasa a carga a mano y muestra el cartel), **no hay que tocar la app**. Si la IA falla (502 o 422), devolver las hojas con `ov_ai_grant`. Se mantiene el tope diario. Actualizar `tests/hc/hcread.test.mjs`.
-   - `hc-read` se despliega solo (`.github/workflows/functions.yml`) al subir a `main` cualquier cambio en `supabase/functions/**`. Por eso **no tocar esos archivos hasta este momento**.
-3. **`admin.html`**: botón «IA historias» en cada cuenta (como «WhatsApp»), para ver el saldo y cargar hojas (+500, +2.000, +5.000 o a mano). Se puede dejar para después: mientras tanto se carga con SQL (punto B).
-4. **Después, sin apuro:** aviso en la app cuando quedan pocas hojas, con botón de WhatsApp (como «Mi plan»); servicio y precios en la portada (`sitio/index.html`) y en los términos (`sitio/terminos.html`, subiendo la versión en `cloud.js` y en las páginas).
-5. Rodrigo corre el SQL nuevo en Supabase › SQL Editor (Claude no maneja la base) y hace el punto C.
+**Una sola vez:** correr `supabase/ia-uso.sql` en Supabase › SQL Editor y `select ov_health();` (tiene que dar ok); poner la clave de Anthropic (punto 3); hacer la prueba de costo (punto 4) antes de venderlo.
 
-### B) Cada vez que un cliente paga: lo hace Rodrigo, sin código, en unos 2 minutos
-1. Cobrarle el paquete del punto 5 (en dólares, pasados a pesos con `DOLAR` de `src/app25.js`).
-2. Supabase › SQL Editor, buscar la cuenta: `select owner, email from ov_accounts where email ilike '%parte-del-mail%';`
-3. Cargar las hojas: `select ov_ai_grant('<owner>', 500);` (Chico 500, Mediano 2000, Grande 5000). Para dar las 100 de prueba gratis: `select ov_ai_grant('<owner>', 100);`
-4. Avisarle al cliente que ya puede usarlo en Ajustes › Consultorio › Pasar historias de papel. Para ver cuánto le queda: `select * from ov_ai_credit where owner = '<owner>';`
-5. Anotar el pago en las notas de la cuenta (panel › Editar), por ejemplo «IA 500 hojas, USD 49, 24/11/2026».
+**Pendiente:** el servicio y sus precios en la portada (`sitio/index.html`) y en los términos (`sitio/terminos.html`, subiendo la versión de términos en `cloud.js` y en las páginas); confirmar el margen con el costo real por hoja.
 
-### C) Una sola vez antes del primer cliente (Rodrigo)
-Hacer el punto 3 de este documento (clave en Supabase; límite mensual en Anthropic: subirlo según el volumen vendido, para no cortar el servicio a mitad de un paquete) y la prueba de costo del punto 4. Si la prueba todavía no se hizo cuando paga el primero, se hace con esas primeras historias y se ajustan los precios antes del segundo.
-
-**Cuidados:** si el gasto de Anthropic llega al límite, la lectura se corta sola y la app pasa a carga a mano (no se pierde nada). Si una lectura falla, no se descuentan hojas. Claude nunca ve ni pega claves.
+**Cuidados:** si el gasto de Anthropic llega al límite mensual, la lectura se corta sola y la app pasa a carga a mano (no se pierde nada). Claude nunca ve ni pega claves.

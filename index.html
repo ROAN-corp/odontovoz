@@ -8204,10 +8204,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.56.0';
+  A.VERSION = '1.57.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.112.0';
+  A.VBUILD = '1.113.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18587,6 +18587,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.57.0', b: '1.113.0', d: '2026-11-27', items: [
+      { t: 'Pasar historias de papel con IA: ahora es un servicio por paquetes de hojas. En la pantalla ves cuántas hojas te quedan y desde ahí podés contratar más por WhatsApp. Cargar a mano sigue siendo gratis.' },
+      { t: 'Mejoras internas para que podamos acompañarte mejor: guardamos contadores de uso (solo números, nunca datos de tus pacientes).' }
+    ] },
     { v: '1.56.0', b: '1.112.0', d: '2026-11-27', items: [
       { t: 'Informe para un colega: desde Endodoncia, Implantes u Ortodoncia armás un PDF (derivación o contrarreferencia) con el resumen del tratamiento, radiografías, indicaciones, tu sello y tu firma, y lo mandás por WhatsApp.' },
       { t: 'Logo del consultorio: ahora se sube en Menú › Datos del centro y sale arriba en todos los PDF, con el nombre, la dirección y el teléfono.' }
@@ -21954,7 +21958,7 @@ const OVMenu = (function () {
     if (A._hcpMock) return A._hcpMock(imgs, it);
     if (!cloudOk()) return { ok: false, manual: true, msg: A.DEMO ? 'En el modo prueba no se lee con IA: cargala a mano mirando la foto.' : 'Para leer con IA hay que entrar con tu cuenta. Mientras, cargala a mano mirando la foto.' };
     try { return await CL.api('/functions/v1/hc-read', { method: 'POST', body: { images: imgs, hint: it.pid ? (A.PAT(it.pid) || {}).name : '' } }); }
-    catch (e) { const d = (e && e.data) || {}; if (e && e.status === 503) return { ok: false, manual: true, off: true, msg: d.msg || 'La lectura automática todavía no está encendida.' }; return { ok: false, msg: d.msg || (navigator.onLine === false ? 'Sin internet: se lee cuando vuelva la conexión.' : 'No se pudo leer ahora. Tocá «Reintentar».'), retry: navigator.onLine === false }; }
+    catch (e) { const d = (e && e.data) || {}; if (e && e.status === 402) return { ok: false, manual: true, off: true, nocredit: true, msg: d.msg || 'Tu cuenta no tiene hojas disponibles para leer con IA.' }; if (e && e.status === 503) return { ok: false, manual: true, off: true, msg: d.msg || 'La lectura automática todavía no está encendida.' }; return { ok: false, msg: d.msg || (navigator.onLine === false ? 'Sin internet: se lee cuando vuelva la conexión.' : 'No se pudo leer ahora. Tocá «Reintentar».'), retry: navigator.onLine === false }; }
   }
   A.hcpRun = async () => {
     if (running) return; running = true;
@@ -21965,7 +21969,7 @@ const OVMenu = (function () {
         it.st = 'leyendo'; paint();
         const r = await readOne(it);
         if (r && r.ok && r.data) { it.data = r.data; it.st = 'leido'; it.src = 'ia'; it.msg = ''; }
-        else if (r && r.manual) { it.data = it.data || emptyData(); it.st = 'manual'; it.msg = r.msg || ''; if (r.off) S._hcpOff = 1; }
+        else if (r && r.manual) { it.data = it.data || emptyData(); it.st = 'manual'; it.msg = r.msg || ''; if (r.off) S._hcpOff = r.nocredit ? 2 : 1; }
         else { it.st = r && r.retry ? 'cola' : 'error'; it.msg = (r && r.msg) || 'No se pudo leer.'; if (r && r.retry) { await putI(it); paint(); break; } }
         await putI(it); paint();
         if (it.st === 'leido' && A.nfAdd) A.nfAdd({ id: 'hcp:' + it.id, k: 'info', t: 'Historia leída: ' + nameOf(it), b: 'Revisala y confirmala en «Pasar historias de papel».', act: 'hcpOpen' });
@@ -21998,7 +22002,10 @@ const OVMenu = (function () {
       b += '<div class="hp-start">' + cam('📷 Sacar fotos de una historia', 'primary big') + '<label class="btn big filebtn">Subir fotos o PDF escaneado<input type="file" accept="image/*,application/pdf" multiple hidden data-chg="hcpFiles"></label></div>' +
         '<label class="chk hp-each"><input type="checkbox" id="hpEach"' + (S._hpEach ? ' checked' : '') + ' data-chg="hcpEach"> Al subir archivos: cada archivo es de un paciente distinto</label>';
     }
-    if (S._hcpOff) b += '<div class="hint">La lectura automática con IA todavía no está encendida en esta cuenta. Igual podés pasar las historias: la foto queda al lado y la cargás a mano (también por voz).</div>';
+    const sheets = CL && CL.lic && CL.lic.ai_sheets != null ? +CL.lic.ai_sheets : null, wa = 'https://wa.me/' + ((A.SUPPORT && A.SUPPORT.whatsapp) || '') + '?text=' + encodeURIComponent('Hola, quiero contratar un paquete de hojas para pasar historias de papel con IA en OdontoVoz.');
+    if (sheets != null && cloudOk()) b += '<div class="hint hp-sheets"><b>Hojas con IA disponibles: ' + sheets + '</b>' + (sheets < 20 ? ' · <a href="' + esc(wa) + '" target="_blank" rel="noopener">Contratar un paquete</a> (500, 2.000 o 5.000 hojas)' : '') + '. Cada hoja leída descuenta una.</div>';
+    if (S._hcpOff === 2) b += '<div class="hint">Tu cuenta no tiene hojas para leer con IA: es un servicio pago por paquetes. <a href="' + esc(wa) + '" target="_blank" rel="noopener">Escribinos por WhatsApp para contratarlo</a>. Mientras tanto podés cargar la historia a mano: la foto queda al lado.</div>';
+    else if (S._hcpOff) b += '<div class="hint">La lectura automática con IA todavía no está encendida en esta cuenta. Igual podés pasar las historias: la foto queda al lado y la cargás a mano (también por voz).</div>';
     if (lote.length) {
       const n = k => lote.filter(x => x.st === k).length;
       b += '<h3 class="hp-h">Historias pasadas por foto <span class="count">' + lote.length + '</span></h3><div class="hp-sum">' + (n('leido') ? '<span class="chip ok">' + n('leido') + ' para revisar</span>' : '') + (n('leyendo') + n('cola') ? '<span class="chip">' + (n('leyendo') + n('cola')) + ' leyéndose</span>' : '') + (n('manual') ? '<span class="chip warn">' + n('manual') + ' a mano</span>' : '') + (n('error') ? '<span class="chip bad">' + n('error') + ' con error</span>' : '') + '</div>' +
@@ -31176,6 +31183,47 @@ const OVMenu = (function () {
   const css = document.createElement('style'); css.id = 'ovApp141';
   css.textContent = '.rp-top{margin:0 0 10px}.rp-secs{display:flex;flex-direction:column;gap:6px;margin-top:4px}.cf-logo{margin:10px 0}';
   document.head.appendChild(css);
+})();
+/* ===== 1.57: uso de la aplicación (solo contadores, sin datos de pacientes): se manda de vez en cuando para que ROAN sepa si la cuenta la usa ===== */
+(function () {
+  'use strict';
+  const A = window.App, S = A.S, CL = A.cloud;
+  if (!CL || !CL.api) return;
+  const KEY = 'odontovoz.usage';
+  const ld = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const sv = u => { try { localStorage.setItem(KEY, JSON.stringify(u)); } catch (e) { /* nada */ } };
+  /* totales actuales de cosas que la persona carga (turnos, pacientes, notas, cobros, fotos, documentos) */
+  A.usageSnap = () => {
+    const t = { turno: 0, paciente: 0, nota: 0, cobro: 0, foto: 0, doc: 0 };
+    try {
+      Object.keys(S.days || {}).forEach(k => { (S.days[k] || []).forEach(a => { if (a && a.type !== 'block' && !a.demo) t.turno++; }); });
+      t.paciente = (A.PATS || []).length;
+      Object.keys(S.pd || {}).forEach(id => { const pd = S.pd[id] || {}; t.nota += (pd.notes || []).length; t.cobro += (pd.ledger || []).filter(e => e && e.type === 'pago' && !e.voided).length; t.foto += (pd.images || []).length; t.doc += (pd.docs || []).length; });
+    } catch (e) { /* nada */ }
+    return t;
+  };
+  const bump = k => { const u = ld(); u.ev = u.ev || {}; u.ev[k] = (u.ev[k] || 0) + 1; sv(u); };
+  /* cosas que se hacen sin guardar datos: voz, PDF, WhatsApp */
+  if (A.cmd && A.cmd.exec) { const p = A.cmd.exec; A.cmd.exec = function () { bump('voz'); return p.apply(this, arguments); }; }
+  if (A.saveFile) { const p = A.saveFile; A.saveFile = function () { bump('pdf'); return p.apply(this, arguments); }; }
+  if (A.waOpen) { const p = A.waOpen; A.waOpen = function () { bump('wa'); return p.apply(this, arguments); }; }
+  let busy = false;
+  A.usageFlush = async force => {
+    if (busy || !CL.session || A.DEMO || (A.CFG && A.CFG.demo) || (CL.readonly && !force) || navigator.onLine === false) return false;
+    const u = ld(), now = A.snapNow ? A.snapNow() : A.usageSnap(), day = A.today(), counts = {};
+    if (u.snap) Object.keys(now).forEach(k => { const d = (now[k] || 0) - (u.snap[k] || 0); if (d > 0 && d <= 300) counts[k] = d; });
+    Object.keys(u.ev || {}).forEach(k => { if (u.ev[k] > 0) counts[k] = Math.min(u.ev[k], 9999); });
+    if (u.day === day && !Object.keys(counts).length && !force) return true;
+    busy = true;
+    try {
+      await CL.api('/rest/v1/rpc/ov_usage_add', { method: 'POST', body: { p_day: day, p_counts: counts } });
+      u.snap = now; u.ev = {}; u.day = day; sv(u); return true;
+    } catch (e) { if (!u.snap) { u.snap = now; sv(u); } return false; } finally { busy = false; }
+  };
+  /* un rato después de abrir y cada media hora */
+  setTimeout(() => { A.usageFlush(); }, 25000);
+  setInterval(() => { A.usageFlush(); }, 30 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') A.usageFlush(); });
 })();
 /* ===== arranque, navegación y eventos ===== */
 (function () {

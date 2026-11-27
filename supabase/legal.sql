@@ -103,7 +103,8 @@ revoke all on function public.ov_admin_delete_account(uuid) from public, anon;
 grant execute on function public.ov_admin_delete_account(uuid) to authenticated;
 
 -- panel: el resumen de cuentas suma la aceptación de términos
-drop function if exists public.ov_admin_accounts();
+/* ov_admin_accounts solo se crea si todavía no existe: hay una versión más nueva en un archivo posterior y volver a correr este no tiene que pisarla (scripts/guardar-sql.py) */
+do $guard$ begin if not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'ov_admin_accounts') then execute $fn$
 create function public.ov_admin_accounts() returns table (
   owner uuid, email text, plan text, status text, trial_until date, paid_until date, max_devices int, max_locs int, lim_pros int, lim_devices int, flags text, notes text,
   created_at timestamptz, last_sync timestamptz, records bigint, last_sign_in timestamptz, devices bigint, limits jsonb, terms_version text, terms_at timestamptz
@@ -118,6 +119,7 @@ create function public.ov_admin_accounts() returns table (
   where public.ov_is_admin()
   order by a.created_at desc;
 $$;
+$fn$; end if; end $guard$;
 revoke all on function public.ov_admin_accounts() from public, anon;
 grant execute on function public.ov_admin_accounts() to authenticated;
 
