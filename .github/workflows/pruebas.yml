@@ -39,6 +39,7 @@ jobs:
           node tests/ui/dinero.js
           node tests/ui/admin.js
           node tests/ui/turnero.js
+          node tests/ui/pdfs.js
 
   # Los SQL de Supabase: se aplican todos en orden en una base común, se vuelve a correr cada uno solo y no tiene que cambiar nada
   # (así volver a correr un archivo viejo no pisa lo nuevo). Ver docs/SQL.md.

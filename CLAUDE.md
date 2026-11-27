@@ -1,6 +1,6 @@
 # OdontoVoz · nota de traspaso para Claude
 
-Leé esto antes de tocar nada. Versión actual: **1.58.0** (compilación 1.114.0), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
+Leé esto antes de tocar nada. Versión actual: **1.59.0** (compilación 1.115.0), noviembre 2026. Esta nota es corta a propósito (cada mensaje la lee entera): el historial completo por versión está en `docs/HISTORIA.md` y el detalle en `LEEME.md`; buscalos con grep solo cuando haga falta.
 
 ## Quiénes y qué
 - Producto de **ROAN corp** (Rodrigo y su socio, odontólogos de la Patagonia). Contacto: somosroan@gmail.com. GitHub: organización **ROAN-corp**.
@@ -27,7 +27,7 @@ Leé esto antes de tocar nada. Versión actual: **1.58.0** (compilación 1.114.0
 
 ## Publicar una versión
 1. Subir la versión. **Desde el 16/11/2026 hay dos números:** el visible (`A.VERSION` en `src/app10.js`, `NAME` en `sw.js`, `package.json`, tag y nombre en `.github/workflows/apk.yml`; arrancó en 1.0) y la compilación interna que nunca baja (`A.VBUILD` en `src/app10.js` y `VERSION` de `sw.js`, `odontovoz-1.55.0` en la 1.0; subirla siempre). En Novedades (`app55`) cada versión nueva lleva `v` (visible) y `b` (compilación). Anotar los cambios en `LEEME.md`.
-2. Correr `node scripts/inline-src.js`, `node tests/ovcmd.test.js`, `node tests/ovcmd.charla.test.js` y **`node tests/ui/humo.js`**, `node tests/ui/xss.js` y `node tests/ui/dinero.js`, `node tests/ui/admin.js` (panel), `node tests/ui/turnero.js` (página de turnos) (y antes de un lanzamiento grande `tests/ui/recorrido.js`, lento) (pantallas en celular y PC, botones sin acción, versiones, funciones principales; necesita `npm i --no-save playwright jspdf@2.5.1`; en GitHub corre solo: `.github/workflows/pruebas.yml`). Al sumar una función importante, sumale su prueba en `tests/ui/humo.js`.
+2. Correr `node scripts/inline-src.js`, `node tests/ovcmd.test.js`, `node tests/ovcmd.charla.test.js` y **`node tests/ui/humo.js`**, `node tests/ui/xss.js` y `node tests/ui/dinero.js`, `node tests/ui/admin.js` (panel), `node tests/ui/turnero.js` (página de turnos), `node tests/ui/pdfs.js` (membrete en todos los PDF) (y antes de un lanzamiento grande `tests/ui/recorrido.js`, lento) (pantallas en celular y PC, botones sin acción, versiones, funciones principales; necesita `npm i --no-save playwright jspdf@2.5.1`; en GitHub corre solo: `.github/workflows/pruebas.yml`). Al sumar una función importante, sumale su prueba en `tests/ui/humo.js`.
 3. Subir a `main`: el workflow `web.yml` publica la web y `apk.yml` compila y firma el APK (keystore en los secrets del repo; **nunca** subir el keystore).
 4. Verificar la web en vivo y que la última release sea la nueva.
 

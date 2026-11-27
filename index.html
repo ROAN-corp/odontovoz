@@ -286,6 +286,7 @@ h1, h2, h3 { font-family: var(--f-display); margin: 0; letter-spacing: -.01em; t
 .docpaper { background: var(--paper); color: var(--paper-ink); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; font-size: 14px; display: flex; flex-direction: column; gap: 10px; }
 .docpaper h3 { font-size: 17px; color: var(--paper-ink); } .docpaper h4 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #3b5660; font-family: var(--f-body); }
 .docpaper p { margin: 0; white-space: pre-line; }
+.docpaper .dp-head { display: flex; gap: 12px; align-items: center; padding-bottom: 10px; border-bottom: 2px solid var(--accent); } .docpaper .dp-head img { max-width: 120px; max-height: 56px; object-fit: contain; } .docpaper .dp-head b { display: block; font-size: 15px; color: var(--accent); } .docpaper .dp-head small { display: block; font-size: 12px; color: #4b6068; }
 .seal { border: 1px solid var(--ok); background: var(--ok-soft); border-radius: 10px; padding: 10px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
 .seal .code { font-family: var(--f-mono); font-size: 15px; font-weight: 600; letter-spacing: .04em; overflow-wrap: anywhere; }
 .seal.rev { border-color: var(--pat); background: var(--red-soft); }
@@ -4038,8 +4039,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
   /* ---------- vista de documento ---------- */
   A.docPaperHTML = (body, pat, meta) => {
     meta = meta || {};
-    let h = '<div class="docpaper"><div><h3>' + esc(body.title) + '</h3><div class="hint" style="color:#4b6068">' + esc(body.lead || '') + '</div></div>' +
-      '<p><b>' + esc(A.CLINIC) + '</b> · Paciente: <b>' + esc(pat.name) + '</b> · DNI ' + esc(pat.dni) + '</p>';
+    const lg = A.CFG && A.CFG.logo, CF = A.CFG || {}, info = [CF.addr, CF.phone ? 'Tel. ' + CF.phone : '', CF.mail, CF.web].filter(Boolean).join(' · ');
+    let h = '<div class="docpaper"><div class="dp-head">' + (lg && lg.src ? '<img src="' + esc(lg.src) + '" alt="">' : '') + '<div><b>' + esc(A.CLINIC) + '</b>' + (info ? '<small>' + esc(info) + '</small>' : '') + '</div></div><div><h3>' + esc(body.title) + '</h3><div class="hint" style="color:#4b6068">' + esc(body.lead || '') + '</div></div>' +
+      '<p>Paciente: <b>' + esc(pat.name) + '</b> · DNI ' + esc(pat.dni) + '</p>';
     (body.sections || []).forEach(s => {
       h += '<div><h4>' + esc(s.h) + '</h4>';
       if (s.p) h += '<p>' + esc(s.p) + '</p>';
@@ -4442,11 +4444,13 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     o.need = h => { if (o.y + h > Hh - 20) { d.addPage(); o.y = M; } };
     o.text = (t, x, y, opt) => d.text(clean(t), x, y, opt);
     o.head = (ttl, sub, pat, extra) => {
-      const lg = A.CFG && A.CFG.logo; let lgH = 0;
-      if (lg && lg.src) { try { const bw = 34, bh = 18, r = Math.min(bw / (lg.w || 1), bh / (lg.h || 1)), w = (lg.w || 1) * r, h = (lg.h || 1) * r; d.addImage(lg.src, /png/i.test(lg.src.slice(0, 30)) ? 'PNG' : 'JPEG', W - M - w, o.y, w, h); lgH = h; } catch (e) { /* logo dañado: se sigue sin logo */ } }
-      d.setFont('helvetica', 'bold'); d.setFontSize(9); o.setC(ACC); o.text(A.CLINIC.toUpperCase(), M, o.y + 3);
-      if (A.CFG && (A.CFG.addr || A.CFG.phone)) { d.setFont('helvetica', 'normal'); d.setFontSize(8); o.setC(MUT); o.text([A.CFG.addr, A.CFG.phone ? 'Tel. ' + A.CFG.phone : ''].filter(Boolean).join(' · '), M, o.y + 7); o.y += 4; }
-      o.y += 8; if (lgH && o.y < M + lgH + 2) o.y = M + lgH + 2;
+      const lg = A.CFG && A.CFG.logo, CF = A.CFG || {}, y0 = o.y; let lgW = 0, lgH = 0;
+      if (lg && lg.src) { try { const bw = 40, bh = 20, r = Math.min(bw / (lg.w || 1), bh / (lg.h || 1)), w = (lg.w || 1) * r, h = (lg.h || 1) * r; d.addImage(lg.src, /png/i.test(lg.src.slice(0, 30)) ? 'PNG' : 'JPEG', M, y0, w, h); lgW = w + 5; lgH = h; } catch (e) { /* logo dañado: se sigue sin logo */ } }
+      const tx = M + lgW, tw = W - M - tx;
+      d.setFont('helvetica', 'bold'); d.setFontSize(13); o.setC(ACC); const nl = d.splitTextToSize(clean(A.CLINIC), tw); o.text(nl, tx, y0 + 4.5); let yy = y0 + 4.5 + (nl.length - 1) * 5.2 + 4.6;
+      const info = [CF.addr, CF.phone ? 'Tel. ' + CF.phone : '', CF.mail, CF.web].filter(Boolean).join(' · ');
+      if (info) { d.setFont('helvetica', 'normal'); d.setFontSize(8); o.setC(MUT); d.splitTextToSize(clean(info), tw).forEach(l => { o.text(l, tx, yy); yy += 3.8; }); }
+      o.y = Math.max(y0 + lgH, yy) + 3; d.setDrawColor(ACC[0], ACC[1], ACC[2]); d.setLineWidth(0.5); d.line(M, o.y - 1.5, W - M, o.y - 1.5); o.y += 3;
       d.setFont('helvetica', 'bold'); d.setFontSize(17); o.setC(INK); const tl = d.splitTextToSize(clean(ttl), W - 2 * M); o.text(tl, M, o.y + 5); o.y += 6 * tl.length + 2;
       if (sub) { d.setFont('helvetica', 'normal'); d.setFontSize(10); o.setC(MUT); const sl = d.splitTextToSize(clean(sub), W - 2 * M); o.text(sl, M, o.y + 3); o.y += 5 * sl.length + 1; }
       if (pat) { d.setFont('helvetica', 'normal'); d.setFontSize(10); o.setC(INK); o.text('Paciente: ' + pat.name + '   DNI ' + pat.dni + (pat.age ? '   ' + pat.age + ' años' : '') + (pat.cov ? '   ' + pat.cov : ''), M, o.y + 4); o.y += 7; }
@@ -5003,7 +5007,9 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return '<div class="cfg-lead">Acá van los datos que se imprimen en presupuestos, recibos e indicaciones, y los que ve el paciente en el turnero online. Los cambios se guardan solos.</div>' +
       '<div class="row2"><div class="field"><label for="cfClin">' + (solo() ? 'Nombre del consultorio' : 'Nombre del centro') + '</label><input id="cfClin" data-chg="cfgField" data-f="clinic" value="' + esc(A.CLINIC) + '"></div>' +
       '<div class="field"><label for="cfPhone">Teléfono / WhatsApp</label><input id="cfPhone" inputmode="tel" data-chg="cfgField" data-f="phone" value="' + esc(A.CFG.phone) + '" placeholder="Ej.: 11 5555-0000"></div></div>' +
-      '<div class="field"><label for="cfAddr">Dirección</label><input id="cfAddr" data-chg="cfgField" data-f="addr" value="' + esc(A.CFG.addr) + '" placeholder="Calle, número, localidad"></div>' + (A.cfgLogoHTML ? A.cfgLogoHTML() : '') +
+      '<div class="field"><label for="cfAddr">Dirección</label><input id="cfAddr" data-chg="cfgField" data-f="addr" value="' + esc(A.CFG.addr) + '" placeholder="Calle, número, localidad"></div>' +
+      '<div class="row2"><div class="field"><label for="cfMail">Correo del consultorio <span class="muted">(opcional)</span></label><input id="cfMail" type="email" data-chg="cfgField" data-f="mail" value="' + esc(A.CFG.mail) + '" placeholder="consultorio@ejemplo.com"></div>' +
+      '<div class="field"><label for="cfWeb">Web o Instagram <span class="muted">(opcional)</span></label><input id="cfWeb" data-chg="cfgField" data-f="web" value="' + esc(A.CFG.web) + '" placeholder="@miconsultorio"></div></div>' + (A.cfgLogoHTML ? A.cfgLogoHTML() : '') +
       '<div class="block"><h3>Turnos de ejemplo</h3><label class="chk"><input type="checkbox" data-chg="cfgDemo"' + (A.CFG.demo ? ' checked' : '') + '> Mostrar turnos ficticios de ejemplo en la agenda</label><div class="hint">Sirven para probar el sistema. Cuando empieces a cargar tus turnos reales, desmarcá esta opción: la agenda queda vacía (tus turnos cargados a mano no se tocan).</div></div>' +
       '<div class="block"><h3>Tipo de cuenta</h3><div class="row-btns"><span class="chip acc">' + (solo() ? 'Consultorio individual' : 'Centro odontológico') + '</span><button class="btn small" data-act="changeAccount">Cambiar tipo de cuenta</button></div>' + (solo() ? '<div class="tip">¿Van a ser dos o más profesionales? Cambiá a «Centro odontológico» y vas a poder sumar profesionales, cada uno con su agenda y sus porcentajes.</div>' : '') + '</div>';
   }
@@ -8204,10 +8210,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.58.0';
+  A.VERSION = '1.59.0';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.114.0';
+  A.VBUILD = '1.115.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -18587,6 +18593,10 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.59.0', b: '1.115.0', d: '2026-11-27', items: [
+      { t: 'Membrete profesional en todos los PDF (historia clínica, anamnesis, consentimientos, presupuestos, planes, informes, estado de cuenta y más): logo, nombre, dirección, teléfono, correo y web del consultorio.' },
+      { t: 'En Menú › Datos del centro ahora podés subir el logo y cargar el correo y la web (o Instagram) del consultorio.' }
+    ] },
     { v: '1.58.0', b: '1.114.0', d: '2026-11-27', items: [
       { t: 'Turnero online: ahora el paciente también puede cancelar su turno desde la página de turnos, con su código, su DNI y los últimos 4 números de su celular (respeta las horas de anticipación que fijaste). El turno pasa solo a «Canceló», el horario queda libre y te llega un aviso.' }
     ] },
