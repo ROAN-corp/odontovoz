@@ -8210,10 +8210,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
 (function () {
   'use strict';
   const A = window.App, $ = A.$, S = A.S, esc = A.esc, MF = A.modalFns, C = window.OVCmd;
-  A.VERSION = '1.61.0';
+  A.VERSION = '1.61.1';
   /* 16/11/2026: la versión que ve la gente volvió a 1.0 (primera versión oficial, la registrada en la DNDA).
      Por dentro sigue subiendo este número, que es el que comparan los avisos de actualización y Novedades. */
-  A.VBUILD = '1.117.0';
+  A.VBUILD = '1.118.0';
   const UC = s => { s = String(s || '').trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
   /* el motivo vive en la historia del paciente; los anteriores quedan como historial */
@@ -10856,7 +10856,7 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
       (on && !A.isSolo() && proList().length > 1 ? '<details class="tl-pros"><summary>Un link para cada profesional</summary><p class="hint" style="margin:4px 0">Cada uno muestra solo a ese profesional: sus pacientes no ven a los demás del centro.</p>' + proList().map(p => '<div class="tl-u"><span class="tl-pn"><i class="stdot" style="background:' + p.color + '"></i> ' + esc(p.name) + '</span><input readonly value="' + esc(link(p.id)) + '" onclick="this.select()" aria-label="Link de ' + esc(p.name) + '"><button class="btn small" data-act="tnLinkCopy" data-p="' + p.id + '">Copiar</button><button class="btn small" data-act="tnLinkWa" data-p="' + p.id + '">WhatsApp</button></div>').join('') + '</details>' : '') +
       '<div class="tl-s' + (TS.state === 'err' || TS.state === 'notables' ? ' bad' : '') + '">' + st + '</div>' +
       '<p class="hint" style="margin:4px 0 0">El paciente ve solo los horarios libres de los próximos ' + (o.maxDays || 30) + ' días y pide el turno. Te llega a la agenda como <b>pendiente · online</b> para que lo confirmes por WhatsApp' + (o.sena ? ' y le pidas la seña de ' + A.money(o.sena) : '') + '. Horarios, motivos y anticipación: Ajustes › Turnero online.</p>' +
-      '<p class="tl-demo">Abajo, una muestra de lo que ve el paciente.</p><button class="btn small" data-act="tnClose">Volver a la app</button></div>';
+      '<p class="tl-demo">Abajo, una muestra de lo que ve el paciente.</p><div class="row-btns"><button class="btn small primary" data-act="tnCfg">Configurar prácticas, seña y horarios</button><button class="btn small" data-act="tnClose">Volver a la app</button></div></div>';
   }
   function paintTn() { const h = $('#tnHost'); if (!h || !document.body.classList.contains('tn-on')) return; const old = $('#tnLink'); if (old) old.outerHTML = tnPanel(); else h.insertAdjacentHTML('afterbegin', tnPanel()); const dm = h.querySelector('.tn-demo'); if (dm) dm.style.display = 'none'; }
   const tnOpenPrev = A.acts.tnOpen;
@@ -17012,6 +17012,10 @@ window.OV_CONFIG = window.OV_CONFIG || { supabaseUrl: 'https://hcppfvioiaaejayzz
     return rmPrev.apply(this, arguments);
   };
 
+  /* el turnero online no es una ventana: abre una página entera. Sin esto, «volver a Ajustes» reabría Ajustes encima y había que cerrarla a mano (1.61.1) */
+  const tnPrev = A.acts.tnOpen;
+  if (tnPrev) A.acts.tnOpen = function () { S._ajBack = false; return tnPrev.apply(this, arguments); };
+
   /* ---------- videos tutoriales por modo ---------- */
   const VBASE = 'https://odontovoz.com.ar/video/';
   const VIDS = [['configurar', 'Configurá tu consultorio'], ['agenda', 'La agenda'], ['ficha', 'Ficha y ortodoncia']];
@@ -18597,6 +18601,9 @@ const OVMenu = (function () {
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.61.1', b: '1.118.0', d: '2026-11-28', items: [
+      { t: 'Corregido: al tocar «Turnero online» en Ajustes, Ajustes volvía a abrirse encima y había que cerrarlo a mano. Ahora el turnero se abre directo. Además, en esa pantalla hay un botón «Configurar prácticas, seña y horarios».' }
+    ] },
     { v: '1.61.0', b: '1.117.0', d: '2026-11-28', items: [
       { t: 'Turnero online: ahora elegís qué prácticas puede pedir el paciente por su cuenta (por ejemplo, sin extracciones), cuánto tiempo reservás para cada una (de 15 min a 4 h), el precio que se le muestra (opcional, lo podés traer de tu lista de precios) y podés agregar prácticas propias. También el aviso para «otro motivo» y un mensaje en la página. Está en Configuración › Turnero online › Editar prácticas, tiempos y precios.' }
     ] },
@@ -31409,6 +31416,7 @@ const OVMenu = (function () {
     if (f === 'other') o.other = !!el.checked; else if (f === 'otherDur') o.otherDur = parseInt(el.value, 10) || 30; else o[f] = String(el.value).trim().slice(0, f === 'msg' ? 220 : 160);
     persist();
   };
+  A.acts.tnCfg = () => { if (A.acts.tnClose && document.body.classList.contains('tn-on')) A.acts.tnClose(); A.acts.cfgOpen({ getAttribute: k => (k === 'data-t' ? 'online' : null) }); };
   A.acts.tnMotBack = () => {
     A.tnMotives().forEach(m => { if (!m.label) m.on = false; }); persist(); if (A.tnPublish) A.tnPublish(true);
     A.acts.cfgOpen({ getAttribute: k => (k === 'data-t' ? 'online' : null) });

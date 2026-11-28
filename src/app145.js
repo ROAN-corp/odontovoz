@@ -70,6 +70,7 @@
     if (f === 'other') o.other = !!el.checked; else if (f === 'otherDur') o.otherDur = parseInt(el.value, 10) || 30; else o[f] = String(el.value).trim().slice(0, f === 'msg' ? 220 : 160);
     persist();
   };
+  A.acts.tnCfg = () => { if (A.acts.tnClose && document.body.classList.contains('tn-on')) A.acts.tnClose(); A.acts.cfgOpen({ getAttribute: k => (k === 'data-t' ? 'online' : null) }); };
   A.acts.tnMotBack = () => {
     A.tnMotives().forEach(m => { if (!m.label) m.on = false; }); persist(); if (A.tnPublish) A.tnPublish(true);
     A.acts.cfgOpen({ getAttribute: k => (k === 'data-t' ? 'online' : null) });

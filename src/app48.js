@@ -71,6 +71,10 @@
     return rmPrev.apply(this, arguments);
   };
 
+  /* el turnero online no es una ventana: abre una página entera. Sin esto, «volver a Ajustes» reabría Ajustes encima y había que cerrarla a mano (1.61.1) */
+  const tnPrev = A.acts.tnOpen;
+  if (tnPrev) A.acts.tnOpen = function () { S._ajBack = false; return tnPrev.apply(this, arguments); };
+
   /* ---------- videos tutoriales por modo ---------- */
   const VBASE = 'https://odontovoz.com.ar/video/';
   const VIDS = [['configurar', 'Configurá tu consultorio'], ['agenda', 'La agenda'], ['ficha', 'Ficha y ortodoncia']];
