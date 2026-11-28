@@ -279,16 +279,18 @@
   const proList = () => A.PROS.filter(p => O().pros && O().pros[p.id] === false ? false : p.sched && Object.keys(p.sched).length);
   const DEF_TYPES = ['primera', 'control', 'limpieza', 'composite', 'endodoncia', 'extraccion', 'urgencia', 'corona', 'ortodoncia', 'implante', 'blanq'];
   const PUB_LABEL = { primera: 'Primera consulta', control: 'Control', limpieza: 'Limpieza y control', composite: 'Arreglo de caries / restauración', endodoncia: 'Tratamiento de conducto (endodoncia)', extraccion: 'Extracción', urgencia: 'Urgencia · dolor', corona: 'Corona (prueba o cementado)', ortodoncia: 'Control de ortodoncia', implante: 'Control de implante', blanq: 'Blanqueamiento' };
-  A.PUB_TYPES = DEF_TYPES;
+  A.PUB_TYPES = DEF_TYPES; A.PUB_LABEL = PUB_LABEL;
   /* por internet se reservan como máximo 30 minutos (si el motivo lleva más, el consultorio lo alarga después) */
   const ONLINE_MAX = 30;
   const capDur = (d, s) => Math.min(d, Math.max(s, Math.floor(ONLINE_MAX / s) * s));
-  const typeDur = (k, p) => { const s = A.slotOf(p), d = (A.TYPES[k] || ['', 30])[1]; return capDur(Math.max(s, Math.ceil(d / s) * s), s); };
+  /* si la persona editó sus prácticas (app145), cada una dura lo que ella puso; si no, se mantiene el tope de 30 minutos de antes */
+  const typeDur = (k, p) => { const s = A.slotOf(p), mo = A.tnMotive && A.tnMotive(k), d = mo ? mo.dur : (A.TYPES[k] || ['', 30])[1]; const r = Math.max(s, Math.ceil(d / s) * s); return mo ? Math.min(r, 240) : capDur(r, s); };
   function pubData() {
     const o = O(), pros = proList(), slots = {}, today = A.today();
     /* si nunca se tocaron los motivos, se ofrecen todos los habituales (antes eran solo 4) */
     const OLD4 = 'primera,control,urgencia,limpieza';
-    let types = (o.types && o.types.length && (o.typesSet || o.types.join(',') !== OLD4) ? o.types : DEF_TYPES).filter(k => A.TYPES[k]);
+    const MO = A.tnMotives ? A.tnMotives().filter(m => m.on !== false && m.label) : null;
+    let types = MO ? MO.map(m => m.k) : (o.types && o.types.length && (o.typesSet || o.types.join(',') !== OLD4) ? o.types : DEF_TYPES).filter(k => A.TYPES[k]);
     if (o.other !== false) types = types.concat(['otro']);
     let n = 0;
     types.forEach(k => {
@@ -297,13 +299,13 @@
         const d = A.add(today, i);
         if (A.closedOn && A.closedOn(d)) continue;
         const l = [];
-        pros.forEach(p => { const dur = k === 'otro' ? capDur(Math.max(A.slotOf(p), 30), A.slotOf(p)) : typeDur(k, p); A.freeSlots(p, d, dur, { minMin: (o.minHours || 0) * 60 }).forEach(t => l.push([p.id, t, dur])); });
+        pros.forEach(p => { const dur = k === 'otro' ? (MO && o.otherDur ? Math.min(240, Math.ceil(o.otherDur / A.slotOf(p)) * A.slotOf(p)) : capDur(Math.max(A.slotOf(p), 30), A.slotOf(p))) : typeDur(k, p); A.freeSlots(p, d, dur, { minMin: (o.minHours || 0) * 60 }).forEach(t => l.push([p.id, t, dur])); });
         if (l.length) { byD[d] = l.sort((a, b) => a[1] - b[1]); n += l.length; }
       }
       slots[k] = byD;
     });
     return { n, data: { clinic: A.CLINIC, addr: A.CFG.addr || '', phone: A.CFG.phone || '', wa: A.waNumber ? A.waNumber(A.CFG.phone || '') || '' : '', sena: o.sena || 0, cancelHours: o.cancelHours || 24, msg: o.msg || '',
-      types: types.map(k => ({ k, label: k === 'otro' ? 'Otro motivo (lo escribo yo)' : PUB_LABEL[k] || A.TYPES[k][0] })), pros: pros.map(p => ({ id: p.id, name: p.name, spec: p.spec || '' })), slots, solo: A.isSolo() } };
+      types: types.map(k => { const mo = A.tnMotive && A.tnMotive(k); return { k, label: k === 'otro' ? 'Otro motivo (lo escribo yo)' : (mo && mo.label) || PUB_LABEL[k] || (A.TYPES[k] || [k])[0], dur: k === 'otro' ? (MO ? (o.otherDur || 30) : 0) : (MO ? (mo ? mo.dur : 0) : 0), price: mo && mo.price > 0 && mo.showPrice !== false ? mo.price : 0 }; }), otherHint: MO ? (o.otherHint || '') : '', pros: pros.map(p => ({ id: p.id, name: p.name, spec: p.spec || '' })), slots, solo: A.isSolo() } };
   }
   async function publish(force) {
     if (!real() || TS.busy) return; const o = O();
@@ -329,7 +331,7 @@
       let pat = dni ? A.PATS.filter(x => String(x.dni || '').replace(/\D/g, '') === dni)[0] : null;
       if (!pat) pat = A.addPatient({ first: d.first, last: d.last, dni: d.dni, phone: d.phone, email: d.email, cov: d.cov || 'Particular', pro: d.pro });
       else if (!pat.phone && d.phone) A.setProfile(pat.id, { phone: d.phone });
-      const a = { id: A.uid(), pid: pat.id, pro: A.PRO(d.pro) ? d.pro : (A.PROS[0] || {}).id, date: d.date, start: +d.start, dur: +d.dur || 30, what: d.type === 'otro' ? ((m => m ? m.charAt(0).toUpperCase() + m.slice(1) : 'Otro motivo')(String(d.note || '').replace(/^Motivo:\s*/, '').split('. ')[0].trim())) : (A.TYPES[d.type] || [d.type || 'Turno'])[0], status: 'pendiente', rem: 'porenviar', online: true, code: r.code, onlineAt: r.created_at, note: d.note || '' };
+      const a = { id: A.uid(), pid: pat.id, pro: A.PRO(d.pro) ? d.pro : (A.PROS[0] || {}).id, date: d.date, start: +d.start, dur: +d.dur || 30, what: d.type === 'otro' ? ((m => m ? m.charAt(0).toUpperCase() + m.slice(1) : 'Otro motivo')(String(d.note || '').replace(/^Motivo:\s*/, '').split('. ')[0].trim())) : ((A.tnMotive && A.tnMotive(d.type)) ? A.tnMotive(d.type).label : (A.TYPES[d.type] || [d.type || 'Turno'])[0]), status: 'pendiente', rem: 'porenviar', online: true, code: r.code, onlineAt: r.created_at, note: d.note || '' };
       if (A.locAt) { const l = A.locAt(a.date, a.start, a.pro); if (l) a.loc = l; }
       A.mutate([a.date], () => { A.day(a.date).push(a); });
       A.toast('Turno pedido online: ' + pat.name + ', ' + A.fmtShort(a.date) + ' ' + A.mm(a.start) + '. Confirmalo por WhatsApp.');

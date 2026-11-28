@@ -6,6 +6,9 @@
 
   /* Lo nuevo, de lo más nuevo a lo más viejo. «top» = lo que va en la tarjeta (máx. 3 en total). Escribir corto y en lo que le sirve al usuario. */
   const NEWS = [
+    { v: '1.61.0', b: '1.117.0', d: '2026-11-28', items: [
+      { t: 'Turnero online: ahora elegís qué prácticas puede pedir el paciente por su cuenta (por ejemplo, sin extracciones), cuánto tiempo reservás para cada una (de 15 min a 4 h), el precio que se le muestra (opcional, lo podés traer de tu lista de precios) y podés agregar prácticas propias. También el aviso para «otro motivo» y un mensaje en la página. Está en Configuración › Turnero online › Editar prácticas, tiempos y precios.' }
+    ] },
     { v: '1.60.0', b: '1.116.0', d: '2026-11-27', items: [
       { t: 'Presupuesto: nuevo botón «Enviar por WhatsApp» en la vista previa. En el teléfono se comparte el PDF directo (elegís el chat del paciente); en la computadora podés compartirlo con la app de WhatsApp instalada o abrir el chat y adjuntarlo.' }
     ] },

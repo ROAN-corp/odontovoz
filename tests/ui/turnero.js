@@ -3,7 +3,7 @@
 const fs = require('fs'), path = require('path'), { chromium } = require('playwright');
 const ROOT = path.resolve(__dirname, '..', '..'), CHROME = process.env.CHROME || ['/usr/bin/google-chrome', '/usr/bin/chromium'].find(p => fs.existsSync(p));
 const hoy = new Date(), iso = n => { const d = new Date(hoy); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
-const D = { clinic: 'Consultorio Prueba', addr: 'Calle 1', phone: '299 000', wa: '5492990000000', cancelHours: 24, sena: 0, types: [{ k: 'control', label: 'Control' }], pros: [{ id: 'p1', name: 'Dra. Ejemplo' }], slots: { control: { [iso(3)]: [['p1', 600, 30]] } } };
+const D = { clinic: 'Consultorio Prueba', addr: 'Calle 1', phone: '299 000', wa: '5492990000000', cancelHours: 24, sena: 0, types: [{ k: 'control', label: 'Control', dur: 60, price: 38000 }, { k: 'otro', label: 'Otro motivo (lo escribo yo)', dur: 30 }], otherHint: 'Las extracciones se evalúan en consulta.', pros: [{ id: 'p1', name: 'Dra. Ejemplo' }], slots: { control: { [iso(3)]: [['p1', 600, 30]] } } };
 (async () => {
   const b = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'], ...(CHROME ? { executablePath: CHROME } : {}) }), pg = await b.newPage({ viewport: { width: 390, height: 844 } }), errs = [], calls = [];
   pg.on('pageerror', e => errs.push(e.message));
@@ -22,9 +22,10 @@ const D = { clinic: 'Consultorio Prueba', addr: 'Calle 1', phone: '299 000', wa:
     if (fn === 'ov_booking_cancel') return J({ ok: true, canceled: true, can_cancel: false, appt });
     return J(null);
   });
-  const R = [], ok = (n, c, d) => R.push([n, !!c, d === undefined ? '' : String(d)]), txt = () => pg.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
+  let t0 = ''; const R = [], ok = (n, c, d) => R.push([n, !!c, d === undefined ? '' : String(d)]), txt = () => pg.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
   await pg.goto('file://' + path.join(ROOT, 'sitio', 'turnos.html') + '?c=abc123xyz'); await pg.waitForTimeout(800);
   ok('la página de turnos muestra el enlace para cancelar', /Cancelalo acá/.test(await txt()));
+  t0 = await txt(); ok('muestra cuánto dura y el precio de cada práctica', /Control/.test(t0) && /1 h/.test(t0) && /\$38\.000/.test(t0), t0.slice(0, 300));
   await pg.click('[data-a="cx"]'); await pg.waitForTimeout(100);
   await pg.fill('#cxCode', 'ov-ab12'); await pg.fill('#cxDni', '999'); await pg.fill('#cxTel', '12'); await pg.click('[data-a="cxFind"]'); await pg.waitForTimeout(200);
   ok('pide código y DNI completos', /últimos 4 números de tu celular/.test(await txt()));
